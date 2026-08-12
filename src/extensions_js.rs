@@ -4626,7 +4626,12 @@ fn runtime_disk_cache_dir() -> Option<PathBuf> {
             Some(PathBuf::from(raw))
         };
     }
-    dirs::home_dir().map(|home| home.join(".kode").join("agent").join("cache").join("modules"))
+    dirs::home_dir().map(|home| {
+        home.join(".kode")
+            .join("agent")
+            .join("cache")
+            .join("modules")
+    })
 }
 
 #[derive(Debug)]

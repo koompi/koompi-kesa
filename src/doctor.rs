@@ -2472,15 +2472,18 @@ fn read_numa_topology(source_errors: &mut Vec<String>) -> NumaTopologySnapshot {
 }
 
 fn read_memory_limit_snapshot(source_errors: &mut Vec<String>) -> MemoryLimitSnapshot {
-    let mem_total_bytes =
-        read_first_existing_trimmed("KODE_DOCTOR_MEMINFO_PATH", &["/proc/meminfo"], source_errors)
-            .and_then(|(source, raw)| {
-                let parsed = parse_mem_total_bytes(&raw);
-                if parsed.is_none() {
-                    source_errors.push(format!("invalid MemTotal in {source}"));
-                }
-                parsed
-            });
+    let mem_total_bytes = read_first_existing_trimmed(
+        "KODE_DOCTOR_MEMINFO_PATH",
+        &["/proc/meminfo"],
+        source_errors,
+    )
+    .and_then(|(source, raw)| {
+        let parsed = parse_mem_total_bytes(&raw);
+        if parsed.is_none() {
+            source_errors.push(format!("invalid MemTotal in {source}"));
+        }
+        parsed
+    });
     let (source, parsed_limit) = read_first_existing_trimmed(
         "KODE_DOCTOR_CGROUP_MEMORY_MAX_PATH",
         &[

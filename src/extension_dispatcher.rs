@@ -782,11 +782,12 @@ impl DualExecOracleConfig {
             .and_then(|raw| raw.trim().parse::<u64>().ok())
             .unwrap_or(DUAL_EXEC_DEFAULT_OVERHEAD_BUDGET_US)
             .max(1);
-        let overhead_backoff_requests = std::env::var("KODE_EXT_DUAL_EXEC_OVERHEAD_BACKOFF_REQUESTS")
-            .ok()
-            .and_then(|raw| raw.trim().parse::<usize>().ok())
-            .unwrap_or(DUAL_EXEC_DEFAULT_OVERHEAD_BACKOFF_REQUESTS)
-            .max(1);
+        let overhead_backoff_requests =
+            std::env::var("KODE_EXT_DUAL_EXEC_OVERHEAD_BACKOFF_REQUESTS")
+                .ok()
+                .and_then(|raw| raw.trim().parse::<usize>().ok())
+                .unwrap_or(DUAL_EXEC_DEFAULT_OVERHEAD_BACKOFF_REQUESTS)
+                .max(1);
 
         Self {
             sample_ppm,

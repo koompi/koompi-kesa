@@ -27,7 +27,9 @@
 
 use std::sync::{Arc, Mutex};
 
-use kode::sdk::{AgentEvent, AgentSessionHandle, ContentBlock, SessionOptions, create_agent_session};
+use kode::sdk::{
+    AgentEvent, AgentSessionHandle, ContentBlock, SessionOptions, create_agent_session,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the async runtime (pi uses asupersync, not tokio).
