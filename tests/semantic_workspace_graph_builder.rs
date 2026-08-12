@@ -2679,7 +2679,7 @@ edition = "2024"
     Ok(())
 }
 
-const HOSTILE_GIT_CHILD_ROOT: &str = "PI_SEMANTIC_HOSTILE_GIT_CHILD_ROOT";
+const HOSTILE_GIT_CHILD_ROOT: &str = "KODE_SEMANTIC_HOSTILE_GIT_CHILD_ROOT";
 
 #[test]
 fn performance_budget_source_binding_hostile_git_environment_child() -> TestResult {

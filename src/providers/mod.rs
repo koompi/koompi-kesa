@@ -93,11 +93,11 @@ fn vcr_client_if_enabled(base_url: &str) -> Result<Option<Client>> {
         return Ok(None);
     }
 
-    if base_url_targets_loopback(base_url) && env::var("PI_VCR_ALLOW_LOOPBACK").is_err() {
+    if base_url_targets_loopback(base_url) && env::var("KODE_VCR_ALLOW_LOOPBACK").is_err() {
         return Ok(None);
     }
 
-    let test_name = env::var("PI_VCR_TEST_NAME").unwrap_or_else(|_| "pi_runtime".to_string());
+    let test_name = env::var("KODE_VCR_TEST_NAME").unwrap_or_else(|_| "pi_runtime".to_string());
     let recorder = VcrRecorder::new(&test_name)?;
     Ok(Some(Client::new().with_vcr(recorder)))
 }

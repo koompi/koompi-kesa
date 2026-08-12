@@ -85,7 +85,7 @@
         ┌───────────────────┐ ┌───────────────────┐ ┌───────────────────┐
         │  Global Config    │ │  Import Sources   │ │  Project Config   │
         │                   │ │                   │ │                   │
-        │ ~/.pi/agent/      │ │ ~/.cursor/        │ │ .pi/mcp.json      │
+        │ ~/.kode/agent/      │ │ ~/.cursor/        │ │ .kode/mcp.json      │
         │    mcp.json       │ │    mcp.json       │ │ (in project)      │
         │                   │ │                   │ │                   │
         │  PRIORITY: 2      │ │ ~/.claude/        │ │  PRIORITY: 1      │
@@ -506,7 +506,7 @@ Servers support three lifecycle modes:
 ## File Structure
 
 ```
-~/.pi/agent/extensions/pi-mcp-adapter/
+~/.kode/agent/extensions/pi-mcp-adapter/
 │
 ├── index.ts              Entry point: unified mcp tool, commands, event handlers
 │                         - mcp({}) status, search, list, call modes
@@ -533,13 +533,13 @@ Servers support three lifecycle modes:
 │                         - resourceNameToToolName()
 │
 ├── metadata-cache.ts     Persistent tool/resource metadata cache
-│                         - Per-server cache at ~/.pi/agent/mcp-cache.json
+│                         - Per-server cache at ~/.kode/agent/mcp-cache.json
 │                         - Config hashing, staleness checks, reconstruction
 │                         - Read-merge-write for multi-session safety
 │
 ├── npx-resolver.ts       npx binary resolution (skip npm parent process)
 │                         - Probes ~/.npm/_npx/ cache directly
-│                         - Persistent cache at ~/.pi/agent/mcp-npx-cache.json
+│                         - Persistent cache at ~/.kode/agent/mcp-npx-cache.json
 │                         - JS detection (extension + shebang)
 │
 ├── lifecycle.ts          Health checks, reconnection, idle timeout
@@ -548,7 +548,7 @@ Servers support three lifecycle modes:
 │                         - Per-server and global timeout settings
 │
 ├── oauth-handler.ts      OAuth token file reading
-│                         - getStoredTokens() from ~/.pi/agent/mcp-oauth/
+│                         - getStoredTokens() from ~/.kode/agent/mcp-oauth/
 │
 ├── package.json          Dependencies (@modelcontextprotocol/sdk)
 │
@@ -614,7 +614,7 @@ Servers support three lifecycle modes:
 │                                                                             │
 │  9. METADATA CACHE                                                          │
 │     ──────────────                                                          │
-│     ~/.pi/agent/mcp-cache.json stores per-server tool/resource              │
+│     ~/.kode/agent/mcp-cache.json stores per-server tool/resource              │
 │     metadata with config hash validation and 7-day staleness.               │
 │     Cache stores original MCP names (not prefixed) — toolPrefix             │
 │     changes never invalidate the cache. Read-merge-write with               │

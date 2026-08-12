@@ -7,18 +7,18 @@ For detailed procedures, see the Incident Response Runbook and Policy Tuning Gui
 
 ```bash
 # Master switches
-PI_EXTENSION_RISK_ENABLED=true      # Enable runtime risk controller
-PI_EXTENSION_RISK_ENFORCE=true       # Enable enforcement (false = shadow mode)
-PI_EXTENSION_RISK_FAIL_CLOSED=true   # Deny on controller errors
+KODE_EXTENSION_RISK_ENABLED=true      # Enable runtime risk controller
+KODE_EXTENSION_RISK_ENFORCE=true       # Enable enforcement (false = shadow mode)
+KODE_EXTENSION_RISK_FAIL_CLOSED=true   # Deny on controller errors
 
 # Tuning
-PI_EXTENSION_RISK_ALPHA=0.01         # Type-I error budget (1e-6..0.5)
-PI_EXTENSION_RISK_WINDOW=128         # Sliding window size (8..4096)
-PI_EXTENSION_RISK_LEDGER_LIMIT=2048  # Max ledger entries (32..20000)
-PI_EXTENSION_RISK_DECISION_TIMEOUT_MS=50  # Decision budget ms (1..2000)
+KODE_EXTENSION_RISK_ALPHA=0.01         # Type-I error budget (1e-6..0.5)
+KODE_EXTENSION_RISK_WINDOW=128         # Sliding window size (8..4096)
+KODE_EXTENSION_RISK_LEDGER_LIMIT=2048  # Max ledger entries (32..20000)
+KODE_EXTENSION_RISK_DECISION_TIMEOUT_MS=50  # Decision budget ms (1..2000)
 
 # Policy profile
-PI_EXTENSION_POLICY=standard         # safe | standard | permissive
+KODE_EXTENSION_POLICY=standard         # safe | standard | permissive
 ```
 
 ## Rollout Phases
@@ -232,8 +232,8 @@ let policy = ExtensionPolicy {
 
 | Task | Method |
 |------|--------|
-| Enable risk controller | `PI_EXTENSION_RISK_ENABLED=true` |
-| Start in shadow mode | `PI_EXTENSION_RISK_ENFORCE=false` |
+| Enable risk controller | `KODE_EXTENSION_RISK_ENABLED=true` |
+| Start in shadow mode | `KODE_EXTENSION_RISK_ENFORCE=false` |
 | Check current phase | `manager.rollout_state()` |
 | Advance rollout | `manager.advance_rollout()` |
 | Emergency rollback | `manager.set_rollout_phase(RolloutPhase::Shadow)` |

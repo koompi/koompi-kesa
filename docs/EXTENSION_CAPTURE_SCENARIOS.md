@@ -417,7 +417,7 @@ Scenarios (deterministic-first):
 
 - `subagent/ui_integration/deny_project_agents` (interactive)
   - Setup:
-    - have a project agent in `.pi/agents/`
+    - have a project agent in `.kode/agents/`
     - call subagent with `agentScope: "project"` and `confirmProjectAgents: true`
     - scripted confirm returns `false`
   - Expected:
@@ -445,7 +445,7 @@ Deterministic scenarios:
   - Expected: stable error message containing `Missing Google Antigravity OAuth credentials`
 
 - `antigravity-image-gen/tool/save_mode_custom_without_dir` (headless)
-  - Steps: invoke `generate_image { prompt: "a cat", save: "custom" }` with no `PI_IMAGE_SAVE_DIR`
+  - Steps: invoke `generate_image { prompt: "a cat", save: "custom" }` with no `KODE_IMAGE_SAVE_DIR`
   - Expected: deterministic error or saveError surfaced (exact message may differ; assert presence of `save`/`custom` and missing dir indicator)
 
 VCR-backed (future):

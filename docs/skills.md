@@ -6,8 +6,8 @@ Skills provide specialized instructions and capabilities to the agent. They are 
 
 Skills are loaded from:
 
-1. **Global**: `~/.pi/agent/skills/*/SKILL.md` or `~/.pi/agent/skills/*.md`
-2. **Project**: `.pi/skills/*/SKILL.md` or `.pi/skills/*.md`
+1. **Global**: `~/.kode/agent/skills/*/SKILL.md` or `~/.kode/agent/skills/*.md`
+2. **Project**: `.kode/skills/*/SKILL.md` or `.kode/skills/*.md`
 3. **Packages**: Installed packages.
 
 ## File Format

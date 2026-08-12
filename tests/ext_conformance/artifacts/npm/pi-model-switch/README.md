@@ -20,13 +20,13 @@ After restarting Pi, the `switch_model` tool should be available. Ask the agent 
 
 If you used curl:
 ```bash
-curl -o ~/.pi/agent/extensions/model-switch/index.ts \
+curl -o ~/.kode/agent/extensions/model-switch/index.ts \
   https://raw.githubusercontent.com/nicobailon/pi-model-switch/main/index.ts
 ```
 
 If you cloned:
 ```bash
-cd ~/.pi/agent/extensions/model-switch && git pull
+cd ~/.kode/agent/extensions/model-switch && git pull
 ```
 
 Restart Pi after updating.
@@ -38,7 +38,7 @@ Restart Pi after updating.
 Create `aliases.json` in the extension directory to define shortcuts:
 
 ```bash
-~/.pi/agent/extensions/model-switch/aliases.json
+~/.kode/agent/extensions/model-switch/aliases.json
 ```
 
 ```json

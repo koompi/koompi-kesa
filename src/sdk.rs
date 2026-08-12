@@ -1740,7 +1740,7 @@ pub async fn create_agent_session(options: SessionOptions) -> Result<AgentSessio
         None,
         &global_dir,
         &package_dir,
-        std::env::var_os("PI_TEST_MODE").is_some(),
+        std::env::var_os("KODE_TEST_MODE").is_some(),
         options.include_cwd_in_prompt,
     )
     .map_err(|err| Error::validation(err.to_string()))?;

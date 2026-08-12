@@ -11,12 +11,12 @@
 //!   cargo test --test `ci_cross_platform_matrix` -- --nocapture
 //!
 //! Regenerate the tracked report for the current platform explicitly with:
-//!   `PI_GENERATE_CROSS_PLATFORM_MATRIX=1 cargo test --test ci_cross_platform_matrix cross_platform_matrix -- --exact --nocapture`
+//!   `KODE_GENERATE_CROSS_PLATFORM_MATRIX=1 cargo test --test ci_cross_platform_matrix cross_platform_matrix -- --exact --nocapture`
 
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
-const GENERATE_CROSS_PLATFORM_MATRIX_ENV: &str = "PI_GENERATE_CROSS_PLATFORM_MATRIX";
+const GENERATE_CROSS_PLATFORM_MATRIX_ENV: &str = "KODE_GENERATE_CROSS_PLATFORM_MATRIX";
 
 fn cross_platform_matrix_generation_enabled(raw: Option<&str>) -> bool {
     raw == Some("1")

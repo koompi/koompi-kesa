@@ -15,9 +15,9 @@ use tempfile::TempDir;
 const DIFFERENTIAL_RUNNER_UNAVAILABLE: &str =
     "RPC slash-command differential runner is unavailable";
 const RPC_RESPONSE_TIMEOUT: Duration = Duration::from_secs(15);
-const PI_MONO_ROOT_RELATIVE: &str = "legacy_pi_mono_code/pi-mono";
-const PI_MONO_TSX_RELATIVE: &str = "node_modules/tsx/dist/cli.mjs";
-const PI_MONO_CLI_RELATIVE: &str = "packages/coding-agent/src/cli.ts";
+const KODE_MONO_ROOT_RELATIVE: &str = "legacy_pi_mono_code/pi-mono";
+const KODE_MONO_TSX_RELATIVE: &str = "node_modules/tsx/dist/cli.mjs";
+const KODE_MONO_CLI_RELATIVE: &str = "packages/coding-agent/src/cli.ts";
 const RPC_TEST_PROVIDER: &str = "slash-differential-fixture";
 const RPC_TEST_MODEL: &str = "credential-free-fixture";
 const RPC_TEST_BASE_URL: &str = "http://127.0.0.1:9/v1";
@@ -532,12 +532,12 @@ impl RunnerPaths {
         }
 
         let repo = Path::new(env!("CARGO_MANIFEST_DIR"));
-        let pi_mono_root = repo.join(PI_MONO_ROOT_RELATIVE);
+        let pi_mono_root = repo.join(KODE_MONO_ROOT_RELATIVE);
         if !pi_mono_root.is_dir() {
             anyhow::bail!("missing pinned pi-mono root: {}", pi_mono_root.display());
         }
 
-        let pi_mono_tsx = pi_mono_root.join(PI_MONO_TSX_RELATIVE);
+        let pi_mono_tsx = pi_mono_root.join(KODE_MONO_TSX_RELATIVE);
         if !pi_mono_tsx.is_file() {
             anyhow::bail!(
                 "missing legacy tsx runner: {}; provision pi-mono dependencies before counting slash-command parity",
@@ -545,7 +545,7 @@ impl RunnerPaths {
             );
         }
 
-        let pi_mono_cli = pi_mono_root.join(PI_MONO_CLI_RELATIVE);
+        let pi_mono_cli = pi_mono_root.join(KODE_MONO_CLI_RELATIVE);
         if !pi_mono_cli.is_file() {
             anyhow::bail!("missing legacy coding-agent CLI: {}", pi_mono_cli.display());
         }
@@ -676,10 +676,10 @@ fn run_rust_rpc_sequence(
             "--no-prompt-templates",
             "--no-themes",
         ])
-        .env("PI_CODING_AGENT_DIR", &agent_dir)
-        .env("PI_CONFIG_PATH", &config_path)
-        .env("PI_SESSIONS_DIR", &sessions_dir)
-        .env("PI_PACKAGE_DIR", &package_dir)
+        .env("KODE_CODING_AGENT_DIR", &agent_dir)
+        .env("KODE_CONFIG_PATH", &config_path)
+        .env("KODE_SESSIONS_DIR", &sessions_dir)
+        .env("KODE_PACKAGE_DIR", &package_dir)
         .current_dir(&workspace)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -721,7 +721,7 @@ fn run_pi_mono_rpc_sequence(
             "--no-prompt-templates",
             "--no-themes",
         ])
-        .env("PI_CODING_AGENT_DIR", &agent_dir)
+        .env("KODE_CODING_AGENT_DIR", &agent_dir)
         .env("TZ", "UTC")
         .current_dir(&paths.pi_mono_root)
         .stdin(Stdio::piped())

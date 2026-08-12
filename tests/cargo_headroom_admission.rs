@@ -39,7 +39,7 @@ fn run_admission_with_env(
     command_args.extend_from_slice(args);
 
     let mut command = Command::new(root.join("scripts/cargo_headroom.sh"));
-    command.env("PATH", path).env("PI_CARGO_PROCESS_COUNT", "0");
+    command.env("PATH", path).env("KODE_CARGO_PROCESS_COUNT", "0");
     for (key, value) in envs {
         command.env(key, value);
     }
@@ -252,10 +252,10 @@ fn fixture_path(fixture: &AdmissionFixture, mock_dir: &Path) -> String {
 fn fixture_envs(fixture: &AdmissionFixture) -> Vec<(&'static str, String)> {
     let mut envs = Vec::new();
     if let Some(count) = fixture.process_count_override {
-        envs.push(("PI_CARGO_PROCESS_COUNT", count.to_string()));
+        envs.push(("KODE_CARGO_PROCESS_COUNT", count.to_string()));
     }
     if let Some(max_processes) = fixture.max_local_cargo_processes {
-        envs.push(("PI_CARGO_MAX_LOCAL_PROCESSES", max_processes.to_string()));
+        envs.push(("KODE_CARGO_MAX_LOCAL_PROCESSES", max_processes.to_string()));
     }
     envs
 }

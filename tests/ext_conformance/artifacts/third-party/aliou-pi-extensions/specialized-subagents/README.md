@@ -7,7 +7,7 @@ Framework for spawning specialized subagents with custom tools, consistent UI re
 - **Custom tools per subagent**: Each subagent has its own tool set
 - **Streaming UI**: Tool call progress, spinner animation, markdown rendering
 - **Cost tracking**: LLM tokens and external API costs
-- **Logging**: Session-like logging in `~/.pi/agent/subagents/`
+- **Logging**: Session-like logging in `~/.kode/agent/subagents/`
 - **Standalone tools**: Direct access to web fetching without LLM
 
 ## Requirements

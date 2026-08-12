@@ -11,7 +11,7 @@
 //!
 //! Run:
 //!   cargo test --test `e2e_tui_perf` -- --nocapture
-//!   `PI_PERF_TELEMETRY=1` cargo test --test `e2e_tui_perf` -- --nocapture
+//!   `KODE_PERF_TELEMETRY=1` cargo test --test `e2e_tui_perf` -- --nocapture
 
 #![allow(
     clippy::cast_precision_loss,
@@ -177,7 +177,7 @@ impl MockRssReader {
     }
 }
 
-const TUI_PERF_ARTIFACT_GENERATION_ENV: &str = "PI_GENERATE_TUI_PERF_ARTIFACTS";
+const TUI_PERF_ARTIFACT_GENERATION_ENV: &str = "KODE_GENERATE_TUI_PERF_ARTIFACTS";
 
 fn tui_perf_artifact_generation_enabled() -> bool {
     let Some(value) = std::env::var_os(TUI_PERF_ARTIFACT_GENERATION_ENV) else {

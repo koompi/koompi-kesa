@@ -90,7 +90,7 @@ class HToRyTransformer(transformer_primitives.Transformer):
     def __call__(self, circuit: cirq.Circuit, *, context=None) -> cirq.Circuit:
         def map_op(op: cirq.Operation, _) -> cirq.OP_TREE:
             if isinstance(op.gate, cirq.HPowGate):
-                return cirq.ry(np.pi/2)(op.qubits[0])
+                return cirq.ry(np.kode/2)(op.qubits[0])
             return op
 
         return transformer_primitives.map_operations(

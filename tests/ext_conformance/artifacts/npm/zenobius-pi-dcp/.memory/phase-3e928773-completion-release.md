@@ -75,7 +75,7 @@ This final phase encompasses the complete development lifecycle of the Pi-DCP ex
 ### Configuration
 - Default configuration with sensible defaults
 - Runtime configuration commands
-- File-based persistence (`~/.pi/agent/config/pi-dcp.json`)
+- File-based persistence (`~/.kode/agent/config/pi-dcp.json`)
 
 ## Challenges Overcome
 

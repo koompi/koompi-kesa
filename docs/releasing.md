@@ -358,9 +358,9 @@ release_crates_io_token="${CARGO_REGISTRY_TOKEN:-${CARGO_REGISTRIES_CRATES_IO_TO
 (( ${#release_crates_io_token} <= 4096 ))
 case "$release_crates_io_token" in *$'\n'*|*$'\r'*) exit 1 ;; esac
 builtin export -n release_crates_io_token
-[[ -z "${PI_CRATES_IO_RELEASE_TOKEN:-}" ]]
+[[ -z "${KODE_CRATES_IO_RELEASE_TOKEN:-}" ]]
 builtin unset CARGO_REGISTRY_TOKEN CARGO_REGISTRIES_CRATES_IO_TOKEN \
-  PI_CRATES_IO_RELEASE_TOKEN
+  KODE_CRATES_IO_RELEASE_TOKEN
 release_cargo_entrypoint="$(builtin type -P -- cargo)"
 release_rustc_entrypoint="$(builtin type -P -- rustc)"
 release_rustup_entrypoint="$(builtin type -P -- rustup)"
@@ -463,7 +463,7 @@ test "$LINUX_ARM64_QEMU_SYSROOT" != "/operator/supplied/aarch64/sysroot"
 case "$LINUX_ARM64_QEMU_SYSROOT" in *'/../'*|*'/..'|*'//'*) exit 1 ;; esac
 test "$DARWIN_SMOKE_HOST" = mmini
 test "$WINDOWS_AMD64_SMOKE_HOST" = wlap
-test -z "${PI_CRATES_IO_RELEASE_TOKEN:-}"
+test -z "${KODE_CRATES_IO_RELEASE_TOKEN:-}"
 test ! -e "$MANUAL_RELEASE_STATE_DIR"
 mkdir -m 700 "$MANUAL_RELEASE_STATE_DIR"
 release_rust_tool_receipt="$MANUAL_RELEASE_STATE_DIR/operator-rust-tools.txt"
@@ -841,7 +841,7 @@ proof is not proof of an empty bypass list.
      cargo test --locked --test extensions_policy_negative \
      negative_conformance_report -- --exact --nocapture
    release_build_env CI_RUN_ID="$CI_RUN_ID" CI_CORRELATION_ID="$CI_CORRELATION_ID" \
-     PI_GENERATE_CONFORMANCE_REPORT=1 \
+     KODE_GENERATE_CONFORMANCE_REPORT=1 \
      cargo test --locked --test conformance_report \
      generate_conformance_report -- --exact --nocapture
    release_build_env RELEASE_TAG="$RELEASE_TAG" python3 - <<'PY'
@@ -3259,11 +3259,11 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
            raise SystemExit(f"self-test path already exists: {receipt}")
        env = {
            **os.environ,
-           "PI_CRATES_IO_RELEASE_TOKEN": "self-test-token",
-           "PI_EXPECTED_CRATE_NAME": "koompi_code_cli",
-           "PI_EXPECTED_CRATE_VERSION": os.environ["PACKAGE_VERSION"],
-           "PI_EXPECTED_CRATE_SHA256": os.environ["CRATE_SHA256"],
-           "PI_CREDENTIAL_RECEIPT": str(receipt),
+           "KODE_CRATES_IO_RELEASE_TOKEN": "self-test-token",
+           "KODE_EXPECTED_CRATE_NAME": "koompi_code_cli",
+           "KODE_EXPECTED_CRATE_VERSION": os.environ["PACKAGE_VERSION"],
+           "KODE_EXPECTED_CRATE_SHA256": os.environ["CRATE_SHA256"],
+           "KODE_CREDENTIAL_RECEIPT": str(receipt),
        }
        process = subprocess.run(
            [provider, "--cargo-plugin"],
@@ -3426,18 +3426,18 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
      # cannot consume credential bytes, and then execs the no-verify upload.
      builtin printf '%s\n' "$controller_token" |
        publisher_env \
-         PI_EXPECTED_CRATE_NAME=koompi_code_cli \
-         PI_EXPECTED_CRATE_VERSION="$RELEASE_VERSION" \
-         PI_EXPECTED_CRATE_SHA256="$expected_crate_sha256" \
-         PI_CREDENTIAL_RECEIPT="$credential_receipt" \
+         KODE_EXPECTED_CRATE_NAME=koompi_code_cli \
+         KODE_EXPECTED_CRATE_VERSION="$RELEASE_VERSION" \
+         KODE_EXPECTED_CRATE_SHA256="$expected_crate_sha256" \
+         KODE_CREDENTIAL_RECEIPT="$credential_receipt" \
          "$release_bash_path" --noprofile --norc -c '
            set -euo pipefail
-           [[ -z "${PI_CRATES_IO_RELEASE_TOKEN:-}" ]]
+           [[ -z "${KODE_CRATES_IO_RELEASE_TOKEN:-}" ]]
            IFS= read -r scoped_release_token
            [[ -n "$scoped_release_token" ]]
            (( ${#scoped_release_token} <= 4096 ))
            case "$scoped_release_token" in *$'"'"'\n'"'"'*|*$'"'"'\r'"'"'*) exit 2 ;; esac
-           export PI_CRATES_IO_RELEASE_TOKEN="$scoped_release_token"
+           export KODE_CRATES_IO_RELEASE_TOKEN="$scoped_release_token"
            unset scoped_release_token
            exec 0</dev/null
            cd "$1"
@@ -3572,7 +3572,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
        jq -e '.state == "absent"' "$before_state" >/dev/null
        actual_receipt="$attempt_dir/pi-crates-credential-receipt.json"
        test ! -e "$actual_receipt"
-       test -z "${PI_CRATES_IO_RELEASE_TOKEN:-}"
+       test -z "${KODE_CRATES_IO_RELEASE_TOKEN:-}"
        test -n "${release_crates_io_token:-}"
        set +e
        (
@@ -3832,8 +3832,8 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
       HOME="$installer_root/home" \
       XDG_STATE_HOME="$installer_root/state" \
       TMPDIR="$installer_root/tmp" \
-      PI_INSTALLER_RETAIN_TEMP=1 \
-      PI_INSTALLER_LOCK_DIR="$installer_lock" \
+      KODE_INSTALLER_RETAIN_TEMP=1 \
+      KODE_INSTALLER_LOCK_DIR="$installer_lock" \
       AGENT_SKILLS_ENABLED=0 \
       bash "$public_installer" \
         --yes --version "$RELEASE_TAG" --dest "$installer_root/bin" \

@@ -2,7 +2,7 @@
 # TDD-HAPPY-3: Mission Control must discover agents
 # Behavior: /mc command shows agent count
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents"/{a1,a2}
 
@@ -10,7 +10,7 @@ mkdir -p "$TEST_WS/agents"/{a1,a2}
 echo '{"event":"session_start","ts":1234}' > "$TEST_WS/agents/a1/audit.jsonl"
 echo '{"event":"session_start","ts":1234}' > "$TEST_WS/agents/a2/audit.jsonl"
 
-OUTPUT=$(PI_WORKSPACE_ROOT="$TEST_WS" \
+OUTPUT=$(KODE_WORKSPACE_ROOT="$TEST_WS" \
   pi --max-turns 1 --no-input -p \
   -e "$EXT" "/mc" 2>&1 || true)
 

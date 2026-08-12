@@ -27,7 +27,7 @@ git pull origin main
 
 Check for new extensions under:
 - `packages/coding-agent/examples/extensions/`
-- `.pi/extensions/`
+- `.kode/extensions/`
 
 ### 1.2 GitHub discovery sweep
 
@@ -195,14 +195,14 @@ labels, bodies, and RCH reproducer commands for follow-up fixes.
 ### 5.1 Run PR benchmark (quick check)
 
 ```bash
-PI_BENCH_MODE=pr cargo test --test ext_bench_harness \
+KODE_BENCH_MODE=pr cargo test --test ext_bench_harness \
   --features ext-conformance -- --nocapture
 ```
 
 ### 5.2 Run nightly benchmark (full corpus)
 
 ```bash
-PI_BENCH_MODE=nightly PI_BENCH_MAX=200 PI_BENCH_ITERATIONS=10 \
+KODE_BENCH_MODE=nightly KODE_BENCH_MAX=200 KODE_BENCH_ITERATIONS=10 \
   cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 ```
 
@@ -459,7 +459,7 @@ every PR:
     cargo test --test ext_conformance_generated --features ext-conformance \
       -- --test-threads=1 -q
   env:
-    PI_TEST_MODE: "1"
+    KODE_TEST_MODE: "1"
 ```
 
 This runs all 223 conformance tests. On a fast CI runner it takes ~2 minutes
@@ -476,7 +476,7 @@ cargo test --test ext_conformance_generated "tier_[12]_" \
 # Extension performance budgets
 - name: Extension perf budget check
   run: |
-    PI_BENCH_MODE=pr cargo test --test ext_bench_harness \
+    KODE_BENCH_MODE=pr cargo test --test ext_bench_harness \
       --features ext-conformance -- --nocapture
     cargo test --test perf_budgets --features ext-conformance -- -q
 ```
@@ -514,7 +514,7 @@ cargo test --test ext_conformance_generated conformance_full_report \
   --features ext-conformance -- --nocapture
 
 # 2. Run benchmarks
-PI_BENCH_MODE=nightly PI_BENCH_MAX=200 PI_BENCH_ITERATIONS=10 \
+KODE_BENCH_MODE=nightly KODE_BENCH_MAX=200 KODE_BENCH_ITERATIONS=10 \
   cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 
 # 3. Follow the full checklist from Phase 1

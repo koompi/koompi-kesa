@@ -305,19 +305,19 @@ impl TestHarness {
 
         let mut env = TestEnv::new();
         env.set(
-            "PI_CODING_AGENT_DIR",
+            "KODE_CODING_AGENT_DIR",
             env_root.join("agent").display().to_string(),
         );
         env.set(
-            "PI_CONFIG_PATH",
+            "KODE_CONFIG_PATH",
             env_root.join("settings.json").display().to_string(),
         );
         env.set(
-            "PI_SESSIONS_DIR",
+            "KODE_SESSIONS_DIR",
             env_root.join("sessions").display().to_string(),
         );
         env.set(
-            "PI_PACKAGE_DIR",
+            "KODE_PACKAGE_DIR",
             env_root.join("packages").display().to_string(),
         );
         env

@@ -91,7 +91,7 @@
     },
     {
       "repo": "Mic92/dotfiles",
-      "entrypoint": "home/.pi/agent/extensions/custom-footer.ts",
+      "entrypoint": "home/.kode/agent/extensions/custom-footer.ts",
       "file_count": 5,
       "registrations": []
     },
@@ -139,7 +139,7 @@
     },
     {
       "repo": "aadishv/dotfiles",
-      "entrypoint": "manifests/files/common/.pi/agent/extensions/clean-startup.ts",
+      "entrypoint": "manifests/files/common/.kode/agent/extensions/clean-startup.ts",
       "file_count": 5,
       "registrations": []
     },
@@ -274,7 +274,7 @@
     },
     {
       "repo": "deybhayden/bendows",
-      "entrypoint": ".pi/agent/extensions/answer.ts",
+      "entrypoint": ".kode/agent/extensions/answer.ts",
       "file_count": 4,
       "registrations": [
         "registerCommand",
@@ -283,7 +283,7 @@
     },
     {
       "repo": "deybhayden/dotfiles",
-      "entrypoint": ".pi/agent/extensions/answer.ts",
+      "entrypoint": ".kode/agent/extensions/answer.ts",
       "file_count": 7,
       "registrations": [
         "registerCommand",
@@ -300,7 +300,7 @@
     },
     {
       "repo": "ehtbanton/controlocal",
-      "entrypoint": "packages/openclaw/.pi/extensions/prompt-url-widget.ts",
+      "entrypoint": "packages/openclaw/.kode/extensions/prompt-url-widget.ts",
       "file_count": 2,
       "registrations": []
     },
@@ -348,7 +348,7 @@
     },
     {
       "repo": "haider-patanwala/clawdbot",
-      "entrypoint": ".pi/extensions/diff.ts",
+      "entrypoint": ".kode/extensions/diff.ts",
       "file_count": 2,
       "registrations": [
         "registerCommand"
@@ -372,7 +372,7 @@
     },
     {
       "repo": "jbuckmccready/dotfiles",
-      "entrypoint": "pi/.pi/agent/extensions/sandbox/index.ts",
+      "entrypoint": "pi/.kode/agent/extensions/sandbox/index.ts",
       "file_count": 7,
       "registrations": [
         "registerTool",
@@ -382,7 +382,7 @@
     },
     {
       "repo": "jcolano/openclaw",
-      "entrypoint": ".pi/extensions/diff.ts",
+      "entrypoint": ".kode/extensions/diff.ts",
       "file_count": 3,
       "registrations": [
         "registerCommand"
@@ -417,7 +417,7 @@
     },
     {
       "repo": "kaofelix/dotfiles",
-      "entrypoint": "pi/.pi/agent/extensions/auto-exit.ts",
+      "entrypoint": "pi/.kode/agent/extensions/auto-exit.ts",
       "file_count": 2,
       "registrations": [
         "registerFlag"
@@ -439,7 +439,7 @@
     },
     {
       "repo": "l-lin/dotfiles",
-      "entrypoint": "home-manager/modules/share/ai/pi/.pi/agent/extensions/ask-user-question.ts",
+      "entrypoint": "home-manager/modules/share/ai/pi/.kode/agent/extensions/ask-user-question.ts",
       "file_count": 5,
       "registrations": [
         "registerTool"
@@ -447,7 +447,7 @@
     },
     {
       "repo": "laulauland/dotfiles",
-      "entrypoint": "shared/.pi/agent/extensions/mcp/index.ts",
+      "entrypoint": "shared/.kode/agent/extensions/mcp/index.ts",
       "file_count": 9,
       "registrations": [
         "registerTool",
@@ -554,7 +554,7 @@
     },
     {
       "repo": "neonspectra/dotfiles",
-      "entrypoint": ".pi/agent/extensions/commands.ts",
+      "entrypoint": ".kode/agent/extensions/commands.ts",
       "file_count": 3,
       "registrations": [
         "registerCommand"
@@ -617,7 +617,7 @@
     },
     {
       "repo": "richard-devbot/Computer-Agent",
-      "entrypoint": ".pi/extensions/diff.ts",
+      "entrypoint": ".kode/extensions/diff.ts",
       "file_count": 3,
       "registrations": [
         "registerCommand"
@@ -642,7 +642,7 @@
     },
     {
       "repo": "sbattywolf/GAIA",
-      "entrypoint": "external/openclaw/.pi/extensions/files.ts",
+      "entrypoint": "external/openclaw/.kode/extensions/files.ts",
       "file_count": 3,
       "registrations": [
         "registerCommand"
@@ -703,7 +703,7 @@
     },
     {
       "repo": "tudoroancea/dotfiles",
-      "entrypoint": ".pi/agent/extensions/claude-style.ts",
+      "entrypoint": ".kode/agent/extensions/claude-style.ts",
       "file_count": 9,
       "registrations": []
     },
@@ -717,7 +717,7 @@
     },
     {
       "repo": "vrslev/dotfiles",
-      "entrypoint": "home/.pi/agent/extensions/mac-system-theme.ts",
+      "entrypoint": "home/.kode/agent/extensions/mac-system-theme.ts",
       "file_count": 2,
       "registrations": []
     },
@@ -744,13 +744,13 @@
     },
     {
       "repo": "whodaniel/fuse",
-      "entrypoint": "apps/openclaw/.pi/extensions/prompt-url-widget.ts",
+      "entrypoint": "apps/openclaw/.kode/extensions/prompt-url-widget.ts",
       "file_count": 3,
       "registrations": []
     },
     {
       "repo": "willem4130/Android",
-      "entrypoint": "Kotlin/android/01-openclaw-production-app/.pi/extensions/prompt-url-widget.ts",
+      "entrypoint": "Kotlin/android/01-openclaw-production-app/.kode/extensions/prompt-url-widget.ts",
       "file_count": 2,
       "registrations": []
     },
@@ -764,7 +764,7 @@
     },
     {
       "repo": "ATONCAP/monorepo",
-      "entrypoint": "packages/self/.pi/extensions/files.ts",
+      "entrypoint": "packages/self/.kode/extensions/files.ts",
       "file_count": 1,
       "registrations": [
         "registerCommand"
@@ -792,7 +792,7 @@
     },
     {
       "repo": "M-Dev-Lab/ultimate-agent",
-      "entrypoint": "Sampling- Resources/openclaw-main/.pi/extensions/prompt-url-widget.ts",
+      "entrypoint": "Sampling- Resources/openclaw-main/.kode/extensions/prompt-url-widget.ts",
       "file_count": 1,
       "registrations": []
     },
@@ -821,7 +821,7 @@
     },
     {
       "repo": "Tiberriver256/mcp-server-azure-devops",
-      "entrypoint": ".pi/extensions/test-watch.ts",
+      "entrypoint": ".kode/extensions/test-watch.ts",
       "file_count": 1,
       "registrations": [
         "registerCommand",
@@ -1232,7 +1232,7 @@
     },
     {
       "repo": "mrexodia/agent-viewer",
-      "entrypoint": ".pi/hooks/devdocs-commands.ts",
+      "entrypoint": ".kode/hooks/devdocs-commands.ts",
       "file_count": 1,
       "registrations": [
         "registerCommand"
@@ -1371,7 +1371,7 @@
     },
     {
       "repo": "pauldthomson/dotfiles",
-      "entrypoint": ".pi/extensions/web-fetch.ts",
+      "entrypoint": ".kode/extensions/web-fetch.ts",
       "file_count": 1,
       "registrations": [
         "registerTool"
@@ -1429,7 +1429,7 @@
     },
     {
       "repo": "samuelstevens/dotfiles",
-      "entrypoint": "pi/.pi/agent/extensions/questions.ts",
+      "entrypoint": "pi/.kode/agent/extensions/questions.ts",
       "file_count": 1,
       "registrations": [
         "registerTool",
@@ -1472,7 +1472,7 @@
     },
     {
       "repo": "sigtom/wow-ocp",
-      "entrypoint": ".pi/extensions/homelab-tools.ts",
+      "entrypoint": ".kode/extensions/homelab-tools.ts",
       "file_count": 1,
       "registrations": [
         "registerTool"
@@ -1531,7 +1531,7 @@
     },
     {
       "repo": "xxrenzhe/autobb",
-      "entrypoint": "openclaw/.pi/extensions/prompt-url-widget.ts",
+      "entrypoint": "openclaw/.kode/extensions/prompt-url-widget.ts",
       "file_count": 2,
       "registrations": []
     },

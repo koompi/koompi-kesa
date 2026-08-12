@@ -131,8 +131,8 @@ Example:
 
 Pi writes a deterministic package lockfile after successful install/update verification:
 
-- Project scope: `.pi/packages.lock.json`
-- User scope: `~/.pi/agent/packages.lock.json`
+- Project scope: `.kode/packages.lock.json`
+- User scope: `~/.kode/agent/packages.lock.json`
 
 Lock entries are sorted deterministically and include:
 
@@ -156,8 +156,8 @@ For unpinned `pi update`, provenance/digest rotation is allowed and re-recorded 
 
 Pi appends trust-state transitions as JSONL audit events:
 
-- Project scope: `.pi/package-trust-audit.jsonl`
-- User scope: `~/.pi/agent/package-trust-audit.jsonl`
+- Project scope: `.kode/package-trust-audit.jsonl`
+- User scope: `~/.kode/agent/package-trust-audit.jsonl`
 
 Each event records action (`install`, `update`, `remove`), scope, identity, source,
 `from_state`, `to_state`, deterministic reason codes, and optional remediation guidance.

@@ -30,7 +30,7 @@ const DEFAULT_MAX_RESPONSE_BYTES: usize = 50 * 1024 * 1024;
 /// (including unset) keeps the secure default. Loopback HTTP is treated as
 /// a "secure context" by browsers for the same reason: traffic never leaves
 /// the host, so TLS is friction without security gain.
-pub const ALLOW_LOOPBACK_HTTP_ENV: &str = "PI_HTTP_ALLOW_LOOPBACK";
+pub const ALLOW_LOOPBACK_HTTP_ENV: &str = "KODE_HTTP_ALLOW_LOOPBACK";
 
 #[derive(Debug, Clone)]
 pub struct HttpConnectorConfig {
@@ -351,7 +351,7 @@ impl HttpConnector {
             Scheme::Http if self.config.require_tls => {
                 // Loopback escape hatch: only when the operator explicitly
                 // opted in (`allow_loopback_http`, default-driven by the
-                // PI_HTTP_ALLOW_LOOPBACK=1 env var) AND the host is actually
+                // KODE_HTTP_ALLOW_LOOPBACK=1 env var) AND the host is actually
                 // loopback. Anything else still gets the strict TLS error.
                 let host_is_loopback = is_loopback_host(&parsed.host);
                 if !(self.config.allow_loopback_http && host_is_loopback) {
@@ -361,7 +361,7 @@ impl HttpConnector {
                     // `http://example.com/`), the env var is irrelevant and
                     // mentioning it sends the user down the wrong path.
                     let message = if host_is_loopback {
-                        "TLS required: use https:// URLs (set PI_HTTP_ALLOW_LOOPBACK=1 \
+                        "TLS required: use https:// URLs (set KODE_HTTP_ALLOW_LOOPBACK=1 \
                          to permit plain http for loopback hosts)"
                     } else {
                         "TLS required: use https:// URLs"

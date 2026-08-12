@@ -18,21 +18,21 @@ use std::sync::Arc;
 fn deterministic_env() -> HashMap<String, String> {
     let mut env = HashMap::new();
     env.insert(
-        "PI_DETERMINISTIC_TIME_MS".to_string(),
+        "KODE_DETERMINISTIC_TIME_MS".to_string(),
         "1700000000000".to_string(),
     );
-    env.insert("PI_DETERMINISTIC_TIME_STEP_MS".to_string(), "1".to_string());
+    env.insert("KODE_DETERMINISTIC_TIME_STEP_MS".to_string(), "1".to_string());
     env.insert(
-        "PI_DETERMINISTIC_CWD".to_string(),
+        "KODE_DETERMINISTIC_CWD".to_string(),
         "/tmp/ext-neg-test".to_string(),
     );
     env.insert(
-        "PI_DETERMINISTIC_HOME".to_string(),
+        "KODE_DETERMINISTIC_HOME".to_string(),
         "/tmp/ext-neg-test-home".to_string(),
     );
     env.insert("HOME".to_string(), "/tmp/ext-neg-test-home".to_string());
-    env.insert("PI_DETERMINISTIC_RANDOM".to_string(), "0.5".to_string());
-    env.insert("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+    env.insert("KODE_DETERMINISTIC_RANDOM".to_string(), "0.5".to_string());
+    env.insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
     env
 }
 

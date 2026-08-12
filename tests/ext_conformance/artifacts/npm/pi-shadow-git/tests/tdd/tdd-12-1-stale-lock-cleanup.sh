@@ -1,14 +1,14 @@
 #!/bin/bash
 # TDD-12-1: Stale lock files should be cleaned up
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1/.git"
 
 # Create a stale lock file (older than 60 seconds - fake it)
 touch "$TEST_WS/agents/test1/.git/index.lock"
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 

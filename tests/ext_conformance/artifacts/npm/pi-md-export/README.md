@@ -2,7 +2,7 @@
 
 Export the last N turns, or entirety of, your current Pi session to a readable Markdown transcript (either the current `/tree` branch or the full session file).
 
-Outputs can be copied to clipboard or saved under `~/.pi/agent/pi-sessions-extracted/`.
+Outputs can be copied to clipboard or saved under `~/.kode/agent/pi-sessions-extracted/`.
 
 ## Install
 
@@ -14,7 +14,7 @@ pi install npm:pi-md-export
 
 From the dot314 git bundle (filtered install):
 
-Add to `~/.pi/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
+Add to `~/.kode/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
 
 ```json
 {

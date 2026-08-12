@@ -349,7 +349,7 @@ fn shutdown(manager: ExtensionManager) {
 }
 
 fn strict_oco_gate_enabled() -> bool {
-    std::env::var("PI_OCO_HETEROGENEOUS_STRICT").is_ok_and(|value| {
+    std::env::var("KODE_OCO_HETEROGENEOUS_STRICT").is_ok_and(|value| {
         let normalized = value.trim().to_ascii_lowercase();
         matches!(normalized.as_str(), "1" | "true" | "yes" | "on")
     })

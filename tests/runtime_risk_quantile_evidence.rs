@@ -53,7 +53,7 @@ fn write_env_artifact(harness: &TestHarness, test_name: &str) -> serde_json::Val
         "rust_version": env!("CARGO_PKG_VERSION"),
         "target": std::env::consts::ARCH,
         "os": std::env::consts::OS,
-        "pi_test_mode": std::env::var("PI_TEST_MODE").unwrap_or_default(),
+        "pi_test_mode": std::env::var("KODE_TEST_MODE").unwrap_or_default(),
         "timestamp_utc": chrono_like_timestamp(),
     });
     let path = harness.temp_path("env.json");

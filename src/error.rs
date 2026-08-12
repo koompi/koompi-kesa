@@ -582,7 +582,7 @@ fn config_hints(message: &str) -> ErrorHints {
         return build_hints(
             "Configuration file is missing.",
             vec![
-                "Create `~/.pi/agent/settings.json` or set `PI_CONFIG_PATH`.".to_string(),
+                "Create `~/.kode/agent/settings.json` or set `KODE_CONFIG_PATH`.".to_string(),
                 "Run `pi config` to confirm the resolved path.".to_string(),
             ],
             vec![("details", message.to_string())],
@@ -615,7 +615,7 @@ fn session_hints(message: &str) -> ErrorHints {
             "Failed to read session data.",
             vec![
                 "Check file permissions for the sessions directory.".to_string(),
-                "Verify `PI_SESSIONS_DIR` if you set it.".to_string(),
+                "Verify `KODE_SESSIONS_DIR` if you set it.".to_string(),
             ],
             vec![("details", message.to_string())],
         );
@@ -843,7 +843,7 @@ fn io_hints(err: &std::io::Error) -> ErrorHints {
             "Required file or directory not found.",
             vec![
                 "Verify the path exists and is spelled correctly.".to_string(),
-                "Check `PI_CONFIG_PATH` or `PI_SESSIONS_DIR` overrides.".to_string(),
+                "Check `KODE_CONFIG_PATH` or `KODE_SESSIONS_DIR` overrides.".to_string(),
             ],
             vec![
                 ("error_kind", format!("{:?}", err.kind())),
@@ -1215,11 +1215,11 @@ mod tests {
     #[test]
     fn error_session_not_found_display() {
         let err = Error::SessionNotFound {
-            path: "/home/user/.pi/sessions/abc.jsonl".to_string(),
+            path: "/home/user/.kode/sessions/abc.jsonl".to_string(),
         };
         let msg = err.to_string();
         assert!(msg.contains("Session not found"));
-        assert!(msg.contains("/home/user/.pi/sessions/abc.jsonl"));
+        assert!(msg.contains("/home/user/.kode/sessions/abc.jsonl"));
     }
 
     #[test]
@@ -1323,7 +1323,7 @@ mod tests {
 
     #[test]
     fn hints_config_missing_file() {
-        let err = Error::config("config file not found: ~/.pi/settings");
+        let err = Error::config("config file not found: ~/.kode/settings");
         let h = err.hints();
         assert!(h.summary.contains("missing"));
     }

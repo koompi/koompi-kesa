@@ -43,7 +43,7 @@ pi
 
 ### Option 2: JSON Config
 
-Create `~/.pi/agent/extensions/firecrawl-mcp.json`:
+Create `~/.kode/agent/extensions/firecrawl-mcp.json`:
 
 ```json
 {
@@ -191,8 +191,8 @@ Config files are loaded in order (first match wins):
 
 1. Path from `--firecrawl-mcp-config` flag
 2. Path from `FIRECRAWL_MCP_CONFIG` environment variable
-3. `./.pi/extensions/firecrawl-mcp.json` (project-level)
-4. `~/.pi/agent/extensions/firecrawl-mcp.json` (global)
+3. `./.kode/extensions/firecrawl-mcp.json` (project-level)
+4. `~/.kode/agent/extensions/firecrawl-mcp.json` (global)
 
 If none exist, the extension writes a default config to the global path with `apiKey` set to `null`.
 

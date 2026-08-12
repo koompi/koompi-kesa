@@ -63,7 +63,7 @@ Use `-l` to install into project settings instead of global:
 pi install -l npm:@marckrenn/pi-sub-bar
 ```
 
-If you previously installed `sub-core` separately, remove it from `~/.pi/agent/extensions` or `~/.pi/agent/settings.json` to avoid duplicate core instances.
+If you previously installed `sub-core` separately, remove it from `~/.kode/agent/extensions` or `~/.kode/agent/settings.json` to avoid duplicate core instances.
 
 Manual install (local development):
 
@@ -72,12 +72,12 @@ git clone https://github.com/marckrenn/pi-sub.git
 cd pi-sub
 npm install
 
-ln -s /path/to/pi-sub/packages/sub-bar ~/.pi/agent/extensions/sub-bar
+ln -s /path/to/pi-sub/packages/sub-bar ~/.kode/agent/extensions/sub-bar
 ```
 
 For local development, also ensure sub-core is available (either link it separately or link it into `packages/sub-bar/node_modules`).
 
-Alternative (no symlink): add sub-bar to `~/.pi/agent/settings.json`:
+Alternative (no symlink): add sub-bar to `~/.kode/agent/settings.json`:
 
 ```json
 {
@@ -98,7 +98,7 @@ The extension loads automatically. Use:
 - `Ctrl+Alt+R` - Toggle reset timer format (relative vs datetime)
 
 **Caching:**
-- Handled by sub-core at `~/.pi/agent/cache/sub-core/cache.json`
+- Handled by sub-core at `~/.kode/agent/cache/sub-core/cache.json`
 - Cache TTL matches your auto-refresh interval setting
 - Lock file prevents race conditions between multiple pi windows
 
@@ -110,7 +110,7 @@ The extension loads automatically. Use:
 
 ## Settings
 
-Display and provider UI settings are stored in `~/.pi/agent/pi-sub-bar-settings.json` (migrated from the legacy extension `settings.json` when present; the legacy file is removed after a successful migration). Core settings are managed by sub-core, and the sub-bar settings menu includes a shortcut that points you to `sub-core:settings` for additional options.
+Display and provider UI settings are stored in `~/.kode/agent/pi-sub-bar-settings.json` (migrated from the legacy extension `settings.json` when present; the legacy file is removed after a successful migration). Core settings are managed by sub-core, and the sub-bar settings menu includes a shortcut that points you to `sub-core:settings` for additional options.
 
 **Settings migrations:** settings are merged with defaults on load, but renames/removals are not migrated automatically. When adding new settings or changing schema, update the defaults/merge logic and provide a migration (or instruct users to reset `pi-sub-bar-settings.json`).
 
@@ -132,7 +132,7 @@ Display Settings cover layout, bars, labels/text, reset timers, status indicator
 
 Credentials are loaded by sub-core from:
 
-- `~/.pi/agent/auth.json` - pi's auth file
+- `~/.kode/agent/auth.json` - pi's auth file
 - Provider-specific locations (e.g., `~/.codex/auth.json`, `~/.gemini/oauth_creds.json`)
 - macOS Keychain for Claude Code credentials
 - Environment variables (e.g., `Z_AI_API_KEY`)

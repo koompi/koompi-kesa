@@ -23,7 +23,7 @@ impl Drop for CwdGuard {
 fn load_errors_on_invalid_project_settings() {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let project_dir = temp_dir.path();
-    let settings_dir = project_dir.join(".pi");
+    let settings_dir = project_dir.join(".kode");
     std::fs::create_dir_all(&settings_dir).expect("create settings dir");
 
     let settings_path = settings_dir.join("settings.json");

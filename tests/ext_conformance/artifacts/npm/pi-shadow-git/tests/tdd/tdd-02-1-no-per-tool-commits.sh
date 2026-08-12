@@ -18,12 +18,12 @@
 #   - "[agent:tool]" commits (removed in this refactor)
 #
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Run agent - should make multiple tool calls in 1 turn
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'a' to output/a.txt and 'b' to output/b.txt" 2>&1 >/dev/null || true
 

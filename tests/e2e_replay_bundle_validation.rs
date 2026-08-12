@@ -308,8 +308,8 @@ fn live_only_replay_commands_use_live_env_prefix() {
         }
         let cmd = row["replay_command"].as_str().unwrap_or("");
         assert!(
-            cmd.contains("PI_E2E_"),
-            "workflow {wf_id}: live-only replay must set PI_E2E_ env vars, got: {cmd}"
+            cmd.contains("KODE_E2E_"),
+            "workflow {wf_id}: live-only replay must set KODE_E2E_ env vars, got: {cmd}"
         );
     }
 }

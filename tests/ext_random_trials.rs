@@ -4,24 +4,24 @@
 //! Selects a deterministic random subset from the Rust-N/A pool and runs
 //! them through the conformance harness. The default test lane is a bounded
 //! one-extension smoke run; operators can opt into broader batches with
-//! `PI_EXT_RANDOM_N`. Results are written as JSONL logs and a summary manifest.
+//! `KODE_EXT_RANDOM_N`. Results are written as JSONL logs and a summary manifest.
 //!
 //! # Environment Variables
-//! - `PI_EXT_RANDOM_SEED` - u64 seed for deterministic selection (default: 42)
-//! - `PI_EXT_RANDOM_N` - sample size (default: 1; use 20 for the legacy batch)
-//! - `PI_EXT_RANDOM_FILTER` - optional `tier:1-3` or `source:community` filter
-//! - `PI_EXT_RANDOM_IDS` - optional comma-separated explicit ID list (bypasses selector)
-//! - `PI_EXT_RANDOM_OUTPUT_DIR` - optional output directory (default: `$TMPDIR/koompi_code_cli/...`)
+//! - `KODE_EXT_RANDOM_SEED` - u64 seed for deterministic selection (default: 42)
+//! - `KODE_EXT_RANDOM_N` - sample size (default: 1; use 20 for the legacy batch)
+//! - `KODE_EXT_RANDOM_FILTER` - optional `tier:1-3` or `source:community` filter
+//! - `KODE_EXT_RANDOM_IDS` - optional comma-separated explicit ID list (bypasses selector)
+//! - `KODE_EXT_RANDOM_OUTPUT_DIR` - optional output directory (default: `$TMPDIR/koompi_code_cli/...`)
 //!
 //! # Smoke Run
 //! ```sh
-//! PI_EXT_RANDOM_SEED=42 PI_EXT_RANDOM_N=1 \
+//! KODE_EXT_RANDOM_SEED=42 KODE_EXT_RANDOM_N=1 \
 //!   rch exec -- cargo test --features ext-conformance --test ext_random_trials random_trials_batch -- --nocapture
 //! ```
 //!
 //! # Wider Opt-In Batch
 //! ```sh
-//! PI_EXT_RANDOM_SEED=42 PI_EXT_RANDOM_N=20 \
+//! KODE_EXT_RANDOM_SEED=42 KODE_EXT_RANDOM_N=20 \
 //!   rch exec -- cargo test --features ext-conformance --test ext_random_trials random_trials_batch -- --nocapture
 //! ```
 #![allow(clippy::too_many_lines, clippy::needless_raw_string_hashes)]
@@ -38,7 +38,7 @@ use std::sync::{Arc, OnceLock};
 
 const DEFAULT_RANDOM_SEED: u64 = 42;
 const DEFAULT_RANDOM_SAMPLE_SIZE: usize = 1;
-const RANDOM_OUTPUT_DIR_ENV: &str = "PI_EXT_RANDOM_OUTPUT_DIR";
+const RANDOM_OUTPUT_DIR_ENV: &str = "KODE_EXT_RANDOM_OUTPUT_DIR";
 
 // ===========================================================================
 // SplitMix64 PRNG (same as ext_conformance_selector.rs)
@@ -694,16 +694,16 @@ struct TrialConfig {
 
 fn trial_config_from_env() -> TrialConfig {
     TrialConfig {
-        seed: std::env::var("PI_EXT_RANDOM_SEED")
+        seed: std::env::var("KODE_EXT_RANDOM_SEED")
             .ok()
             .and_then(|s| s.parse().ok())
             .unwrap_or(DEFAULT_RANDOM_SEED),
-        sample_size: std::env::var("PI_EXT_RANDOM_N")
+        sample_size: std::env::var("KODE_EXT_RANDOM_N")
             .ok()
             .and_then(|s| s.parse().ok())
             .unwrap_or(DEFAULT_RANDOM_SAMPLE_SIZE),
-        filter_str: std::env::var("PI_EXT_RANDOM_FILTER").unwrap_or_default(),
-        explicit_ids: std::env::var("PI_EXT_RANDOM_IDS").ok(),
+        filter_str: std::env::var("KODE_EXT_RANDOM_FILTER").unwrap_or_default(),
+        explicit_ids: std::env::var("KODE_EXT_RANDOM_IDS").ok(),
     }
 }
 
@@ -869,7 +869,7 @@ fn write_trial_output(run: &TrialRun) -> TrialOutputPaths {
 /// Run a batch of random extension trials.
 ///
 /// Defaults to a one-extension deterministic smoke lane. Increase
-/// `PI_EXT_RANDOM_N` for a wider opt-in batch.
+/// `KODE_EXT_RANDOM_N` for a wider opt-in batch.
 #[test]
 fn random_trials_batch() {
     let run = run_random_trials();

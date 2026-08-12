@@ -17,7 +17,7 @@ use anyhow::{Context, Result, bail};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 
-const PI_MONO_REPO: &str = "https://github.com/badlogic/pi-mono";
+const KODE_MONO_REPO: &str = "https://github.com/badlogic/pi-mono";
 
 #[derive(Debug, Parser)]
 #[command(name = "ext_artifact_manifest")]
@@ -347,7 +347,7 @@ fn infer_source(ext: &MasterCatalogExtension, packages: &PackageInventory) -> Pr
         let file = ext.extension_files.first().cloned();
         let path = file.map(|file| format!("packages/coding-agent/examples/extensions/{file}"));
         return ProvenanceSource::Git {
-            repo: PI_MONO_REPO.to_string(),
+            repo: KODE_MONO_REPO.to_string(),
             path,
         };
     }
@@ -362,7 +362,7 @@ fn infer_source(ext: &MasterCatalogExtension, packages: &PackageInventory) -> Pr
             _ => None,
         };
         return ProvenanceSource::Git {
-            repo: PI_MONO_REPO.to_string(),
+            repo: KODE_MONO_REPO.to_string(),
             path,
         };
     }

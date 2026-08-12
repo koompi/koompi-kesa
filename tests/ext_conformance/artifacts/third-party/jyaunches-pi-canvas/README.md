@@ -14,7 +14,7 @@ Interactive TUI canvases for [Pi Coding Agent](https://github.com/badlogic/pi-mo
 
 ```bash
 # Clone to extensions directory
-git clone https://github.com/jyaunches/pi-canvas ~/.pi/agent/extensions/pi-canvas
+git clone https://github.com/jyaunches/pi-canvas ~/.kode/agent/extensions/pi-canvas
 
 # Restart pi to load the extension
 ```
@@ -227,7 +227,7 @@ The extension is a single TypeScript file (`index.ts`) that registers:
 - 1 command (`/calendar`)
 - Session startup handler
 
-To modify, edit `~/.pi/agent/extensions/pi-canvas/index.ts` and restart pi.
+To modify, edit `~/.kode/agent/extensions/pi-canvas/index.ts` and restart pi.
 
 ## Credits
 

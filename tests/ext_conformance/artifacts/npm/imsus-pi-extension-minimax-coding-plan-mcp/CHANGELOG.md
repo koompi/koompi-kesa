@@ -72,7 +72,7 @@ See [README.md](README.md) for detailed installation instructions.
    export MINIMAX_API_HOST="https://api.minimax.io"  # optional
    ```
 
-2. **Auth file** (`~/.pi/agent/auth.json`):
+2. **Auth file** (`~/.kode/agent/auth.json`):
    ```json
    {
      "minimax": { "type": "api_key", "key": "your-api-key" }
@@ -157,7 +157,7 @@ pi  # Start pi, it loads extensions/ directly
 - 📝 Added TSDoc comments for better IDE support
 
 **Configuration:**
-- ✅ Fixed to use correct pi auth pattern (`~/.pi/agent/auth.json`)
+- ✅ Fixed to use correct pi auth pattern (`~/.kode/agent/auth.json`)
 - ✅ Support for both MINIMAX_API_KEY and MINIMAX_CN_API_KEY
 - ✅ Interactive `/minimax-configure` command
 - ✅ Secure file permissions (0600) for auth.json

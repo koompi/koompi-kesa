@@ -1114,9 +1114,9 @@ jobs:
       - name: Must-pass extension gate (208 extensions) [linux]
         if: runner.os == 'Linux'
         env:
-          PI_EXT_GATE_MUST_PASS_RATE: ${{ vars.PI_EXT_GATE_MUST_PASS_RATE || '100.0' }}
-          PI_EXT_GATE_MAX_FAILURES: ${{ vars.PI_EXT_GATE_MAX_FAILURES || '0' }}
-          PI_EXT_GATE_MODE: ${{ vars.PI_EXT_GATE_MODE || 'strict' }}
+          KODE_EXT_GATE_MUST_PASS_RATE: ${{ vars.KODE_EXT_GATE_MUST_PASS_RATE || '100.0' }}
+          KODE_EXT_GATE_MAX_FAILURES: ${{ vars.KODE_EXT_GATE_MAX_FAILURES || '0' }}
+          KODE_EXT_GATE_MODE: ${{ vars.KODE_EXT_GATE_MODE || 'strict' }}
         run: |
           set -euxo pipefail
           cargo test --locked --test ext_conformance_generated --features ext-conformance \
@@ -1837,9 +1837,9 @@ jobs:
             extension)
               TEST_LOG_JSONL_PATH="$SHARD_ARTIFACT_DIR/test-log.jsonl" \
               TEST_ARTIFACT_INDEX_PATH="$SHARD_ARTIFACT_DIR/artifact-index.jsonl" \
-              PI_SHARD_INDEX="${{ matrix.shard.shard_index }}" \
-              PI_SHARD_TOTAL="${{ matrix.shard.shard_total }}" \
-              PI_SHARD_PARALLELISM="${{ vars.PI_EXT_SHARD_PARALLELISM || '4' }}" \
+              KODE_SHARD_INDEX="${{ matrix.shard.shard_index }}" \
+              KODE_SHARD_TOTAL="${{ matrix.shard.shard_total }}" \
+              KODE_SHARD_PARALLELISM="${{ vars.KODE_EXT_SHARD_PARALLELISM || '4' }}" \
               RUST_LOG=info \
               cargo test --locked --test ext_conformance_generated --features ext-conformance \
                 -- conformance_sharded_matrix --nocapture --exact \

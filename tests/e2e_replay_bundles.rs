@@ -9,14 +9,14 @@
 //! classification.
 //!
 //! Ordinary test runs validate replay bundles in memory without modifying
-//! tracked evidence. Set `PI_GENERATE_REPLAY_BUNDLE_ARTIFACTS=1` to regenerate
+//! tracked evidence. Set `KODE_GENERATE_REPLAY_BUNDLE_ARTIFACTS=1` to regenerate
 //! the canonical examples explicitly.
 
 use serde_json::Value;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-const GENERATE_REPLAY_BUNDLE_ARTIFACTS_ENV: &str = "PI_GENERATE_REPLAY_BUNDLE_ARTIFACTS";
+const GENERATE_REPLAY_BUNDLE_ARTIFACTS_ENV: &str = "KODE_GENERATE_REPLAY_BUNDLE_ARTIFACTS";
 
 fn replay_bundle_artifact_generation_requested() -> bool {
     let raw = std::env::var(GENERATE_REPLAY_BUNDLE_ARTIFACTS_ENV).ok();

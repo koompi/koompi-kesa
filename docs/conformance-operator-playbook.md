@@ -8,7 +8,7 @@ conformance harness locally or in CI.
 
 ```bash
 # Run the fast conformance check (5 official extensions)
-PI_OFFICIAL_MAX=5 cargo test --test ext_conformance_diff \
+KODE_OFFICIAL_MAX=5 cargo test --test ext_conformance_diff \
   --features ext-conformance -- --nocapture
 
 # Run the full 223-extension campaign
@@ -61,21 +61,21 @@ cargo test --features ext-conformance --test ext_conformance_diff
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PI_TEST_MODE` | unset | Set to `1` for deterministic timestamps and CWD normalization |
-| `PI_CONFORMANCE_SEED` | unset | Seed for deterministic conformance diff runs (e.g., `42`) |
-| `PI_EXT_RANDOM_SEED` | `42` | Seed for `ext_random_trials` deterministic selection |
-| `PI_EXT_RANDOM_N` | `1` | Bounded `ext_random_trials` sample size; raise only for explicit batch runs |
-| `PI_EXT_RANDOM_FILTER` | unset | Optional `ext_random_trials` filter such as `tier:1-3` or `source:community` |
-| `PI_EXT_RANDOM_IDS` | unset | Explicit comma-separated `ext_random_trials` extension IDs |
-| `PI_EXT_RANDOM_OUTPUT_DIR` | `$TMPDIR/koompi_code_cli/ext_conformance/random_trials` | Override random-trial JSONL and manifest output directory |
-| `PI_TS_ORACLE_TIMEOUT_SECS` | `30` | Per-extension timeout for the TS oracle |
-| `PI_OFFICIAL_MAX` | unset | Limit number of official extensions tested (e.g., `5` for fast checks) |
-| `PI_DETERMINISTIC_CWD` | auto | Override deterministic working directory |
-| `PI_DETERMINISTIC_HOME` | auto | Override deterministic home directory |
-| `PI_DETERMINISTIC_TIME_MS` | auto | Fixed timestamp for deterministic output |
-| `PI_DETERMINISTIC_TIME_STEP_MS` | auto | Time increment per `Date.now()` call |
-| `PI_DETERMINISTIC_RANDOM` | auto | Fixed random value (overrides seed) |
-| `PI_DETERMINISTIC_RANDOM_SEED` | auto | Seed for deterministic PRNG |
+| `KODE_TEST_MODE` | unset | Set to `1` for deterministic timestamps and CWD normalization |
+| `KODE_CONFORMANCE_SEED` | unset | Seed for deterministic conformance diff runs (e.g., `42`) |
+| `KODE_EXT_RANDOM_SEED` | `42` | Seed for `ext_random_trials` deterministic selection |
+| `KODE_EXT_RANDOM_N` | `1` | Bounded `ext_random_trials` sample size; raise only for explicit batch runs |
+| `KODE_EXT_RANDOM_FILTER` | unset | Optional `ext_random_trials` filter such as `tier:1-3` or `source:community` |
+| `KODE_EXT_RANDOM_IDS` | unset | Explicit comma-separated `ext_random_trials` extension IDs |
+| `KODE_EXT_RANDOM_OUTPUT_DIR` | `$TMPDIR/koompi_code_cli/ext_conformance/random_trials` | Override random-trial JSONL and manifest output directory |
+| `KODE_TS_ORACLE_TIMEOUT_SECS` | `30` | Per-extension timeout for the TS oracle |
+| `KODE_OFFICIAL_MAX` | unset | Limit number of official extensions tested (e.g., `5` for fast checks) |
+| `KODE_DETERMINISTIC_CWD` | auto | Override deterministic working directory |
+| `KODE_DETERMINISTIC_HOME` | auto | Override deterministic home directory |
+| `KODE_DETERMINISTIC_TIME_MS` | auto | Fixed timestamp for deterministic output |
+| `KODE_DETERMINISTIC_TIME_STEP_MS` | auto | Time increment per `Date.now()` call |
+| `KODE_DETERMINISTIC_RANDOM` | auto | Fixed random value (overrides seed) |
+| `KODE_DETERMINISTIC_RANDOM_SEED` | auto | Seed for deterministic PRNG |
 | `RUST_TEST_THREADS` | `1` | Set to `1` for deterministic serial execution |
 | `CARGO_TARGET_DIR` | `target` | Isolate build artifacts per agent (multi-agent environments) |
 
@@ -135,15 +135,15 @@ export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target"
 export TMPDIR="/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp"
 mkdir -p "$CARGO_TARGET_DIR" "$TMPDIR"
 
-PI_EXT_RANDOM_SEED=42 PI_EXT_RANDOM_N=1 \
+KODE_EXT_RANDOM_SEED=42 KODE_EXT_RANDOM_N=1 \
   rch exec -- cargo test --test ext_random_trials \
     --features ext-conformance random_trials_batch -- --nocapture
 ```
 
-For a wider opt-in batch, raise `PI_EXT_RANDOM_N` or pass
-`PI_EXT_RANDOM_IDS=id-a,id-b`; results are written to
+For a wider opt-in batch, raise `KODE_EXT_RANDOM_N` or pass
+`KODE_EXT_RANDOM_IDS=id-a,id-b`; results are written to
 `$TMPDIR/koompi_code_cli/ext_conformance/random_trials` unless
-`PI_EXT_RANDOM_OUTPUT_DIR` is set.
+`KODE_EXT_RANDOM_OUTPUT_DIR` is set.
 
 ### Scenario Conformance (`ext_conformance_scenarios`)
 
@@ -252,7 +252,7 @@ Check whether the difference is:
 
 Triggered on pull requests. Runs a subset for quick feedback:
 
-- `ext_conformance_diff` with `PI_OFFICIAL_MAX=5`
+- `ext_conformance_diff` with `KODE_OFFICIAL_MAX=5`
 - `ext_conformance_generated` (generated tier 1-2)
 - `extensions_policy_negative`
 - `capability_denial_matrix`
@@ -315,7 +315,7 @@ If the TS oracle times out:
 
 ```bash
 # Increase timeout
-export PI_TS_ORACLE_TIMEOUT_SECS=60
+export KODE_TS_ORACLE_TIMEOUT_SECS=60
 
 # Or check if Bun is installed correctly
 /home/ubuntu/.bun/bin/bun --version
@@ -366,7 +366,7 @@ python3 tests/ext_conformance/build_inventory.py
 
 1. Check if the failure is deterministic by running with fixed seed:
    ```bash
-   PI_CONFORMANCE_SEED=42 PI_TEST_MODE=1 RUST_TEST_THREADS=1 \
+   KODE_CONFORMANCE_SEED=42 KODE_TEST_MODE=1 RUST_TEST_THREADS=1 \
      cargo test --test ext_conformance_diff -- --nocapture
    ```
 
@@ -447,8 +447,8 @@ codebase:
 2. **Serial test execution**: Set `RUST_TEST_THREADS=1` to avoid filesystem
    contention in the VFS.
 
-3. **Deterministic settings**: Always set `PI_TEST_MODE=1` and
-   `PI_CONFORMANCE_SEED=42` for reproducible results.
+3. **Deterministic settings**: Always set `KODE_TEST_MODE=1` and
+   `KODE_CONFORMANCE_SEED=42` for reproducible results.
 
 4. **Check for compilation errors**: Other agents may modify shared files
    like `src/extensions.rs`. If compilation fails, pull latest changes and

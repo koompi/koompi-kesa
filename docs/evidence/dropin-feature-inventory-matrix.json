@@ -666,8 +666,8 @@
         "OPENAI_API_KEY",
         "GEMINI_API_KEY",
         "AZURE_OPENAI_API_KEY",
-        "PI_CODING_AGENT_DIR",
-        "PI_PACKAGE_DIR"
+        "KODE_CODING_AGENT_DIR",
+        "KODE_PACKAGE_DIR"
       ],
       "upstream_evidence": [
         "legacy_pi_mono_code/pi-mono/packages/coding-agent/src/cli/args.ts"
@@ -684,7 +684,7 @@
       "row_id": "env.contracts.pi_ai_antigravity_version",
       "surface": "integration_contract",
       "elements": [
-        "PI_AI_ANTIGRAVITY_VERSION"
+        "KODE_AI_ANTIGRAVITY_VERSION"
       ],
       "upstream_evidence": [
         "legacy_pi_mono_code/pi-mono/packages/coding-agent/src/cli/args.ts"
@@ -741,7 +741,7 @@
       "elements": [
         "cli-overrides-env-overrides-project-overrides-global-overrides-defaults",
         "global+project-settings-loading",
-        "single-file-mode-via-PI_CONFIG_PATH"
+        "single-file-mode-via-KODE_CONFIG_PATH"
       ],
       "upstream_evidence": [
         "legacy_pi_mono_code/pi-mono/packages/coding-agent/docs/settings.md",

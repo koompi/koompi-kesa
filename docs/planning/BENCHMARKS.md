@@ -490,13 +490,13 @@ scenarios with per-extension timeouts, budget checks, and full environment finge
 
 ```bash
 # PR mode — diverse 10-extension subset, 10 iterations, ~3-4s in debug
-PI_BENCH_MODE=pr cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
+KODE_BENCH_MODE=pr cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 
 # Nightly mode — full safe corpus, 50 iterations
-PI_BENCH_MODE=nightly cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
+KODE_BENCH_MODE=nightly cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 
 # Custom mode — tune all parameters
-PI_BENCH_MODE=custom PI_BENCH_MAX=25 PI_BENCH_ITERATIONS=20 PI_BENCH_EVENT_COUNT=100 \
+KODE_BENCH_MODE=custom KODE_BENCH_MAX=25 KODE_BENCH_ITERATIONS=20 KODE_BENCH_EVENT_COUNT=100 \
   cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 ```
 
@@ -504,11 +504,11 @@ PI_BENCH_MODE=custom PI_BENCH_MAX=25 PI_BENCH_ITERATIONS=20 PI_BENCH_EVENT_COUNT
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PI_BENCH_MODE` | `pr` | Mode: `pr`, `nightly`, or `custom` |
-| `PI_BENCH_MAX` | 10 (pr) / 200 (nightly) / 20 (custom) | Max extensions to benchmark |
-| `PI_BENCH_ITERATIONS` | 10 (pr) / 50 (nightly) / 20 (custom) | Iterations per extension per scenario |
-| `PI_BENCH_EVENT_COUNT` | 50 (pr) / 200 (nightly) / 100 (custom) | Event dispatch iterations |
-| `PI_BENCH_TIMEOUT_SECS` | 30 | Per-extension timeout (skips slow extensions) |
+| `KODE_BENCH_MODE` | `pr` | Mode: `pr`, `nightly`, or `custom` |
+| `KODE_BENCH_MAX` | 10 (pr) / 200 (nightly) / 20 (custom) | Max extensions to benchmark |
+| `KODE_BENCH_ITERATIONS` | 10 (pr) / 50 (nightly) / 20 (custom) | Iterations per extension per scenario |
+| `KODE_BENCH_EVENT_COUNT` | 50 (pr) / 200 (nightly) / 100 (custom) | Event dispatch iterations |
+| `KODE_BENCH_TIMEOUT_SECS` | 30 | Per-extension timeout (skips slow extensions) |
 
 ### PR Subset Selection Policy
 

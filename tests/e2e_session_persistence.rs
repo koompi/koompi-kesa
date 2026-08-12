@@ -222,22 +222,22 @@ fn isolated_cli_env(harness: &TestHarness) -> BTreeMap<String, String> {
     let _ = std::fs::create_dir_all(&env_root);
 
     env.insert(
-        "PI_CODING_AGENT_DIR".to_string(),
+        "KODE_CODING_AGENT_DIR".to_string(),
         env_root.join("agent").display().to_string(),
     );
     env.insert(
-        "PI_CONFIG_PATH".to_string(),
+        "KODE_CONFIG_PATH".to_string(),
         env_root.join("settings.json").display().to_string(),
     );
     env.insert(
-        "PI_SESSIONS_DIR".to_string(),
+        "KODE_SESSIONS_DIR".to_string(),
         env_root.join("sessions").display().to_string(),
     );
     env.insert(
-        "PI_PACKAGE_DIR".to_string(),
+        "KODE_PACKAGE_DIR".to_string(),
         env_root.join("packages").display().to_string(),
     );
-    env.insert("PI_TEST_MODE".to_string(), "1".to_string());
+    env.insert("KODE_TEST_MODE".to_string(), "1".to_string());
 
     env
 }
@@ -264,8 +264,8 @@ fn run_cli(
     command.env_remove("GROQ_API_KEY");
     command.env_remove("KIMI_API_KEY");
     command.env_remove("AZURE_OPENAI_API_KEY");
-    command.env_remove("PI_OPENROUTER_API_KEY");
-    command.env_remove("PI_AWS_ACCESS_KEY_ID");
+    command.env_remove("KODE_OPENROUTER_API_KEY");
+    command.env_remove("KODE_AWS_ACCESS_KEY_ID");
     command
         .args(args)
         .envs(env.clone())
@@ -484,12 +484,12 @@ fn spawn_session_store_chaos_child(
         .arg("--exact")
         .arg("session_store_chaos_worker_process_entrypoint")
         .arg("--nocapture")
-        .env("PI_SESSION_STORE_CHAOS_WORKER", "1")
-        .env("PI_SESSION_STORE_CHAOS_WORKER_ID", spec.id)
-        .env("PI_SESSION_STORE_CHAOS_BACKEND", spec.backend)
-        .env("PI_SESSION_STORE_CHAOS_INJECT", spec.inject)
-        .env("PI_SESSION_STORE_CHAOS_ROOT", sessions_root)
-        .env("PI_SESSION_STORE_CHAOS_ARTIFACT_DIR", artifact_dir)
+        .env("KODE_SESSION_STORE_CHAOS_WORKER", "1")
+        .env("KODE_SESSION_STORE_CHAOS_WORKER_ID", spec.id)
+        .env("KODE_SESSION_STORE_CHAOS_BACKEND", spec.backend)
+        .env("KODE_SESSION_STORE_CHAOS_INJECT", spec.inject)
+        .env("KODE_SESSION_STORE_CHAOS_ROOT", sessions_root)
+        .env("KODE_SESSION_STORE_CHAOS_ARTIFACT_DIR", artifact_dir)
         .current_dir(worker_cwd)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -713,7 +713,7 @@ fn required_chaos_env(name: &str) -> String {
 
 #[test]
 fn session_store_chaos_worker_process_entrypoint() {
-    if std::env::var_os("PI_SESSION_STORE_CHAOS_WORKER").is_none() {
+    if std::env::var_os("KODE_SESSION_STORE_CHAOS_WORKER").is_none() {
         return;
     }
 
@@ -722,11 +722,11 @@ fn session_store_chaos_worker_process_entrypoint() {
 
 #[allow(clippy::too_many_lines)]
 fn run_session_store_chaos_worker_from_env() {
-    let worker_id = required_chaos_env("PI_SESSION_STORE_CHAOS_WORKER_ID");
-    let backend = required_chaos_env("PI_SESSION_STORE_CHAOS_BACKEND");
-    let inject = required_chaos_env("PI_SESSION_STORE_CHAOS_INJECT");
-    let sessions_root = PathBuf::from(required_chaos_env("PI_SESSION_STORE_CHAOS_ROOT"));
-    let artifact_dir = PathBuf::from(required_chaos_env("PI_SESSION_STORE_CHAOS_ARTIFACT_DIR"));
+    let worker_id = required_chaos_env("KODE_SESSION_STORE_CHAOS_WORKER_ID");
+    let backend = required_chaos_env("KODE_SESSION_STORE_CHAOS_BACKEND");
+    let inject = required_chaos_env("KODE_SESSION_STORE_CHAOS_INJECT");
+    let sessions_root = PathBuf::from(required_chaos_env("KODE_SESSION_STORE_CHAOS_ROOT"));
+    let artifact_dir = PathBuf::from(required_chaos_env("KODE_SESSION_STORE_CHAOS_ARTIFACT_DIR"));
     std::fs::create_dir_all(&sessions_root).expect("create chaos sessions root");
     std::fs::create_dir_all(&artifact_dir).expect("create chaos artifact dir");
 
@@ -2061,7 +2061,7 @@ fn session_dir_override_and_env_sessions_path() {
     std::fs::create_dir_all(&env_sessions).expect("create env sessions dir");
     let mut env = isolated_cli_env(&harness);
     env.insert(
-        "PI_SESSIONS_DIR".to_string(),
+        "KODE_SESSIONS_DIR".to_string(),
         env_sessions.display().to_string(),
     );
 
@@ -2272,7 +2272,7 @@ fn cli_continue_tmux_loads_existing_session() {
         cassette_dir.display().to_string(),
     );
     env.insert(
-        "PI_VCR_TEST_NAME".to_string(),
+        "KODE_VCR_TEST_NAME".to_string(),
         "e2e_continue_session".to_string(),
     );
     env.insert("ANTHROPIC_API_KEY".to_string(), "test-vcr-key".to_string());
@@ -2291,7 +2291,7 @@ fn cli_continue_tmux_loads_existing_session() {
     .expect("write cassette");
     harness.record_artifact("continue-cassette.json", &cassette_path);
 
-    let sessions_dir = PathBuf::from(env.get("PI_SESSIONS_DIR").expect("PI_SESSIONS_DIR"));
+    let sessions_dir = PathBuf::from(env.get("KODE_SESSIONS_DIR").expect("KODE_SESSIONS_DIR"));
     let project_sessions = sessions_dir.join(encode_cwd(harness.temp_dir()));
     std::fs::create_dir_all(&project_sessions).expect("create project sessions dir");
     let session_file = project_sessions.join("2026-02-06T00-00-00.000Z_continue.jsonl");
@@ -2410,7 +2410,7 @@ fn cli_continue_tmux_loads_existing_session() {
             ));
             ctx.push((
                 "cassette_name".into(),
-                env.get("PI_VCR_TEST_NAME").cloned().unwrap_or_default(),
+                env.get("KODE_VCR_TEST_NAME").cloned().unwrap_or_default(),
             ));
             ctx.push(("cassette_path".into(), cassette_path.display().to_string()));
         });

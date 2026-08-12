@@ -23,10 +23,10 @@ Symlink or copy to Pi extensions directory:
 
 ```bash
 # If pi-extensions is cloned locally:
-ln -sf /path/to/pi-extensions/extensions/neovim ~/.pi/agent/extensions/neovim
+ln -sf /path/to/pi-extensions/extensions/neovim ~/.kode/agent/extensions/neovim
 
 # Or copy:
-cp -R /path/to/pi-extensions/extensions/neovim ~/.pi/agent/extensions/
+cp -R /path/to/pi-extensions/extensions/neovim ~/.kode/agent/extensions/
 ```
 
 ### 2. Neovim Plugin
@@ -36,7 +36,7 @@ Add the extension to your Neovim runtimepath. The `lua/` directory at the extens
 **lazy.nvim:**
 ```lua
 {
-  dir = "~/.pi/agent/extensions/neovim",
+  dir = "~/.kode/agent/extensions/neovim",
   config = function()
     require("pi-nvim").setup()
   end
@@ -46,14 +46,14 @@ Add the extension to your Neovim runtimepath. The `lua/` directory at the extens
 **mini.deps:**
 ```lua
 local add = MiniDeps.add
-add({ source = "~/.pi/agent/extensions/neovim" })
+add({ source = "~/.kode/agent/extensions/neovim" })
 require("pi-nvim").setup()
 ```
 
 **packer.nvim:**
 ```lua
 use {
-  "~/.pi/agent/extensions/neovim",
+  "~/.kode/agent/extensions/neovim",
   config = function()
     require("pi-nvim").setup()
   end
@@ -63,7 +63,7 @@ use {
 **Manual:**
 ```lua
 -- In init.lua
-vim.opt.runtimepath:append(vim.fn.expand("~/.pi/agent/extensions/neovim"))
+vim.opt.runtimepath:append(vim.fn.expand("~/.kode/agent/extensions/neovim"))
 require("pi-nvim").setup()
 ```
 

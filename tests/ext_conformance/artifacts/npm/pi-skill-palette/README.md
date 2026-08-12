@@ -49,9 +49,9 @@ Skills are loaded from these directories (in order):
 1. `~/.codex/skills/` — Codex user skills (recursive)
 2. `~/.claude/skills/` — Claude user skills (one level deep)
 3. `.claude/skills/` — Claude project skills (one level deep)
-4. `~/.pi/agent/skills/` — Pi user skills (recursive)
-5. `~/.pi/skills/` — Legacy user skills (recursive)
-6. `.pi/skills/` — Pi project-specific skills (recursive)
+4. `~/.kode/agent/skills/` — Pi user skills (recursive)
+5. `~/.kode/skills/` — Legacy user skills (recursive)
+6. `.kode/skills/` — Pi project-specific skills (recursive)
 
 Each skill must be in its own directory with a `SKILL.md` file containing YAML frontmatter:
 

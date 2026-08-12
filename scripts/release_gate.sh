@@ -3991,7 +3991,7 @@ case "$PERFORMANCE_STATUS" in
             fi
         fi
         if [[ "$CANONICAL_PERF_LIST_VALID" -eq 1 ]] && CANONICAL_PERF_RUN_OUTPUT=$(
-            PI_PERF_STRICT=1 CARGO_TERM_COLOR=never \
+            KODE_PERF_STRICT=1 CARGO_TERM_COLOR=never \
                 run_cargo_gate test --locked --test perf_budgets \
                 "$CANONICAL_PERF_TEST" -- --exact --nocapture --test-threads=1 2>&1
         ); then

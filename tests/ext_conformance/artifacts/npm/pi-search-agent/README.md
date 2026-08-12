@@ -12,7 +12,7 @@ On first run you will be prompted (via UI) to:
 
 Configuration is stored in:
 ```
-~/.pi/extensions/pi-search-agent/.env
+~/.kode/extensions/pi-search-agent/.env
 ```
 
 You can edit the file manually later. Supported keys:
@@ -58,15 +58,15 @@ local_embedding_search(query: "retry logic", path: "packages/api")
 
 ## Data locations
 
-- **Index**: `~/.pi/agent/cache/semantic-search/<hash>/`
-- **Embedding cache**: `~/.pi/agent/cache/semantic-search/embeddings/`
-- **Subagent logs** (when enabled): `~/.pi/agent/cache/semantic-search/subagent-logs/`
+- **Index**: `~/.kode/agent/cache/semantic-search/<hash>/`
+- **Embedding cache**: `~/.kode/agent/cache/semantic-search/embeddings/`
+- **Subagent logs** (when enabled): `~/.kode/agent/cache/semantic-search/subagent-logs/`
 
 ## Legacy tools / UI
 
 Legacy tools are disabled by default. Enable them with:
 ```
-PI_SEMANTIC_LEGACY=1
+KODE_SEMANTIC_LEGACY=1
 ```
 This re-enables:
 - `semantic_index`, `semantic_search`

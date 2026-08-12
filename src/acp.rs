@@ -1276,7 +1276,7 @@ fn build_acp_system_prompt(cwd: &std::path::Path, enabled_tools: &[&str]) -> Str
     );
 
     // Load project context files (pi.md, AGENTS.md) if they exist.
-    for filename in &["pi.md", "AGENTS.md", ".pi"] {
+    for filename in &["pi.md", "AGENTS.md", ".kode"] {
         let path = cwd.join(filename);
         if path.is_file()
             && let Ok(content) = std::fs::read_to_string(&path)

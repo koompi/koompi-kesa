@@ -197,7 +197,7 @@ async fn run_debug(mut cli: cli::Cli, runtime_handle: RuntimeHandle) -> Result<(
     } else {
         String::new()
     };
-    let test_mode = std::env::var_os("PI_TEST_MODE").is_some();
+    let test_mode = std::env::var_os("KODE_TEST_MODE").is_some();
     let system_prompt = kode::app::build_system_prompt(
         &cli,
         &cwd,

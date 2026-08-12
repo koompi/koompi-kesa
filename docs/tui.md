@@ -37,7 +37,7 @@ Displays session statistics and status.
 
 ## Operator Telemetry
 
-Setting `PI_PERF_TELEMETRY=1` enables bounded in-process timing samples for
+Setting `KODE_PERF_TELEMETRY=1` enables bounded in-process timing samples for
 operator diagnosis during long swarm runs. The samples are timing-only: they do
 not include prompts, tool arguments, provider payloads, transcript text, or
 credentials. Runtime summaries use the `pi.operator_tail_latency.v1` schema and
@@ -56,7 +56,7 @@ gates under `tests/perf/reports/`, `docs/evidence/`, and the perf SLI contract.
 
 ### Keyboard shortcuts (`/hotkeys`)
 Use `/hotkeys` to see the current shortcut list (including any user overrides
-from `~/.pi/agent/keybindings.json`).
+from `~/.kode/agent/keybindings.json`).
 
 ## Slash commands
 

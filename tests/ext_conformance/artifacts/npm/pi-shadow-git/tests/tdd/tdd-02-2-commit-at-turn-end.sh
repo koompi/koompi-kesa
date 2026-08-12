@@ -2,11 +2,11 @@
 # TDD-02-2: Commit message should include "turn"
 # Depends on TDD-01 completing first
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'test' to output/test.txt" 2>&1 >/dev/null || true
 

@@ -54,7 +54,7 @@ CLI → Config → Models/Auth → Session → Agent → Provider
 ## Provider Strategy
 - Shared `Provider` trait for streaming events.
 - Built-in providers: Anthropic first, then OpenAI/Google etc.
-- Models loaded from `~/.pi/agent/models.json` with per-provider defaults.
+- Models loaded from `~/.kode/agent/models.json` with per-provider defaults.
 
 ## Tool System
 - Tool schema from JSON Schema definitions.

@@ -58,7 +58,7 @@ Review mode (2/7)
 
 ## Prompt Templates
 
-The package includes two prompt templates that are automatically installed to `~/.pi/agent/prompts/` (if they don't already exist):
+The package includes two prompt templates that are automatically installed to `~/.kode/agent/prompts/` (if they don't already exist):
 
 | Template | Command | Description |
 |----------|---------|-------------|
@@ -77,7 +77,7 @@ You can customize or replace these prompts, change trigger patterns, or use your
 **Manual installation** (if cloning instead of npm):
 
 ```bash
-cp ~/.pi/agent/extensions/pi-review-loop/prompts/*.md ~/.pi/agent/prompts/
+cp ~/.kode/agent/extensions/pi-review-loop/prompts/*.md ~/.kode/agent/prompts/
 ```
 
 ## Quick Start
@@ -98,7 +98,7 @@ Auto-trigger is disabled by default. Enable it for the current session:
 /review-auto on
 ```
 
-Or permanently in `~/.pi/agent/settings.json`:
+Or permanently in `~/.kode/agent/settings.json`:
 
 ```json
 {
@@ -185,7 +185,7 @@ If auto-compaction fires during a review loop (large sessions), the fresh contex
 
 ## Configuration
 
-Configure in `~/.pi/agent/settings.json`. Works out of the box, but everything is customizable:
+Configure in `~/.kode/agent/settings.json`. Works out of the box, but everything is customizable:
 
 ```json
 {
@@ -228,7 +228,7 @@ Three formats for `reviewPrompt`:
 
 | Format | Example | Description |
 |--------|---------|-------------|
-| Template | `"template:double-check"` | Loads `~/.pi/agent/prompts/double-check.md` |
+| Template | `"template:double-check"` | Loads `~/.kode/agent/prompts/double-check.md` |
 | File | `"~/prompts/review.md"` | Loads from any file path |
 | Inline | `"Review the code carefully..."` | Uses text directly |
 
@@ -371,7 +371,7 @@ otherwise → exit (max reached)
 
 ## Limitations
 
-- **User templates only** - `template:name` loads from `~/.pi/agent/prompts/`, not project templates
+- **User templates only** - `template:name` loads from `~/.kode/agent/prompts/`, not project templates
 - **Session-scoped settings** - `/review-max` and `/review-auto` don't persist across sessions (use settings.json for persistence)
 - **Pattern failures are silent** - Invalid regex patterns are skipped without error
 

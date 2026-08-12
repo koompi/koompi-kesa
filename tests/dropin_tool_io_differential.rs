@@ -155,10 +155,10 @@ async fn run_scenario(scenario: &Scenario) -> kode::PiResult<()> {
             let tool = BashTool::with_shell(
                 root,
                 None,
-                Some("export PI_G09_PREFIXED=from-prefix".to_string()),
+                Some("export KODE_G09_PREFIXED=from-prefix".to_string()),
             );
             let output =
-                execute_text(&tool, json!({"command": "printf \"$PI_G09_PREFIXED\\n\""})).await?;
+                execute_text(&tool, json!({"command": "printf \"$KODE_G09_PREFIXED\\n\""})).await?;
             assert_contains(&output, "from-prefix", &scenario.id);
         }
         "bash_line_truncation_details" => {

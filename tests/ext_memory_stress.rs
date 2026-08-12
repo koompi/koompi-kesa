@@ -7,16 +7,16 @@
 //! ## Modes
 //!
 //! - Default (CI-friendly): 60 seconds, ~17 events/sec (1000 events/min)
-//! - Full 1-hour: `PI_MEM_STRESS_DURATION_SECS=3600`
+//! - Full 1-hour: `KODE_MEM_STRESS_DURATION_SECS=3600`
 //!
 //! ## Environment Variables
 //!
 //! | Variable                       | Default | Description                           |
 //! |--------------------------------|---------|---------------------------------------|
-//! | `PI_MEM_STRESS_DURATION_SECS`  | 60      | Total run duration                    |
-//! | `PI_MEM_STRESS_EVENTS_PER_SEC` | 17      | Event dispatch rate (~1000/min)       |
-//! | `PI_MEM_STRESS_RSS_INTERVAL`   | 5       | Seconds between RSS samples           |
-//! | `PI_MEM_STRESS_MAX_EXTENSIONS` | 20      | Max extensions to load simultaneously |
+//! | `KODE_MEM_STRESS_DURATION_SECS`  | 60      | Total run duration                    |
+//! | `KODE_MEM_STRESS_EVENTS_PER_SEC` | 17      | Event dispatch rate (~1000/min)       |
+//! | `KODE_MEM_STRESS_RSS_INTERVAL`   | 5       | Seconds between RSS samples           |
+//! | `KODE_MEM_STRESS_MAX_EXTENSIONS` | 20      | Max extensions to load simultaneously |
 //!
 //! ## Output
 //!
@@ -42,28 +42,28 @@ use sysinfo::{ProcessRefreshKind, RefreshKind, System, get_current_pid};
 // ─── Configuration ──────────────────────────────────────────────────────────
 
 fn duration_secs() -> u64 {
-    std::env::var("PI_MEM_STRESS_DURATION_SECS")
+    std::env::var("KODE_MEM_STRESS_DURATION_SECS")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(60)
 }
 
 fn events_per_sec() -> u64 {
-    std::env::var("PI_MEM_STRESS_EVENTS_PER_SEC")
+    std::env::var("KODE_MEM_STRESS_EVENTS_PER_SEC")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(17)
 }
 
 fn rss_interval_secs() -> u64 {
-    std::env::var("PI_MEM_STRESS_RSS_INTERVAL")
+    std::env::var("KODE_MEM_STRESS_RSS_INTERVAL")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(5)
 }
 
 fn max_extensions() -> usize {
-    std::env::var("PI_MEM_STRESS_MAX_EXTENSIONS")
+    std::env::var("KODE_MEM_STRESS_MAX_EXTENSIONS")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(20)
@@ -529,10 +529,10 @@ fn write_report(outcome: &StressOutcome, vd: &VerdictData, ext_names: &[String],
 #[test]
 #[allow(clippy::too_many_lines)]
 fn ext_memory_stress_real_extensions() {
-    if std::env::var("PI_MEM_STRESS_REAL").is_err() {
+    if std::env::var("KODE_MEM_STRESS_REAL").is_err() {
         eprintln!(
             "[mem-stress] skipping real extension stress test \
-             (set PI_MEM_STRESS_REAL=1 to enable)"
+             (set KODE_MEM_STRESS_REAL=1 to enable)"
         );
         return;
     }

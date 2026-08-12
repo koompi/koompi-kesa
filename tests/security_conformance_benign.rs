@@ -13,8 +13,8 @@
 //! Schema: `pi.security.compat_dashboard.v1`
 //!
 //! Regenerate tracked compatibility evidence explicitly with:
-//!   PI_GENERATE_SECURITY_COMPAT_DASHBOARD=1 cargo test --test security_conformance_benign generate_compat_dashboard_artifact -- --exact --nocapture
-//!   PI_GENERATE_SECURITY_COMPAT_EVENTS=1 cargo test --test security_conformance_benign emit_compat_events_jsonl -- --exact --nocapture
+//!   KODE_GENERATE_SECURITY_COMPAT_DASHBOARD=1 cargo test --test security_conformance_benign generate_compat_dashboard_artifact -- --exact --nocapture
+//!   KODE_GENERATE_SECURITY_COMPAT_EVENTS=1 cargo test --test security_conformance_benign emit_compat_events_jsonl -- --exact --nocapture
 //!
 //! Acceptance criteria addressed:
 //! - Benign extension compatibility is continuously measured.
@@ -41,8 +41,8 @@ use std::path::{Path, PathBuf};
 
 /// Schema version for the compatibility dashboard.
 const COMPAT_DASHBOARD_SCHEMA: &str = "pi.security.compat_dashboard.v1";
-const GENERATE_SECURITY_COMPAT_DASHBOARD_ENV: &str = "PI_GENERATE_SECURITY_COMPAT_DASHBOARD";
-const GENERATE_SECURITY_COMPAT_EVENTS_ENV: &str = "PI_GENERATE_SECURITY_COMPAT_EVENTS";
+const GENERATE_SECURITY_COMPAT_DASHBOARD_ENV: &str = "KODE_GENERATE_SECURITY_COMPAT_DASHBOARD";
+const GENERATE_SECURITY_COMPAT_EVENTS_ENV: &str = "KODE_GENERATE_SECURITY_COMPAT_EVENTS";
 
 fn security_compat_dashboard_generation_enabled(raw: Option<&str>) -> bool {
     raw == Some("1")

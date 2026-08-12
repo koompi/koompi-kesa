@@ -2,13 +2,13 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PI_AGENT_DIR="$HOME/.pi/agent"
+KODE_AGENT_DIR="$HOME/.kode/agent"
 
 echo "Setting up agent-guidance..."
-mkdir -p "$PI_AGENT_DIR/extensions"
+mkdir -p "$KODE_AGENT_DIR/extensions"
 
-AGENTS_FILE="$PI_AGENT_DIR/AGENTS.md"
-CLAUDE_FILE="$PI_AGENT_DIR/CLAUDE.md"
+AGENTS_FILE="$KODE_AGENT_DIR/AGENTS.md"
+CLAUDE_FILE="$KODE_AGENT_DIR/CLAUDE.md"
 
 create_placeholder() {
     cat > "$AGENTS_FILE" << 'EOF'
@@ -24,7 +24,7 @@ EOF
 if [ ! -f "$AGENTS_FILE" ]; then
     if [ -f "$CLAUDE_FILE" ] || [ -L "$CLAUDE_FILE" ]; then
         echo ""
-        echo "  ⚠️  No AGENTS.md found in $PI_AGENT_DIR/"
+        echo "  ⚠️  No AGENTS.md found in $KODE_AGENT_DIR/"
         echo "     You have an existing CLAUDE.md which was being used by Pi"
         echo "     across all models - if you want that guidance to continue"
         echo "     to apply across all models, it should be in AGENTS.md."
@@ -50,7 +50,7 @@ if [ ! -f "$AGENTS_FILE" ]; then
 fi
 
 # Symlink extension
-target="$PI_AGENT_DIR/extensions/agent-guidance.ts"
+target="$KODE_AGENT_DIR/extensions/agent-guidance.ts"
 if [ -L "$target" ]; then
     echo "  agent-guidance.ts already linked"
 else
@@ -67,9 +67,9 @@ echo "  CODEX.md   (OpenAI)"
 echo "  GEMINI.md  (Google)"
 echo ""
 echo "To install:"
-echo "  ln -s $SCRIPT_DIR/templates/CLAUDE.md $PI_AGENT_DIR/"
-echo "  ln -s $SCRIPT_DIR/templates/CODEX.md $PI_AGENT_DIR/"
-echo "  ln -s $SCRIPT_DIR/templates/GEMINI.md $PI_AGENT_DIR/"
+echo "  ln -s $SCRIPT_DIR/templates/CLAUDE.md $KODE_AGENT_DIR/"
+echo "  ln -s $SCRIPT_DIR/templates/CODEX.md $KODE_AGENT_DIR/"
+echo "  ln -s $SCRIPT_DIR/templates/GEMINI.md $KODE_AGENT_DIR/"
 echo ""
 echo "Or all:"
-echo "  ln -s $SCRIPT_DIR/templates/*.md $PI_AGENT_DIR/"
+echo "  ln -s $SCRIPT_DIR/templates/*.md $KODE_AGENT_DIR/"

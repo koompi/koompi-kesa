@@ -6,7 +6,7 @@ mkdir -p "$BASELINE_DIR"
 
 echo "=== BASELINE CAPTURE: $(date -Iseconds) ===" | tee "$BASELINE_DIR/baseline.log"
 
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 if [ ! -f "$EXT" ]; then
   echo "ERROR: Extension not found at $EXT"
   exit 1
@@ -20,7 +20,7 @@ git init >/dev/null 2>&1
 mkdir -p agents/test1/{workspace,output}
 git add -A && git commit -m "init" >/dev/null 2>&1
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 3 --no-input -p \
   -e "$EXT" \
   "Write the number 1 to output/one.txt, then 2 to output/two.txt" 2>&1 >/dev/null || true
@@ -38,7 +38,7 @@ mkdir -p agents/{a1,a2,a3}/{workspace,output}
 git add -A && git commit -m "init" >/dev/null 2>&1
 
 for agent in a1 a2 a3; do
-  PI_WORKSPACE_ROOT="$TEST_WS2" PI_AGENT_NAME="$agent" \
+  KODE_WORKSPACE_ROOT="$TEST_WS2" KODE_AGENT_NAME="$agent" \
     timeout 60 pi --max-turns 2 --no-input -p \
     -e "$EXT" \
     "Write 'hello from $agent' to output/greeting.txt" 2>&1 >/dev/null &

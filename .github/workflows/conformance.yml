@@ -25,9 +25,9 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: "1"
   RUST_TEST_THREADS: "1"
-  PI_TEST_MODE: "1"
-  PI_TS_ORACLE_TIMEOUT_SECS: "30"
-  PI_CONFORMANCE_SEED: "42"
+  KODE_TEST_MODE: "1"
+  KODE_TS_ORACLE_TIMEOUT_SECS: "30"
+  KODE_CONFORMANCE_SEED: "42"
 
 jobs:
   # ─── Shared setup (reusable via needs) ────────────────────────────────────
@@ -47,7 +47,7 @@ jobs:
           - name: fast-official
             if_event: pull_request
             test_cmd: cargo test --test ext_conformance_diff --features ext-conformance -- --nocapture
-            env_extra: "PI_OFFICIAL_MAX=5"
+            env_extra: "KODE_OFFICIAL_MAX=5"
           - name: fast-generated
             if_event: pull_request
             test_cmd: cargo test --test ext_conformance_generated --features ext-conformance -- --nocapture
@@ -211,12 +211,12 @@ jobs:
       - name: "Run: ${{ matrix.name }}"
         if: env.SHOULD_RUN == 'true'
         env:
-          PI_OFFICIAL_MAX: ${{ matrix.env_extra == 'PI_OFFICIAL_MAX=5' && '5' || '' }}
-          PI_CONFORMANCE_MAX_RETRIES: ${{ contains(matrix.if_event, 'nightly') && '2' || '0' }}
-          PI_CONFORMANCE_RETRY_DELAY: "10"
+          KODE_OFFICIAL_MAX: ${{ matrix.env_extra == 'KODE_OFFICIAL_MAX=5' && '5' || '' }}
+          KODE_CONFORMANCE_MAX_RETRIES: ${{ contains(matrix.if_event, 'nightly') && '2' || '0' }}
+          KODE_CONFORMANCE_RETRY_DELAY: "10"
         run: |
           set -euxo pipefail
-          if [[ "${PI_CONFORMANCE_MAX_RETRIES}" -gt 0 ]]; then
+          if [[ "${KODE_CONFORMANCE_MAX_RETRIES}" -gt 0 ]]; then
             bash scripts/ci_conformance_retry.sh "${{ matrix.name }}" \
               ${{ matrix.test_cmd }} 2>&1 | tee "conformance-${{ matrix.name }}.log"
           else

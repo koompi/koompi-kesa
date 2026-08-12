@@ -183,7 +183,7 @@ fn provider_has_dedicated_login_flow(provider: &str) -> bool {
 /// Choose the GitHub Copilot device flow over the browser flow when the
 /// current process cannot rely on a localhost OAuth redirect — i.e. the
 /// session is running headless / over SSH and the user's browser cannot reach
-/// the callback server bound on this host. `PI_COPILOT_FORCE_DEVICE_FLOW=1`
+/// the callback server bound on this host. `KODE_COPILOT_FORCE_DEVICE_FLOW=1`
 /// opts in unconditionally.
 ///
 /// When `GITHUB_COPILOT_CLIENT_ID` is unset we fall back to the well-known
@@ -192,7 +192,7 @@ fn provider_has_dedicated_login_flow(provider: &str) -> bool {
 /// no client id is explicitly configured, since that path is the most robust on
 /// headless/SSH sessions where a localhost OAuth redirect can't be reached.
 fn should_use_copilot_device_flow() -> bool {
-    if std::env::var("PI_COPILOT_FORCE_DEVICE_FLOW")
+    if std::env::var("KODE_COPILOT_FORCE_DEVICE_FLOW")
         .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "yes"))
     {
         return true;
@@ -2930,8 +2930,8 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
     ///
     /// Pi connects to MCP servers only when an installed extension registers
     /// them via `registerMcpServer`. It does *not* read standalone MCP config
-    /// files such as `.agents/mcp.json`, `.pi/mcp.json`, or
-    /// `~/.pi/agent/mcp.json` (those are honored by other agents, not Pi), so
+    /// files such as `.agents/mcp.json`, `.kode/mcp.json`, or
+    /// `~/.kode/agent/mcp.json` (those are honored by other agents, not Pi), so
     /// this command makes the current state explicit instead of leaving
     /// `/mcp` as an "unknown command" (pi_agent_rust#112).
     pub(super) fn handle_slash_mcp(&mut self, _args: &str) -> Option<Cmd> {
@@ -2969,7 +2969,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         content.push_str(
             "\nNote: Pi only loads MCP servers that an installed extension registers via\n\
              registerMcpServer. It does not read standalone MCP config files\n\
-             (.agents/mcp.json, .pi/mcp.json, ~/.pi/agent/mcp.json) — those are used by\n\
+             (.agents/mcp.json, .kode/mcp.json, ~/.kode/agent/mcp.json) — those are used by\n\
              other agents, not Pi. To expose an MCP server to Pi, install an extension\n\
              that registers it.",
         );

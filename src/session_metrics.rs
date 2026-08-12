@@ -1,7 +1,7 @@
 //! Session hot-path observability.
 //!
 //! Thread-safe atomic counters and timing for save/append/serialize/IO
-//! operations. Gated behind `PI_PERF_TELEMETRY=1` for zero overhead in
+//! operations. Gated behind `KODE_PERF_TELEMETRY=1` for zero overhead in
 //! production: when disabled, all recording methods are instant no-ops.
 //!
 //! ## Design
@@ -474,7 +474,7 @@ impl SessionMetrics {
     /// Human-readable multi-line summary for diagnostics.
     pub fn summary(&self) -> String {
         if !self.enabled() {
-            return "Session telemetry disabled (set PI_PERF_TELEMETRY=1 to enable)".to_string();
+            return "Session telemetry disabled (set KODE_PERF_TELEMETRY=1 to enable)".to_string();
         }
         let s = self.snapshot();
         format!(
@@ -714,13 +714,13 @@ static GLOBAL_METRICS: OnceLock<SessionMetrics> = OnceLock::new();
 
 /// Return the global `SessionMetrics` singleton.
 ///
-/// On first call, reads `PI_PERF_TELEMETRY` to decide whether collection
+/// On first call, reads `KODE_PERF_TELEMETRY` to decide whether collection
 /// is enabled. The singleton lives for the process lifetime.
 pub fn global() -> &'static SessionMetrics {
     GLOBAL_METRICS.get_or_init(|| {
         let metrics = SessionMetrics::new();
         let enabled =
-            std::env::var_os("PI_PERF_TELEMETRY").is_some_and(|v| v == "1" || v == "true");
+            std::env::var_os("KODE_PERF_TELEMETRY").is_some_and(|v| v == "1" || v == "true");
         if enabled {
             metrics.enabled.store(true, Ordering::Relaxed);
         }

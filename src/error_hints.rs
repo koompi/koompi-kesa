@@ -62,7 +62,7 @@ fn config_hints(msg: &str) -> ErrorHint {
         return ErrorHint {
             summary: "Invalid or missing configuration file",
             hints: &[
-                "Check that ~/.pi/agent/settings.json exists and is valid JSON",
+                "Check that ~/.kode/agent/settings.json exists and is valid JSON",
                 "Run 'pi config' to see configuration paths and precedence",
             ],
             context_fields: &["file_path"],
@@ -72,7 +72,7 @@ fn config_hints(msg: &str) -> ErrorHint {
         return ErrorHint {
             summary: "Invalid models configuration",
             hints: &[
-                "Verify ~/.pi/agent/models.json has valid JSON syntax",
+                "Verify ~/.kode/agent/models.json has valid JSON syntax",
                 "Check that 'providers' key exists in models.json",
             ],
             context_fields: &["file_path", "parse_error"],
@@ -122,7 +122,7 @@ fn auth_hints(msg: &str) -> ErrorHint {
             summary: "GitHub Copilot OAuth client_id not configured",
             hints: &[
                 "Set GITHUB_COPILOT_CLIENT_ID to your GitHub OAuth App / GitHub App client id",
-                "Or run on a workstation with a browser, or use device flow over SSH (set PI_COPILOT_FORCE_DEVICE_FLOW=1)",
+                "Or run on a workstation with a browser, or use device flow over SSH (set KODE_COPILOT_FORCE_DEVICE_FLOW=1)",
             ],
             context_fields: &["provider"],
         };
@@ -132,7 +132,7 @@ fn auth_hints(msg: &str) -> ErrorHint {
             summary: "API key not configured",
             hints: &[
                 "Set ANTHROPIC_API_KEY environment variable",
-                "Or add key to ~/.pi/agent/auth.json",
+                "Or add key to ~/.kode/agent/auth.json",
             ],
             context_fields: &["provider"],
         };
@@ -466,7 +466,7 @@ fn sqlite_hints(err: &sqlmodel_core::Error) -> ErrorHint {
             summary: "Database corrupted",
             hints: &[
                 "The session index may need to be rebuilt",
-                "Delete ~/.pi/agent/sessions/index.db to rebuild",
+                "Delete ~/.kode/agent/sessions/index.db to rebuild",
             ],
             context_fields: &["db_path"],
         };
@@ -497,7 +497,7 @@ fn api_hints(msg: &str) -> ErrorHint {
         return ErrorHint {
             summary: "Request timed out",
             hints: &[
-                "Raise the timeout: --request-timeout <seconds>, PI_HTTP_REQUEST_TIMEOUT_SECS=<seconds>, or requestTimeoutSecs in settings.json (0 = no timeout)",
+                "Raise the timeout: --request-timeout <seconds>, KODE_HTTP_REQUEST_TIMEOUT_SECS=<seconds>, or requestTimeoutSecs in settings.json (0 = no timeout)",
                 "Local providers (Ollama/LM Studio): the first request can block while the model loads — ensure the model is pulled (ollama pull <model>) and the server is reachable (ollama list)",
             ],
             context_fields: &["url", "timeout_seconds"],

@@ -289,9 +289,9 @@
       "AWS_SECRET_ACCESS_KEY",
       "AWS_BEARER_TOKEN_BEDROCK",
       "AWS_REGION",
-      "PI_PACKAGE_DIR",
-      "PI_SHARE_VIEWER_URL",
-      "PI_AI_ANTIGRAVITY_VERSION"
+      "KODE_PACKAGE_DIR",
+      "KODE_SHARE_VIEWER_URL",
+      "KODE_AI_ANTIGRAVITY_VERSION"
     ]
   },
   "reproducibility": {

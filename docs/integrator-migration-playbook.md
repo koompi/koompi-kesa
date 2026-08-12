@@ -86,8 +86,8 @@ Move settings and secrets deliberately; do not rely on implicit defaults.
 ### 2.1 Settings
 
 Review and reconcile:
-- `~/.pi/agent/settings.json`
-- project-level `.pi/settings.json`
+- `~/.kode/agent/settings.json`
+- project-level `.kode/settings.json`
 
 Key parity-sensitive areas:
 - default provider/model/thinking level

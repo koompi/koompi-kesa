@@ -4,7 +4,7 @@
 //! compatibility data, then verifies a machine-readable compatibility matrix.
 //! If `FRANKEN_NODE_RUNTIME` points at a runtime executable, the same fixtures
 //! are also executed against that runtime and reported as a separate leg.
-//! Set `PI_GENERATE_FRANKEN_NODE_COMPATIBILITY_MATRIX=1` to regenerate the
+//! Set `KODE_GENERATE_FRANKEN_NODE_COMPATIBILITY_MATRIX=1` to regenerate the
 //! committed matrix explicitly.
 
 use serde::{Deserialize, Serialize};
@@ -1105,7 +1105,7 @@ fn verify_or_generate_compatibility_matrix(
     let json = serde_json::to_string_pretty(matrix)
         .map_err(|error| format!("serialize computed compatibility matrix: {error}"))?;
     let generate = matches!(
-        std::env::var("PI_GENERATE_FRANKEN_NODE_COMPATIBILITY_MATRIX").as_deref(),
+        std::env::var("KODE_GENERATE_FRANKEN_NODE_COMPATIBILITY_MATRIX").as_deref(),
         Ok("1")
     );
     if generate {
@@ -1164,7 +1164,7 @@ fn verify_or_generate_compatibility_matrix(
     assert_eq!(
         committed, computed,
         "committed FrankenNode compatibility matrix is stale; regenerate explicitly with \
-         PI_GENERATE_FRANKEN_NODE_COMPATIBILITY_MATRIX=1 cargo test \
+         KODE_GENERATE_FRANKEN_NODE_COMPATIBILITY_MATRIX=1 cargo test \
          --test franken_node_compat_harness generate_compatibility_matrix -- --exact"
     );
     Ok(())

@@ -70,7 +70,7 @@ Each cycle MUST be logged in this exact format:
 
 ## TDD Cycles for STEP-01: Per-Agent Git Repos
 
-The current code commits to `PI_WORKSPACE_ROOT/.git` (shared).
+The current code commits to `KODE_WORKSPACE_ROOT/.git` (shared).
 We need it to commit to `agents/{name}/.git` (per-agent).
 
 ### TDD-01-1: Agent directory gets its own .git
@@ -87,7 +87,7 @@ set -e
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 
@@ -125,7 +125,7 @@ mkdir -p agents/test1
 git add -A && git commit -m "init" >/dev/null 2>&1
 ROOT_BEFORE=$(git rev-parse HEAD)
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'hello' to output/test.txt" 2>&1 >/dev/null || true
 
@@ -163,7 +163,7 @@ set -e
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 
@@ -204,7 +204,7 @@ git add -A && git commit -m "init" >/dev/null 2>&1
 
 # Spawn 3 agents in parallel
 for agent in a1 a2 a3; do
-  PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="$agent" \
+  KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="$agent" \
     timeout 60 pi --max-turns 3 --no-input -p \
     -e "$EXT" "Write 'hello from $agent' to output/greeting.txt" 2>&1 >/dev/null &
 done
@@ -246,7 +246,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Run agent with multiple tools
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 120 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'a' to output/a.txt, then 'b' to output/b.txt, then 'c' to output/c.txt" 2>&1 >/dev/null || true
 
@@ -294,7 +294,7 @@ set -e
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'test' to output/test.txt" 2>&1 >/dev/null || true
 
@@ -336,7 +336,7 @@ fi
 # This is a static analysis test
 
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 
 # ASSERTION: No commitQueue variable
 if grep -q "commitQueue" "$EXT"; then

@@ -978,7 +978,7 @@ fn merge_provider_model_ids(
 /// Path to the user's optional model-override file.
 ///
 /// Resolution order:
-/// 1. `PI_MODELS_OVERRIDE` env var (absolute path) — primarily for tests and
+/// 1. `KODE_MODELS_OVERRIDE` env var (absolute path) — primarily for tests and
 ///    advanced users who want to keep the override outside the standard config
 ///    directory.
 /// 2. `<config_dir>/pi/models-override.json` — `<config_dir>` is whatever
@@ -988,7 +988,7 @@ fn merge_provider_model_ids(
 /// Returns `None` when no config directory can be resolved and no env override
 /// is set; callers treat that as "no override available".
 fn user_model_overrides_path() -> Option<PathBuf> {
-    if let Ok(env_path) = std::env::var("PI_MODELS_OVERRIDE") {
+    if let Ok(env_path) = std::env::var("KODE_MODELS_OVERRIDE") {
         let trimmed = env_path.trim();
         if !trimmed.is_empty() {
             return Some(PathBuf::from(trimmed));
@@ -7574,8 +7574,8 @@ mod tests {
 
     #[test]
     fn default_models_path_joins_correctly() {
-        let path = default_models_path(Path::new("/home/user/.pi"));
-        assert_eq!(path, PathBuf::from("/home/user/.pi/models.json"));
+        let path = default_models_path(Path::new("/home/user/.kode"));
+        assert_eq!(path, PathBuf::from("/home/user/.kode/models.json"));
     }
 
     #[test]

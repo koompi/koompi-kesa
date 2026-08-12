@@ -8,26 +8,26 @@ use std::io::Read as _;
 use std::path::Path;
 
 /// Environment variable that overrides benchmark build-profile metadata.
-pub const BENCH_BUILD_PROFILE_ENV: &str = "PI_BENCH_BUILD_PROFILE";
+pub const BENCH_BUILD_PROFILE_ENV: &str = "KODE_BENCH_BUILD_PROFILE";
 
 /// Environment variable that requests an allocator label for benchmark runs.
-pub const BENCH_ALLOCATOR_ENV: &str = "PI_BENCH_ALLOCATOR";
+pub const BENCH_ALLOCATOR_ENV: &str = "KODE_BENCH_ALLOCATOR";
 
 /// Release binary-size budget (MB) shared by perf regression and budget gates.
 pub const BINARY_SIZE_RELEASE_BUDGET_MB: f64 = 22.0;
 
 /// Cargo profile family embedded by `build.rs` (`PROFILE`; custom release-derived
 /// profiles are reported by Cargo as `release`).
-pub const COMPILED_PROFILE_FAMILY: &str = env!("PI_BUILD_PROFILE_FAMILY");
+pub const COMPILED_PROFILE_FAMILY: &str = env!("KODE_BUILD_PROFILE_FAMILY");
 
 /// Cargo optimization level embedded by `build.rs` (`OPT_LEVEL`).
-pub const COMPILED_OPT_LEVEL: &str = env!("PI_BUILD_OPT_LEVEL");
+pub const COMPILED_OPT_LEVEL: &str = env!("KODE_BUILD_OPT_LEVEL");
 
 /// Cargo debug-info switch embedded by `build.rs` (`DEBUG`).
-pub const COMPILED_DEBUG: &str = env!("PI_BUILD_DEBUG");
+pub const COMPILED_DEBUG: &str = env!("KODE_BUILD_DEBUG");
 
 /// Sorted, comma-separated package feature set embedded by `build.rs`.
-pub const COMPILED_FEATURES_CSV: &str = env!("PI_BUILD_FEATURES");
+pub const COMPILED_FEATURES_CSV: &str = env!("KODE_BUILD_FEATURES");
 
 /// Exact package feature set for the canonical shipping/system PiJS perf lane.
 pub const CANONICAL_PIJS_PERF_FEATURES: &[&str] = &[

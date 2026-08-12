@@ -65,8 +65,8 @@ fn load_skills_defaults_and_collision_diagnostics() {
     std::fs::create_dir_all(&agent_dir).expect("create agent dir");
 
     let user_alpha_dir = agent_dir.join("skills").join("alpha");
-    let project_alpha_dir = cwd.join(".pi").join("skills").join("alpha");
-    let project_beta_dir = cwd.join(".pi").join("skills").join("beta");
+    let project_alpha_dir = cwd.join(".kode").join("skills").join("alpha");
+    let project_beta_dir = cwd.join(".kode").join("skills").join("beta");
 
     let user_alpha = write_skill(&harness, &user_alpha_dir, "alpha", "User alpha", "");
     let project_alpha = write_skill(&harness, &project_alpha_dir, "alpha", "Project alpha", "");
@@ -275,7 +275,7 @@ fn prompt_template_description_and_collision_diagnostics() {
     );
     let project_plan = write_prompt(
         &harness,
-        &cwd.join(".pi").join("prompts").join("plan.md"),
+        &cwd.join(".kode").join("prompts").join("plan.md"),
         "---\ndescription: Project plan\n---\nProject body.\n",
     );
 
@@ -390,7 +390,7 @@ fn themes_load_ini_and_dedupe_collisions() {
     );
     let project_dark = write_theme_ini(
         &harness,
-        &cwd.join(".pi").join("themes").join("dark.ini"),
+        &cwd.join(".kode").join("themes").join("dark.ini"),
         "brand.accent = bold #38bdf8",
     );
 
@@ -541,7 +541,7 @@ fn resolved_paths_feed_skill_and_prompt_loaders_with_collision_diagnostics() {
 
     let cwd = dest_root.join("project");
     let global_base_dir = dest_root.join("global");
-    let project_base_dir = cwd.join(".pi");
+    let project_base_dir = cwd.join(".kode");
 
     let manager = PackageManager::new(cwd.clone());
     let roots = ResolveRoots {
@@ -586,7 +586,7 @@ fn resolved_paths_feed_skill_and_prompt_loaders_with_collision_diagnostics() {
     assert!(
         alpha
             .file_path
-            .ends_with(Path::new("project/.pi/skills/alpha/SKILL.md")),
+            .ends_with(Path::new("project/.kode/skills/alpha/SKILL.md")),
         "expected project alpha skill to win collision"
     );
     assert!(
@@ -628,7 +628,7 @@ fn resolved_paths_feed_skill_and_prompt_loaders_with_collision_diagnostics() {
     assert!(
         collision
             .file_path
-            .ends_with(Path::new("project/.pi/prompts/collision.md")),
+            .ends_with(Path::new("project/.kode/prompts/collision.md")),
         "expected project collision prompt to win"
     );
 
@@ -641,7 +641,7 @@ fn resolved_paths_feed_skill_and_prompt_loaders_with_collision_diagnostics() {
     assert_eq!(info.name, "collision");
     assert!(
         info.winner_path
-            .ends_with(Path::new("project/.pi/prompts/collision.md")),
+            .ends_with(Path::new("project/.kode/prompts/collision.md")),
         "expected winner path to be project collision prompt"
     );
     assert!(

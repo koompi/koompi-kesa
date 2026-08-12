@@ -117,7 +117,7 @@ To compare against this baseline:
 cp tests/perf/reports/ext_bench_baseline.json tests/perf/reports/ext_bench_baseline_prev.json
 
 # Run new benchmarks
-PI_BENCH_MODE=nightly PI_BENCH_MAX=103 PI_BENCH_ITERATIONS=10 \
+KODE_BENCH_MODE=nightly KODE_BENCH_MAX=103 KODE_BENCH_ITERATIONS=10 \
   cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 
 # Compare (manual): check target/perf/ext_bench_harness_report.json against baseline

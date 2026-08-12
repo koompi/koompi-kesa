@@ -35,7 +35,7 @@ pi
 
 ### Option 2: Auth Storage (persistent)
 
-Add to `~/.pi/agent/auth.json`:
+Add to `~/.kode/agent/auth.json`:
 
 ```json
 {
@@ -86,7 +86,7 @@ Run `/synthetic-models` inside pi for the full, current catalog.
 When multiple sources are configured, pi checks in this order:
 
 1. CLI runtime flag (`--api-key`)
-2. Auth storage (`~/.pi/agent/auth.json`)
+2. Auth storage (`~/.kode/agent/auth.json`)
 3. OAuth credentials (if configured)
 4. Environment variable (`SYNTHETIC_API_KEY`)
 

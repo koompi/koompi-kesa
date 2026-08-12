@@ -35,9 +35,9 @@ test_config_new_files() {
     # Verify all files were created
     assert_file_exists "$SANDBOX_DIR/.config/amp/settings.json" "Amp settings file was created"
     assert_file_exists "$SANDBOX_DIR/.codex/config.toml" "Codex config file was created"
-    assert_file_exists "$SANDBOX_DIR/.pi/agent/settings.json" "Pi settings file was created"
+    assert_file_exists "$SANDBOX_DIR/.kode/agent/settings.json" "Pi settings file was created"
     assert_file_exists "$SANDBOX_DIR/.codex/AGENTS.md" "Codex AGENTS.md was created"
-    assert_file_exists "$SANDBOX_DIR/.pi/agent/AGENTS.md" "Pi AGENTS.md was created"
+    assert_file_exists "$SANDBOX_DIR/.kode/agent/AGENTS.md" "Pi AGENTS.md was created"
 }
 
 # Test: Amp config preserves existing settings
@@ -87,13 +87,13 @@ test_config_idempotent() {
     local amp_first codex_first pi_first
     amp_first=$(cat "$SANDBOX_DIR/.config/amp/settings.json")
     codex_first=$(cat "$SANDBOX_DIR/.codex/config.toml")
-    pi_first=$(cat "$SANDBOX_DIR/.pi/agent/settings.json")
+    pi_first=$(cat "$SANDBOX_DIR/.kode/agent/settings.json")
 
     HOME="$SANDBOX_DIR" make install-configs >/dev/null 2>&1
     local amp_second codex_second pi_second
     amp_second=$(cat "$SANDBOX_DIR/.config/amp/settings.json")
     codex_second=$(cat "$SANDBOX_DIR/.codex/config.toml")
-    pi_second=$(cat "$SANDBOX_DIR/.pi/agent/settings.json")
+    pi_second=$(cat "$SANDBOX_DIR/.kode/agent/settings.json")
 
     # Content should be identical
     local all_match=true
@@ -134,7 +134,7 @@ test_config_creates_directories() {
 
     assert_dir_exists "$SANDBOX_DIR/.config/amp" ".config/amp directory was created"
     assert_dir_exists "$SANDBOX_DIR/.codex" ".codex directory was created"
-    assert_dir_exists "$SANDBOX_DIR/.pi/agent" ".pi/agent directory was created"
+    assert_dir_exists "$SANDBOX_DIR/.kode/agent" ".kode/agent directory was created"
 }
 
 # Test: install-configs help is visible

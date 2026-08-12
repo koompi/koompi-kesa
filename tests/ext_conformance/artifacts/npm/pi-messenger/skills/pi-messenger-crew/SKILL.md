@@ -112,9 +112,9 @@ pi_messenger({ action: "status" })
 
 ## Data Storage
 
-Crew stores data in `.pi/messenger/crew/`:
+Crew stores data in `.kode/messenger/crew/`:
 ```
-.pi/messenger/crew/
+.kode/messenger/crew/
 ├── config.json       # Project config (concurrency, etc.)
 ├── plan.json         # Plan metadata
 ├── plan.md           # Planner output
@@ -129,7 +129,7 @@ Crew stores data in `.pi/messenger/crew/`:
 
 ## Config Options
 
-Create `.pi/messenger/crew/config.json`:
+Create `.kode/messenger/crew/config.json`:
 ```json
 {
   "concurrency": {

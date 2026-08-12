@@ -197,14 +197,14 @@ Line numbers are shown when `file` or `lines` is specified. Diff syntax (`+`/`-`
 
 ## Configuration
 
-Settings in `~/.pi/agent/settings.json`:
+Settings in `~/.kode/agent/settings.json`:
 
 ```json
 {
   "interview": {
     "timeout": 600,
     "port": 19847,
-    "snapshotDir": "~/.pi/interview-snapshots/",
+    "snapshotDir": "~/.kode/interview-snapshots/",
     "autoSaveOnSubmit": true,
     "theme": {
       "mode": "auto",
@@ -220,7 +220,7 @@ Settings in `~/.pi/agent/settings.json`:
 **Timeout precedence**: params > settings > default (600s)
 
 **Snapshot settings:**
-- `snapshotDir`: Directory for saved interview snapshots (default: `~/.pi/interview-snapshots/`)
+- `snapshotDir`: Directory for saved interview snapshots (default: `~/.kode/interview-snapshots/`)
 - `autoSaveOnSubmit`: Automatically save snapshot on successful submit (default: `true`)
 
 **Port setting**: Set a fixed `port` (e.g., `19847`) to use a consistent port across sessions.
@@ -330,17 +330,17 @@ interview/
 
 ## Session Recovery
 
-If an interview times out or is abandoned (tab closed, lost connection), the questions are automatically saved to `~/.pi/interview-recovery/` for later retry.
+If an interview times out or is abandoned (tab closed, lost connection), the questions are automatically saved to `~/.kode/interview-recovery/` for later retry.
 
 **Recovery files:**
-- Location: `~/.pi/interview-recovery/`
+- Location: `~/.kode/interview-recovery/`
 - Format: `{date}_{time}_{project}_{branch}_{sessionId}.json`
 - Example: `2026-01-02_093000_myproject_main_65bec3f4.json`
 - Auto-cleanup: Files older than 7 days are deleted
 
 **To retry an abandoned interview:**
 ```javascript
-interview({ questions: "~/.pi/interview-recovery/2026-01-02_093000_myproject_main_65bec3f4.json" })
+interview({ questions: "~/.kode/interview-recovery/2026-01-02_093000_myproject_main_65bec3f4.json" })
 ```
 
 ## Saving Interviews
@@ -349,7 +349,7 @@ Save a snapshot of your interview at any time for later review or to resume.
 
 **Manual Save:**
 - Click the Save button (header or footer)
-- Saves to `~/.pi/interview-snapshots/` by default
+- Saves to `~/.kode/interview-snapshots/` by default
 - Creates folder with `index.html` + `images/` subfolder
 
 **Auto-save on Submit:**
@@ -359,7 +359,7 @@ Save a snapshot of your interview at any time for later review or to resume.
 
 **Reviving a Saved Interview:**
 ```javascript
-interview({ questions: "~/.pi/interview-snapshots/project-setup-myapp-main-2026-01-20-141523/index.html" })
+interview({ questions: "~/.kode/interview-snapshots/project-setup-myapp-main-2026-01-20-141523/index.html" })
 ```
 The form opens with answers pre-populated. Edit and submit as normal.
 
@@ -367,7 +367,7 @@ The form opens with answers pre-populated. Edit and submit as normal.
 ```json
 {
   "interview": {
-    "snapshotDir": "~/.pi/interview-snapshots/",
+    "snapshotDir": "~/.kode/interview-snapshots/",
     "autoSaveOnSubmit": true
   }
 }
@@ -375,7 +375,7 @@ The form opens with answers pre-populated. Edit and submit as normal.
 
 **Snapshot Structure:**
 ```
-~/.pi/interview-snapshots/
+~/.kode/interview-snapshots/
   {title}-{project}-{branch}-{timestamp}[-submitted]/
     index.html          # Human-readable + embedded JSON for revival
     images/

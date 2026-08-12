@@ -21,7 +21,7 @@ const MANAGED_TOOL_BINARIES: &[&str] = &["fd", "rg", "fd.exe", "rg.exe"];
 pub struct MigrationReport {
     /// Providers migrated into `auth.json`.
     pub migrated_auth_providers: Vec<String>,
-    /// Number of session files moved from `~/.pi/agent/*.jsonl` to `sessions/<encoded-cwd>/`.
+    /// Number of session files moved from `~/.kode/agent/*.jsonl` to `sessions/<encoded-cwd>/`.
     pub migrated_session_files: usize,
     /// Directories where `commands/` was renamed to `prompts/`.
     pub migrated_commands_dirs: Vec<PathBuf>,
@@ -666,7 +666,7 @@ mod tests {
         let temp = TempDir::new().expect("tempdir");
         let agent_dir = temp.path().join("agent");
         let cwd = temp.path().join("workspace");
-        let project_dir = cwd.join(".pi");
+        let project_dir = cwd.join(".kode");
         fs::create_dir_all(&agent_dir).expect("create agent dir");
         fs::create_dir_all(&project_dir).expect("create project dir");
 
@@ -712,7 +712,7 @@ mod tests {
         let temp = TempDir::new().expect("tempdir");
         let agent_dir = temp.path().join("agent");
         let cwd = temp.path().join("workspace");
-        let project_dir = cwd.join(".pi");
+        let project_dir = cwd.join(".kode");
         fs::create_dir_all(agent_dir.join("hooks")).expect("create global hooks");
         fs::create_dir_all(project_dir.join("hooks")).expect("create project hooks");
         write(&agent_dir.join("tools/custom.sh"), "#!/bin/sh\necho hi\n");

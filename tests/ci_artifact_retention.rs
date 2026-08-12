@@ -17,14 +17,14 @@
 //!
 //! Regenerate the tracked summary explicitly with:
 //! ```bash
-//! PI_GENERATE_ARTIFACT_RETENTION_REPORT=1 \
+//! KODE_GENERATE_ARTIFACT_RETENTION_REPORT=1 \
 //!   cargo test --test ci_artifact_retention artifact_retention_summary_report -- --exact --nocapture
 //! ```
 
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
-const GENERATE_ARTIFACT_RETENTION_REPORT_ENV: &str = "PI_GENERATE_ARTIFACT_RETENTION_REPORT";
+const GENERATE_ARTIFACT_RETENTION_REPORT_ENV: &str = "KODE_GENERATE_ARTIFACT_RETENTION_REPORT";
 
 fn artifact_retention_report_generation_enabled(raw: Option<&str>) -> bool {
     raw == Some("1")

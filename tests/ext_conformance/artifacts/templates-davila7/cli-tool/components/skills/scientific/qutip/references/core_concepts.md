@@ -194,10 +194,10 @@ from qutip_qip.operations import *
 
 # Single-qubit gates
 hadamard_transform()  # Hadamard
-rx(np.pi/2)  # X-rotation
-ry(np.pi/2)  # Y-rotation
-rz(np.pi/2)  # Z-rotation
-phasegate(np.pi/4)  # Phase gate
+rx(np.kode/2)  # X-rotation
+ry(np.kode/2)  # Y-rotation
+rz(np.kode/2)  # Z-rotation
+phasegate(np.kode/4)  # Phase gate
 snot()  # Hadamard (alternative)
 
 # Two-qubit gates

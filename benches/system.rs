@@ -166,7 +166,7 @@ fn run_resolution_regression_checks() {
 
 fn resolve_pi_binary() -> ResolvedBinary {
     // Check for explicit override
-    if let Ok(path) = env::var("PI_BENCH_BINARY") {
+    if let Ok(path) = env::var("KODE_BENCH_BINARY") {
         let path = PathBuf::from(path);
         return ResolvedBinary {
             kind: infer_binary_kind(&path),

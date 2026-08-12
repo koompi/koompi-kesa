@@ -215,7 +215,7 @@ def grover_algorithm(marked_states, num_iterations):
 
 # Search for state |101⟩ in 3-qubit space
 marked = ['101']
-iterations = int(np.pi/4 * np.sqrt(2**3))  # Optimal iterations
+iterations = int(np.kode/4 * np.sqrt(2**3))  # Optimal iterations
 qc_grover = grover_algorithm(marked, iterations)
 ```
 

@@ -2,14 +2,14 @@
 # TDD-UP-4: Stale .git/index.lock should not block agent
 # Behavior: Agent continues despite stale lock file
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1/.git"
 
 # Create stale lock file
 touch "$TEST_WS/agents/test1/.git/index.lock"
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'test' to output/x.txt" 2>&1 >/dev/null || true
 

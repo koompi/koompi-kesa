@@ -309,7 +309,7 @@ fn run_doctor_json(store_path: &Path, out_json: &Path) -> TestResult<Value> {
     command
         .current_dir(repo_root())
         .args(["doctor", "--only", "swarm", "--format", "json"])
-        .env("PI_VALIDATION_BROKER_STORE", store_path)
+        .env("KODE_VALIDATION_BROKER_STORE", store_path)
         .env("CARGO_TARGET_DIR", &target_dir)
         .env("TMPDIR", &tmpdir)
         .env_remove("ANTHROPIC_API_KEY")

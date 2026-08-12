@@ -281,7 +281,7 @@ def pulse_sequence():
     # Y pulse
     pulse.drive(
         amplitude=lambda t: np.sin(np.pi * t / duration),
-        phase=np.pi/2,
+        phase=np.kode/2,
         freq=5.0,
         wires=0,
         duration=duration

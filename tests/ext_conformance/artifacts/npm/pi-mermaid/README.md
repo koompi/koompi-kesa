@@ -17,7 +17,7 @@ pi install npm:pi-mermaid
 Or, clone into your Pi extensions directory and enable it:
 
 ```bash
-git clone https://github.com/Gurpartap/pi-mermaid ~/.pi/agent/extensions/pi-mermaid
+git clone https://github.com/Gurpartap/pi-mermaid ~/.kode/agent/extensions/pi-mermaid
 ```
 
 After installing, enter `/reload` or restart Pi.

@@ -80,10 +80,10 @@ struct DeterministicSettings {
 }
 
 fn deterministic_settings() -> DeterministicSettings {
-    let random_env = std::env::var("PI_DETERMINISTIC_RANDOM")
+    let random_env = std::env::var("KODE_DETERMINISTIC_RANDOM")
         .ok()
         .filter(|val| !val.trim().is_empty());
-    let seed_env = std::env::var("PI_DETERMINISTIC_RANDOM_SEED")
+    let seed_env = std::env::var("KODE_DETERMINISTIC_RANDOM_SEED")
         .ok()
         .filter(|val| !val.trim().is_empty());
     let random_value = if random_env.is_some() {
@@ -94,18 +94,18 @@ fn deterministic_settings() -> DeterministicSettings {
         Some("0.5".to_string())
     };
     DeterministicSettings {
-        time_ms: env_or_default("PI_DETERMINISTIC_TIME_MS", DEFAULT_DETERMINISTIC_TIME_MS),
+        time_ms: env_or_default("KODE_DETERMINISTIC_TIME_MS", DEFAULT_DETERMINISTIC_TIME_MS),
         time_step_ms: env_or_default(
-            "PI_DETERMINISTIC_TIME_STEP_MS",
+            "KODE_DETERMINISTIC_TIME_STEP_MS",
             DEFAULT_DETERMINISTIC_TIME_STEP_MS,
         ),
         random_seed: env_or_default(
-            "PI_DETERMINISTIC_RANDOM_SEED",
+            "KODE_DETERMINISTIC_RANDOM_SEED",
             DEFAULT_DETERMINISTIC_RANDOM_SEED,
         ),
         random_value,
-        cwd: env_or_default("PI_DETERMINISTIC_CWD", DEFAULT_DETERMINISTIC_CWD),
-        home: env_or_default("PI_DETERMINISTIC_HOME", DEFAULT_DETERMINISTIC_HOME),
+        cwd: env_or_default("KODE_DETERMINISTIC_CWD", DEFAULT_DETERMINISTIC_CWD),
+        home: env_or_default("KODE_DETERMINISTIC_HOME", DEFAULT_DETERMINISTIC_HOME),
     }
 }
 
@@ -122,13 +122,13 @@ fn deterministic_settings_for(extension_path: &Path) -> DeterministicSettings {
     let mut settings = deterministic_settings();
     let key = sanitize_path_for_dir(extension_path);
 
-    if std::env::var("PI_DETERMINISTIC_CWD").is_err() {
+    if std::env::var("KODE_DETERMINISTIC_CWD").is_err() {
         settings.cwd = Path::new(DEFAULT_DETERMINISTIC_CWD)
             .join(&key)
             .display()
             .to_string();
     }
-    if std::env::var("PI_DETERMINISTIC_HOME").is_err() {
+    if std::env::var("KODE_DETERMINISTIC_HOME").is_err() {
         settings.home = Path::new(DEFAULT_DETERMINISTIC_HOME)
             .join(&key)
             .display()
@@ -326,22 +326,22 @@ fn parse_scenario_shard(
     match (index_raw, total_raw) {
         (None, None) => Ok(None),
         (Some(_), None) | (None, Some(_)) => {
-            Err("both PI_SCENARIO_SHARD_INDEX and PI_SCENARIO_SHARD_TOTAL are required".to_string())
+            Err("both KODE_SCENARIO_SHARD_INDEX and KODE_SCENARIO_SHARD_TOTAL are required".to_string())
         }
         (Some(index_raw), Some(total_raw)) => {
             let index = index_raw
                 .parse::<usize>()
-                .map_err(|err| format!("invalid PI_SCENARIO_SHARD_INDEX='{index_raw}': {err}"))?;
+                .map_err(|err| format!("invalid KODE_SCENARIO_SHARD_INDEX='{index_raw}': {err}"))?;
             let total = total_raw
                 .parse::<usize>()
-                .map_err(|err| format!("invalid PI_SCENARIO_SHARD_TOTAL='{total_raw}': {err}"))?;
+                .map_err(|err| format!("invalid KODE_SCENARIO_SHARD_TOTAL='{total_raw}': {err}"))?;
 
             if total == 0 {
-                return Err("PI_SCENARIO_SHARD_TOTAL must be > 0".to_string());
+                return Err("KODE_SCENARIO_SHARD_TOTAL must be > 0".to_string());
             }
             if index >= total {
                 return Err(format!(
-                    "PI_SCENARIO_SHARD_INDEX must be < PI_SCENARIO_SHARD_TOTAL ({index} >= {total})"
+                    "KODE_SCENARIO_SHARD_INDEX must be < KODE_SCENARIO_SHARD_TOTAL ({index} >= {total})"
                 ));
             }
 
@@ -357,9 +357,9 @@ fn parse_scenario_shard(
 }
 
 fn scenario_shard_from_env() -> Option<ScenarioShard> {
-    let index = std::env::var("PI_SCENARIO_SHARD_INDEX").ok();
-    let total = std::env::var("PI_SCENARIO_SHARD_TOTAL").ok();
-    let name = std::env::var("PI_SCENARIO_SHARD_NAME").ok();
+    let index = std::env::var("KODE_SCENARIO_SHARD_INDEX").ok();
+    let total = std::env::var("KODE_SCENARIO_SHARD_TOTAL").ok();
+    let name = std::env::var("KODE_SCENARIO_SHARD_NAME").ok();
     parse_scenario_shard(index.as_deref(), total.as_deref(), name.as_deref())
         .unwrap_or_else(|message| panic!("{message}"))
 }
@@ -579,22 +579,22 @@ fn load_extension(extension_path: &Path) -> Result<LoadedExtension, String> {
     let tools = Arc::new(ToolRegistry::new(&[], &cwd, None));
     let mut env = HashMap::new();
     env.insert(
-        "PI_DETERMINISTIC_TIME_MS".to_string(),
+        "KODE_DETERMINISTIC_TIME_MS".to_string(),
         settings.time_ms.clone(),
     );
     env.insert(
-        "PI_DETERMINISTIC_TIME_STEP_MS".to_string(),
+        "KODE_DETERMINISTIC_TIME_STEP_MS".to_string(),
         settings.time_step_ms.clone(),
     );
-    env.insert("PI_DETERMINISTIC_CWD".to_string(), settings.cwd.clone());
-    env.insert("PI_DETERMINISTIC_HOME".to_string(), settings.home.clone());
+    env.insert("KODE_DETERMINISTIC_CWD".to_string(), settings.cwd.clone());
+    env.insert("KODE_DETERMINISTIC_HOME".to_string(), settings.home.clone());
     env.insert("HOME".to_string(), settings.home.clone());
-    env.insert("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+    env.insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
     if let Some(random_value) = settings.random_value {
-        env.insert("PI_DETERMINISTIC_RANDOM".to_string(), random_value);
+        env.insert("KODE_DETERMINISTIC_RANDOM".to_string(), random_value);
     } else {
         env.insert(
-            "PI_DETERMINISTIC_RANDOM_SEED".to_string(),
+            "KODE_DETERMINISTIC_RANDOM_SEED".to_string(),
             settings.random_seed.clone(),
         );
     }
@@ -2038,22 +2038,22 @@ fn load_extension_with_mocks(
 
     let mut env = HashMap::new();
     env.insert(
-        "PI_DETERMINISTIC_TIME_MS".to_string(),
+        "KODE_DETERMINISTIC_TIME_MS".to_string(),
         settings.time_ms.clone(),
     );
     env.insert(
-        "PI_DETERMINISTIC_TIME_STEP_MS".to_string(),
+        "KODE_DETERMINISTIC_TIME_STEP_MS".to_string(),
         settings.time_step_ms.clone(),
     );
-    env.insert("PI_DETERMINISTIC_CWD".to_string(), settings.cwd.clone());
-    env.insert("PI_DETERMINISTIC_HOME".to_string(), settings.home.clone());
+    env.insert("KODE_DETERMINISTIC_CWD".to_string(), settings.cwd.clone());
+    env.insert("KODE_DETERMINISTIC_HOME".to_string(), settings.home.clone());
     env.insert("HOME".to_string(), settings.home.clone());
-    env.insert("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+    env.insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
     if let Some(random_value) = settings.random_value {
-        env.insert("PI_DETERMINISTIC_RANDOM".to_string(), random_value);
+        env.insert("KODE_DETERMINISTIC_RANDOM".to_string(), random_value);
     } else {
         env.insert(
-            "PI_DETERMINISTIC_RANDOM_SEED".to_string(),
+            "KODE_DETERMINISTIC_RANDOM_SEED".to_string(),
             settings.random_seed.clone(),
         );
     }
@@ -3250,7 +3250,7 @@ fn parse_scenario_shard_accepts_valid_values() {
 #[test]
 fn parse_scenario_shard_rejects_partial_values() {
     let err = parse_scenario_shard(Some("1"), None, None).expect_err("expected parse error");
-    assert!(err.contains("both PI_SCENARIO_SHARD_INDEX and PI_SCENARIO_SHARD_TOTAL"));
+    assert!(err.contains("both KODE_SCENARIO_SHARD_INDEX and KODE_SCENARIO_SHARD_TOTAL"));
 }
 
 #[test]
@@ -3310,7 +3310,7 @@ fn json_contains_array_accepts_distinct_candidates() {
 #[allow(clippy::too_many_lines)]
 fn scenario_conformance_suite() {
     let sample = load_sample_json();
-    let filter = std::env::var("PI_SCENARIO_FILTER").ok();
+    let filter = std::env::var("KODE_SCENARIO_FILTER").ok();
     let shard = scenario_shard_from_env();
     let plan = build_scenario_plan(&sample, filter.as_deref(), shard.as_ref());
     let mut scenarios_by_extension: BTreeMap<String, usize> = BTreeMap::new();
@@ -3852,7 +3852,7 @@ fn scenario_pi_ai_helpers_provider_bridge_success() {
 #[allow(clippy::too_many_lines)]
 fn smoke_runtime_suite() {
     let sample = load_sample_json();
-    let filter = std::env::var("PI_SCENARIO_FILTER").ok();
+    let filter = std::env::var("KODE_SCENARIO_FILTER").ok();
     let shard = scenario_shard_from_env();
     let run_id = format!(
         "smoke-{}",
@@ -4050,7 +4050,7 @@ const fn bun_path() -> &'static str {
 }
 
 fn ts_oracle_timeout() -> Duration {
-    std::env::var("PI_TS_ORACLE_TIMEOUT_SECS")
+    std::env::var("KODE_TS_ORACLE_TIMEOUT_SECS")
         .ok()
         .and_then(|v| v.parse().ok())
         .map_or(Duration::from_secs(30), Duration::from_secs)
@@ -4130,14 +4130,14 @@ fn run_ts_scenario(extension_path: &Path, scenario: &Scenario) -> Result<Value, 
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .env("NODE_PATH", node_path.as_ref())
-        .env("PI_DETERMINISTIC_TIME_MS", &settings.time_ms)
-        .env("PI_DETERMINISTIC_TIME_STEP_MS", &settings.time_step_ms)
-        .env("PI_DETERMINISTIC_CWD", &settings.cwd)
-        .env("PI_DETERMINISTIC_HOME", &settings.home);
+        .env("KODE_DETERMINISTIC_TIME_MS", &settings.time_ms)
+        .env("KODE_DETERMINISTIC_TIME_STEP_MS", &settings.time_step_ms)
+        .env("KODE_DETERMINISTIC_CWD", &settings.cwd)
+        .env("KODE_DETERMINISTIC_HOME", &settings.home);
     if let Some(random_value) = settings.random_value.as_deref() {
-        cmd.env("PI_DETERMINISTIC_RANDOM", random_value);
+        cmd.env("KODE_DETERMINISTIC_RANDOM", random_value);
     } else {
-        cmd.env("PI_DETERMINISTIC_RANDOM_SEED", &settings.random_seed);
+        cmd.env("KODE_DETERMINISTIC_RANDOM_SEED", &settings.random_seed);
     }
 
     let mut child = cmd

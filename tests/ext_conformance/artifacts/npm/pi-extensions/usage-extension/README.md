@@ -21,7 +21,7 @@ pi install npm:@tmustier/pi-usage-extension
 pi install git:github.com/tmustier/pi-extensions
 ```
 
-Then filter to just this extension in `~/.pi/agent/settings.json`:
+Then filter to just this extension in `~/.kode/agent/settings.json`:
 
 ```json
 {
@@ -36,7 +36,7 @@ Then filter to just this extension in `~/.pi/agent/settings.json`:
 
 ### Local clone
 
-Add to your `~/.pi/agent/settings.json`:
+Add to your `~/.kode/agent/settings.json`:
 
 ```json
 {
@@ -111,9 +111,9 @@ The "Cache" column combines both read and write tokens.
 
 ## Data Source
 
-Statistics are parsed from session files in `~/.pi/agent/sessions/`. Each session is a JSONL file containing message entries with usage data. Assistant messages duplicated across branched session files are deduplicated by timestamp + total tokens (matching ccusage).
+Statistics are parsed from session files in `~/.kode/agent/sessions/`. Each session is a JSONL file containing message entries with usage data. Assistant messages duplicated across branched session files are deduplicated by timestamp + total tokens (matching ccusage).
 
-Respects the `PI_CODING_AGENT_DIR` environment variable if set.
+Respects the `KODE_CODING_AGENT_DIR` environment variable if set.
 
 ## Changelog
 

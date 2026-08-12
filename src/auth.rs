@@ -1,6 +1,6 @@
 //! Authentication storage and API key resolution.
 //!
-//! Auth file: ~/.pi/agent/auth.json
+//! Auth file: ~/.kode/agent/auth.json
 
 use crate::config::Config;
 use crate::error::{Error, Result};
@@ -147,101 +147,101 @@ fn oauth_param(env_key: &str, default: &str) -> String {
 // hatch is always active.
 
 fn anthropic_oauth_client_id() -> String {
-    oauth_param("PI_ANTHROPIC_OAUTH_CLIENT_ID", ANTHROPIC_OAUTH_CLIENT_ID)
+    oauth_param("KODE_ANTHROPIC_OAUTH_CLIENT_ID", ANTHROPIC_OAUTH_CLIENT_ID)
 }
 fn anthropic_oauth_authorize_url() -> String {
     oauth_param(
-        "PI_ANTHROPIC_OAUTH_AUTHORIZE_URL",
+        "KODE_ANTHROPIC_OAUTH_AUTHORIZE_URL",
         ANTHROPIC_OAUTH_AUTHORIZE_URL,
     )
 }
 fn anthropic_oauth_token_url() -> String {
-    oauth_param("PI_ANTHROPIC_OAUTH_TOKEN_URL", ANTHROPIC_OAUTH_TOKEN_URL)
+    oauth_param("KODE_ANTHROPIC_OAUTH_TOKEN_URL", ANTHROPIC_OAUTH_TOKEN_URL)
 }
 fn anthropic_oauth_redirect_uri() -> String {
     oauth_param(
-        "PI_ANTHROPIC_OAUTH_REDIRECT_URI",
+        "KODE_ANTHROPIC_OAUTH_REDIRECT_URI",
         ANTHROPIC_OAUTH_REDIRECT_URI,
     )
 }
 fn anthropic_oauth_scopes() -> String {
-    oauth_param("PI_ANTHROPIC_OAUTH_SCOPES", ANTHROPIC_OAUTH_SCOPES)
+    oauth_param("KODE_ANTHROPIC_OAUTH_SCOPES", ANTHROPIC_OAUTH_SCOPES)
 }
 
 fn openai_codex_oauth_client_id() -> String {
     oauth_param(
-        "PI_OPENAI_CODEX_OAUTH_CLIENT_ID",
+        "KODE_OPENAI_CODEX_OAUTH_CLIENT_ID",
         OPENAI_CODEX_OAUTH_CLIENT_ID,
     )
 }
 fn openai_codex_oauth_authorize_url() -> String {
     oauth_param(
-        "PI_OPENAI_CODEX_OAUTH_AUTHORIZE_URL",
+        "KODE_OPENAI_CODEX_OAUTH_AUTHORIZE_URL",
         OPENAI_CODEX_OAUTH_AUTHORIZE_URL,
     )
 }
 fn openai_codex_oauth_token_url() -> String {
     oauth_param(
-        "PI_OPENAI_CODEX_OAUTH_TOKEN_URL",
+        "KODE_OPENAI_CODEX_OAUTH_TOKEN_URL",
         OPENAI_CODEX_OAUTH_TOKEN_URL,
     )
 }
 fn openai_codex_oauth_redirect_uri() -> String {
     oauth_param(
-        "PI_OPENAI_CODEX_OAUTH_REDIRECT_URI",
+        "KODE_OPENAI_CODEX_OAUTH_REDIRECT_URI",
         OPENAI_CODEX_OAUTH_REDIRECT_URI,
     )
 }
 fn openai_codex_oauth_scopes() -> String {
-    oauth_param("PI_OPENAI_CODEX_OAUTH_SCOPES", OPENAI_CODEX_OAUTH_SCOPES)
+    oauth_param("KODE_OPENAI_CODEX_OAUTH_SCOPES", OPENAI_CODEX_OAUTH_SCOPES)
 }
 
 fn google_gemini_cli_oauth_client_id() -> String {
     oauth_param(
-        "PI_GOOGLE_GEMINI_CLI_OAUTH_CLIENT_ID",
+        "KODE_GOOGLE_GEMINI_CLI_OAUTH_CLIENT_ID",
         GOOGLE_GEMINI_CLI_OAUTH_CLIENT_ID,
     )
 }
 fn google_gemini_cli_oauth_client_secret() -> String {
     oauth_param(
-        "PI_GOOGLE_GEMINI_CLI_OAUTH_CLIENT_SECRET",
+        "KODE_GOOGLE_GEMINI_CLI_OAUTH_CLIENT_SECRET",
         GOOGLE_GEMINI_CLI_OAUTH_CLIENT_SECRET,
     )
 }
 fn google_gemini_cli_oauth_redirect_uri() -> String {
     oauth_param(
-        "PI_GOOGLE_GEMINI_CLI_OAUTH_REDIRECT_URI",
+        "KODE_GOOGLE_GEMINI_CLI_OAUTH_REDIRECT_URI",
         GOOGLE_GEMINI_CLI_OAUTH_REDIRECT_URI,
     )
 }
 
 fn google_antigravity_oauth_client_id() -> String {
     oauth_param(
-        "PI_GOOGLE_ANTIGRAVITY_OAUTH_CLIENT_ID",
+        "KODE_GOOGLE_ANTIGRAVITY_OAUTH_CLIENT_ID",
         GOOGLE_ANTIGRAVITY_OAUTH_CLIENT_ID,
     )
 }
 fn google_antigravity_oauth_client_secret() -> String {
     oauth_param(
-        "PI_GOOGLE_ANTIGRAVITY_OAUTH_CLIENT_SECRET",
+        "KODE_GOOGLE_ANTIGRAVITY_OAUTH_CLIENT_SECRET",
         GOOGLE_ANTIGRAVITY_OAUTH_CLIENT_SECRET,
     )
 }
 fn google_antigravity_oauth_redirect_uri() -> String {
     oauth_param(
-        "PI_GOOGLE_ANTIGRAVITY_OAUTH_REDIRECT_URI",
+        "KODE_GOOGLE_ANTIGRAVITY_OAUTH_REDIRECT_URI",
         GOOGLE_ANTIGRAVITY_OAUTH_REDIRECT_URI,
     )
 }
 fn google_antigravity_default_project_id() -> String {
     oauth_param(
-        "PI_GOOGLE_ANTIGRAVITY_PROJECT_ID",
+        "KODE_GOOGLE_ANTIGRAVITY_PROJECT_ID",
         GOOGLE_ANTIGRAVITY_DEFAULT_PROJECT_ID,
     )
 }
 
 fn kimi_code_oauth_client_id() -> String {
-    oauth_param("PI_KIMI_CODE_OAUTH_CLIENT_ID", KIMI_CODE_OAUTH_CLIENT_ID)
+    oauth_param("KODE_KIMI_CODE_OAUTH_CLIENT_ID", KIMI_CODE_OAUTH_CLIENT_ID)
 }
 
 /// Credentials stored in auth.json.
@@ -253,7 +253,7 @@ pub enum AuthCredential {
     },
     /// OAuth credential, serialized in the shape upstream TS pi
     /// (`@earendil-works/pi-coding-agent`) reads and writes to the shared
-    /// `~/.pi/agent/auth.json`: `{"type":"oauth","access":..,"refresh":..,"expires":..}`
+    /// `~/.kode/agent/auth.json`: `{"type":"oauth","access":..,"refresh":..,"expires":..}`
     /// (see `pi-ai` `dist/auth/types.d.ts` `OAuthCredential`). The variant tag and
     /// field names carry `alias`es for the historical koompi_code_cli shape
     /// (`o_auth` / `access_token` / `refresh_token`) so previously-written
@@ -1136,7 +1136,7 @@ where
 impl AuthStorage {
     fn allow_external_provider_lookup(&self) -> bool {
         // External credential auto-detection is intended for Pi's global auth
-        // file (typically `~/.pi/agent/auth.json`). Scoping it this way keeps
+        // file (typically `~/.kode/agent/auth.json`). Scoping it this way keeps
         // tests and custom auth sandboxes deterministic.
         self.path.eq(&Config::auth_path())
     }
@@ -3004,9 +3004,9 @@ where
 {
     // AWS SDKs honor AWS_SDK_LOAD_NONDEFAULT_CONFIG and similar tweaks for
     // the cache dir, but the only path the official tooling actually uses
-    // is `<HOME>/.aws/sso/cache`. We additionally allow PI_AWS_SSO_CACHE_DIR
+    // is `<HOME>/.aws/sso/cache`. We additionally allow KODE_AWS_SSO_CACHE_DIR
     // for tests + advanced users.
-    if let Some(custom) = env("PI_AWS_SSO_CACHE_DIR")
+    if let Some(custom) = env("KODE_AWS_SSO_CACHE_DIR")
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty())
     {
@@ -3140,7 +3140,7 @@ struct SsoRoleCredentials {
 
 /// Test-only override for the SSO Portal base URL.
 ///
-/// We use an interior-mutable static rather than reading `PI_AWS_SSO_PORTAL_URL`
+/// We use an interior-mutable static rather than reading `KODE_AWS_SSO_PORTAL_URL`
 /// directly because Rust 2024 made `std::env::set_var`/`remove_var` `unsafe`,
 /// and the crate forbids `unsafe_code`. Tests set the override via
 /// `set_sso_portal_base_url_override`; production code paths always see `None`
@@ -4516,7 +4516,7 @@ fn kimi_device_id_paths() -> Option<(PathBuf, PathBuf)> {
     let primary = kimi_share_dir()?.join("device_id");
     let legacy = home_dir().map_or_else(
         || primary.clone(),
-        |home| home.join(".pi").join("agent").join("kimi-device-id"),
+        |home| home.join(".kode").join("agent").join("kimi-device-id"),
     );
     Some((primary, legacy))
 }
@@ -10748,7 +10748,7 @@ sso_region = us-east-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("dev".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "PI_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "KODE_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             "HOME" => Some(dir.path().to_string_lossy().to_string()),
             _ => None,
         };
@@ -10785,7 +10785,7 @@ region = eu-west-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("legacy".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "PI_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "KODE_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let detected = detect_aws_sso_profile_with_env("legacy", None, "us-east-1", &mut env)
@@ -10844,7 +10844,7 @@ sso_region = us-east-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("dev".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "PI_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "KODE_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let err = detect_aws_sso_profile_with_env("dev", None, "us-east-1", &mut env)
@@ -10887,7 +10887,7 @@ sso_region = us-east-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("dev".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "PI_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "KODE_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let err = detect_aws_sso_profile_with_env("dev", None, "us-east-1", &mut env)
@@ -10926,7 +10926,7 @@ sso_region = us-east-1
 
         let mut env = |name: &str| match name {
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "PI_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "KODE_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let error = detect_aws_sso_profile_with_env("dev", None, "us-east-1", &mut env)
@@ -11051,7 +11051,7 @@ sso_region = us-east-1
                 config_path.to_string_lossy().to_string(),
             );
             env_map.insert(
-                "PI_AWS_SSO_CACHE_DIR",
+                "KODE_AWS_SSO_CACHE_DIR",
                 cache_dir.to_string_lossy().to_string(),
             );
 
@@ -11131,7 +11131,7 @@ sso_region = us-east-1
             env_map.insert("AWS_PROFILE", "dev".to_string());
             env_map.insert("AWS_CONFIG_FILE", config_path.to_string_lossy().to_string());
             env_map.insert(
-                "PI_AWS_SSO_CACHE_DIR",
+                "KODE_AWS_SSO_CACHE_DIR",
                 cache_dir.to_string_lossy().to_string(),
             );
 
@@ -11192,7 +11192,7 @@ sso_start_url = https://example.awsapps.com/start
             env_map.insert("AWS_PROFILE", "dev".to_string());
             env_map.insert("AWS_CONFIG_FILE", config_path.to_string_lossy().to_string());
             env_map.insert(
-                "PI_AWS_SSO_CACHE_DIR",
+                "KODE_AWS_SSO_CACHE_DIR",
                 cache_dir.to_string_lossy().to_string(),
             );
 
@@ -11298,7 +11298,7 @@ sso_region = us-east-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("dev".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "PI_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "KODE_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let detected =
@@ -12502,7 +12502,7 @@ sso_region = us-east-1
         auth.set(
             "openai",
             AuthCredential::ApiKey {
-                key: "$ENV:PI_TEST_OPENAI_KEY_INTEG".to_string(),
+                key: "$ENV:KODE_TEST_OPENAI_KEY_INTEG".to_string(),
             },
         );
 

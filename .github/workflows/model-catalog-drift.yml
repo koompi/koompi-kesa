@@ -10,7 +10,7 @@ name: Model Catalog Drift
 # job only reports the delta and proves the generator runs clean.
 #
 # To make it GATING after the catalog is adopted from upstream, set the repo
-# variable PI_CATALOG_ADOPT_UPSTREAM=true: the job then regenerates the vendored
+# variable KODE_CATALOG_ADOPT_UPSTREAM=true: the job then regenerates the vendored
 # file and fails on any drift (i.e. "updates are a version bump + regen", not a
 # manual edit).
 
@@ -60,7 +60,7 @@ jobs:
         run: node scripts/gen-model-catalog.mjs --out scripts/models.generated.candidate.ts
       - name: Drift check
         env:
-          ADOPT: ${{ vars.PI_CATALOG_ADOPT_UPSTREAM }}
+          ADOPT: ${{ vars.KODE_CATALOG_ADOPT_UPSTREAM }}
         run: |
           set -euo pipefail
           if [ "${ADOPT:-}" = "true" ]; then
@@ -72,7 +72,7 @@ jobs:
             fi
             echo "Vendored catalog is in sync."
           else
-            echo "::notice::Advisory mode. Set repo variable PI_CATALOG_ADOPT_UPSTREAM=true to gate."
+            echo "::notice::Advisory mode. Set repo variable KODE_CATALOG_ADOPT_UPSTREAM=true to gate."
             echo "Generator runs clean. The vendored catalog is intentionally NOT yet sourced from @earendil-works/pi-ai (see scripts/models.local.json _README)."
             diff -u "$VENDORED" scripts/models.generated.candidate.ts > catalog-drift.diff || true
             echo "Generated-vs-vendored delta: $(wc -l < catalog-drift.diff) diff lines"

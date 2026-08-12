@@ -27,7 +27,7 @@ pi -e npm:@benvargas/pi-cut-stack
 
 `keybindings.json` is optional. Only add it if you want to override the defaults.
 
-Add entries to `~/.pi/agent/keybindings.json`:
+Add entries to `~/.kode/agent/keybindings.json`:
 
 ```json
 {

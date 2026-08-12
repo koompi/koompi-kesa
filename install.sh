@@ -33,10 +33,10 @@ FROM_SOURCE=0
 VERIFY=0
 NO_VERIFY=0
 FORCE_INSTALL=0
-OFFLINE="${PI_INSTALLER_OFFLINE:-0}"
-OFFLINE_TARBALL="${PI_INSTALLER_OFFLINE_TARBALL:-}"
+OFFLINE="${KODE_INSTALLER_OFFLINE:-0}"
+OFFLINE_TARBALL="${KODE_INSTALLER_OFFLINE_TARBALL:-}"
 AGENT_SKILLS_ENABLED="${AGENT_SKILLS_ENABLED:-1}"
-RETAIN_TEMP="${PI_INSTALLER_RETAIN_TEMP:-0}"
+RETAIN_TEMP="${KODE_INSTALLER_RETAIN_TEMP:-0}"
 
 CHECKSUM="${CHECKSUM:-}"
 CHECKSUM_URL="${CHECKSUM_URL:-}"
@@ -94,7 +94,7 @@ STATE_FILE="$STATE_DIR/install-state.env"
 STATE_VERSION="1"
 
 TMP=""
-LOCK_DIR="${PI_INSTALLER_LOCK_DIR:-/tmp/koompi-code-cli-install.lock.d}"
+LOCK_DIR="${KODE_INSTALLER_LOCK_DIR:-/tmp/koompi-code-cli-install.lock.d}"
 LOCKED=0
 MIGRATION_MOVED=0
 INSTALL_COMMITTED=0
@@ -356,10 +356,10 @@ fetch_url_to_file() {
   local url="$1"
   local output_path="$2"
   local context="${3:-resource}"
-  local connect_timeout="${PI_INSTALLER_CONNECT_TIMEOUT:-10}"
-  local max_time="${PI_INSTALLER_MAX_TIME:-180}"
-  local retries="${PI_INSTALLER_RETRIES:-2}"
-  local retry_delay="${PI_INSTALLER_RETRY_DELAY:-1}"
+  local connect_timeout="${KODE_INSTALLER_CONNECT_TIMEOUT:-10}"
+  local max_time="${KODE_INSTALLER_MAX_TIME:-180}"
+  local retries="${KODE_INSTALLER_RETRIES:-2}"
+  local retry_delay="${KODE_INSTALLER_RETRY_DELAY:-1}"
 
   if ! ensure_network_allowed "$url" "$context"; then
     return 1
@@ -367,19 +367,19 @@ fetch_url_to_file() {
 
   case "$context" in
     "agent skill")
-      connect_timeout="${PI_INSTALLER_AGENT_SKILL_CONNECT_TIMEOUT:-3}"
-      max_time="${PI_INSTALLER_AGENT_SKILL_MAX_TIME:-8}"
-      retries="${PI_INSTALLER_AGENT_SKILL_RETRIES:-0}"
+      connect_timeout="${KODE_INSTALLER_AGENT_SKILL_CONNECT_TIMEOUT:-3}"
+      max_time="${KODE_INSTALLER_AGENT_SKILL_MAX_TIME:-8}"
+      retries="${KODE_INSTALLER_AGENT_SKILL_RETRIES:-0}"
       ;;
     "release artifact")
-      connect_timeout="${PI_INSTALLER_ARTIFACT_CONNECT_TIMEOUT:-10}"
-      max_time="${PI_INSTALLER_ARTIFACT_MAX_TIME:-240}"
-      retries="${PI_INSTALLER_ARTIFACT_RETRIES:-2}"
+      connect_timeout="${KODE_INSTALLER_ARTIFACT_CONNECT_TIMEOUT:-10}"
+      max_time="${KODE_INSTALLER_ARTIFACT_MAX_TIME:-240}"
+      retries="${KODE_INSTALLER_ARTIFACT_RETRIES:-2}"
       ;;
     "release checksum manifest"|"checksum file"|"derived checksum file"|"sigstore bundle")
-      connect_timeout="${PI_INSTALLER_META_CONNECT_TIMEOUT:-5}"
-      max_time="${PI_INSTALLER_META_MAX_TIME:-20}"
-      retries="${PI_INSTALLER_META_RETRIES:-2}"
+      connect_timeout="${KODE_INSTALLER_META_CONNECT_TIMEOUT:-5}"
+      max_time="${KODE_INSTALLER_META_MAX_TIME:-20}"
+      retries="${KODE_INSTALLER_META_RETRIES:-2}"
       ;;
   esac
 
@@ -406,10 +406,10 @@ fetch_url_to_file() {
 fetch_url_to_stdout() {
   local url="$1"
   local context="${2:-resource}"
-  local connect_timeout="${PI_INSTALLER_CONNECT_TIMEOUT:-10}"
-  local max_time="${PI_INSTALLER_MAX_TIME:-180}"
-  local retries="${PI_INSTALLER_RETRIES:-2}"
-  local retry_delay="${PI_INSTALLER_RETRY_DELAY:-1}"
+  local connect_timeout="${KODE_INSTALLER_CONNECT_TIMEOUT:-10}"
+  local max_time="${KODE_INSTALLER_MAX_TIME:-180}"
+  local retries="${KODE_INSTALLER_RETRIES:-2}"
+  local retry_delay="${KODE_INSTALLER_RETRY_DELAY:-1}"
 
   if ! ensure_network_allowed "$url" "$context"; then
     return 1
@@ -417,14 +417,14 @@ fetch_url_to_stdout() {
 
   case "$context" in
     "agent skill")
-      connect_timeout="${PI_INSTALLER_AGENT_SKILL_CONNECT_TIMEOUT:-3}"
-      max_time="${PI_INSTALLER_AGENT_SKILL_MAX_TIME:-8}"
-      retries="${PI_INSTALLER_AGENT_SKILL_RETRIES:-0}"
+      connect_timeout="${KODE_INSTALLER_AGENT_SKILL_CONNECT_TIMEOUT:-3}"
+      max_time="${KODE_INSTALLER_AGENT_SKILL_MAX_TIME:-8}"
+      retries="${KODE_INSTALLER_AGENT_SKILL_RETRIES:-0}"
       ;;
     "release checksum manifest"|"checksum file"|"derived checksum file"|"sigstore bundle")
-      connect_timeout="${PI_INSTALLER_META_CONNECT_TIMEOUT:-5}"
-      max_time="${PI_INSTALLER_META_MAX_TIME:-20}"
-      retries="${PI_INSTALLER_META_RETRIES:-2}"
+      connect_timeout="${KODE_INSTALLER_META_CONNECT_TIMEOUT:-5}"
+      max_time="${KODE_INSTALLER_META_MAX_TIME:-20}"
+      retries="${KODE_INSTALLER_META_RETRIES:-2}"
       ;;
   esac
 
@@ -451,10 +451,10 @@ fetch_url_to_stdout() {
 fetch_effective_url() {
   local url="$1"
   local context="${2:-resource}"
-  local connect_timeout="${PI_INSTALLER_CONNECT_TIMEOUT:-10}"
-  local max_time="${PI_INSTALLER_MAX_TIME:-180}"
-  local retries="${PI_INSTALLER_RETRIES:-2}"
-  local retry_delay="${PI_INSTALLER_RETRY_DELAY:-1}"
+  local connect_timeout="${KODE_INSTALLER_CONNECT_TIMEOUT:-10}"
+  local max_time="${KODE_INSTALLER_MAX_TIME:-180}"
+  local retries="${KODE_INSTALLER_RETRIES:-2}"
+  local retry_delay="${KODE_INSTALLER_RETRY_DELAY:-1}"
 
   if ! ensure_network_allowed "$url" "$context"; then
     return 1
@@ -462,14 +462,14 @@ fetch_effective_url() {
 
   case "$context" in
     "agent skill")
-      connect_timeout="${PI_INSTALLER_AGENT_SKILL_CONNECT_TIMEOUT:-3}"
-      max_time="${PI_INSTALLER_AGENT_SKILL_MAX_TIME:-8}"
-      retries="${PI_INSTALLER_AGENT_SKILL_RETRIES:-0}"
+      connect_timeout="${KODE_INSTALLER_AGENT_SKILL_CONNECT_TIMEOUT:-3}"
+      max_time="${KODE_INSTALLER_AGENT_SKILL_MAX_TIME:-8}"
+      retries="${KODE_INSTALLER_AGENT_SKILL_RETRIES:-0}"
       ;;
     "release checksum manifest"|"checksum file"|"derived checksum file"|"sigstore bundle")
-      connect_timeout="${PI_INSTALLER_META_CONNECT_TIMEOUT:-5}"
-      max_time="${PI_INSTALLER_META_MAX_TIME:-20}"
-      retries="${PI_INSTALLER_META_RETRIES:-2}"
+      connect_timeout="${KODE_INSTALLER_META_CONNECT_TIMEOUT:-5}"
+      max_time="${KODE_INSTALLER_META_MAX_TIME:-20}"
+      retries="${KODE_INSTALLER_META_RETRIES:-2}"
       ;;
   esac
 
@@ -1008,7 +1008,7 @@ detect_platform() {
   EXE_EXT=""
 
   if [ "$OS" = "linux" ]; then
-    if [ "${PI_INSTALLER_TEST_FORCE_WSL:-0}" = "1" ] \
+    if [ "${KODE_INSTALLER_TEST_FORCE_WSL:-0}" = "1" ] \
       || grep -qi microsoft /proc/version 2>/dev/null \
       || grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
       WSL_DETECTED=1
@@ -1162,7 +1162,7 @@ validate_options() {
     0|1)
       ;;
     *)
-      err "PI_INSTALLER_RETAIN_TEMP must be 0 or 1"
+      err "KODE_INSTALLER_RETAIN_TEMP must be 0 or 1"
       exit 1
       ;;
   esac
@@ -1171,13 +1171,13 @@ validate_options() {
     /*)
       ;;
     *)
-      err "PI_INSTALLER_LOCK_DIR must be an absolute path"
+      err "KODE_INSTALLER_LOCK_DIR must be an absolute path"
       exit 1
       ;;
   esac
   case "$LOCK_DIR" in
     /|*/|*//*|*/./*|*/.|*/../*|*/..|*$'\t'*|*$'\n'*|*$'\r'*)
-      err "PI_INSTALLER_LOCK_DIR is unsafe"
+      err "KODE_INSTALLER_LOCK_DIR is unsafe"
       exit 1
       ;;
   esac
@@ -2042,8 +2042,8 @@ install_completions_for_shell() {
   fi
 
   local subcommand=""
-  local probe_timeout="${PI_INSTALLER_COMPLETION_PROBE_TIMEOUT:-3}"
-  local generation_timeout="${PI_INSTALLER_COMPLETION_CMD_TIMEOUT:-10}"
+  local probe_timeout="${KODE_INSTALLER_COMPLETION_PROBE_TIMEOUT:-3}"
+  local generation_timeout="${KODE_INSTALLER_COMPLETION_CMD_TIMEOUT:-10}"
 
   # Prefer static command discovery from top-level --help (safe, fast path).
   # If that fails, fall back to legacy subcommand probes guarded by a timeout.

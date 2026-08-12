@@ -60,10 +60,10 @@ pi config show | grep -A 20 extensions.policy
 ### Symptom: "Allow Always" not persisting
 
 **Cause**: The `PermissionStore` writes to
-`~/.pi/agent/extension_permissions.json`. If this file is unwritable or
+`~/.kode/agent/extension_permissions.json`. If this file is unwritable or
 the directory doesn't exist, decisions are session-only.
 
-**Fix**: Ensure `~/.pi/agent/` exists and is writable.
+**Fix**: Ensure `~/.kode/agent/` exists and is writable.
 
 ### Policy Precedence (for debugging)
 
@@ -100,7 +100,7 @@ descriptor).
 **Cause**: `JsExtensionLoadSpec::from_entry_path()` cannot find the file.
 
 **Fix**:
-- Verify the extension is installed: `ls ~/.pi/agent/extensions/`
+- Verify the extension is installed: `ls ~/.kode/agent/extensions/`
 - Check that `extension.json` exists in the extension directory
 - Ensure `entry_path` in `extension.json` points to a valid `.js`/`.ts`
 
@@ -173,9 +173,9 @@ classification.
 differs between TS oracle and Rust runtime.
 
 **Fix**:
-- Set `PI_TEST_MODE=1` to stabilize timestamps and CWD
-- Set `PI_CONFORMANCE_SEED=42` for deterministic conformance diffs
-- Set `PI_EXT_RANDOM_SEED=42 PI_EXT_RANDOM_N=1` for bounded random-trial smoke runs
+- Set `KODE_TEST_MODE=1` to stabilize timestamps and CWD
+- Set `KODE_CONFORMANCE_SEED=42` for deterministic conformance diffs
+- Set `KODE_EXT_RANDOM_SEED=42 KODE_EXT_RANDOM_N=1` for bounded random-trial smoke runs
 - Use path canonicalization assertions (suffix matching, not exact)
 - Check `docs/extension-architecture.md` for normalization details
 
@@ -186,7 +186,7 @@ per extension. Complex extensions or slow machines may exceed this.
 
 **Fix**:
 ```bash
-export PI_TS_ORACLE_TIMEOUT_SECS=60
+export KODE_TS_ORACLE_TIMEOUT_SECS=60
 ```
 
 The harness includes retry logic for flaky oracle timeouts.

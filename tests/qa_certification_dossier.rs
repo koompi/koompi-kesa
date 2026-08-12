@@ -31,7 +31,7 @@ const CANONICAL_223_FAILURE_TRIO: [&str; 3] = [
     "npm/aliou-pi-synthetic",
     "npm/pi-package-test",
 ];
-const GENERATE_QA_CERTIFICATION_DOSSIER_ENV: &str = "PI_GENERATE_QA_CERTIFICATION_DOSSIER";
+const GENERATE_QA_CERTIFICATION_DOSSIER_ENV: &str = "KODE_GENERATE_QA_CERTIFICATION_DOSSIER";
 
 fn qa_certification_dossier_generation_requested() -> bool {
     let raw = std::env::var(GENERATE_QA_CERTIFICATION_DOSSIER_ENV).ok();

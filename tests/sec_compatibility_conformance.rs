@@ -17,7 +17,7 @@
 //!   cargo test --test sec_compatibility_conformance -- --nocapture
 //!
 //! Regenerate the tracked verdict explicitly with:
-//!   PI_GENERATE_SEC_CONFORMANCE_VERDICT=1 cargo test --test sec_compatibility_conformance generate_sec_conformance_verdict -- --exact --nocapture
+//!   KODE_GENERATE_SEC_CONFORMANCE_VERDICT=1 cargo test --test sec_compatibility_conformance generate_sec_conformance_verdict -- --exact --nocapture
 
 mod common;
 
@@ -29,7 +29,7 @@ use kode::extensions::{
 };
 use std::collections::BTreeMap;
 
-const GENERATE_SEC_CONFORMANCE_VERDICT_ENV: &str = "PI_GENERATE_SEC_CONFORMANCE_VERDICT";
+const GENERATE_SEC_CONFORMANCE_VERDICT_ENV: &str = "KODE_GENERATE_SEC_CONFORMANCE_VERDICT";
 
 fn sec_conformance_verdict_generation_enabled(raw: Option<&str>) -> bool {
     raw == Some("1")

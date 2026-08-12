@@ -15,7 +15,7 @@ A [pi](https://github.com/badlogic/pi-mono) extension that provides tools for se
 pi install npm:pi-threads
 ```
 
-Or add to your `~/.pi/agent/settings.json`:
+Or add to your `~/.kode/agent/settings.json`:
 
 ```json
 {

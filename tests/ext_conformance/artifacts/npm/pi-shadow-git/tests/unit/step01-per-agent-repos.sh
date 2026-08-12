@@ -3,13 +3,13 @@
 set -e
 
 echo "=== STEP-01 UNIT TESTS ==="
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 
 # UT-01-01: Agent has its own .git directory
 echo -n "UT-01-01: Agent has own .git directory... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 
@@ -26,7 +26,7 @@ rm -rf "$TEST_WS"
 echo -n "UT-01-02: .gitignore excludes audit.jsonl... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 
@@ -48,7 +48,7 @@ mkdir -p agents/test1
 git add -A && git commit -m "init" >/dev/null 2>&1
 ROOT_BEFORE=$(git rev-parse HEAD)
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'hello' to output/test.txt" 2>&1 >/dev/null || true
 

@@ -25,11 +25,11 @@ Once installed, the extension and skill are automatically loaded. No manual setu
 
 ```bash
 # Clone
-git clone https://github.com/EmZod/pi-subagent-with-logging.git ~/.pi/packages/shadow-git
+git clone https://github.com/EmZod/pi-subagent-with-logging.git ~/.kode/packages/shadow-git
 
 # Add to settings.json
-# In ~/.pi/agent/settings.json, add to "packages" array:
-# "~/.pi/packages/shadow-git"
+# In ~/.kode/agent/settings.json, add to "packages" array:
+# "~/.kode/packages/shadow-git"
 ```
 
 ## What's Included
@@ -75,8 +75,8 @@ Research X and produce findings.
 EOF
 
 # 3. Spawn agent with shadow-git
-PI_WORKSPACE_ROOT="$WORKSPACE" \
-PI_AGENT_NAME="scout1" \
+KODE_WORKSPACE_ROOT="$WORKSPACE" \
+KODE_AGENT_NAME="scout1" \
 pi --max-turns 20 'Read plan.md and execute it.'
 
 # 4. Open Mission Control to monitor
@@ -125,11 +125,11 @@ Monitor multiple agents in real-time with the Mission Control TUI:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `PI_WORKSPACE_ROOT` | Yes* | Root of the shadow git workspace |
-| `PI_AGENT_NAME` | For logging | Agent name for commits and paths |
-| `PI_TARGET_REPOS` | No | Comma-separated target repo paths |
-| `PI_TARGET_BRANCH` | No | Branch name for commit linkage |
-| `PI_SHADOW_GIT_DISABLED` | No | Set to `1` to disable (killswitch) |
+| `KODE_WORKSPACE_ROOT` | Yes* | Root of the shadow git workspace |
+| `KODE_AGENT_NAME` | For logging | Agent name for commits and paths |
+| `KODE_TARGET_REPOS` | No | Comma-separated target repo paths |
+| `KODE_TARGET_BRANCH` | No | Branch name for commit linkage |
+| `KODE_SHADOW_GIT_DISABLED` | No | Set to `1` to disable (killswitch) |
 
 *Required for both Mission Control and logging
 
@@ -139,20 +139,20 @@ For detailed orchestration patterns, see the included skill documentation. Key p
 
 ### Blocking (Sequential)
 ```bash
-PI_WORKSPACE_ROOT="$WORKSPACE" PI_AGENT_NAME="scout" \
+KODE_WORKSPACE_ROOT="$WORKSPACE" KODE_AGENT_NAME="scout" \
 pi --max-turns 20 --print 'Read plan.md and execute.'
 ```
 
 ### Non-blocking (Parallel with tmux)
 ```bash
 tmux new-session -d -s scout1 \
-  "PI_WORKSPACE_ROOT='$WORKSPACE' PI_AGENT_NAME='scout1' \
+  "KODE_WORKSPACE_ROOT='$WORKSPACE' KODE_AGENT_NAME='scout1' \
    pi --max-turns 30 'Read plan.md and execute.'"
 ```
 
 ### Non-blocking (Headless)
 ```bash
-(PI_WORKSPACE_ROOT="$WORKSPACE" PI_AGENT_NAME="scout1" \
+(KODE_WORKSPACE_ROOT="$WORKSPACE" KODE_AGENT_NAME="scout1" \
  pi --max-turns 20 --print 'Read plan.md and execute.') &
 ```
 
@@ -222,7 +222,7 @@ During an incident, disable logging instantly:
 
 **Environment variable:**
 ```bash
-PI_SHADOW_GIT_DISABLED=1 pi ...
+KODE_SHADOW_GIT_DISABLED=1 pi ...
 ```
 
 ## License

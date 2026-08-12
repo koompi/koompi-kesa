@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/cac6a17a-1eeb-4dde-9818-cdf85d8ea98f
 pi install npm:pi-web-access
 ```
 
-If you're not signed into Chrome, or prefer a different provider, add API keys to `~/.pi/web-search.json`:
+If you're not signed into Chrome, or prefer a different provider, add API keys to `~/.kode/web-search.json`:
 
 ```json
 {
@@ -204,7 +204,7 @@ Toggle with **Ctrl+Shift+W** to see live request/response activity:
 
 ## Configuration
 
-All config lives in `~/.pi/web-search.json`. Every field is optional.
+All config lives in `~/.kode/web-search.json`. Every field is optional.
 
 ```json
 {

@@ -120,7 +120,7 @@ test_make_install_skills() {
     fi
 
     local pi_skills_count
-    pi_skills_count=$(find "$SANDBOX_DIR/.pi/agent/skills" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+    pi_skills_count=$(find "$SANDBOX_DIR/.kode/agent/skills" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
     if [ "$pi_skills_count" -gt 0 ]; then
         log_info "PASS: Pi skills installed ($pi_skills_count directories)"
         TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -144,7 +144,7 @@ test_make_install_extensions() {
 
     # Check if extensions directory has any extensions
     local extensions_count
-    extensions_count=$(find "$SANDBOX_DIR/.pi/agent/extensions" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+    extensions_count=$(find "$SANDBOX_DIR/.kode/agent/extensions" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
     if [ "$extensions_count" -gt 0 ]; then
         log_info "PASS: Pi extensions installed ($extensions_count directories)"
         TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -163,8 +163,8 @@ test_make_install() {
     # Clean sandbox first
     rm -rf "$SANDBOX_DIR/.claude/skills"/* 2>/dev/null || true
     rm -rf "$SANDBOX_DIR/.codex/skills"/* 2>/dev/null || true
-    rm -rf "$SANDBOX_DIR/.pi/agent/skills"/* 2>/dev/null || true
-    rm -rf "$SANDBOX_DIR/.pi/agent/extensions"/* 2>/dev/null || true
+    rm -rf "$SANDBOX_DIR/.kode/agent/skills"/* 2>/dev/null || true
+    rm -rf "$SANDBOX_DIR/.kode/agent/extensions"/* 2>/dev/null || true
 
     # Run full install with sandbox HOME
     local output

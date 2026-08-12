@@ -396,7 +396,7 @@ impl Default for AmacBatchExecutorConfig {
 impl AmacBatchExecutorConfig {
     #[must_use]
     pub fn from_env() -> Self {
-        let enabled = std::env::var("PI_HOSTCALL_AMAC")
+        let enabled = std::env::var("KODE_HOSTCALL_AMAC")
             .ok()
             .as_deref()
             .is_none_or(|value| {
@@ -405,22 +405,22 @@ impl AmacBatchExecutorConfig {
                     "0" | "false" | "off" | "disabled"
                 )
             });
-        let min_batch_size = std::env::var("PI_HOSTCALL_AMAC_MIN_BATCH")
+        let min_batch_size = std::env::var("KODE_HOSTCALL_AMAC_MIN_BATCH")
             .ok()
             .and_then(|raw| raw.trim().parse::<usize>().ok())
             .unwrap_or(AMAC_MIN_BATCH_SIZE)
             .max(2);
-        let max_interleave_width = std::env::var("PI_HOSTCALL_AMAC_MAX_WIDTH")
+        let max_interleave_width = std::env::var("KODE_HOSTCALL_AMAC_MAX_WIDTH")
             .ok()
             .and_then(|raw| raw.trim().parse::<usize>().ok())
             .unwrap_or(AMAC_MAX_INTERLEAVE_WIDTH)
             .max(2);
-        let stall_threshold_ns = std::env::var("PI_HOSTCALL_AMAC_STALL_THRESHOLD_NS")
+        let stall_threshold_ns = std::env::var("KODE_HOSTCALL_AMAC_STALL_THRESHOLD_NS")
             .ok()
             .and_then(|raw| raw.trim().parse::<u64>().ok())
             .unwrap_or(AMAC_STALL_THRESHOLD_NS)
             .max(1);
-        let stall_ratio_threshold = std::env::var("PI_HOSTCALL_AMAC_STALL_RATIO_THRESHOLD")
+        let stall_ratio_threshold = std::env::var("KODE_HOSTCALL_AMAC_STALL_RATIO_THRESHOLD")
             .ok()
             .and_then(|raw| raw.trim().parse::<u64>().ok())
             .unwrap_or(AMAC_STALL_RATIO_THRESHOLD)

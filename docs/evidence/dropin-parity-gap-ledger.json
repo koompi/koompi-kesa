@@ -359,9 +359,9 @@
         "src/providers/gemini.rs",
         "src/http/client.rs"
       ],
-      "final_state": "PI_AI_ANTIGRAVITY_VERSION is classified as the google-antigravity user-agent version component for Google CLI/Antigravity routing.",
+      "final_state": "KODE_AI_ANTIGRAVITY_VERSION is classified as the google-antigravity user-agent version component for Google CLI/Antigravity routing.",
       "closure_bead": "bd-uuf2z",
-      "closure_reason": "DROPIN-142 config/env parity closure covers representative env precedence, while current provider/http code consumes PI_AI_ANTIGRAVITY_VERSION in the Antigravity request path.",
+      "closure_reason": "DROPIN-142 config/env parity closure covers representative env precedence, while current provider/http code consumes KODE_AI_ANTIGRAVITY_VERSION in the Antigravity request path.",
       "owner_issue_primary": "bd-uuf2z",
       "owner_issue_supporting": [
         "bd-3cqgd",
@@ -373,7 +373,7 @@
         "Document final semantics and migration notes."
       ],
       "verification_evidence": [
-        "src/providers/gemini.rs reads PI_AI_ANTIGRAVITY_VERSION for google-antigravity request user_agent formatting",
+        "src/providers/gemini.rs reads KODE_AI_ANTIGRAVITY_VERSION for google-antigravity request user_agent formatting",
         "src/http/client.rs antigravity_user_agent_format and antigravity_user_agent_in_request_headers cover request-header behavior",
         "bd-uuf2z close evidence: config_precedence suite 105/105 passing"
       ],

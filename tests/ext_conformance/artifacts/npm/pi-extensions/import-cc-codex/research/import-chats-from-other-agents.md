@@ -2,7 +2,7 @@
 
 ## Pi session format and storage
 
-- **Location:** `~/.pi/agent/sessions/--<cwd>--/<timestamp>_<uuid>.jsonl` (cwd is encoded by replacing `/` with `-`).
+- **Location:** `~/.kode/agent/sessions/--<cwd>--/<timestamp>_<uuid>.jsonl` (cwd is encoded by replacing `/` with `-`).
 - **Format:** JSONL with a header line (`type: "session"`, `version: 3`, `id`, `timestamp`, `cwd`, optional `parentSession`).
 - **Entries:** Each entry is a `SessionEntry` with `id`, `parentId`, `timestamp`. Messages are stored as:
   - `user` message with `content` (string or `[{type:"text"|"image", ...}]`) and `timestamp` (ms).
@@ -50,7 +50,7 @@
 - **Make imports obvious:**
   - Add a `session_info` entry like `"Imported from Claude Code"` / `"Imported from Codex"` for `/resume` visibility.
   - Optionally add a `custom` entry (non‑LLM) to store source metadata (file path, original session ID, original tool/event IDs).
-- **Resume + share support:** as long as the file is a valid Pi session JSONL in `~/.pi/agent/sessions`, `/resume`, `/tree`, `/export`, and `/share` should work without special casing.
+- **Resume + share support:** as long as the file is a valid Pi session JSONL in `~/.kode/agent/sessions`, `/resume`, `/tree`, `/export`, and `/share` should work without special casing.
 
 ## Open gaps to resolve if we implement
 
@@ -78,7 +78,7 @@
 - Optional user-only histories (`~/.claude/history.jsonl`, `~/.codex/history.jsonl`) are out of scope for v0.
 
 ### Output
-- A Pi session JSONL file in `~/.pi/agent/sessions/--<cwd>--/` with version `3` header.
+- A Pi session JSONL file in `~/.kode/agent/sessions/--<cwd>--/` with version `3` header.
 - A `session_info` entry naming the source (e.g., "Imported from Claude Code").
 - A `custom` entry with import metadata:
   - `customType: "import"`

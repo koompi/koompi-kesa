@@ -197,7 +197,7 @@
 |---------|--------|---------------|-------|-------|
 | Extension discovery (paths + packages) | ✅ | `src/package_manager.rs`, `src/resources.rs` | Unit | Resolves `extensions/` sources from settings/auto-discovery/packages/CLI |
 | Extension protocol (v1) + JSON schema | ✅ | `src/extensions.rs`, `docs/schema/extension_protocol.json` | Unit + `tests/extensions_manifest.rs` | `ExtensionMessage::parse_and_validate` + schema compilation tests |
-| Compatibility scanner (Node API audit) | ✅ | `src/extensions.rs`, `src/package_manager.rs` | `tests/ext_conformance_artifacts.rs` | Emits compat ledgers when `PI_EXT_COMPAT_SCAN` is enabled |
+| Compatibility scanner (Node API audit) | ✅ | `src/extensions.rs`, `src/package_manager.rs` | `tests/ext_conformance_artifacts.rs` | Emits compat ledgers when `KODE_EXT_COMPAT_SCAN` is enabled |
 | Capability manifest + policy | ✅ | `src/extensions.rs` | Unit + `tests/extensions_manifest.rs` | `strict/prompt/permissive` + scoped manifests (`pi.ext.cap.v1`) |
 | FS connector (scoped, anti-escape) | ✅ | `src/extensions.rs` | Unit | Path traversal + symlink escape hardening |
 | HTTP connector (policy-gated) | ✅ | `src/connectors/http.rs` | Unit | TLS/allowlist/denylist/size/timeouts |
@@ -222,7 +222,7 @@
 | Image settings | ✅ | `src/config.rs` | - | auto_resize, block |
 | Terminal settings | ✅ | `src/config.rs` | - | show_images, clear |
 | Thinking budgets | ✅ | `src/config.rs` | - | Per-level overrides |
-| Environment variables | ✅ | `src/config.rs` | - | PI_CONFIG_PATH/PI_CODING_AGENT_DIR/PI_PACKAGE_DIR/PI_SESSIONS_DIR + provider API keys |
+| Environment variables | ✅ | `src/config.rs` | - | KODE_CONFIG_PATH/KODE_CODING_AGENT_DIR/KODE_PACKAGE_DIR/KODE_SESSIONS_DIR + provider API keys |
 
 ---
 

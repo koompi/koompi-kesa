@@ -333,7 +333,7 @@ impl Provider for GeminiProvider {
                 .header("client-metadata", client_metadata);
 
             if is_antigravity {
-                let antigravity_version = std::env::var("PI_AI_ANTIGRAVITY_VERSION")
+                let antigravity_version = std::env::var("KODE_AI_ANTIGRAVITY_VERSION")
                     .unwrap_or_else(|_| pi_version.to_string());
                 request = request.header(
                     "User-Agent",

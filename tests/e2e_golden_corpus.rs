@@ -109,19 +109,19 @@ impl GoldenTestHarness {
         base_env.insert("HOME".to_string(), env_root.display().to_string());
         base_env.insert("USERPROFILE".to_string(), env_root.display().to_string());
         base_env.insert(
-            "PI_CODING_AGENT_DIR".to_string(),
+            "KODE_CODING_AGENT_DIR".to_string(),
             env_root.join("agent").display().to_string(),
         );
         base_env.insert(
-            "PI_CONFIG_PATH".to_string(),
+            "KODE_CONFIG_PATH".to_string(),
             env_root.join("settings.json").display().to_string(),
         );
         base_env.insert(
-            "PI_SESSIONS_DIR".to_string(),
+            "KODE_SESSIONS_DIR".to_string(),
             env_root.join("sessions").display().to_string(),
         );
         base_env.insert(
-            "PI_PACKAGE_DIR".to_string(),
+            "KODE_PACKAGE_DIR".to_string(),
             env_root.join("packages").display().to_string(),
         );
         base_env.insert("npm_config_audit".to_string(), "false".to_string());
@@ -219,9 +219,9 @@ impl GoldenTestHarness {
             "VCR_CASSETTE_DIR".to_string(),
             cassette_dir.display().to_string(),
         );
-        env.insert("PI_VCR_TEST_NAME".to_string(), cassette_name.to_string());
+        env.insert("KODE_VCR_TEST_NAME".to_string(), cassette_name.to_string());
         env.insert("ANTHROPIC_API_KEY".to_string(), "test-vcr-key".to_string());
-        env.insert("PI_TEST_MODE".to_string(), "1".to_string());
+        env.insert("KODE_TEST_MODE".to_string(), "1".to_string());
         env.insert("VCR_DEBUG_BODY".to_string(), "1".to_string());
     }
 
@@ -243,8 +243,8 @@ impl GoldenTestHarness {
         command.env_remove("GROQ_API_KEY");
         command.env_remove("KIMI_API_KEY");
         command.env_remove("AZURE_OPENAI_API_KEY");
-        command.env_remove("PI_OPENROUTER_API_KEY");
-        command.env_remove("PI_AWS_ACCESS_KEY_ID");
+        command.env_remove("KODE_OPENROUTER_API_KEY");
+        command.env_remove("KODE_AWS_ACCESS_KEY_ID");
         command
             .args(args)
             .envs(env)

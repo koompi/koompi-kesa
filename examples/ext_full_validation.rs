@@ -471,10 +471,10 @@ fn run_commands(project_root: &Path, args: &Args, stages: &mut Vec<StageResult>)
 
     for shard_index in 0..args.shards {
         let env = vec![
-            ("PI_SHARD_INDEX".to_string(), shard_index.to_string()),
-            ("PI_SHARD_TOTAL".to_string(), args.shards.to_string()),
+            ("KODE_SHARD_INDEX".to_string(), shard_index.to_string()),
+            ("KODE_SHARD_TOTAL".to_string(), args.shards.to_string()),
             (
-                "PI_SHARD_PARALLELISM".to_string(),
+                "KODE_SHARD_PARALLELISM".to_string(),
                 args.shard_parallelism.to_string(),
             ),
         ];

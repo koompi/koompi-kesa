@@ -13,7 +13,7 @@ A file browser extension for pi that lets you select files and directories and p
 
 1. Copy the extension into your pi extensions directory:
    ```bash
-   cp -R /path/to/pi-extensions/codemap ~/.pi/agent/extensions/codemap
+   cp -R /path/to/pi-extensions/codemap ~/.kode/agent/extensions/codemap
    ```
 2. Restart pi (or reload extensions).
 
@@ -101,7 +101,7 @@ The search auto-detects the mode based on your query:
 
 ## Configuration
 
-Create `~/.pi/agent/extensions/codemap/config.json` to set defaults:
+Create `~/.kode/agent/extensions/codemap/config.json` to set defaults:
 
 ```json
 {
@@ -123,7 +123,7 @@ Create `~/.pi/agent/extensions/codemap/config.json` to set defaults:
 
 ## Theming
 
-Create `~/.pi/agent/extensions/codemap/theme.json` to customize colors:
+Create `~/.kode/agent/extensions/codemap/theme.json` to customize colors:
 
 ```json
 {

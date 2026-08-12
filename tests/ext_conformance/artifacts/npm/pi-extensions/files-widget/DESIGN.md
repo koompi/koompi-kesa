@@ -29,7 +29,7 @@ When working with coding agents in Pi:
 ## Architecture
 
 ### Extension Type
-Pi extension (`~/.pi/agent/extensions/editor/index.ts`) using:
+Pi extension (`~/.kode/agent/extensions/editor/index.ts`) using:
 - `ctx.ui.setWidget()` for the file browser panel
 - `ctx.ui.custom()` for the file viewer modal
 - `pi.registerShortcut()` for hotkeys

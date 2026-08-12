@@ -3,7 +3,7 @@
 //! Loads the inclusion list and API matrix, builds the full conformance matrix
 //! via `build_test_plan()`, and validates coverage against requirements.
 //! Ordinary runs verify `docs/extension-conformance-test-plan.json`; set
-//! `PI_GENERATE_CONFORMANCE_TEST_PLAN=1` to regenerate it explicitly.
+//! `KODE_GENERATE_CONFORMANCE_TEST_PLAN=1` to regenerate it explicitly.
 
 use kode::extension_conformance_matrix::{
     ApiMatrix, ConformanceTestPlan, HostCapability, build_test_plan,
@@ -710,7 +710,7 @@ fn generate_conformance_test_plan() {
     let json = serde_json::to_string_pretty(&plan).expect("serialize plan");
     let output_path = repo_root.join("docs/extension-conformance-test-plan.json");
     let generate = matches!(
-        std::env::var("PI_GENERATE_CONFORMANCE_TEST_PLAN").as_deref(),
+        std::env::var("KODE_GENERATE_CONFORMANCE_TEST_PLAN").as_deref(),
         Ok("1")
     );
     if generate {
@@ -740,7 +740,7 @@ fn generate_conformance_test_plan() {
         assert_eq!(
             committed, computed,
             "committed conformance test plan is stale; regenerate explicitly with \
-             PI_GENERATE_CONFORMANCE_TEST_PLAN=1 cargo test \
+             KODE_GENERATE_CONFORMANCE_TEST_PLAN=1 cargo test \
              --test ext_conformance_matrix generate_conformance_test_plan -- --exact"
         );
     }

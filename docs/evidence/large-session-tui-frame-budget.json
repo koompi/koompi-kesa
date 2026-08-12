@@ -6,7 +6,7 @@
   "frameBudgetUs": 16667,
   "telemetry": {
     "runtimeSchema": "pi.tui.frame_budget.v1",
-    "emission": "PI_PERF_TELEMETRY gated rolling snapshots plus test-local snapshots",
+    "emission": "KODE_PERF_TELEMETRY gated rolling snapshots plus test-local snapshots",
     "redaction": {
       "payloadsIncluded": false,
       "omittedFields": [

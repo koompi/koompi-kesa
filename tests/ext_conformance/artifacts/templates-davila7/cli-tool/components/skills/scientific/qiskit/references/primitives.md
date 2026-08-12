@@ -76,7 +76,7 @@ qc.measure_all()
 
 # Run with parameter values
 sampler = StatevectorSampler()
-param_values = [[0], [np.pi/4], [np.pi/2]]
+param_values = [[0], [np.kode/4], [np.kode/2]]
 result = sampler.run([(qc, param_values)], shots=1024).result()
 ```
 
@@ -138,7 +138,7 @@ observable = SparsePauliOp(["Z"])
 
 # Run with multiple parameter values
 estimator = StatevectorEstimator()
-param_values = [[0], [np.pi/4], [np.pi/2], [np.pi]]
+param_values = [[0], [np.kode/4], [np.kode/2], [np.pi]]
 result = estimator.run([(qc, observable, param_values)]).result()
 ```
 

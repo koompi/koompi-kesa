@@ -17,7 +17,7 @@ pi install npm:pi-repoprompt-mcp
 
 From the dot314 git bundle (filtered install):
 
-Add to `~/.pi/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
+Add to `~/.kode/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
 
 ```json
 {
@@ -57,7 +57,7 @@ rp({ call: "read_file", args: { path: "src/main.ts" } })
 
 ## Configuration
 
-Create `~/.pi/agent/extensions/repoprompt-mcp.json`:
+Create `~/.kode/agent/extensions/repoprompt-mcp.json`:
 
 ```json
 {
@@ -77,6 +77,6 @@ If the MCP server is not auto-detected, set `command` explicitly:
 }
 ```
 
-(Alternatively, configure RepoPrompt in `~/.pi/agent/mcp.json`)
+(Alternatively, configure RepoPrompt in `~/.kode/agent/mcp.json`)
 
 For more detail, see: `extensions/repoprompt-mcp/README.md` in the dot314 repo.

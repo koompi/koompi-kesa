@@ -92,7 +92,7 @@ Run it and find your chat ID in the output.
 
 ### Option A: Using Settings File
 
-Edit your `settings.json` file (global: `~/.pi/agent/settings.json`, or project: `.pi/settings.json`):
+Edit your `settings.json` file (global: `~/.kode/agent/settings.json`, or project: `.kode/settings.json`):
 
 ```json
 {
@@ -123,8 +123,8 @@ export TELEGRAM_BOT_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
 export TELEGRAM_CHAT_ID="987654321"
 
 # Or use PI_ prefix
-export PI_TELEGRAM_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
-export PI_TELEGRAM_CHAT_ID="987654321"
+export KODE_TELEGRAM_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
+export KODE_TELEGRAM_CHAT_ID="987654321"
 
 pi
 ```
@@ -132,8 +132,8 @@ pi
 For permanent configuration, add to your shell profile (e.g., `~/.bashrc`, `~/.zshrc`):
 
 ```bash
-export PI_TELEGRAM_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
-export PI_TELEGRAM_CHAT_ID="987654321"
+export KODE_TELEGRAM_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
+export KODE_TELEGRAM_CHAT_ID="987654321"
 ```
 
 ## Step 4: Test the Setup
@@ -294,7 +294,7 @@ To temporarily disable notifications without changing settings:
 Or set environment variable:
 
 ```bash
-export PI_TELEGRAM_BOT_TOKEN=""
+export KODE_TELEGRAM_BOT_TOKEN=""
 ```
 
 ## Additional Resources

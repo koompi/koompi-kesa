@@ -284,7 +284,7 @@ impl Provider for OpenAIResponsesProvider {
                 .header("chatgpt-account-id", account_id)
                 .header("OpenAI-Beta", "responses=experimental")
                 .header("originator", "pi")
-                .header("User-Agent", "koompi_code_cli");
+                .header("User-Agent", "koompi-code-cli");
             if let Some(session_id) = &options.session_id {
                 request = request.header("session_id", session_id);
             }

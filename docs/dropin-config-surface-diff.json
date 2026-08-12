@@ -6,19 +6,19 @@
   "status": "pass",
   "upstream_baseline": {
     "source": "legacy_pi_mono_code/pi-mono/packages/coding-agent/src/core/settings-manager.ts",
-    "merge_semantics": "project .pi/settings.json recursively overrides global settings; arrays and primitive values replace rather than concatenate"
+    "merge_semantics": "project .kode/settings.json recursively overrides global settings; arrays and primitive values replace rather than concatenate"
   },
   "rust_implementation": {
     "source": "src/config.rs",
-    "merge_semantics": "Config::load_with_roots loads global settings.json, then project .pi/settings.json, and Config::merge recursively merges nested settings with project precedence",
-    "override_semantics": "PI_CONFIG_PATH maps to Config::load_with_roots(Some(path), ...) and loads only that file, skipping global/project merge"
+    "merge_semantics": "Config::load_with_roots loads global settings.json, then project .kode/settings.json, and Config::merge recursively merges nested settings with project precedence",
+    "override_semantics": "KODE_CONFIG_PATH maps to Config::load_with_roots(Some(path), ...) and loads only that file, skipping global/project merge"
   },
   "precedence_model": [
     "CLI runtime overrides",
     "environment runtime overrides",
-    "PI_CONFIG_PATH single-file override, when set",
-    "project .pi/settings.json",
-    "global ~/.pi/agent/settings.json",
+    "KODE_CONFIG_PATH single-file override, when set",
+    "project .kode/settings.json",
+    "global ~/.kode/agent/settings.json",
     "built-in defaults"
   ],
   "legacy_settings_fields": [
@@ -49,7 +49,7 @@
     { "path": "themes", "rust_path": "themes", "default": [], "status": "pass" },
     { "path": "enableSkillCommands", "rust_path": "enable_skill_commands", "default": true, "status": "pass" },
     { "path": "terminal.showImages", "rust_path": "terminal.show_images", "default": true, "status": "pass" },
-    { "path": "terminal.clearOnShrink", "rust_path": "terminal.clear_on_shrink", "default": false, "env_fallback": "PI_CLEAR_ON_SHRINK=1", "status": "pass" },
+    { "path": "terminal.clearOnShrink", "rust_path": "terminal.clear_on_shrink", "default": false, "env_fallback": "KODE_CLEAR_ON_SHRINK=1", "status": "pass" },
     { "path": "images.autoResize", "rust_path": "images.auto_resize", "default": true, "status": "pass" },
     { "path": "images.blockImages", "rust_path": "images.block_images", "default": false, "status": "pass" },
     { "path": "enabledModels", "rust_path": "enabled_models", "status": "pass" },
@@ -61,7 +61,7 @@
     { "path": "thinkingBudgets.xhigh", "rust_path": "thinking_budgets.xhigh", "default": 32768, "status": "pass", "note": "Rust extension for the xhigh thinking level; now documented and defaulted consistently." },
     { "path": "editorPaddingX", "rust_path": "editor_padding_x", "default": 0, "status": "pass" },
     { "path": "autocompleteMaxVisible", "rust_path": "autocomplete_max_visible", "default": 5, "status": "pass" },
-    { "path": "showHardwareCursor", "rust_path": "show_hardware_cursor", "default": false, "env_fallback": "PI_HARDWARE_CURSOR=1", "status": "pass" },
+    { "path": "showHardwareCursor", "rust_path": "show_hardware_cursor", "default": false, "env_fallback": "KODE_HARDWARE_CURSOR=1", "status": "pass" },
     { "path": "markdown.codeBlockIndent", "rust_path": "markdown.code_block_indent", "default": 2, "status": "pass", "note": "Rust accepts legacy string indentation and numeric indentation, storing the effective space count." }
   ],
   "rust_only_extensions": [
@@ -96,7 +96,7 @@
   "evidence": [
     {
       "path": "tests/dropin_config_differential.rs",
-      "summary": "Covers more than twenty legacy settings fields, project-over-global precedence, PI_CONFIG_PATH single-file override, legacy markdown indent strings, and xhigh defaults."
+      "summary": "Covers more than twenty legacy settings fields, project-over-global precedence, KODE_CONFIG_PATH single-file override, legacy markdown indent strings, and xhigh defaults."
     },
     {
       "path": "src/config.rs",

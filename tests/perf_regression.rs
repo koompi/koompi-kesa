@@ -42,7 +42,7 @@ use sysinfo::System;
 /// Serialize perf-sensitive tests to avoid scheduler noise.
 static PERF_LOCK: Mutex<()> = Mutex::new(());
 const PERF_RELEASE_BINARY_PATH_ENV: &str = "PERF_RELEASE_BINARY_PATH";
-const PI_PERF_STRICT_ENV: &str = "PI_PERF_STRICT";
+const KODE_PERF_STRICT_ENV: &str = "KODE_PERF_STRICT";
 
 fn recover_poisoned_mutex_guard<'a, T>(
     lock: &'a Mutex<T>,
@@ -107,7 +107,7 @@ fn perf_strict_mode_from(raw: Option<&str>) -> bool {
 }
 
 fn perf_strict_mode() -> bool {
-    let strict_raw = std::env::var(PI_PERF_STRICT_ENV).ok();
+    let strict_raw = std::env::var(KODE_PERF_STRICT_ENV).ok();
     perf_strict_mode_from(strict_raw.as_deref())
 }
 
@@ -813,7 +813,7 @@ fn binary_size_check() {
             Err(err) => {
                 harness.log().info(
                     "missing_release_binary",
-                    format!("strict_mode=true env={PI_PERF_STRICT_ENV} checked={checked}"),
+                    format!("strict_mode=true env={KODE_PERF_STRICT_ENV} checked={checked}"),
                 );
                 assert!(!strict_mode, "{err}");
                 return;
@@ -1075,7 +1075,7 @@ fn config_parse_latency() {
             "disabled": []
         },
         "extensions": {
-            "paths": ["/home/user/.pi/extensions"]
+            "paths": ["/home/user/.kode/extensions"]
         }
     });
     let config_str = serde_json::to_string(&config).unwrap();

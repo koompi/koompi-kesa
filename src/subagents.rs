@@ -1,7 +1,7 @@
 //! Native child-agent orchestration.
 //!
 //! This module deliberately uses the Pi executable that is already running
-//! (or the explicit `PI_SUBAGENT_PI_BINARY` override) instead of resolving a
+//! (or the explicit `KODE_SUBAGENT_PI_BINARY` override) instead of resolving a
 //! `pi` binary through `PATH`.  That makes a Rust Pi parent reliably launch
 //! Rust Pi children even on hosts that also have the TypeScript implementation
 //! installed.
@@ -45,7 +45,7 @@ pub struct SubagentTool {
 impl SubagentTool {
     #[must_use]
     pub fn new(cwd: &Path) -> Self {
-        let child_binary = std::env::var_os("PI_SUBAGENT_PI_BINARY")
+        let child_binary = std::env::var_os("KODE_SUBAGENT_PI_BINARY")
             .filter(|path| !path.is_empty())
             .map(PathBuf::from)
             .or_else(|| std::env::current_exe().ok())
@@ -157,7 +157,7 @@ impl Tool for SubagentTool {
     }
 
     fn description(&self) -> &'static str {
-        "Delegate an isolated task to a named Pi child agent. Supports one task, bounded parallel tasks, or a sequential chain whose tasks may reference {previous}. Agent definitions live in $PI_CODING_AGENT_DIR/agents/*.md or .pi/agents/*.md."
+        "Delegate an isolated task to a named Pi child agent. Supports one task, bounded parallel tasks, or a sequential chain whose tasks may reference {previous}. Agent definitions live in $KODE_CODING_AGENT_DIR/agents/*.md or .kode/agents/*.md."
     }
 
     fn parameters(&self) -> Value {
@@ -375,7 +375,7 @@ fn discover_agents_with_roots(
 fn nearest_project_agents_dir(cwd: &Path) -> Option<PathBuf> {
     let mut current = cwd.to_path_buf();
     loop {
-        let candidate = current.join(".pi").join("agents");
+        let candidate = current.join(".kode").join("agents");
         if candidate.is_dir() {
             return Some(candidate);
         }
@@ -576,10 +576,10 @@ impl ChildRunner {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             // `Command` inherits the rest of the parent environment, including API/router/auth
-            // variables and `PI_CODING_AGENT_DIR`; set this explicitly for auditability.
-            .env("PI_CODING_AGENT_DIR", &self.global_dir)
-            .env("PI_SUBAGENT_PARENT_PID", std::process::id().to_string())
-            .env("PI_SUBAGENT_DEPTH", child_depth().to_string());
+            // variables and `KODE_CODING_AGENT_DIR`; set this explicitly for auditability.
+            .env("KODE_CODING_AGENT_DIR", &self.global_dir)
+            .env("KODE_SUBAGENT_PARENT_PID", std::process::id().to_string())
+            .env("KODE_SUBAGENT_DEPTH", child_depth().to_string());
 
         let child = match command.spawn() {
             Ok(child) => child,
@@ -747,7 +747,7 @@ fn child_depth() -> usize {
 }
 
 fn current_subagent_depth() -> usize {
-    std::env::var("PI_SUBAGENT_DEPTH")
+    std::env::var("KODE_SUBAGENT_DEPTH")
         .ok()
         .and_then(|value| value.parse::<usize>().ok())
         .unwrap_or_default()
@@ -1066,7 +1066,7 @@ mod tests {
             "---\nname: scout\ndescription: user\nmodel: provider/user\nreasoning: low\ntools: read,grep\nskills: one.md,two.md\n---\nuser prompt",
         );
         write_agent(
-            &cwd.parent().expect("parent").join(".pi/agents"),
+            &cwd.parent().expect("parent").join(".kode/agents"),
             "scout",
             "---\nname: scout\ndescription: project\nmodel: provider/project\nthinking: high\ntools: read,find\n---\nproject prompt",
         );
@@ -1164,7 +1164,7 @@ mod tests {
             &child,
             r#"#!/bin/sh
 printf '{"type":"message_update","assistantMessageEvent":{"delta":"streamed:"}}\n'
-printf '{"type":"message_update","assistantMessageEvent":{"delta":"%s"}}\n' "$PI_CODING_AGENT_DIR"
+printf '{"type":"message_update","assistantMessageEvent":{"delta":"%s"}}\n' "$KODE_CODING_AGENT_DIR"
 printf '{"type":"agent_end","messages":[{"role":"assistant","content":[{"type":"text","text":"final child result"}]}]}\n'
 "#,
         )

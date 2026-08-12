@@ -120,7 +120,7 @@ Three-tier blocklist:
 **Bypass prevention:**
 - Case-insensitive matching via `.to_ascii_uppercase()` (line 107)
 - `PI_*` vars unconditionally allowed (line 125-127) — but this is checked
-  *after* the blocklist, so `PI_API_KEY` would still be blocked by suffix match
+  *after* the blocklist, so `KODE_API_KEY` would still be blocked by suffix match
 
 **process.env implementation** (lines 14310-14343):
 - Read-only Proxy: `set()` and `deleteProperty()` silently ignored (lines 14319-14325)

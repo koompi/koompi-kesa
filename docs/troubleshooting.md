@@ -10,7 +10,7 @@ being implemented, the relevant bead ID is listed for tracking.
 **Fixes:**
 - Use env vars: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, etc.
 - Or set `--api-key` per run.
-- Or store credentials in `~/.pi/agent/auth.json` via `/login` (Anthropic OAuth).
+- Or store credentials in `~/.kode/agent/auth.json` via `/login` (Anthropic OAuth).
 
 **Config precedence (most → least):**
 1. `--api-key`
@@ -33,7 +33,7 @@ client secret as an API token.
 
 **5xx/network:** Temporary provider outage or flaky network. Retry or switch models.
 
-**Retry config** lives in `~/.pi/agent/settings.json`:
+**Retry config** lives in `~/.kode/agent/settings.json`:
 ```json
 {
   "retry": {
@@ -64,7 +64,7 @@ Common fixes:
 
 **Fixes:**
 - Check package sources via `pi list`.
-- Confirm settings in `~/.pi/agent/settings.json` or `.pi/settings.json`.
+- Confirm settings in `~/.kode/agent/settings.json` or `.kode/settings.json`.
 - Re-run `pi update` after adding a source.
 
 Extension discovery is tracked under **bd-1e0** (install + resolution). If an
@@ -74,12 +74,12 @@ extension fails to load, expect diagnostics to improve as that bead lands.
 
 Sessions live under:
 ```
-~/.pi/agent/sessions/
+~/.kode/agent/sessions/
 ```
 
 Overrides:
-- `PI_CODING_AGENT_DIR` (global base)
-- `PI_SESSIONS_DIR` (sessions root)
+- `KODE_CODING_AGENT_DIR` (global base)
+- `KODE_SESSIONS_DIR` (sessions root)
 
 **Corruption recovery:**
 - Run with `--no-session` to bypass persistence.
@@ -91,7 +91,7 @@ Interactive UX parity for `/resume`, `/tree`, `/fork` is tracked by **bd-14cc**.
 
 Keybindings are loaded from:
 ```
-~/.pi/agent/keybindings.json
+~/.kode/agent/keybindings.json
 ```
 
 If shortcuts don’t work as expected:

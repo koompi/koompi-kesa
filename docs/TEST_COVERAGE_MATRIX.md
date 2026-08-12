@@ -245,7 +245,7 @@ cargo test --test ext_conformance_generated --features ext-conformance -- --incl
 cargo test --test ext_conformance_diff --features ext-conformance
 
 # Official extensions only, bounded.
-PI_OFFICIAL_MAX=5 cargo test --test ext_conformance_diff --features ext-conformance
+KODE_OFFICIAL_MAX=5 cargo test --test ext_conformance_diff --features ext-conformance
 
 # Scenario execution tests.
 cargo test --test ext_conformance_scenarios --features ext-conformance

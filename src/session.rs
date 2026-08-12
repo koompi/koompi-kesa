@@ -2249,25 +2249,24 @@ impl ExtensionSession for SessionHandle {
     }
 }
 
-/// Default base URL for the Pi session share viewer.
-pub const DEFAULT_SHARE_VIEWER_URL: &str = "https://buildwithpi.ai/session/";
+/// Base URL of the gist itself, used when no session viewer is configured.
+pub const GIST_BASE_URL: &str = "https://gist.github.com/";
 
 fn build_share_viewer_url(base_url: Option<&str>, gist_id: &str) -> String {
-    let base_url = base_url
-        .filter(|value| !value.is_empty())
-        .unwrap_or(DEFAULT_SHARE_VIEWER_URL);
-    format!("{base_url}#{gist_id}")
+    match base_url.filter(|value| !value.is_empty()) {
+        Some(base_url) => format!("{base_url}#{gist_id}"),
+        None => format!("{GIST_BASE_URL}{gist_id}"),
+    }
 }
 
 /// Get the share viewer URL for a gist ID.
 ///
-/// Matches legacy Pi Agent semantics:
-/// - Use `PI_SHARE_VIEWER_URL` env var when set and non-empty
-/// - Otherwise fall back to `DEFAULT_SHARE_VIEWER_URL`
-/// - Final URL is `{base}#{gist_id}` (no trailing-slash normalization)
+/// - Use `KODE_SHARE_VIEWER_URL` env var when set and non-empty, as `{base}#{gist_id}`
+/// - Otherwise link the gist directly, so a share link resolves without KOOMPI
+///   hosting a viewer
 #[must_use]
 pub fn get_share_viewer_url(gist_id: &str) -> String {
-    let base_url = std::env::var("PI_SHARE_VIEWER_URL").ok();
+    let base_url = std::env::var("KODE_SHARE_VIEWER_URL").ok();
     build_share_viewer_url(base_url.as_deref(), gist_id)
 }
 
@@ -2321,7 +2320,7 @@ impl SessionStoreKind {
 const DEFAULT_AUTOSAVE_MAX_PENDING_MUTATIONS: usize = 256;
 
 fn autosave_max_pending_mutations() -> usize {
-    std::env::var("PI_SESSION_AUTOSAVE_MAX_PENDING")
+    std::env::var("KODE_SESSION_AUTOSAVE_MAX_PENDING")
         .ok()
         .and_then(|raw| raw.parse::<usize>().ok())
         .filter(|value| *value > 0)
@@ -2332,7 +2331,7 @@ fn autosave_max_pending_mutations() -> usize {
 const DEFAULT_COMPACTION_CHECKPOINT_INTERVAL: u64 = 50;
 
 fn compaction_checkpoint_interval() -> u64 {
-    std::env::var("PI_SESSION_COMPACTION_INTERVAL")
+    std::env::var("KODE_SESSION_COMPACTION_INTERVAL")
         .ok()
         .and_then(|raw| raw.parse::<u64>().ok())
         .filter(|value| *value > 0)
@@ -2358,7 +2357,7 @@ impl AutosaveDurabilityMode {
     }
 
     fn from_env() -> Self {
-        std::env::var("PI_SESSION_DURABILITY_MODE")
+        std::env::var("KODE_SESSION_DURABILITY_MODE")
             .ok()
             .as_deref()
             .and_then(Self::parse)
@@ -2993,7 +2992,7 @@ impl Session {
         let durability_mode = resolve_autosave_durability_mode(
             cli.session_durability.as_deref(),
             config.session_durability.as_deref(),
-            std::env::var("PI_SESSION_DURABILITY_MODE").ok().as_deref(),
+            std::env::var("KODE_SESSION_DURABILITY_MODE").ok().as_deref(),
         );
         if cli.no_session {
             let mut session = Self::in_memory();
@@ -7053,16 +7052,16 @@ fn open_from_v2_store_blocking(jsonl_path: &Path) -> Result<(Session, SessionOpe
     let v2_root = session_store_v2::v2_sidecar_path(&jsonl_path);
 
     // 3. Choose an explicit hydration strategy for resume:
-    // - env override (PI_SESSION_V2_OPEN_MODE)
+    // - env override (KODE_SESSION_V2_OPEN_MODE)
     // - auto lazy mode for large sessions
-    let mode_override_raw = std::env::var("PI_SESSION_V2_OPEN_MODE").ok();
-    let threshold_override_raw = std::env::var("PI_SESSION_V2_LAZY_THRESHOLD").ok();
+    let mode_override_raw = std::env::var("KODE_SESSION_V2_OPEN_MODE").ok();
+    let threshold_override_raw = std::env::var("KODE_SESSION_V2_LAZY_THRESHOLD").ok();
     if let Some(raw) = mode_override_raw.as_deref()
         && parse_v2_open_mode(raw).is_none()
     {
         tracing::warn!(
             value = %raw,
-            "invalid PI_SESSION_V2_OPEN_MODE; using automatic hydration mode selection"
+            "invalid KODE_SESSION_V2_OPEN_MODE; using automatic hydration mode selection"
         );
     }
     if let Some(raw) = threshold_override_raw.as_deref()
@@ -7070,7 +7069,7 @@ fn open_from_v2_store_blocking(jsonl_path: &Path) -> Result<(Session, SessionOpe
     {
         tracing::warn!(
             value = %raw,
-            "invalid PI_SESSION_V2_LAZY_THRESHOLD; using default lazy hydration threshold"
+            "invalid KODE_SESSION_V2_LAZY_THRESHOLD; using default lazy hydration threshold"
         );
     }
 
@@ -8062,7 +8061,7 @@ fn parse_env_bool(value: &str) -> bool {
 fn session_entry_id_cache_enabled() -> bool {
     static ENABLED: OnceLock<bool> = OnceLock::new();
     *ENABLED.get_or_init(|| {
-        std::env::var("PI_SESSION_ENTRY_ID_CACHE").map_or(true, |value| parse_env_bool(&value))
+        std::env::var("KODE_SESSION_ENTRY_ID_CACHE").map_or(true, |value| parse_env_bool(&value))
     })
 }
 
@@ -9783,10 +9782,10 @@ mod tests {
     }
 
     #[test]
-    fn test_get_share_viewer_url_matches_legacy() {
+    fn test_get_share_viewer_url() {
         assert_eq!(
             build_share_viewer_url(None, "gist-123"),
-            "https://buildwithpi.ai/session/#gist-123"
+            "https://gist.github.com/gist-123"
         );
         assert_eq!(
             build_share_viewer_url(Some("https://example.com/session/"), "gist-123"),
@@ -9796,11 +9795,9 @@ mod tests {
             build_share_viewer_url(Some("https://example.com/session"), "gist-123"),
             "https://example.com/session#gist-123"
         );
-        // Legacy JS uses `process.env.PI_SHARE_VIEWER_URL || DEFAULT`, so empty-string should
-        // fall back to default.
         assert_eq!(
             build_share_viewer_url(Some(""), "gist-123"),
-            "https://buildwithpi.ai/session/#gist-123"
+            "https://gist.github.com/gist-123"
         );
     }
 

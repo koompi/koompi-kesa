@@ -20,7 +20,7 @@ pi -e npm:pi-ghostty-theme-sync
 
 - Reads: `background`, `foreground`, and `palette[0..15]` from Ghostty.
 - Computes a hash of `bg/fg + palette[0..15]`.
-- Writes a theme to: `~/.pi/agent/themes/ghostty-sync-<hash>.json`.
+- Writes a theme to: `~/.kode/agent/themes/ghostty-sync-<hash>.json`.
 - Removes older `ghostty-sync-*.json` files (keeps only the current one).
 - Sets pi theme to `ghostty-sync-<hash>`.
 

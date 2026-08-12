@@ -205,15 +205,15 @@ pub fn platform_tag() -> String {
     format!("{}/{}", os_name(), arch_name())
 }
 
-/// Canonical Pi User-Agent: `"koompi_code_cli/{version}"`.
+/// Canonical Pi User-Agent: `"koompi-code-cli/{version}"`.
 pub fn pi_user_agent() -> String {
-    format!("koompi_code_cli/{VERSION}")
+    format!("koompi-code-cli/{VERSION}")
 }
 
 /// Canonical Pi User-Agent with an additional component:
-/// `"koompi_code_cli/{version} {extra}"`.
+/// `"koompi-code-cli/{version} {extra}"`.
 pub fn pi_user_agent_with(extra: &str) -> String {
-    format!("koompi_code_cli/{VERSION} {extra}")
+    format!("koompi-code-cli/{VERSION} {extra}")
 }
 
 // ---------------------------------------------------------------------------
@@ -274,14 +274,14 @@ mod tests {
     #[test]
     fn pi_user_agent_contains_version() {
         let ua = pi_user_agent();
-        assert!(ua.starts_with("koompi_code_cli/"), "ua: {ua}");
+        assert!(ua.starts_with("koompi-code-cli/"), "ua: {ua}");
         assert!(ua.contains(VERSION), "ua should contain version");
     }
 
     #[test]
     fn pi_user_agent_with_appends() {
         let ua = pi_user_agent_with("Antigravity/1.2.3");
-        assert!(ua.starts_with("koompi_code_cli/"));
+        assert!(ua.starts_with("koompi-code-cli/"));
         assert!(ua.ends_with("Antigravity/1.2.3"));
     }
 

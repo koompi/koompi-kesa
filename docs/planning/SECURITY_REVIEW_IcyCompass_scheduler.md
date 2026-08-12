@@ -54,7 +54,7 @@ Applied systematic security review for the following patterns:
 **Change**: Fix to preserve lockfile when settings.json is missing
 
 ### Security Analysis
-- **Path operations**: Uses safe `join()` with hardcoded paths like "keep-me", ".pi"
+- **Path operations**: Uses safe `join()` with hardcoded paths like "keep-me", ".kode"
 - **Error handling**: Proper `.expect()` usage in test code only  
 - **Input validation**: Extensive path traversal protection already in place
 - **Channel usage**: `let _ = tx.send()` pattern is acceptable (error handled at recv end)

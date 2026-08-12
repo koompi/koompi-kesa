@@ -340,7 +340,7 @@
         "redaction_rules": [
           "Values matching *_KEY, *_SECRET, *_TOKEN, *_PASSWORD are replaced with [REDACTED].",
           "Values matching *_API_KEY are replaced with [REDACTED].",
-          "Only test-relevant env vars are included (VCR_MODE, RUST_LOG, PI_E2E, CARGO_TARGET_DIR)."
+          "Only test-relevant env vars are included (VCR_MODE, RUST_LOG, KODE_E2E, CARGO_TARGET_DIR)."
         ]
       },
       {

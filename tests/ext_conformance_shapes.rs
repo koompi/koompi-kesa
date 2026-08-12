@@ -56,14 +56,14 @@ fn deterministic_env(cwd: &Path, home: &Path) -> HashMap<String, String> {
     let home = home.to_string_lossy().into_owned();
     let mut env = HashMap::new();
     env.insert(
-        "PI_DETERMINISTIC_TIME_MS".to_string(),
+        "KODE_DETERMINISTIC_TIME_MS".to_string(),
         "1700000000000".to_string(),
     );
-    env.insert("PI_DETERMINISTIC_TIME_STEP_MS".to_string(), "1".to_string());
-    env.insert("PI_DETERMINISTIC_CWD".to_string(), cwd);
-    env.insert("PI_DETERMINISTIC_HOME".to_string(), home.clone());
+    env.insert("KODE_DETERMINISTIC_TIME_STEP_MS".to_string(), "1".to_string());
+    env.insert("KODE_DETERMINISTIC_CWD".to_string(), cwd);
+    env.insert("KODE_DETERMINISTIC_HOME".to_string(), home.clone());
     env.insert("HOME".to_string(), home);
-    env.insert("PI_DETERMINISTIC_RANDOM".to_string(), "0.5".to_string());
+    env.insert("KODE_DETERMINISTIC_RANDOM".to_string(), "0.5".to_string());
     env
 }
 

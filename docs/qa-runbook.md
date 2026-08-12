@@ -119,7 +119,7 @@ only when their schema, command, git commit, build profile, run
 ID/correlation ID, host/toolchain provenance, checksum, and TTL validate. The
 preflight and staging JSON label reused artifacts with `source_kind=cache` or
 `evidence_source=cache`; rejected cache entries stay visible in
-`rejected_evidence_cache_entries`. Use `PI_PERF_EVIDENCE_CACHE_TTL_HOURS` to
+`rejected_evidence_cache_entries`. Use `KODE_PERF_EVIDENCE_CACHE_TTL_HOURS` to
 shorten the maximum accepted cache lifetime.
 
 When a cargo target directory lives outside the repository, do not ask an RCH
@@ -129,15 +129,15 @@ and run the report with `PERF_EVIDENCE_DIR`:
 
 ```bash
 PERF_EVIDENCE_DIR=tests/perf/reports \
-  PI_GENERATE_PERF_BUDGET_REPORT=1 rch exec -- cargo test --test perf_budgets --profile perf generate_budget_report -- --nocapture
+  KODE_GENERATE_PERF_BUDGET_REPORT=1 rch exec -- cargo test --test perf_budgets --profile perf generate_budget_report -- --nocapture
 ```
 
 Both report-producing integration tests are read-only during ordinary test
 runs. Refresh tracked artifacts only with their explicit opt-ins:
 
 ```bash
-PI_GENERATE_PERF_BUDGET_REPORT=1 cargo test --test perf_budgets generate_budget_report -- --nocapture
-PI_GENERATE_BENCH_SCHEMA_DOCS=1 cargo test --test bench_schema generate_schema_doc -- --nocapture
+KODE_GENERATE_PERF_BUDGET_REPORT=1 cargo test --test perf_budgets generate_budget_report -- --nocapture
+KODE_GENERATE_BENCH_SCHEMA_DOCS=1 cargo test --test bench_schema generate_schema_doc -- --nocapture
 ```
 
 In `pi.perf.budget_summary.v2`, `performance_claims_authorized=true` governs
@@ -186,7 +186,7 @@ Every test file belongs to exactly one suite. See `tests/suite_classification.to
 |-------|---------------|-------------------|
 | **unit** | Pure logic, parsing, serialization, state machines. No mocks, fixtures, or VCR. | `cargo test --lib` + curated `--test` targets |
 | **vcr** | Provider streaming, HTTP client, conformance against recorded data. | `VCR_MODE=playback cargo test` |
-| **e2e** | Full system with real providers, network, or tmux. | `PI_E2E=1 cargo test --test e2e_*` |
+| **e2e** | Full system with real providers, network, or tmux. | `KODE_E2E=1 cargo test --test e2e_*` |
 
 ---
 

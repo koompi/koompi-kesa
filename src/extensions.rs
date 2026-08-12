@@ -13159,7 +13159,7 @@ fn discover_sibling_extension_entries(primary: &Path) -> Vec<PathBuf> {
     };
 
     // Skip sibling discovery when the parent is a known auto-discovery root
-    // (e.g., ~/.pi/agent/extensions/ or .pi/extensions/). Files in these
+    // (e.g., ~/.kode/agent/extensions/ or .kode/extensions/). Files in these
     // directories are independent extensions, not siblings of a single package.
     if parent_dir
         .file_name()

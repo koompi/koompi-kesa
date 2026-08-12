@@ -13,7 +13,7 @@ Create a pi extension that integrates MCPHub's `mh` CLI to provide Model Context
 
 ### Success Criteria
 
-- [x] Extension loads and checks for `~/.pi/agent/mcp.json` on session start
+- [x] Extension loads and checks for `~/.kode/agent/mcp.json` on session start
 - [x] Available MCP tools are listed in the system prompt
 - [x] `mcp_invoke` tool can invoke MCP tools with JSON parameters
 - [x] `mcp_inspect` tool can retrieve detailed tool information
@@ -115,7 +115,7 @@ class MCPClient {
 
 ### Manual Tests
 
-- Start pi with `~/.pi/agent/mcp.json` present → tools should appear in prompt
+- Start pi with `~/.kode/agent/mcp.json` present → tools should appear in prompt
 - Start pi without config file → no MCP section in prompt
 - Use mcp_inspect to get tool details
 - Use mcp_invoke to call an MCP tool

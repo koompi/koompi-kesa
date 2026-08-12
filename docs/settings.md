@@ -8,10 +8,10 @@ Pi loads settings from (up to) two files:
 
 | Location | Scope |
 |----------|-------|
-| `~/.pi/agent/settings.json` | Global (all projects) |
-| `.pi/settings.json` | Project (current directory) |
+| `~/.kode/agent/settings.json` | Global (all projects) |
+| `.kode/settings.json` | Project (current directory) |
 
-You can override the path entirely with `PI_CONFIG_PATH` (see below).
+You can override the path entirely with `KODE_CONFIG_PATH` (see below).
 
 Run `pi config` to print the effective paths and precedence.
 
@@ -19,20 +19,20 @@ Run `pi config` to print the effective paths and precedence.
 
 1. CLI flags
 2. Environment variables
-3. Project settings (`.pi/settings.json`)
-4. Global settings (`~/.pi/agent/settings.json`)
+3. Project settings (`.kode/settings.json`)
+4. Global settings (`~/.kode/agent/settings.json`)
 5. Built-in defaults
 
-## `PI_CONFIG_PATH` (single-file mode)
+## `KODE_CONFIG_PATH` (single-file mode)
 
-If `PI_CONFIG_PATH` is set, Pi loads *only* that file and skips the global/project merge.
+If `KODE_CONFIG_PATH` is set, Pi loads *only* that file and skips the global/project merge.
 
 ## Merge behavior (global vs project)
 
 Project settings override global settings on a per-field basis.
 
 Important detail: nested objects like `compaction`, `retry`, `images`, `terminal`, `branch_summary`,
-and `thinking_budgets` are treated as *single* fields. If `.pi/settings.json` contains a
+and `thinking_budgets` are treated as *single* fields. If `.kode/settings.json` contains a
 `compaction` object, it replaces the entire global `compaction` object.
 
 Within a single file, missing nested keys fall back to built-in defaults when accessed (see
@@ -41,12 +41,12 @@ Within a single file, missing nested keys fall back to built-in defaults when ac
 Example:
 
 ```json
-// ~/.pi/agent/settings.json (global)
+// ~/.kode/agent/settings.json (global)
 { "compaction": { "enabled": false, "reserve_tokens": 16384 } }
 ```
 
 ```json
-// .pi/settings.json (project)
+// .kode/settings.json (project)
 { "compaction": { "reserve_tokens": 8192 } }
 ```
 
@@ -61,7 +61,7 @@ Resulting behavior:
 - `theme` (string): Theme name to apply. Defaults to `dark` if unset.
 - `hide_thinking_block` (bool): Hide thinking blocks in interactive output. Default `false`.
 - `show_hardware_cursor` (bool): Show terminal hardware cursor. Default `false` unless
-  `PI_HARDWARE_CURSOR=1`.
+  `KODE_HARDWARE_CURSOR=1`.
 
 ### Model selection
 

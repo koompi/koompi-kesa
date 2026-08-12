@@ -70,7 +70,7 @@
         "code_path": "src/provider_metadata.rs::provider_auth_env_keys + src/auth.rs::resolve_api_key_with_env_lookup"
       },
       {
-        "source": "Persisted auth store (~/.pi/agent/auth.json)",
+        "source": "Persisted auth store (~/.kode/agent/auth.json)",
         "behavior": "ApiKey credential or unexpired OAuth access_token via auth.api_key(provider).",
         "code_path": "src/auth.rs::api_key"
       },

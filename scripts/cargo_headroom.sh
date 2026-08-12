@@ -15,7 +15,7 @@ Usage:
   scripts/cargo_headroom.sh [options] <cargo-subcommand> [cargo-args...]
 
 Options:
-  --runner <rch|auto|local>   Cargo runner mode (default: PI_CARGO_RUNNER or rch)
+  --runner <rch|auto|local>   Cargo runner mode (default: KODE_CARGO_RUNNER or rch)
   --target-dir <path>         Override CARGO_TARGET_DIR for this invocation
   --tmpdir <path>             Override TMPDIR for this invocation
   --min-free-mb <mb>          Required free MB on target/tmp mounts (default: 24576)
@@ -30,23 +30,23 @@ Options:
   -h, --help                  Show this help
 
 Environment:
-  PI_CARGO_BUILD_ROOT         Build root used when CARGO_TARGET_DIR is unset
+  KODE_CARGO_BUILD_ROOT         Build root used when CARGO_TARGET_DIR is unset
                               (default: /data/tmp/koompi_code_cli, or
                               /data/tmp/koompi_code_cli_cargo if the former
                               resolves inside this repository)
-  PI_CARGO_AGENT_SUFFIX       Per-agent subdirectory suffix (default: $USER)
-  PI_CARGO_ALLOW_REPO_TARGET  Set to 1 to allow target dirs under the repo root
-  PI_CARGO_ALLOW_LOCAL_FALLBACK
+  KODE_CARGO_AGENT_SUFFIX       Per-agent subdirectory suffix (default: $USER)
+  KODE_CARGO_ALLOW_REPO_TARGET  Set to 1 to allow target dirs under the repo root
+  KODE_CARGO_ALLOW_LOCAL_FALLBACK
                               Set to 1 to permit heavy local fallback in auto mode
-  PI_CARGO_MAX_LOCAL_PROCESSES
+  KODE_CARGO_MAX_LOCAL_PROCESSES
                               Local cargo/rustc process cap for heavy gates
-  PI_CARGO_PROCESS_COUNT      Test/operator override for observed process count
-  PI_CARGO_FORCE_ADMIT        Set to 1 to override local process pressure
-  PI_CARGO_INCLUDE_SCRATCH_CLEANUP
+  KODE_CARGO_PROCESS_COUNT      Test/operator override for observed process count
+  KODE_CARGO_FORCE_ADMIT        Set to 1 to override local process pressure
+  KODE_CARGO_INCLUDE_SCRATCH_CLEANUP
                               Set to 1 to include scratch cleanup pressure on
                               allow decisions too; backoff/degraded decisions
                               include it automatically
-  PI_CARGO_SCRATCH_PLAN_JSON  Test/operator override containing planner JSON
+  KODE_CARGO_SCRATCH_PLAN_JSON  Test/operator override containing planner JSON
 EOF
 }
 
@@ -55,11 +55,11 @@ die() {
     exit 2
 }
 
-RUNNER="${PI_CARGO_RUNNER:-rch}"
-MIN_FREE_MB="${PI_CARGO_HEADROOM_MIN_FREE_MB:-24576}"
-MIN_INODE_FREE_PCT="${PI_CARGO_HEADROOM_MIN_FREE_INODE_PCT:-5}"
-MAX_LOCAL_CARGO_PROCESSES="${PI_CARGO_MAX_LOCAL_PROCESSES:-2}"
-RCH_QUEUE_FORECAST_MAX_AGE_SECS="${PI_RCH_QUEUE_FORECAST_MAX_AGE_SECS:-120}"
+RUNNER="${KODE_CARGO_RUNNER:-rch}"
+MIN_FREE_MB="${KODE_CARGO_HEADROOM_MIN_FREE_MB:-24576}"
+MIN_INODE_FREE_PCT="${KODE_CARGO_HEADROOM_MIN_FREE_INODE_PCT:-5}"
+MAX_LOCAL_CARGO_PROCESSES="${KODE_CARGO_MAX_LOCAL_PROCESSES:-2}"
+RCH_QUEUE_FORECAST_MAX_AGE_SECS="${KODE_RCH_QUEUE_FORECAST_MAX_AGE_SECS:-120}"
 DEFAULT_BUILD_ROOT="/data/tmp/koompi_code_cli"
 if [[ -e "$DEFAULT_BUILD_ROOT" ]]; then
     if DEFAULT_BUILD_ROOT_REAL="$(cd "$DEFAULT_BUILD_ROOT" && pwd -P 2>/dev/null)"; then
@@ -70,13 +70,13 @@ if [[ -e "$DEFAULT_BUILD_ROOT" ]]; then
         esac
     fi
 fi
-BUILD_ROOT="${PI_CARGO_BUILD_ROOT:-$DEFAULT_BUILD_ROOT}"
+BUILD_ROOT="${KODE_CARGO_BUILD_ROOT:-$DEFAULT_BUILD_ROOT}"
 TARGET_OVERRIDE=""
 TMPDIR_OVERRIDE=""
 ADMIT_ONLY=0
 DECISION_JSON_PATH=""
-ALLOW_LOCAL_FALLBACK="${PI_CARGO_ALLOW_LOCAL_FALLBACK:-0}"
-FORCE_ADMIT="${PI_CARGO_FORCE_ADMIT:-0}"
+ALLOW_LOCAL_FALLBACK="${KODE_CARGO_ALLOW_LOCAL_FALLBACK:-0}"
+FORCE_ADMIT="${KODE_CARGO_FORCE_ADMIT:-0}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -162,7 +162,7 @@ esac
     || die "invalid --max-local-cargo-processes '$MAX_LOCAL_CARGO_PROCESSES'"
 
 safe_agent_suffix() {
-    printf '%s' "${PI_CARGO_AGENT_SUFFIX:-${USER:-agent}}" | tr -c 'A-Za-z0-9._-' '_'
+    printf '%s' "${KODE_CARGO_AGENT_SUFFIX:-${USER:-agent}}" | tr -c 'A-Za-z0-9._-' '_'
 }
 
 resolve_dir() {
@@ -292,10 +292,10 @@ PY
 local_process_pressure_json() {
     local count detail status recommended_action
 
-    if [[ -n "${PI_CARGO_PROCESS_COUNT:-}" ]]; then
-        [[ "$PI_CARGO_PROCESS_COUNT" =~ ^[0-9]+$ ]] \
-            || die "invalid PI_CARGO_PROCESS_COUNT '$PI_CARGO_PROCESS_COUNT'"
-        count="$PI_CARGO_PROCESS_COUNT"
+    if [[ -n "${KODE_CARGO_PROCESS_COUNT:-}" ]]; then
+        [[ "$KODE_CARGO_PROCESS_COUNT" =~ ^[0-9]+$ ]] \
+            || die "invalid KODE_CARGO_PROCESS_COUNT '$KODE_CARGO_PROCESS_COUNT'"
+        count="$KODE_CARGO_PROCESS_COUNT"
         detail="env_override"
     elif command -v pgrep >/dev/null 2>&1; then
         local raw
@@ -500,13 +500,13 @@ scratch_cleanup_pressure_json() {
     local decision="$1"
     local raw
 
-    if [[ "$decision" == "allow" && "${PI_CARGO_INCLUDE_SCRATCH_CLEANUP:-0}" != "1" ]]; then
+    if [[ "$decision" == "allow" && "${KODE_CARGO_INCLUDE_SCRATCH_CLEANUP:-0}" != "1" ]]; then
         scratch_cleanup_pressure_not_checked "admission_allowed"
         return 0
     fi
 
-    if [[ -n "${PI_CARGO_SCRATCH_PLAN_JSON:-}" ]]; then
-        summarize_scratch_cleanup_plan "$PI_CARGO_SCRATCH_PLAN_JSON" "env_override"
+    if [[ -n "${KODE_CARGO_SCRATCH_PLAN_JSON:-}" ]]; then
+        summarize_scratch_cleanup_plan "$KODE_CARGO_SCRATCH_PLAN_JSON" "env_override"
         return 0
     fi
 
@@ -777,8 +777,8 @@ fi
 TARGET_CANDIDATE="$(candidate_path "$CARGO_TARGET_DIR")"
 case "$TARGET_CANDIDATE" in
     "$PROJECT_ROOT"/*)
-        if [[ "${PI_CARGO_ALLOW_REPO_TARGET:-0}" != "1" ]]; then
-            die "CARGO_TARGET_DIR is under the repo root ($TARGET_CANDIDATE). Use /data/tmp or set PI_CARGO_ALLOW_REPO_TARGET=1 explicitly."
+        if [[ "${KODE_CARGO_ALLOW_REPO_TARGET:-0}" != "1" ]]; then
+            die "CARGO_TARGET_DIR is under the repo root ($TARGET_CANDIDATE). Use /data/tmp or set KODE_CARGO_ALLOW_REPO_TARGET=1 explicitly."
         fi
         ;;
 esac
@@ -792,8 +792,8 @@ esac
 TMPDIR_CANDIDATE="$(candidate_path "$TMPDIR")"
 case "$TMPDIR_CANDIDATE" in
     "$PROJECT_ROOT"/*)
-        if [[ "${PI_CARGO_ALLOW_REPO_TARGET:-0}" != "1" ]]; then
-            die "TMPDIR is under the repo root ($TMPDIR_CANDIDATE). Use /data/tmp or set PI_CARGO_ALLOW_REPO_TARGET=1 explicitly."
+        if [[ "${KODE_CARGO_ALLOW_REPO_TARGET:-0}" != "1" ]]; then
+            die "TMPDIR is under the repo root ($TMPDIR_CANDIDATE). Use /data/tmp or set KODE_CARGO_ALLOW_REPO_TARGET=1 explicitly."
         fi
         ;;
 esac
@@ -804,8 +804,8 @@ export CARGO_TARGET_DIR TMPDIR
 
 case "$CARGO_TARGET_DIR" in
     "$PROJECT_ROOT"/*)
-        if [[ "${PI_CARGO_ALLOW_REPO_TARGET:-0}" != "1" ]]; then
-            die "CARGO_TARGET_DIR is under the repo root ($CARGO_TARGET_DIR). Use /data/tmp or set PI_CARGO_ALLOW_REPO_TARGET=1 explicitly."
+        if [[ "${KODE_CARGO_ALLOW_REPO_TARGET:-0}" != "1" ]]; then
+            die "CARGO_TARGET_DIR is under the repo root ($CARGO_TARGET_DIR). Use /data/tmp or set KODE_CARGO_ALLOW_REPO_TARGET=1 explicitly."
         fi
         ;;
 esac

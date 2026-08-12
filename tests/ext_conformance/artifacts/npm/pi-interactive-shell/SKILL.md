@@ -394,7 +394,7 @@ This is the cleanest workflow - the subagent's response becomes your context aut
 Last 30 lines included in tool result. Good for seeing errors/final status.
 
 ### Snapshot to File
-Write full transcript to `~/.pi/agent/cache/interactive-shell/snapshot-*.log`:
+Write full transcript to `~/.kode/agent/cache/interactive-shell/snapshot-*.log`:
 ```typescript
 interactive_shell({
   command: 'claude "Fix bugs"',
@@ -405,7 +405,7 @@ interactive_shell({
 ### Artifact Handoff (for complex tasks)
 Instruct the delegated agent to write a handoff file:
 ```
-Write your findings to .pi/delegation/claude-handoff.md including:
+Write your findings to .kode/delegation/claude-handoff.md including:
 - What you did
 - Files changed
 - Any errors

@@ -86,17 +86,17 @@ tmux kill-server 2>/dev/null
 uptime  # Load should be < number of CPU cores
 
 # 4. ⚠️ CRITICAL: Force correct model in settings (CLI flags are IGNORED!)
-cat > ~/.pi/agent/settings.json << 'EOF'
+cat > ~/.kode/agent/settings.json << 'EOF'
 {
   "defaultProvider": "anthropic",
   "defaultModel": "claude-haiku-4-5",
   "defaultThinkingLevel": "none"
 }
 EOF
-echo "Model set to: $(jq -r .defaultModel ~/.pi/agent/settings.json)"
+echo "Model set to: $(jq -r .defaultModel ~/.kode/agent/settings.json)"
 ```
 
-**⚠️ WARNING: `--model` CLI flag is IGNORED! Pi uses `~/.pi/agent/settings.json` instead.**
+**⚠️ WARNING: `--model` CLI flag is IGNORED! Pi uses `~/.kode/agent/settings.json` instead.**
 **If you skip step 4, you WILL spawn Opus agents at 15x the cost of Haiku.**
 
 **IF YOU SPAWN IT, YOU OWN IT. CLEAN UP AFTER YOURSELF.**
@@ -190,7 +190,7 @@ tmux new-session -d -s scout1 \
 
 ### Pi Sessions vs Shadow Git
 
-**Pi has built-in session management** — it stores conversation history in `~/.pi/agent/sessions/`. This is great for single-agent work but has limitations for orchestration:
+**Pi has built-in session management** — it stores conversation history in `~/.kode/agent/sessions/`. This is great for single-agent work but has limitations for orchestration:
 
 | Feature | Pi Sessions | Shadow Git |
 |---------|-------------|------------|
@@ -380,13 +380,13 @@ EOF
 ```bash
 WORKSPACE="$(pwd)"
 AGENT="scout1"
-EXT="$HOME/.pi/agent/extensions/shadow-git.ts"
+EXT="$HOME/.kode/agent/extensions/shadow-git.ts"
 
 # Single agent with shadow-git logging
 tmux new-session -d -s "$AGENT" \
   "cd $WORKSPACE/agents/$AGENT && \
-   PI_WORKSPACE_ROOT='$WORKSPACE' \
-   PI_AGENT_NAME='$AGENT' \
+   KODE_WORKSPACE_ROOT='$WORKSPACE' \
+   KODE_AGENT_NAME='$AGENT' \
    pi \
       --model claude-haiku-4-5 \
       --tools read,bash,browser \
@@ -409,14 +409,14 @@ tmux kill-session -t "$AGENT"
 
 ```bash
 WORKSPACE="$(pwd)"
-EXT="$HOME/.pi/agent/extensions/shadow-git.ts"
+EXT="$HOME/.kode/agent/extensions/shadow-git.ts"
 AGENTS="scout1 scout2 scout3"
 
 for agent in $AGENTS; do
   tmux new-session -d -s "$agent" \
     "cd $WORKSPACE/agents/$agent && \
-     PI_WORKSPACE_ROOT='$WORKSPACE' \
-     PI_AGENT_NAME='$agent' \
+     KODE_WORKSPACE_ROOT='$WORKSPACE' \
+     KODE_AGENT_NAME='$agent' \
      pi --model claude-haiku-4-5 --max-turns 30 \
      -e '$EXT' 'Read plan.md and execute.' 2>&1 | tee output/run.log"
   echo "Spawned: $agent"
@@ -442,12 +442,12 @@ echo "All done"
 ```bash
 WORKSPACE="$(pwd)"
 AGENT="scout1"
-EXT="$HOME/.pi/agent/extensions/shadow-git.ts"
+EXT="$HOME/.kode/agent/extensions/shadow-git.ts"
 
 # Single agent
 (cd $WORKSPACE/agents/$AGENT && \
- PI_WORKSPACE_ROOT="$WORKSPACE" \
- PI_AGENT_NAME="$AGENT" \
+ KODE_WORKSPACE_ROOT="$WORKSPACE" \
+ KODE_AGENT_NAME="$AGENT" \
  pi \
     --model claude-haiku-4-5 \
     --max-turns 20 \
@@ -471,18 +471,18 @@ echo "Exit code: $?"
 
 ```bash
 WORKSPACE="$(pwd)"
-EXT="$HOME/.pi/agent/extensions/shadow-git.ts"
+EXT="$HOME/.kode/agent/extensions/shadow-git.ts"
 
 # Agent 1 (blocking - wait for result)
 cd $WORKSPACE/agents/scout
-PI_WORKSPACE_ROOT="$WORKSPACE" PI_AGENT_NAME="scout" \
+KODE_WORKSPACE_ROOT="$WORKSPACE" KODE_AGENT_NAME="scout" \
 pi --model claude-haiku-4-5 --max-turns 20 --print \
    -e "$EXT" 'Read plan.md and execute.' > output/result.txt 2>&1
 
 # Agent 2 (uses Agent 1's output)
 FINDINGS=$(cat $WORKSPACE/agents/scout/output/result.txt)
 cd $WORKSPACE/agents/planner
-PI_WORKSPACE_ROOT="$WORKSPACE" PI_AGENT_NAME="planner" \
+KODE_WORKSPACE_ROOT="$WORKSPACE" KODE_AGENT_NAME="planner" \
 pi --model claude-sonnet-4-5 --max-turns 20 --print \
    -e "$EXT" "Based on these findings: $FINDINGS - create implementation plan." \
    > output/result.txt 2>&1
@@ -530,9 +530,9 @@ Once installed, the extension is automatically loaded. No `-e` flag needed.
 git clone https://github.com/EmZod/pi-subagent-with-logging.git
 
 # Copy to global extensions
-mkdir -p ~/.pi/agent/extensions
-cp pi-subagent-with-logging/extensions/shadow-git.ts ~/.pi/agent/extensions/
-cp pi-subagent-with-logging/extensions/lib/mission-control.ts ~/.pi/agent/extensions/
+mkdir -p ~/.kode/agent/extensions
+cp pi-subagent-with-logging/extensions/shadow-git.ts ~/.kode/agent/extensions/
+cp pi-subagent-with-logging/extensions/lib/mission-control.ts ~/.kode/agent/extensions/
 ```
 
 > **Note on `-e` flag:** Examples below show `-e "$EXT"` for manual installation. 
@@ -544,24 +544,24 @@ cp pi-subagent-with-logging/extensions/lib/mission-control.ts ~/.pi/agent/extens
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `PI_WORKSPACE_ROOT` | Yes | Absolute path to workspace |
-| `PI_AGENT_NAME` | Yes | Agent name (used in commits and paths) |
-| `PI_TARGET_REPOS` | No | Comma-separated paths to track external repos |
-| `PI_TARGET_BRANCH` | No | Branch name to include in commits |
-| `PI_SHADOW_GIT_DISABLED` | No | Set to `1` to disable (killswitch) |
+| `KODE_WORKSPACE_ROOT` | Yes | Absolute path to workspace |
+| `KODE_AGENT_NAME` | Yes | Agent name (used in commits and paths) |
+| `KODE_TARGET_REPOS` | No | Comma-separated paths to track external repos |
+| `KODE_TARGET_BRANCH` | No | Branch name to include in commits |
+| `KODE_SHADOW_GIT_DISABLED` | No | Set to `1` to disable (killswitch) |
 
 **Spawning with shadow-git:**
 
 ```bash
 WORKSPACE="$(pwd)"
 AGENT="scout1"
-EXT="$HOME/.pi/agent/extensions/shadow-git.ts"
+EXT="$HOME/.kode/agent/extensions/shadow-git.ts"
 
 # Option A: tmux (for observability)
 tmux new-session -d -s "$AGENT" \
   "cd $WORKSPACE/agents/$AGENT && \
-   PI_WORKSPACE_ROOT='$WORKSPACE' \
-   PI_AGENT_NAME='$AGENT' \
+   KODE_WORKSPACE_ROOT='$WORKSPACE' \
+   KODE_AGENT_NAME='$AGENT' \
    pi \
       --model claude-haiku-4-5 \
       --max-turns 30 \
@@ -571,8 +571,8 @@ tmux new-session -d -s "$AGENT" \
 
 # Option B: Background with --print (headless)
 (cd $WORKSPACE/agents/$AGENT && \
- PI_WORKSPACE_ROOT="$WORKSPACE" \
- PI_AGENT_NAME="$AGENT" \
+ KODE_WORKSPACE_ROOT="$WORKSPACE" \
+ KODE_AGENT_NAME="$AGENT" \
  pi \
     --model claude-haiku-4-5 \
     --max-turns 30 \
@@ -606,7 +606,7 @@ If logging is causing problems during an incident:
 
 **Environment (for new agents):**
 ```bash
-PI_SHADOW_GIT_DISABLED=1 pi -e shadow-git.ts ...
+KODE_SHADOW_GIT_DISABLED=1 pi -e shadow-git.ts ...
 ```
 
 The extension **fails open**: git errors are logged but don't block the agent.
@@ -670,7 +670,7 @@ A real-time TUI dashboard for monitoring multiple agents.
 
 ```bash
 # Set workspace root and start pi with the extension
-PI_WORKSPACE_ROOT="/path/to/workspace" pi -e ~/.pi/agent/extensions/shadow-git.ts
+KODE_WORKSPACE_ROOT="/path/to/workspace" pi -e ~/.kode/agent/extensions/shadow-git.ts
 
 # Open dashboard
 /mc
@@ -761,9 +761,9 @@ EOF
 
 # Spawn aggregator (blocking - we need the result)
 cd agents/aggregator
-PI_WORKSPACE_ROOT="$(pwd)/../.." PI_AGENT_NAME="aggregator" \
+KODE_WORKSPACE_ROOT="$(pwd)/../.." KODE_AGENT_NAME="aggregator" \
 pi --model claude-sonnet-4-5 --max-turns 15 --print \
-   -e ~/.pi/agent/extensions/shadow-git.ts \
+   -e ~/.kode/agent/extensions/shadow-git.ts \
    'Read plan.md and execute.' 2>&1 | tee output/run.log
 ```
 
@@ -945,9 +945,9 @@ git reset --hard abc1234  # Reset to good commit
 
 | Task | Command |
 |------|---------|
-| Spawn with tmux | `tmux new-session -d -s NAME "cd DIR && PI_WORKSPACE_ROOT=... PI_AGENT_NAME=... pi --model MODEL -e shadow-git.ts ..."` |
-| Spawn headless | `(cd DIR && PI_WORKSPACE_ROOT=... PI_AGENT_NAME=... pi --model MODEL --print -e shadow-git.ts ...) &` |
-| Spawn blocking | `cd DIR && PI_WORKSPACE_ROOT=... PI_AGENT_NAME=... pi --model MODEL --print -e shadow-git.ts ...` |
+| Spawn with tmux | `tmux new-session -d -s NAME "cd DIR && KODE_WORKSPACE_ROOT=... KODE_AGENT_NAME=... pi --model MODEL -e shadow-git.ts ..."` |
+| Spawn headless | `(cd DIR && KODE_WORKSPACE_ROOT=... KODE_AGENT_NAME=... pi --model MODEL --print -e shadow-git.ts ...) &` |
+| Spawn blocking | `cd DIR && KODE_WORKSPACE_ROOT=... KODE_AGENT_NAME=... pi --model MODEL --print -e shadow-git.ts ...` |
 
 ### Process Management
 
@@ -981,7 +981,7 @@ git reset --hard abc1234  # Reset to good commit
 | `claude-sonnet-4-5` | Complex reasoning, implementation | ~$0.01/turn | 10x |
 | `claude-opus-4-5` | Hardest problems, synthesis | ~$0.015/turn | 15x |
 
-**⚠️ WARNING: CLI `--model` flag is IGNORED!** Pi uses `~/.pi/agent/settings.json`.
+**⚠️ WARNING: CLI `--model` flag is IGNORED!** Pi uses `~/.kode/agent/settings.json`.
 
 ---
 
@@ -999,11 +999,11 @@ The `--print` flag runs pi in non-interactive mode: it processes the prompt and 
 **Wrong:** `pi --hook shadow-git.ts ...` (deprecated)
 **Right:** `pi -e shadow-git.ts ...`
 
-### 3. Set PI_WORKSPACE_ROOT for Mission Control
+### 3. Set KODE_WORKSPACE_ROOT for Mission Control
 
 ```bash
 # Mission Control needs this to find agents
-PI_WORKSPACE_ROOT=/path/to/workspace pi -e shadow-git.ts
+KODE_WORKSPACE_ROOT=/path/to/workspace pi -e shadow-git.ts
 # Then: /mc
 ```
 
@@ -1016,17 +1016,17 @@ PI_WORKSPACE_ROOT=/path/to/workspace pi -e shadow-git.ts
 # RIGHT: Absolute path
 -e /full/path/to/shadow-git.ts
 # or
--e ~/.pi/agent/extensions/shadow-git.ts
+-e ~/.kode/agent/extensions/shadow-git.ts
 ```
 
 ### 5. Env Vars Must Be Set Inside tmux Command
 
 ```bash
 # WRONG: Vars not passed to tmux subshell
-PI_WORKSPACE_ROOT="$PWD" tmux new-session -d -s agent "pi ..."
+KODE_WORKSPACE_ROOT="$PWD" tmux new-session -d -s agent "pi ..."
 
 # RIGHT: Set vars inside the command string
-tmux new-session -d -s agent "PI_WORKSPACE_ROOT='$PWD' PI_AGENT_NAME='agent' pi ..."
+tmux new-session -d -s agent "KODE_WORKSPACE_ROOT='$PWD' KODE_AGENT_NAME='agent' pi ..."
 ```
 
 ### 6. Check manifest.json for Agent Status
@@ -1057,7 +1057,7 @@ cat workspace/manifest.json | jq '.agents | to_entries[] | {name: .key, status: 
 [ ] Spawn command ready
     [ ] TTY decision: tmux OR --print
     [ ] settings.json configured with correct model
-    [ ] PI_WORKSPACE_ROOT and PI_AGENT_NAME set (for shadow-git)
+    [ ] KODE_WORKSPACE_ROOT and KODE_AGENT_NAME set (for shadow-git)
     [ ] -e with absolute path to shadow-git.ts
     [ ] --max-turns set
 

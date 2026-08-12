@@ -39,8 +39,8 @@ use std::pin::Pin;
 const OPENAI_API_URL: &str = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_MAX_TOKENS: u32 = 4096;
 const MAX_API_ERROR_BODY_BYTES: usize = 64 * 1024;
-const OPENROUTER_DEFAULT_HTTP_REFERER: &str = "https://github.com/Dicklesworthstone/koompi_code_cli";
-const OPENROUTER_DEFAULT_X_TITLE: &str = "Pi Agent Rust";
+const OPENROUTER_DEFAULT_HTTP_REFERER: &str = "https://github.com/koompi/koompi-code-cli";
+const OPENROUTER_DEFAULT_X_TITLE: &str = "KOOMPI Code";
 
 /// Map a role string (which may come from compat config at runtime) to a `Cow<'_, str>`.
 ///
@@ -111,12 +111,12 @@ fn first_non_empty_env(keys: &[&str]) -> Option<String> {
 }
 
 fn openrouter_default_http_referer() -> String {
-    first_non_empty_env(&["OPENROUTER_HTTP_REFERER", "PI_OPENROUTER_HTTP_REFERER"])
+    first_non_empty_env(&["OPENROUTER_HTTP_REFERER", "KODE_OPENROUTER_HTTP_REFERER"])
         .unwrap_or_else(|| OPENROUTER_DEFAULT_HTTP_REFERER.to_string())
 }
 
 fn openrouter_default_x_title() -> String {
-    first_non_empty_env(&["OPENROUTER_X_TITLE", "PI_OPENROUTER_X_TITLE"])
+    first_non_empty_env(&["OPENROUTER_X_TITLE", "KODE_OPENROUTER_X_TITLE"])
         .unwrap_or_else(|| OPENROUTER_DEFAULT_X_TITLE.to_string())
 }
 

@@ -30,14 +30,14 @@
     },
     {
       "repo": "dejanr/dotfiles",
-      "path": ".pi/extensions/project-context/index.ts",
+      "path": ".kode/extensions/project-context/index.ts",
       "registrations": [
         "registerTool"
       ]
     },
     {
       "repo": "joelazar/dotfiles",
-      "path": ".pi/extensions/commands.ts",
+      "path": ".kode/extensions/commands.ts",
       "registrations": [
         "registerTool",
         "registerCommand",

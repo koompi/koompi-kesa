@@ -149,7 +149,7 @@ fn setup_config_ui_fixture(session: &TuiSession, package_name: &str) -> PathBuf 
     }))
     .expect("serialize config UI settings");
 
-    let project_settings = session.harness.temp_dir().join(".pi").join("settings.json");
+    let project_settings = session.harness.temp_dir().join(".kode").join("settings.json");
     fs::create_dir_all(
         project_settings
             .parent()
@@ -1329,7 +1329,7 @@ E2E-only skill used by tests.
         .harness
         .record_artifact("skill.valid.SKILL.md", &skill_path);
 
-    let project_pi_dir = session.harness.temp_dir().join(".pi");
+    let project_pi_dir = session.harness.temp_dir().join(".kode");
     let global_agent_dir = session.harness.temp_dir().join("env").join("agent");
 
     let snapshot_pi_after_add = session.harness.temp_path("snapshot.pi.after_add.txt");
@@ -1728,8 +1728,8 @@ fn e2e_tui_basic_chat_vcr() {
     let cassette_dir_str = cassette_dir.display().to_string();
     session.set_env(VCR_ENV_MODE, "playback");
     session.set_env(VCR_ENV_DIR, &cassette_dir_str);
-    session.set_env("PI_VCR_TEST_NAME", VCR_BASIC_CHAT_TEST_NAME);
-    session.set_env("PI_TEST_MODE", "1");
+    session.set_env("KODE_VCR_TEST_NAME", VCR_BASIC_CHAT_TEST_NAME);
+    session.set_env("KODE_TEST_MODE", "1");
     session.set_env("VCR_DEBUG_BODY", "1");
     session.set_env("VCR_DEBUG_BODY_FILE", "/tmp/vcr_debug_bodies.txt");
 
@@ -1755,7 +1755,7 @@ fn e2e_tui_basic_chat_vcr() {
 
     // Write stderr log path for the binary
     let stderr_log = session.harness.temp_path("pi-stderr.log");
-    session.set_env("PI_STDERR_LOG", &stderr_log.display().to_string());
+    session.set_env("KODE_STDERR_LOG", &stderr_log.display().to_string());
     session.set_env("RUST_LOG", "debug");
 
     session.harness.section("launch");
@@ -1885,8 +1885,8 @@ fn e2e_tui_stream_scroll_and_finalize_vcr() {
     let cassette_dir_str = cassette_dir.display().to_string();
     session.set_env(VCR_ENV_MODE, "playback");
     session.set_env(VCR_ENV_DIR, &cassette_dir_str);
-    session.set_env("PI_VCR_TEST_NAME", VCR_SCROLL_FINALIZE_TEST_NAME);
-    session.set_env("PI_TEST_MODE", "1");
+    session.set_env("KODE_VCR_TEST_NAME", VCR_SCROLL_FINALIZE_TEST_NAME);
+    session.set_env("KODE_TEST_MODE", "1");
     session.set_env("VCR_DEBUG_BODY", "1");
 
     session.harness.section("launch");
@@ -1995,9 +1995,9 @@ fn e2e_tui_vcr_tool_read() {
     let cassette_dir_str = cassette_dir.display().to_string();
     session.set_env(VCR_ENV_MODE, "playback");
     session.set_env(VCR_ENV_DIR, &cassette_dir_str);
-    session.set_env("PI_VCR_TEST_NAME", VCR_TEST_NAME);
+    session.set_env("KODE_VCR_TEST_NAME", VCR_TEST_NAME);
     session.set_env("VCR_DEBUG_BODY", "1");
-    session.set_env("PI_TEST_MODE", "1");
+    session.set_env("KODE_TEST_MODE", "1");
 
     session.launch(&vcr_interactive_args());
     session.wait_and_capture("startup", "Welcome to Pi!", STARTUP_TIMEOUT);
@@ -2115,12 +2115,12 @@ fn e2e_tui_full_interactive_loop() {
     let cassette_dir_str = cassette_dir.display().to_string();
     session.set_env(VCR_ENV_MODE, "playback");
     session.set_env(VCR_ENV_DIR, &cassette_dir_str);
-    session.set_env("PI_VCR_TEST_NAME", VCR_TEST_NAME);
-    session.set_env("PI_TEST_MODE", "1");
+    session.set_env("KODE_VCR_TEST_NAME", VCR_TEST_NAME);
+    session.set_env("KODE_TEST_MODE", "1");
     session.set_env("VCR_DEBUG_BODY", "1");
 
     let stderr_log = session.harness.temp_path("pi-stderr.log");
-    session.set_env("PI_STDERR_LOG", &stderr_log.display().to_string());
+    session.set_env("KODE_STDERR_LOG", &stderr_log.display().to_string());
     session.set_env("RUST_LOG", "debug");
 
     // ── Step 1: Launch and verify startup ──
@@ -2901,8 +2901,8 @@ fn e2e_scenario_error_api_failure() {
         .args(&vcr_interactive_args_no_tools())
         .env(VCR_ENV_MODE, "playback")
         .env(VCR_ENV_DIR, &cassette_dir.display().to_string())
-        .env("PI_VCR_TEST_NAME", test_name)
-        .env("PI_TEST_MODE", "1")
+        .env("KODE_VCR_TEST_NAME", test_name)
+        .env("KODE_TEST_MODE", "1")
         .step(
             ScenarioStep::wait("Welcome to Pi!")
                 .label("startup")
@@ -3043,8 +3043,8 @@ fn e2e_scenario_session_persistence_and_tree() {
         .args(&vcr_interactive_args_no_tools())
         .env(VCR_ENV_MODE, "playback")
         .env(VCR_ENV_DIR, &cassette_dir.display().to_string())
-        .env("PI_VCR_TEST_NAME", VCR_BASIC_CHAT_TEST_NAME)
-        .env("PI_TEST_MODE", "1")
+        .env("KODE_VCR_TEST_NAME", VCR_BASIC_CHAT_TEST_NAME)
+        .env("KODE_TEST_MODE", "1")
         .step(
             ScenarioStep::wait("Welcome to Pi!")
                 .label("startup")
@@ -3174,8 +3174,8 @@ fn e2e_scenario_session_restore_explicit_path() {
         .arg(&session_path_str)
         .arg("--system-prompt")
         .arg("pi e2e session restore harness")
-        .env("PI_SESSIONS_DIR", &sessions_dir_str)
-        .env("PI_TEST_MODE", "1")
+        .env("KODE_SESSIONS_DIR", &sessions_dir_str)
+        .env("KODE_TEST_MODE", "1")
         .step(
             ScenarioStep::wait("Persist:")
                 .label("startup")
@@ -3258,8 +3258,8 @@ fn e2e_scenario_tool_chain_read_response() {
         .file(SAMPLE_FILE_NAME, SAMPLE_FILE_CONTENT)
         .env(VCR_ENV_MODE, "playback")
         .env(VCR_ENV_DIR, &cassette_dir.display().to_string())
-        .env("PI_VCR_TEST_NAME", VCR_TEST_NAME)
-        .env("PI_TEST_MODE", "1")
+        .env("KODE_VCR_TEST_NAME", VCR_TEST_NAME)
+        .env("KODE_TEST_MODE", "1")
         .step(
             ScenarioStep::wait("Welcome to Pi!")
                 .label("startup")
@@ -3326,8 +3326,8 @@ fn e2e_scenario_tool_chain_multi_turn() {
         .args(&vcr_interactive_args())
         .env(VCR_ENV_MODE, "playback")
         .env(VCR_ENV_DIR, &cassette_dir.display().to_string())
-        .env("PI_VCR_TEST_NAME", VCR_MULTI_TOOL_CHAIN_TEST_NAME)
-        .env("PI_TEST_MODE", "1")
+        .env("KODE_VCR_TEST_NAME", VCR_MULTI_TOOL_CHAIN_TEST_NAME)
+        .env("KODE_TEST_MODE", "1")
         .step(
             ScenarioStep::wait("Welcome to Pi!")
                 .label("startup")
@@ -3527,8 +3527,8 @@ fn e2e_scenario_prompt_loop_multi_round() {
         .args(&vcr_interactive_args_no_tools())
         .env(VCR_ENV_MODE, "playback")
         .env(VCR_ENV_DIR, &cassette_dir.display().to_string())
-        .env("PI_VCR_TEST_NAME", test_name)
-        .env("PI_TEST_MODE", "1")
+        .env("KODE_VCR_TEST_NAME", test_name)
+        .env("KODE_TEST_MODE", "1")
         .step(
             ScenarioStep::wait("Welcome to Pi!")
                 .label("startup")

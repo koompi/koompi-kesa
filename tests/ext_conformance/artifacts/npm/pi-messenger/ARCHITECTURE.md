@@ -147,7 +147,7 @@ No epics. Just PRD-based task planning and execution.
 ## Data Storage
 
 ```
-.pi/messenger/crew/
+.kode/messenger/crew/
 ├── plan.json                 # Plan metadata (PRD path, task counts)
 ├── plan.md                   # Planner output (task breakdown)
 ├── planning-progress.md      # Planning loop history + reviewer feedback

@@ -78,17 +78,17 @@ impl TraceJitConfig {
     /// Create from environment variables.
     #[must_use]
     pub fn from_env() -> Self {
-        let enabled = bool_from_env("PI_HOSTCALL_TRACE_JIT", true);
+        let enabled = bool_from_env("KODE_HOSTCALL_TRACE_JIT", true);
         let min_jit_executions = u64_from_env(
-            "PI_HOSTCALL_TRACE_JIT_MIN_EXECUTIONS",
+            "KODE_HOSTCALL_TRACE_JIT_MIN_EXECUTIONS",
             DEFAULT_MIN_JIT_EXECUTIONS,
         );
         let max_compiled_traces = usize_from_env(
-            "PI_HOSTCALL_TRACE_JIT_MAX_TRACES",
+            "KODE_HOSTCALL_TRACE_JIT_MAX_TRACES",
             DEFAULT_MAX_COMPILED_TRACES,
         );
         let max_guard_failures = u64_from_env(
-            "PI_HOSTCALL_TRACE_JIT_MAX_GUARD_FAILURES",
+            "KODE_HOSTCALL_TRACE_JIT_MAX_GUARD_FAILURES",
             DEFAULT_MAX_GUARD_FAILURES,
         );
         Self::new(

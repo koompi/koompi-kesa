@@ -134,9 +134,9 @@ Example questions the LLM can answer using this tool:
 
 Use `/lsp` to configure the auto diagnostics hook:
 - Mode: default at agent end; can run after each edit/write or be disabled
-- Scope: session-only or global (`~/.pi/agent/settings.json`)
+- Scope: session-only or global (`~/.kode/agent/settings.json`)
 
-To disable auto diagnostics, choose "Disabled" in `/lsp` or set in `~/.pi/agent/settings.json`:
+To disable auto diagnostics, choose "Disabled" in `/lsp` or set in `~/.kode/agent/settings.json`:
 ```json
 {
   "lsp": {

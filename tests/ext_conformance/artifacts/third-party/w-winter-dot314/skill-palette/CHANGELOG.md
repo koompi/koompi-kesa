@@ -20,9 +20,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `~/.codex/skills` (recursive)
   - `~/.claude/skills` (claude format - one level)
   - `${cwd}/.claude/skills` (claude format - one level)
-  - `~/.pi/agent/skills` (recursive)
-  - `~/.pi/skills` (recursive)
-  - `${cwd}/.pi/skills` (recursive)
+  - `~/.kode/agent/skills` (recursive)
+  - `~/.kode/skills` (recursive)
+  - `${cwd}/.kode/skills` (recursive)
 - **Claude format support** — Claude skill directories (one level deep) now handled differently from recursive directories
 
 ### Changed
@@ -51,9 +51,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Progress dots countdown timer
 - Skill content injection via `before_agent_start` event
 - Support for multiple skill directories:
-  - `~/.pi/agent/skills/`
-  - `~/.pi/skills/`
-  - `.pi/skills/` (project-specific)
+  - `~/.kode/agent/skills/`
+  - `~/.kode/skills/`
+  - `.kode/skills/` (project-specific)
 - Symlink support for skill directories
 - Skill deduplication by name (first occurrence wins)
 - Elegant TUI design with:

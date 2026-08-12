@@ -9,13 +9,13 @@ policy profiles, and enforcement thresholds in production.
 
 | Parameter | Config Key | Env Var | Default | Range |
 |-----------|-----------|---------|---------|-------|
-| `enabled` | `extension_risk.enabled` | `PI_EXTENSION_RISK_ENABLED` | `false` | bool |
-| `enforce` | `extension_risk.enforce` | `PI_EXTENSION_RISK_ENFORCE` | `true` | bool |
-| `alpha` | `extension_risk.alpha` | `PI_EXTENSION_RISK_ALPHA` | `0.01` | 1e-6..0.5 |
-| `window_size` | `extension_risk.windowSize` | `PI_EXTENSION_RISK_WINDOW` | `128` | 8..4096 |
-| `ledger_limit` | `extension_risk.ledgerLimit` | `PI_EXTENSION_RISK_LEDGER_LIMIT` | `2048` | 32..20000 |
-| `decision_timeout_ms` | `extension_risk.decisionTimeoutMs` | `PI_EXTENSION_RISK_DECISION_TIMEOUT_MS` | `50` | 1..2000 |
-| `fail_closed` | `extension_risk.failClosed` | `PI_EXTENSION_RISK_FAIL_CLOSED` | `true` | bool |
+| `enabled` | `extension_risk.enabled` | `KODE_EXTENSION_RISK_ENABLED` | `false` | bool |
+| `enforce` | `extension_risk.enforce` | `KODE_EXTENSION_RISK_ENFORCE` | `true` | bool |
+| `alpha` | `extension_risk.alpha` | `KODE_EXTENSION_RISK_ALPHA` | `0.01` | 1e-6..0.5 |
+| `window_size` | `extension_risk.windowSize` | `KODE_EXTENSION_RISK_WINDOW` | `128` | 8..4096 |
+| `ledger_limit` | `extension_risk.ledgerLimit` | `KODE_EXTENSION_RISK_LEDGER_LIMIT` | `2048` | 32..20000 |
+| `decision_timeout_ms` | `extension_risk.decisionTimeoutMs` | `KODE_EXTENSION_RISK_DECISION_TIMEOUT_MS` | `50` | 1..2000 |
+| `fail_closed` | `extension_risk.failClosed` | `KODE_EXTENSION_RISK_FAIL_CLOSED` | `true` | bool |
 
 ### Parameter Tuning Recipes
 
@@ -84,7 +84,7 @@ Profiles are set via CLI flag, environment variable, or config file:
 pi --extension-policy safe
 
 # Environment
-export PI_EXTENSION_POLICY=safe
+export KODE_EXTENSION_POLICY=safe
 
 # Config (~/.config/pi/config.toml)
 [extension_policy]
@@ -93,7 +93,7 @@ profile = "safe"
 
 **Before changing profile in production:**
 1. Review current FP/FN rates in rollout state
-2. Switch to Shadow mode first: `PI_EXTENSION_RISK_ENFORCE=false`
+2. Switch to Shadow mode first: `KODE_EXTENSION_RISK_ENFORCE=false`
 3. Monitor for 24-48 hours under new profile
 4. If metrics acceptable, re-enable enforcement
 
@@ -181,7 +181,7 @@ When triggered, the system automatically reverts to `shadow` phase.
 ### "Extension suddenly blocked after update"
 
 1. Check if policy profile changed
-2. Check if risk controller was enabled (`PI_EXTENSION_RISK_ENABLED`)
+2. Check if risk controller was enabled (`KODE_EXTENSION_RISK_ENABLED`)
 3. Review enforcement state for the extension in ledger
 4. If FP: add per-extension override or tune alpha
 

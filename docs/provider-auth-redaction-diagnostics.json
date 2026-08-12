@@ -258,7 +258,7 @@
         "action": "Check auth.json credential status (existence only)",
         "safe": true,
         "details": "Verify auth.json has an entry for the provider without reading the key value.",
-        "example": "jq 'keys' ~/.pi/agent/auth.json  # shows provider names, not key values"
+        "example": "jq 'keys' ~/.kode/agent/auth.json  # shows provider names, not key values"
       }
     ],
     "anti_patterns": [
@@ -268,9 +268,9 @@
         "safe_alternative": "echo ${ANTHROPIC_API_KEY:0:7}... (prefix only)"
       },
       {
-        "bad": "cat ~/.pi/agent/auth.json",
+        "bad": "cat ~/.kode/agent/auth.json",
         "why": "Dumps all stored credentials to terminal",
-        "safe_alternative": "jq 'keys' ~/.pi/agent/auth.json (provider names only)"
+        "safe_alternative": "jq 'keys' ~/.kode/agent/auth.json (provider names only)"
       },
       {
         "bad": "curl -v https://api.anthropic.com/...",

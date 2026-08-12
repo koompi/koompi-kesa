@@ -586,7 +586,7 @@ pub enum HostcallQueueMode {
 impl HostcallQueueMode {
     #[must_use]
     pub fn from_env() -> Self {
-        std::env::var("PI_HOSTCALL_QUEUE_RECLAIMER")
+        std::env::var("KODE_HOSTCALL_QUEUE_RECLAIMER")
             .ok()
             .as_deref()
             .and_then(Self::parse)

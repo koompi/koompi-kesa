@@ -941,7 +941,7 @@ pub enum ExtensionRuntimeEngineSelection {
 }
 
 impl ExtensionRuntimeEngineSelection {
-    pub const ENV_VAR: &'static str = "PI_EXTENSION_RUNTIME_ENGINE";
+    pub const ENV_VAR: &'static str = "KODE_EXTENSION_RUNTIME_ENGINE";
 
     pub const fn as_str(self) -> &'static str {
         match self {

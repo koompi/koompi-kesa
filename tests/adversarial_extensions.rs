@@ -43,7 +43,7 @@ fn load_ext(harness: &common::TestHarness, source: &str) -> ExtensionManager {
     };
     js_config
         .env
-        .insert("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+        .insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
 
     let runtime = common::run_async({
         let manager = manager.clone();
@@ -86,7 +86,7 @@ fn try_load_ext(source: &str) -> Result<(), String> {
     };
     js_config
         .env
-        .insert("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+        .insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
 
     let runtime = common::run_async({
         let manager = manager.clone();
@@ -129,7 +129,7 @@ fn try_load_extensions(
     };
     js_config
         .env
-        .insert("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+        .insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
 
     let runtime = common::run_async({
         let manager = manager.clone();
@@ -190,7 +190,7 @@ fn eval_adversarial_with_memory_limit(source: &str, memory_limit_bytes: usize) -
     };
     js_config
         .env
-        .insert("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+        .insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
 
     let runtime = common::run_async({
         let manager = manager.clone();
@@ -1840,18 +1840,18 @@ export default function activate(pi) {
 // T6 — PI_* ENV VAR ALLOW-LIST EDGE CASE
 //
 // PI_* vars are unconditionally allowed, but the blocklist is checked first.
-// Verify that PI_API_KEY is still blocked by suffix match.
+// Verify that KODE_API_KEY is still blocked by suffix match.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 #[test]
 fn t6_pi_api_key_suffix_still_blocked() {
-    // PI_API_KEY matches *_API_KEY suffix — should be blocked even though
+    // KODE_API_KEY matches *_API_KEY suffix — should be blocked even though
     // PI_* prefix is allowed. Blocklist is checked before the allow-list.
     let result = eval_adversarial(
         r#"
 export default function activate(pi) {
   pi.on("agent_start", () => {
-    const key = process.env.PI_API_KEY;
+    const key = process.env.KODE_API_KEY;
     return { result: key === undefined ? "BLOCKED" : "LEAKED:" + key };
   });
 }
@@ -1859,7 +1859,7 @@ export default function activate(pi) {
     );
     assert_eq!(
         result, "BLOCKED",
-        "PI_API_KEY should be blocked by *_API_KEY suffix despite PI_* prefix allow"
+        "KODE_API_KEY should be blocked by *_API_KEY suffix despite PI_* prefix allow"
     );
 }
 
@@ -1870,8 +1870,8 @@ fn t6_pi_safe_var_allowed() {
         r#"
 export default function activate(pi) {
   pi.on("agent_start", () => {
-    // PI_TEST_MODE is a legitimate PI_* var
-    const val = process.env.PI_TEST_MODE;
+    // KODE_TEST_MODE is a legitimate PI_* var
+    const val = process.env.KODE_TEST_MODE;
     // It's allowed but may not be set in this test environment
     return { result: val !== undefined ? "ALLOWED:" + val : "ALLOWED_BUT_UNSET" };
   });
@@ -1880,7 +1880,7 @@ export default function activate(pi) {
     );
     assert!(
         result.starts_with("ALLOWED"),
-        "PI_TEST_MODE (PI_* prefix, no blocklist match) should be allowed, got: {result}"
+        "KODE_TEST_MODE (PI_* prefix, no blocklist match) should be allowed, got: {result}"
     );
 }
 

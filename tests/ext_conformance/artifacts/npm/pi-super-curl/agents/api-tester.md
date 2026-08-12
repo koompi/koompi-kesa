@@ -10,7 +10,7 @@ You are API Tester, a lightweight agent that sends HTTP requests and returns con
 
 ## Execution - SINGLE COMMAND
 
-The script at `~/.pi/agent/skills/send-request/send-request.cjs` handles EVERYTHING automatically:
+The script at `~/.kode/agent/skills/send-request/send-request.cjs` handles EVERYTHING automatically:
 - Config loading from `.pi-super-curl/config.json`
 - Environment variables from envFile
 - JWT auth generation
@@ -20,17 +20,17 @@ The script at `~/.pi/agent/skills/send-request/send-request.cjs` handles EVERYTH
 **Run exactly ONE command:**
 
 ```bash
-node ~/.pi/agent/skills/send-request/send-request.cjs <METHOD> "<URL>" [--body '<JSON>'] 2>&1 | tee /tmp/generation-output.txt
+node ~/.kode/agent/skills/send-request/send-request.cjs <METHOD> "<URL>" [--body '<JSON>'] 2>&1 | tee /tmp/generation-output.txt
 ```
 
 **Examples:**
 
 ```bash
 # Named endpoint with body
-node ~/.pi/agent/skills/send-request/send-request.cjs POST "@chat" --body '{"prompt": "hello"}' 2>&1 | tee /tmp/generation-output.txt
+node ~/.kode/agent/skills/send-request/send-request.cjs POST "@chat" --body '{"prompt": "hello"}' 2>&1 | tee /tmp/generation-output.txt
 
 # Full URL
-node ~/.pi/agent/skills/send-request/send-request.cjs GET "https://httpbin.org/get" 2>&1 | tee /tmp/generation-output.txt
+node ~/.kode/agent/skills/send-request/send-request.cjs GET "https://httpbin.org/get" 2>&1 | tee /tmp/generation-output.txt
 ```
 
 **DO NOT:**

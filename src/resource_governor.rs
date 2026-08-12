@@ -3533,10 +3533,10 @@ mod tests {
     }
 
     fn write_resource_contract_evidence(entry: &Value) {
-        let path = std::env::var_os("PI_RESOURCE_GOVERNOR_CONTRACT_EVIDENCE")
+        let path = std::env::var_os("KODE_RESOURCE_GOVERNOR_CONTRACT_EVIDENCE")
             .map(std::path::PathBuf::from)
             .or_else(|| {
-                std::env::var_os("PI_EVIDENCE_DIR").map(|base| {
+                std::env::var_os("KODE_EVIDENCE_DIR").map(|base| {
                     std::path::PathBuf::from(base)
                         .join("perf")
                         .join("resource_governor_surface_contract.jsonl")

@@ -3,7 +3,7 @@
 set -e
 
 echo "=== STEP-02 UNIT TESTS ==="
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 
 # UT-02-01: Commits happen at turn boundaries, not per-tool
 echo -n "UT-02-01: Turn-level commits (not per-tool)... "
@@ -11,7 +11,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # This should generate multiple tool calls but few commits
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 120 pi --max-turns 2 --no-input -p \
   -e "$EXT" \
   "Write 'a' to output/a.txt, 'b' to output/b.txt, 'c' to output/c.txt in one turn" 2>&1 >/dev/null || true
@@ -42,7 +42,7 @@ echo -n "UT-02-02: Commit message has turn number... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'test' to output/test.txt" 2>&1 >/dev/null || true
 

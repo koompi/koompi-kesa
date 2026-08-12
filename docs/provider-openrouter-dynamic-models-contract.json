@@ -38,7 +38,7 @@
   },
   "dynamic_catalog_contract": {
     "models_endpoint": "GET https://openrouter.ai/api/v1/models",
-    "cache_path": "~/.pi/agent/cache/openrouter_models.json",
+    "cache_path": "~/.kode/agent/cache/openrouter_models.json",
     "cache_ttl_seconds": 86400,
     "refresh_triggers": [
       "explicit refresh flag/command",
@@ -75,8 +75,8 @@
         "X-Title": "Pi Agent Rust"
       },
       "env_overrides": {
-        "HTTP-Referer": ["OPENROUTER_HTTP_REFERER", "PI_OPENROUTER_HTTP_REFERER"],
-        "X-Title": ["OPENROUTER_X_TITLE", "PI_OPENROUTER_X_TITLE"]
+        "HTTP-Referer": ["OPENROUTER_HTTP_REFERER", "KODE_OPENROUTER_HTTP_REFERER"],
+        "X-Title": ["OPENROUTER_X_TITLE", "KODE_OPENROUTER_X_TITLE"]
       }
     }
   },

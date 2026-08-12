@@ -118,7 +118,7 @@ feedback. The retry logic lives in CI only (`.github/workflows/conformance.yml`)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PI_CONFORMANCE_MAX_RETRIES` | `1` | Max automatic retries per target |
-| `PI_CONFORMANCE_RETRY_DELAY` | `5` | Seconds between retry attempts |
-| `PI_CONFORMANCE_FLAKE_BUDGET` | `3` | Per-target 30-day flake budget |
-| `PI_CONFORMANCE_CLASSIFY_ONLY` | `0` | Set to `1` to classify without retrying |
+| `KODE_CONFORMANCE_MAX_RETRIES` | `1` | Max automatic retries per target |
+| `KODE_CONFORMANCE_RETRY_DELAY` | `5` | Seconds between retry attempts |
+| `KODE_CONFORMANCE_FLAKE_BUDGET` | `3` | Per-target 30-day flake budget |
+| `KODE_CONFORMANCE_CLASSIFY_ONLY` | `0` | Set to `1` to classify without retrying |

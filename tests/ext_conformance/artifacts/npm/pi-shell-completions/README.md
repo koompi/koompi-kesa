@@ -8,7 +8,7 @@ Adds native shell completions to pi's `!` and `!!` bash mode commands.
 pi install npm:pi-shell-completions
 ```
 
-Or for local development, place in `~/.pi/agent/extensions/shell-completions/`
+Or for local development, place in `~/.kode/agent/extensions/shell-completions/`
 
 ## How it works
 

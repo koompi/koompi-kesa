@@ -51,19 +51,19 @@ impl GoldenPathHarness {
         let mut env = BTreeMap::new();
         // Fully isolate from user environment.
         env.insert(
-            "PI_CODING_AGENT_DIR".into(),
+            "KODE_CODING_AGENT_DIR".into(),
             env_root.join("agent").display().to_string(),
         );
         env.insert(
-            "PI_CONFIG_PATH".into(),
+            "KODE_CONFIG_PATH".into(),
             env_root.join("settings.json").display().to_string(),
         );
         env.insert(
-            "PI_SESSIONS_DIR".into(),
+            "KODE_SESSIONS_DIR".into(),
             env_root.join("sessions").display().to_string(),
         );
         env.insert(
-            "PI_PACKAGE_DIR".into(),
+            "KODE_PACKAGE_DIR".into(),
             env_root.join("packages").display().to_string(),
         );
         // Offline-friendly npm.

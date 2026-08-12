@@ -255,11 +255,11 @@ Enforced in CI via `tests/perf_budgets.rs`:
 
 ```bash
 # PR mode (10 diverse extensions, quick)
-PI_BENCH_MODE=pr cargo test --test ext_bench_harness \
+KODE_BENCH_MODE=pr cargo test --test ext_bench_harness \
   --features ext-conformance -- --nocapture
 
 # Full corpus (103 extensions, thorough)
-PI_BENCH_MODE=nightly PI_BENCH_MAX=103 PI_BENCH_ITERATIONS=10 \
+KODE_BENCH_MODE=nightly KODE_BENCH_MAX=103 KODE_BENCH_ITERATIONS=10 \
   cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 ```
 
@@ -297,7 +297,7 @@ cargo test --test ext_conformance_generated --features ext-conformance -- \
   conformance_sharded_matrix --nocapture --exact
 
 # 2. Performance (103 safe extensions)
-PI_BENCH_MODE=nightly PI_BENCH_MAX=103 PI_BENCH_ITERATIONS=10 \
+KODE_BENCH_MODE=nightly KODE_BENCH_MAX=103 KODE_BENCH_ITERATIONS=10 \
   cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 
 # 3. Security (30 negative tests)

@@ -23,7 +23,7 @@ After installation, the extension automatically loads and will ask for confirmat
 
 ### Basic Configuration
 
-Create or edit `~/.pi/agent/settings.json` (global) or `.pi/settings.json` (project):
+Create or edit `~/.kode/agent/settings.json` (global) or `.kode/settings.json` (project):
 
 ```json
 {
@@ -73,8 +73,8 @@ Alternatively, use environment variables:
 export TELEGRAM_BOT_TOKEN="your_bot_token"
 export TELEGRAM_CHAT_ID="your_chat_id"
 # or
-export PI_TELEGRAM_TOKEN="your_bot_token"
-export PI_TELEGRAM_CHAT_ID="your_chat_id"
+export KODE_TELEGRAM_TOKEN="your_bot_token"
+export KODE_TELEGRAM_CHAT_ID="your_chat_id"
 ```
 
 ### Test Notifications
@@ -282,7 +282,7 @@ Block dangerous patterns:
 
 ### Project-Specific Settings
 
-Create `.pi/settings.json` in your project directory:
+Create `.kode/settings.json` in your project directory:
 
 ```json
 {
@@ -385,8 +385,8 @@ rm -rf ./old-dir-backup
 Settings are loaded in this order (later overrides earlier):
 
 1. Extension defaults
-2. Global settings (`~/.pi/agent/settings.json`)
-3. Project settings (`.pi/settings.json`)
+2. Global settings (`~/.kode/agent/settings.json`)
+3. Project settings (`.kode/settings.json`)
 4. Environment variables (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`)
 
 ## Non-Interactive Mode
@@ -441,18 +441,18 @@ For local development and testing, pi does not support installing packages from 
 
 **Global installation** (applies to all projects):
 ```bash
-cp extensions/bash-confirm.ts ~/.pi/agent/extensions/
+cp extensions/bash-confirm.ts ~/.kode/agent/extensions/
 ```
 
 **Project installation** (applies to current project only):
 ```bash
-mkdir -p .pi/extensions
-cp extensions/bash-confirm.ts .pi/extensions/
+mkdir -p .kode/extensions
+cp extensions/bash-confirm.ts .kode/extensions/
 ```
 
 ### Method 2: Add to Settings.json
 
-**Global settings** (`~/.pi/agent/settings.json`):
+**Global settings** (`~/.kode/agent/settings.json`):
 ```json
 {
   "packages": [
@@ -461,7 +461,7 @@ cp extensions/bash-confirm.ts .pi/extensions/
 }
 ```
 
-**Project settings** (`.pi/settings.json`):
+**Project settings** (`.kode/settings.json`):
 ```json
 {
   "packages": [

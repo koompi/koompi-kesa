@@ -10,7 +10,7 @@
 //!
 //! Report generation is deliberately opt-in because the outputs are tracked
 //! release evidence. Run it only from a clean source commit with:
-//! `PI_GENERATE_CONFORMANCE_REPORT=1 cargo test --locked --test conformance_report generate_conformance_report -- --exact --nocapture`
+//! `KODE_GENERATE_CONFORMANCE_REPORT=1 cargo test --locked --test conformance_report generate_conformance_report -- --exact --nocapture`
 
 use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
@@ -39,7 +39,7 @@ fn provenance_path() -> PathBuf {
 }
 
 static CONFORMANCE_REPORT_IO_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
-const GENERATE_CONFORMANCE_REPORT_ENV: &str = "PI_GENERATE_CONFORMANCE_REPORT";
+const GENERATE_CONFORMANCE_REPORT_ENV: &str = "KODE_GENERATE_CONFORMANCE_REPORT";
 
 fn report_generation_requested(value: Option<&str>) -> bool {
     value.is_some_and(|candidate| candidate.trim() == "1")
@@ -973,7 +973,7 @@ fn generate_markdown(
     md.push_str("cargo test --test extensions_policy_negative\n\n");
     md.push_str("# 2. Generate this consolidated report\n");
     md.push_str(
-        "PI_GENERATE_CONFORMANCE_REPORT=1 cargo test --locked --test conformance_report generate_conformance_report -- --exact --nocapture\n",
+        "KODE_GENERATE_CONFORMANCE_REPORT=1 cargo test --locked --test conformance_report generate_conformance_report -- --exact --nocapture\n",
     );
     md.push_str("```\n\n");
     md.push_str("Report files:\n");

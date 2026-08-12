@@ -5062,7 +5062,7 @@ fn performance_git_environment_scrubbing_is_ascii_case_insensitive() {
             std::ffi::OsString::from("1"),
         ),
         (
-            std::ffi::OsString::from("PI_RELEASE_TEST_SENTINEL"),
+            std::ffi::OsString::from("KODE_RELEASE_TEST_SENTINEL"),
             std::ffi::OsString::from("retained"),
         ),
     ];
@@ -5081,7 +5081,7 @@ fn performance_git_environment_scrubbing_is_ascii_case_insensitive() {
         );
     }
     assert!(command.get_envs().any(|(key, value)| {
-        key == "PI_RELEASE_TEST_SENTINEL"
+        key == "KODE_RELEASE_TEST_SENTINEL"
             && value.is_some_and(|value| value == std::ffi::OsStr::new("retained"))
     }));
 }
@@ -5737,7 +5737,7 @@ fn signal_serde_roundtrip() {
 // ── Final QA Certification (bd-1f42.7.3) ────────────────────────────────────
 
 const CERT_SCHEMA: &str = "pi.qa.final_certification.v1";
-const GENERATE_FINAL_CERTIFICATION_ENV: &str = "PI_GENERATE_FINAL_CERTIFICATION";
+const GENERATE_FINAL_CERTIFICATION_ENV: &str = "KODE_GENERATE_FINAL_CERTIFICATION";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CertEvidence {

@@ -3,13 +3,13 @@
 set -e
 
 echo "=== STEP-02 INTEGRATION TEST: COMMIT REDUCTION ==="
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 echo "Running agent for 5 turns with multiple tools..."
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 180 pi --max-turns 5 --no-input -p \
   -e "$EXT" \
   "Do 5 separate tasks: 1) write '1' to output/1.txt, 2) write '2' to output/2.txt, 3) write '3' to output/3.txt, 4) write '4' to output/4.txt, 5) write '5' to output/5.txt. Do one per turn." 2>&1 >/dev/null || true

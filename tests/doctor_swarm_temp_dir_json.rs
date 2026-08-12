@@ -96,8 +96,8 @@ fn run_doctor_json(env_overrides: &[(&str, Option<&str>)]) -> TestResult<Value> 
         .env_remove("GROQ_API_KEY")
         .env_remove("KIMI_API_KEY")
         .env_remove("AZURE_OPENAI_API_KEY")
-        .env_remove("PI_VALIDATION_BROKER_STORE")
-        .env_remove("PI_DOCTOR_LOGICAL_CPU_CORES")
+        .env_remove("KODE_VALIDATION_BROKER_STORE")
+        .env_remove("KODE_DOCTOR_LOGICAL_CPU_CORES")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -142,8 +142,8 @@ fn run_doctor_text(env_overrides: &[(&str, Option<&str>)]) -> TestResult<String>
         .env_remove("GROQ_API_KEY")
         .env_remove("KIMI_API_KEY")
         .env_remove("AZURE_OPENAI_API_KEY")
-        .env_remove("PI_VALIDATION_BROKER_STORE")
-        .env_remove("PI_DOCTOR_LOGICAL_CPU_CORES")
+        .env_remove("KODE_VALIDATION_BROKER_STORE")
+        .env_remove("KODE_DOCTOR_LOGICAL_CPU_CORES")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -614,7 +614,7 @@ fn doctor_swarm_validation_broker_json_reports_missing_configured_store() -> Tes
     let report = run_doctor_json(&[
         ("CARGO_TARGET_DIR", None),
         ("TMPDIR", None),
-        ("PI_VALIDATION_BROKER_STORE", Some(missing_store.as_str())),
+        ("KODE_VALIDATION_BROKER_STORE", Some(missing_store.as_str())),
     ])?;
     let finding = finding_by_schema(&report, SWARM_VALIDATION_BROKER_SCHEMA)?;
     require_eq(field_str(finding, "severity")?, "warn", "severity")?;
@@ -662,7 +662,7 @@ fn doctor_swarm_validation_broker_json_reports_stale_slot_posture() -> TestResul
     let report = run_doctor_json(&[
         ("CARGO_TARGET_DIR", None),
         ("TMPDIR", None),
-        ("PI_VALIDATION_BROKER_STORE", Some(store_path.as_str())),
+        ("KODE_VALIDATION_BROKER_STORE", Some(store_path.as_str())),
     ])?;
     let finding = finding_by_schema(&report, SWARM_VALIDATION_BROKER_SCHEMA)?;
     require_eq(field_str(finding, "severity")?, "warn", "severity")?;
@@ -996,13 +996,13 @@ fn doctor_swarm_resource_preflight_json_reports_constrained_profile() -> TestRes
     let report = run_doctor_json(&[
         ("CARGO_TARGET_DIR", Some(target_dir.as_str())),
         ("TMPDIR", Some(tmp_dir.as_str())),
-        ("PI_DOCTOR_CGROUP_CPU_MAX_PATH", Some(cpu_max.as_str())),
-        ("PI_DOCTOR_CPUSET_CPUS_PATH", Some(cpuset.as_str())),
-        ("PI_DOCTOR_NUMA_ONLINE_PATH", Some(numa.as_str())),
-        ("PI_DOCTOR_CGROUP_MEMORY_MAX_PATH", Some(memory.as_str())),
-        ("PI_DOCTOR_MEMINFO_PATH", Some(meminfo.as_str())),
-        ("PI_DOCTOR_LOGICAL_CPU_CORES", Some("4")),
-        ("PI_DOCTOR_LOCAL_BUILD_PROCESS_COUNT", Some("0")),
+        ("KODE_DOCTOR_CGROUP_CPU_MAX_PATH", Some(cpu_max.as_str())),
+        ("KODE_DOCTOR_CPUSET_CPUS_PATH", Some(cpuset.as_str())),
+        ("KODE_DOCTOR_NUMA_ONLINE_PATH", Some(numa.as_str())),
+        ("KODE_DOCTOR_CGROUP_MEMORY_MAX_PATH", Some(memory.as_str())),
+        ("KODE_DOCTOR_MEMINFO_PATH", Some(meminfo.as_str())),
+        ("KODE_DOCTOR_LOGICAL_CPU_CORES", Some("4")),
+        ("KODE_DOCTOR_LOCAL_BUILD_PROCESS_COUNT", Some("0")),
     ])?;
     let finding = finding_by_schema(&report, SWARM_RESOURCE_PREFLIGHT_SCHEMA)?;
     let data = field(finding, "data")?;
@@ -1100,13 +1100,13 @@ fn doctor_swarm_resource_preflight_json_reports_high_capacity_profile() -> TestR
     let report = run_doctor_json(&[
         ("CARGO_TARGET_DIR", Some(target_dir.as_str())),
         ("TMPDIR", Some(tmp_dir.as_str())),
-        ("PI_DOCTOR_CGROUP_CPU_MAX_PATH", Some(cpu_max.as_str())),
-        ("PI_DOCTOR_CPUSET_CPUS_PATH", Some(cpuset.as_str())),
-        ("PI_DOCTOR_NUMA_ONLINE_PATH", Some(numa.as_str())),
-        ("PI_DOCTOR_CGROUP_MEMORY_MAX_PATH", Some(memory.as_str())),
-        ("PI_DOCTOR_MEMINFO_PATH", Some(meminfo.as_str())),
-        ("PI_DOCTOR_LOGICAL_CPU_CORES", Some("64")),
-        ("PI_DOCTOR_LOCAL_BUILD_PROCESS_COUNT", Some("0")),
+        ("KODE_DOCTOR_CGROUP_CPU_MAX_PATH", Some(cpu_max.as_str())),
+        ("KODE_DOCTOR_CPUSET_CPUS_PATH", Some(cpuset.as_str())),
+        ("KODE_DOCTOR_NUMA_ONLINE_PATH", Some(numa.as_str())),
+        ("KODE_DOCTOR_CGROUP_MEMORY_MAX_PATH", Some(memory.as_str())),
+        ("KODE_DOCTOR_MEMINFO_PATH", Some(meminfo.as_str())),
+        ("KODE_DOCTOR_LOGICAL_CPU_CORES", Some("64")),
+        ("KODE_DOCTOR_LOCAL_BUILD_PROCESS_COUNT", Some("0")),
     ])?;
     let finding = finding_by_schema(&report, SWARM_RESOURCE_PREFLIGHT_SCHEMA)?;
     let data = field(finding, "data")?;
@@ -1182,12 +1182,12 @@ fn doctor_swarm_resource_preflight_json_reports_unknown_topology_lane_plan() -> 
     let report = run_doctor_json(&[
         ("CARGO_TARGET_DIR", Some(target_dir.as_str())),
         ("TMPDIR", Some(tmp_dir.as_str())),
-        ("PI_DOCTOR_CGROUP_CPU_MAX_PATH", Some(cpu_max.as_str())),
-        ("PI_DOCTOR_CPUSET_CPUS_PATH", Some(missing_cpuset.as_str())),
-        ("PI_DOCTOR_NUMA_ONLINE_PATH", Some(missing_numa.as_str())),
-        ("PI_DOCTOR_CGROUP_MEMORY_MAX_PATH", Some(memory.as_str())),
-        ("PI_DOCTOR_MEMINFO_PATH", Some(meminfo.as_str())),
-        ("PI_DOCTOR_LOCAL_BUILD_PROCESS_COUNT", Some("0")),
+        ("KODE_DOCTOR_CGROUP_CPU_MAX_PATH", Some(cpu_max.as_str())),
+        ("KODE_DOCTOR_CPUSET_CPUS_PATH", Some(missing_cpuset.as_str())),
+        ("KODE_DOCTOR_NUMA_ONLINE_PATH", Some(missing_numa.as_str())),
+        ("KODE_DOCTOR_CGROUP_MEMORY_MAX_PATH", Some(memory.as_str())),
+        ("KODE_DOCTOR_MEMINFO_PATH", Some(meminfo.as_str())),
+        ("KODE_DOCTOR_LOCAL_BUILD_PROCESS_COUNT", Some("0")),
     ])?;
     let finding = finding_by_schema(&report, SWARM_RESOURCE_PREFLIGHT_SCHEMA)?;
     let data = field(finding, "data")?;

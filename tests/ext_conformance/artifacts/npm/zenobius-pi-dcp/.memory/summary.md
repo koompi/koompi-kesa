@@ -286,7 +286,7 @@ pi-dcp/
 
 ## Quick Start
 
-1. Extension is auto-discovered from `~/.pi/agent/extensions/pi-dcp/`
+1. Extension is auto-discovered from `~/.kode/agent/extensions/pi-dcp/`
 2. Look for initialization message: `[pi-dcp] Initialized with 4 rules: ...`
 3. Enable debug logging: `/dcp-debug`
 4. Use pi normally - pruning happens automatically

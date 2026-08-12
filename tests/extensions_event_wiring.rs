@@ -23,7 +23,7 @@ use serde_json::{Value, json};
 use std::sync::Arc;
 
 const GENERATE_LIFECYCLE_HOOK_PARITY_ARTIFACT_ENV: &str =
-    "PI_GENERATE_LIFECYCLE_HOOK_PARITY_ARTIFACT";
+    "KODE_GENERATE_LIFECYCLE_HOOK_PARITY_ARTIFACT";
 
 fn lifecycle_hook_parity_artifact_generation_enabled(raw: Option<&str>) -> bool {
     raw == Some("1")
@@ -272,7 +272,7 @@ fn build_lifecycle_hook_parity_artifact(
         ],
         "ordering_trace": ordering_trace,
         "cancellable_assertions": cancellable_results,
-        "reproduce_command": "PI_GENERATE_LIFECYCLE_HOOK_PARITY_ARTIFACT=1 cargo test --test extensions_event_wiring lifecycle_hook_parity_matrix_writes_evidence_artifact -- --exact --nocapture",
+        "reproduce_command": "KODE_GENERATE_LIFECYCLE_HOOK_PARITY_ARTIFACT=1 cargo test --test extensions_event_wiring lifecycle_hook_parity_matrix_writes_evidence_artifact -- --exact --nocapture",
     })
 }
 

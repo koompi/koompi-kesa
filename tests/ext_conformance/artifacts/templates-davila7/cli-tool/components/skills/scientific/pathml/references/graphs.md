@@ -199,7 +199,7 @@ texture_features = extract_texture_features(
     image=grayscale_image,
     features='haralick',  # or 'lbp', 'gabor'
     distance=1,
-    angles=[0, np.pi/4, np.pi/2, 3*np.pi/4]
+    angles=[0, np.kode/4, np.kode/2, 3*np.kode/4]
 )
 
 cell_graph.add_node_features(texture_features)

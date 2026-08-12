@@ -6,8 +6,8 @@ Pi loads available models from a built-in registry and an optional user-defined 
 
 | Path | Description |
 |------|-------------|
-| `~/.pi/agent/models.json` | User-defined model overrides and custom providers |
-| `~/.pi/agent/models.fetched.json` | Generated v2 live-catalog membership; managed only by `--persist-models` |
+| `~/.kode/agent/models.json` | User-defined model overrides and custom providers |
+| `~/.kode/agent/models.fetched.json` | Generated v2 live-catalog membership; managed only by `--persist-models` |
 
 Do not hand-edit `models.fetched.json`. Its provider/model IDs are bound to the
 fetching endpoint and transport shape by a non-secret fingerprint and timestamp. The
@@ -226,7 +226,7 @@ snapshot at runtime. The file uses the same shape as the bundled snapshot:
 
 `<config_dir>` is whatever `dirs::config_dir()` reports — `~/.config` on Linux,
 `~/Library/Application Support` on macOS, `%APPDATA%` on Windows. Set
-`PI_MODELS_OVERRIDE=/path/to/file.json` in the environment to point pi at a
+`KODE_MODELS_OVERRIDE=/path/to/file.json` in the environment to point pi at a
 file outside the standard config directory.
 
 Behavior:

@@ -3,7 +3,7 @@
 set -e
 
 echo "=== HOT PATH TESTS ==="
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 
 # HP-01: Tool execution latency
 echo "HP-01: Tool execution not blocked by git..."
@@ -11,7 +11,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 START=$(python3 -c 'import time; print(int(time.time() * 1000))' 2>/dev/null || date +%s%3N)
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 1 --no-input -p \
   -e "$EXT" "What is 2+2?" 2>&1 >/dev/null || true
 END=$(python3 -c 'import time; print(int(time.time() * 1000))' 2>/dev/null || date +%s%3N)
@@ -33,7 +33,7 @@ echo "HP-02: Audit log writes are instant..."
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'test' to output/x.txt" 2>&1 >/dev/null || true
 
@@ -61,7 +61,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Start a longer-running agent
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   timeout 120 pi --max-turns 5 --no-input -p \
   -e "$EXT" "Count from 1 to 5, writing each number to a separate file" 2>&1 >/dev/null &
 AGENT_PID=$!

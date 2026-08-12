@@ -12,14 +12,14 @@
 #     cargo test --test ext_conformance_diff --features ext-conformance -- --nocapture
 #
 # Environment:
-#   PI_CONFORMANCE_MAX_RETRIES   Max retries (default: 1)
-#   PI_CONFORMANCE_RETRY_DELAY   Seconds between retries (default: 5)
-#   PI_CONFORMANCE_CLASSIFY_ONLY Set to 1 to classify without retrying
-#   PI_CONFORMANCE_CARGO_RUNNER  Cargo runner mode: rch | auto | local (default: rch)
+#   KODE_CONFORMANCE_MAX_RETRIES   Max retries (default: 1)
+#   KODE_CONFORMANCE_RETRY_DELAY   Seconds between retries (default: 5)
+#   KODE_CONFORMANCE_CLASSIFY_ONLY Set to 1 to classify without retrying
+#   KODE_CONFORMANCE_CARGO_RUNNER  Cargo runner mode: rch | auto | local (default: rch)
 
 set -euo pipefail
 
-CARGO_RUNNER_REQUEST="${PI_CONFORMANCE_CARGO_RUNNER:-rch}" # rch | auto | local
+CARGO_RUNNER_REQUEST="${KODE_CONFORMANCE_CARGO_RUNNER:-rch}" # rch | auto | local
 CARGO_RUNNER_MODE="local"
 SEEN_NO_RCH=false
 SEEN_REQUIRE_RCH=false
@@ -63,13 +63,13 @@ if [[ "${#CMD[@]}" -eq 0 ]]; then
 fi
 
 if [[ "$CARGO_RUNNER_REQUEST" != "rch" && "$CARGO_RUNNER_REQUEST" != "auto" && "$CARGO_RUNNER_REQUEST" != "local" ]]; then
-    echo "Invalid PI_CONFORMANCE_CARGO_RUNNER value: $CARGO_RUNNER_REQUEST (expected: rch|auto|local)" >&2
+    echo "Invalid KODE_CONFORMANCE_CARGO_RUNNER value: $CARGO_RUNNER_REQUEST (expected: rch|auto|local)" >&2
     exit 2
 fi
 
 if [[ "$CARGO_RUNNER_REQUEST" == "rch" ]]; then
     if ! command -v rch >/dev/null 2>&1; then
-        echo "PI_CONFORMANCE_CARGO_RUNNER=rch requested, but 'rch' is not available in PATH." >&2
+        echo "KODE_CONFORMANCE_CARGO_RUNNER=rch requested, but 'rch' is not available in PATH." >&2
         exit 2
     fi
     if ! rch check --quiet >/dev/null 2>&1; then
@@ -89,10 +89,10 @@ if [[ "$CARGO_RUNNER_MODE" == "rch" ]] && [[ "${CMD[0]}" == "cargo" ]]; then
     CMD=("rch" "exec" "--" "${CMD[@]}")
 fi
 
-MAX_RETRIES="${PI_CONFORMANCE_MAX_RETRIES:-1}"
-RETRY_DELAY="${PI_CONFORMANCE_RETRY_DELAY:-5}"
-CLASSIFY_ONLY="${PI_CONFORMANCE_CLASSIFY_ONLY:-0}"
-FLAKE_LOG="${PI_CONFORMANCE_FLAKE_LOG:-flake_events.jsonl}"
+MAX_RETRIES="${KODE_CONFORMANCE_MAX_RETRIES:-1}"
+RETRY_DELAY="${KODE_CONFORMANCE_RETRY_DELAY:-5}"
+CLASSIFY_ONLY="${KODE_CONFORMANCE_CLASSIFY_ONLY:-0}"
+FLAKE_LOG="${KODE_CONFORMANCE_FLAKE_LOG:-flake_events.jsonl}"
 
 # ─── Known flake patterns (must match src/flake_classifier.rs) ──────────────
 

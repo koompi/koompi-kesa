@@ -139,7 +139,7 @@ fn collect_env_fingerprint() -> EnvFingerprint {
 }
 
 fn detect_build_profile() -> String {
-    if let Ok(value) = std::env::var("PI_BENCH_BUILD_PROFILE") {
+    if let Ok(value) = std::env::var("KODE_BENCH_BUILD_PROFILE") {
         let trimmed = value.trim();
         if !trimmed.is_empty() {
             return trimmed.to_string();
@@ -966,7 +966,7 @@ for ((i=1; i<=$#; i++)); do
     fi
   fi
 done
-if [[ "${PI_FAKE_FAIL_JEMALLOC:-0}" == "1" ]]; then
+if [[ "${KODE_FAKE_FAIL_JEMALLOC:-0}" == "1" ]]; then
   prev=""
   for arg in "$@"; do
     if [[ "$arg" == "--features=jemalloc" || "$arg" == "--features=jemalloc,"* ]]; then
@@ -1118,7 +1118,7 @@ fn run_bench_workloads_with_config(
         .env("HYPERFINE_WARMUP", "0")
         .env("HYPERFINE_RUNS", "1")
         .env(
-            "PI_FAKE_FAIL_JEMALLOC",
+            "KODE_FAKE_FAIL_JEMALLOC",
             if fail_jemalloc_build { "1" } else { "0" },
         )
         .output()

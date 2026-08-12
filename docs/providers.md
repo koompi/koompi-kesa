@@ -552,8 +552,8 @@ Auth diagnostics and redaction contract:
 
 Choose provider/model via:
 - CLI flags: `pi --provider openai --model gpt-4o "Hello"`
-- Env vars: `PI_PROVIDER`, `PI_MODEL`
-- Settings: `default_provider`, `default_model` in `~/.pi/agent/settings.json`
+- Env vars: `KODE_PROVIDER`, `KODE_MODEL`
+- Settings: `default_provider`, `default_model` in `~/.kode/agent/settings.json`
 
 Custom endpoints and overrides should be configured in `models.json`:
 - See [models.md](models.md) for schema and examples.

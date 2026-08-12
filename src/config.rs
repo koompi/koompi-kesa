@@ -33,7 +33,7 @@ pub struct Config {
     /// authorization URL, which becomes effectively impossible to copy out
     /// when the TUI captures every mouse event. See pi_agent_rust#78.
     ///
-    /// Env override: `PI_NO_MOUSE_CAPTURE=1`.
+    /// Env override: `KODE_NO_MOUSE_CAPTURE=1`.
     #[serde(alias = "disableMouseCapture", alias = "noMouseCapture")]
     pub disable_mouse_capture: Option<bool>,
 
@@ -55,7 +55,7 @@ pub struct Config {
     /// When unset, the default is provider-aware: 60s for cloud providers and
     /// 600s for local providers (Ollama, LM Studio) where the first request can
     /// block while the model loads into memory. Overridden by the
-    /// `--request-timeout` CLI flag / `PI_HTTP_REQUEST_TIMEOUT_SECS` env var.
+    /// `--request-timeout` CLI flag / `KODE_HTTP_REQUEST_TIMEOUT_SECS` env var.
     /// See pi_agent_rust#90.
     #[serde(alias = "requestTimeoutSecs", alias = "requestTimeoutSeconds")]
     pub request_timeout_secs: Option<u64>,
@@ -371,10 +371,10 @@ impl Config {
         }
     }
 
-    /// Resolve the `PI_CONFIG_PATH` override relative to the supplied cwd.
+    /// Resolve the `KODE_CONFIG_PATH` override relative to the supplied cwd.
     #[must_use]
     pub fn config_path_override_from_env(cwd: &Path) -> Option<PathBuf> {
-        std::env::var_os("PI_CONFIG_PATH")
+        std::env::var_os("KODE_CONFIG_PATH")
             .map(PathBuf::from)
             .map(|path| Self::resolve_config_override_path(&path, cwd))
     }
@@ -386,7 +386,7 @@ impl Config {
 
     /// Get the project configuration directory.
     pub fn project_dir() -> PathBuf {
-        PathBuf::from(".pi")
+        PathBuf::from(".kode")
     }
 
     /// Get the sessions directory.
@@ -673,7 +673,7 @@ impl Config {
         if let Some(value) = self.terminal.as_ref().and_then(|t| t.clear_on_shrink) {
             return value;
         }
-        get_env("PI_CLEAR_ON_SHRINK").is_some_and(|value| value == "1")
+        get_env("KODE_CLEAR_ON_SHRINK").is_some_and(|value| value == "1")
     }
 
     pub fn thinking_budget(&self, level: &str) -> u32 {
@@ -701,7 +701,7 @@ impl Config {
     }
 
     pub fn fail_closed_hooks(&self) -> bool {
-        if let Some(value) = parse_env_bool("PI_EXTENSION_HOOKS_FAIL_CLOSED") {
+        if let Some(value) = parse_env_bool("KODE_EXTENSION_HOOKS_FAIL_CLOSED") {
             return value;
         }
         self.fail_closed_hooks.unwrap_or(false)
@@ -711,7 +711,7 @@ impl Config {
     ///
     /// Resolution order (highest precedence first):
     /// 1. `cli_override` (from `--extension-policy` flag)
-    /// 2. `PI_EXTENSION_POLICY` environment variable
+    /// 2. `KODE_EXTENSION_POLICY` environment variable
     /// 3. `extension_policy.profile` from settings.json
     /// 4. `extension_policy.default_permissive` from settings.json
     /// 5. Default: "permissive"
@@ -727,7 +727,7 @@ impl Config {
         // Determine profile name with source: CLI > env > config > default
         let (requested_profile, profile_source) = cli_override.map_or_else(
             || {
-                std::env::var("PI_EXTENSION_POLICY").map_or_else(
+                std::env::var("KODE_EXTENSION_POLICY").map_or_else(
                     |_| {
                         self.extension_policy
                             .as_ref()
@@ -781,13 +781,13 @@ impl Config {
 
         let mut policy = profile.to_policy();
 
-        // Check allow_dangerous: config setting or PI_EXTENSION_ALLOW_DANGEROUS env
+        // Check allow_dangerous: config setting or KODE_EXTENSION_ALLOW_DANGEROUS env
         let config_allows = self
             .extension_policy
             .as_ref()
             .and_then(|p| p.allow_dangerous)
             .unwrap_or(false);
-        let env_allows = std::env::var("PI_EXTENSION_ALLOW_DANGEROUS")
+        let env_allows = std::env::var("KODE_EXTENSION_ALLOW_DANGEROUS")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let allow_dangerous = config_allows || env_allows;
 
@@ -845,7 +845,7 @@ impl Config {
     ///
     /// Resolution order (highest precedence first):
     /// 1. `cli_override` (from `--repair-policy` flag)
-    /// 2. `PI_REPAIR_POLICY` environment variable
+    /// 2. `KODE_REPAIR_POLICY` environment variable
     /// 3. `repair_policy.mode` from settings.json
     /// 4. Default: "suggest"
     pub fn resolve_repair_policy_with_metadata(
@@ -857,7 +857,7 @@ impl Config {
         // Determine mode string with source: CLI > env > config > default
         let (requested_mode, source) = cli_override.map_or_else(
             || {
-                std::env::var("PI_REPAIR_POLICY").map_or_else(
+                std::env::var("KODE_REPAIR_POLICY").map_or_else(
                     |_| {
                         self.repair_policy
                             .as_ref()
@@ -898,7 +898,7 @@ impl Config {
     /// Resolve runtime risk controller settings from config and environment.
     ///
     /// Resolution order (highest precedence first):
-    /// 1. `PI_EXTENSION_RISK_*` env vars
+    /// 1. `KODE_EXTENSION_RISK_*` env vars
     /// 2. `extensionRisk` config
     /// 3. deterministic defaults
     pub fn resolve_extension_risk_with_metadata(&self) -> ResolvedExtensionRisk {
@@ -956,31 +956,31 @@ impl Config {
             }
         }
 
-        if let Some(enabled) = parse_env_bool("PI_EXTENSION_RISK_ENABLED") {
+        if let Some(enabled) = parse_env_bool("KODE_EXTENSION_RISK_ENABLED") {
             settings.enabled = enabled;
             source = "env";
         }
-        if let Some(alpha) = parse_env_f64("PI_EXTENSION_RISK_ALPHA").and_then(sanitize_alpha) {
+        if let Some(alpha) = parse_env_f64("KODE_EXTENSION_RISK_ALPHA").and_then(sanitize_alpha) {
             settings.alpha = alpha;
             source = "env";
         }
-        if let Some(window_size) = parse_env_u32("PI_EXTENSION_RISK_WINDOW") {
+        if let Some(window_size) = parse_env_u32("KODE_EXTENSION_RISK_WINDOW") {
             settings.window_size = window_size.clamp(8, 4096) as usize;
             source = "env";
         }
-        if let Some(ledger_limit) = parse_env_u32("PI_EXTENSION_RISK_LEDGER_LIMIT") {
+        if let Some(ledger_limit) = parse_env_u32("KODE_EXTENSION_RISK_LEDGER_LIMIT") {
             settings.ledger_limit = ledger_limit.clamp(32, 20_000) as usize;
             source = "env";
         }
-        if let Some(timeout_ms) = parse_env_u64("PI_EXTENSION_RISK_DECISION_TIMEOUT_MS") {
+        if let Some(timeout_ms) = parse_env_u64("KODE_EXTENSION_RISK_DECISION_TIMEOUT_MS") {
             settings.decision_timeout_ms = timeout_ms.clamp(1, 2_000);
             source = "env";
         }
-        if let Some(fail_closed) = parse_env_bool("PI_EXTENSION_RISK_FAIL_CLOSED") {
+        if let Some(fail_closed) = parse_env_bool("KODE_EXTENSION_RISK_FAIL_CLOSED") {
             settings.fail_closed = fail_closed;
             source = "env";
         }
-        if let Some(enforce) = parse_env_bool("PI_EXTENSION_RISK_ENFORCE") {
+        if let Some(enforce) = parse_env_bool("KODE_EXTENSION_RISK_ENFORCE") {
             settings.enforce = enforce;
             source = "env";
         }
@@ -1027,11 +1027,11 @@ fn global_dir_from_env<F>(get_env: F) -> PathBuf
 where
     F: Fn(&str) -> Option<String>,
 {
-    get_env("PI_CODING_AGENT_DIR").map_or_else(
+    get_env("KODE_CODING_AGENT_DIR").map_or_else(
         || {
             dirs::home_dir()
                 .unwrap_or_else(|| PathBuf::from("."))
-                .join(".pi")
+                .join(".kode")
                 .join("agent")
         },
         PathBuf::from,
@@ -1042,21 +1042,21 @@ fn sessions_dir_from_env<F>(get_env: F, global_dir: &Path) -> PathBuf
 where
     F: Fn(&str) -> Option<String>,
 {
-    get_env("PI_SESSIONS_DIR").map_or_else(|| global_dir.join("sessions"), PathBuf::from)
+    get_env("KODE_SESSIONS_DIR").map_or_else(|| global_dir.join("sessions"), PathBuf::from)
 }
 
 fn package_dir_from_env<F>(get_env: F, global_dir: &Path) -> PathBuf
 where
     F: Fn(&str) -> Option<String>,
 {
-    get_env("PI_PACKAGE_DIR").map_or_else(|| global_dir.join("packages"), PathBuf::from)
+    get_env("KODE_PACKAGE_DIR").map_or_else(|| global_dir.join("packages"), PathBuf::from)
 }
 
 fn extension_index_path_from_env<F>(get_env: F, global_dir: &Path) -> PathBuf
 where
     F: Fn(&str) -> Option<String>,
 {
-    get_env("PI_EXTENSION_INDEX_PATH")
+    get_env("KODE_EXTENSION_INDEX_PATH")
         .map_or_else(|| global_dir.join("extension-index.json"), PathBuf::from)
 }
 
@@ -1435,7 +1435,7 @@ mod tests {
             r#"{ "theme": "global", "default_provider": "anthropic" }"#,
         );
         write_file(
-            &cwd.join(".pi/settings.json"),
+            &cwd.join(".kode/settings.json"),
             r#"{ "theme": "project", "default_provider": "google" }"#,
         );
 
@@ -1503,7 +1503,7 @@ mod tests {
             r#"{ "default_provider": "anthropic", "default_model": "global", "theme": "global" }"#,
         );
         write_file(
-            &cwd.join(".pi/settings.json"),
+            &cwd.join(".kode/settings.json"),
             r#"{ "default_model": "project" }"#,
         );
 
@@ -1523,7 +1523,7 @@ mod tests {
             r#"{ "compaction": { "enabled": true, "reserve_tokens": 1234, "keep_recent_tokens": 5678 } }"#,
         );
         write_file(
-            &cwd.join(".pi/settings.json"),
+            &cwd.join(".kode/settings.json"),
             r#"{ "compaction": { "enabled": false } }"#,
         );
 
@@ -1588,11 +1588,11 @@ mod tests {
     #[test]
     fn directory_helpers_honor_environment_overrides() {
         let env = HashMap::from([
-            ("PI_CODING_AGENT_DIR".to_string(), "env-root".to_string()),
-            ("PI_SESSIONS_DIR".to_string(), "env-sessions".to_string()),
-            ("PI_PACKAGE_DIR".to_string(), "env-packages".to_string()),
+            ("KODE_CODING_AGENT_DIR".to_string(), "env-root".to_string()),
+            ("KODE_SESSIONS_DIR".to_string(), "env-sessions".to_string()),
+            ("KODE_PACKAGE_DIR".to_string(), "env-packages".to_string()),
             (
-                "PI_EXTENSION_INDEX_PATH".to_string(),
+                "KODE_EXTENSION_INDEX_PATH".to_string(),
                 "env-extension-index.json".to_string(),
             ),
         ]);
@@ -1610,7 +1610,7 @@ mod tests {
 
     #[test]
     fn directory_helpers_fall_back_to_global_subdirs_when_unset() {
-        let env = HashMap::from([("PI_CODING_AGENT_DIR".to_string(), "root-dir".to_string())]);
+        let env = HashMap::from([("KODE_CODING_AGENT_DIR".to_string(), "root-dir".to_string())]);
         let global = global_dir_from_env(|key| env.get(key).cloned());
         let sessions = sessions_dir_from_env(|key| env.get(key).cloned(), &global);
         let package = package_dir_from_env(|key| env.get(key).cloned(), &global);
@@ -2076,7 +2076,7 @@ mod tests {
     fn terminal_clear_on_shrink_uses_env_when_unset() {
         let config = Config::default();
         assert!(config.terminal_clear_on_shrink_with_lookup(|name| {
-            if name == "PI_CLEAR_ON_SHRINK" {
+            if name == "KODE_CLEAR_ON_SHRINK" {
                 Some("1".to_string())
             } else {
                 None
@@ -2095,7 +2095,7 @@ mod tests {
             ..Config::default()
         };
         assert!(!config.terminal_clear_on_shrink_with_lookup(|name| {
-            if name == "PI_CLEAR_ON_SHRINK" {
+            if name == "KODE_CLEAR_ON_SHRINK" {
                 Some("1".to_string())
             } else {
                 None
@@ -2147,7 +2147,7 @@ mod tests {
             r#"{ "thinking_budgets": { "minimal": 100, "low": 200 } }"#,
         );
         write_file(
-            &cwd.join(".pi/settings.json"),
+            &cwd.join(".kode/settings.json"),
             r#"{ "thinking_budgets": { "minimal": 999 } }"#,
         );
 
@@ -2175,7 +2175,7 @@ mod tests {
             }"#,
         );
         write_file(
-            &cwd.join(".pi/settings.json"),
+            &cwd.join(".kode/settings.json"),
             r#"{
                 "extensionRisk": {
                     "alpha": 0.05,
@@ -2213,7 +2213,7 @@ mod tests {
                 }
             }"#,
         );
-        write_file(&cwd.join(".pi/settings.json"), r#"{ "extensionRisk": {} }"#);
+        write_file(&cwd.join(".kode/settings.json"), r#"{ "extensionRisk": {} }"#);
 
         let config = Config::load_with_roots(None, &global_dir, &cwd).expect("load");
         let risk = config.extension_risk.expect("merged extension risk");
@@ -2411,7 +2411,7 @@ mod tests {
             r#"{ "extensionPolicy": { "profile": "safe" } }"#,
         );
         write_file(
-            &cwd.join(".pi/settings.json"),
+            &cwd.join(".kode/settings.json"),
             r#"{ "extensionPolicy": { "profile": "permissive" } }"#,
         );
 
@@ -2460,7 +2460,7 @@ mod tests {
         );
         // Project sets allowDangerous=true but not profile
         write_file(
-            &cwd.join(".pi/settings.json"),
+            &cwd.join(".kode/settings.json"),
             r#"{ "extensionPolicy": { "allowDangerous": true } }"#,
         );
 
@@ -2662,7 +2662,7 @@ mod tests {
             r#"{ "repairPolicy": { "mode": "off" } }"#,
         );
         write_file(
-            &cwd.join(".pi/settings.json"),
+            &cwd.join(".kode/settings.json"),
             r#"{ "repairPolicy": { "mode": "auto-safe" } }"#,
         );
 
@@ -2934,12 +2934,12 @@ mod tests {
             };
 
             let resolved = config.resolve_extension_risk_with_metadata();
-            let env_alpha = std::env::var("PI_EXTENSION_RISK_ALPHA")
+            let env_alpha = std::env::var("KODE_EXTENSION_RISK_ALPHA")
                 .ok()
                 .and_then(|raw| raw.trim().parse::<f64>().ok())
                 .and_then(|parsed| parsed.is_finite().then_some(parsed.clamp(1.0e-6, 0.5)));
 
-            // Only PI_EXTENSION_RISK_ALPHA should override config alpha.
+            // Only KODE_EXTENSION_RISK_ALPHA should override config alpha.
             let expected_alpha = env_alpha.unwrap_or_else(|| alpha.clamp(1.0e-6, 0.5));
             prop_assert!((resolved.settings.alpha - expected_alpha).abs() <= f64::EPSILON);
             if env_alpha.is_some() {

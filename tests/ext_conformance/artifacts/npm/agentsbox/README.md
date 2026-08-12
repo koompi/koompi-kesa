@@ -41,7 +41,7 @@ Installs the plugin by copying `dist/opencode.js` to `~/.config/opencode/plugins
 agentsbox setup pi
 ```
 
-Installs extension by symlinking to `~/.pi/agent/extensions/agentsbox` (auto-loaded by pi).
+Installs extension by symlinking to `~/.kode/agent/extensions/agentsbox` (auto-loaded by pi).
 
 ### What Gets Created
 

@@ -21,11 +21,11 @@ fuzz_target!(|data: &[u8]| {
 
     let cwd = tmp.path().join("cwd");
     let global = tmp.path().join("global");
-    let project_settings = cwd.join(".pi/settings.json");
+    let project_settings = cwd.join(".kode/settings.json");
     let global_settings = global.join("settings.json");
     let override_path = tmp.path().join("override.json");
 
-    let _ = std::fs::create_dir_all(cwd.join(".pi"));
+    let _ = std::fs::create_dir_all(cwd.join(".kode"));
     let _ = std::fs::create_dir_all(&global);
 
     // Override-only load path.

@@ -373,7 +373,7 @@ run_installer() {
   local out="${dir}/output.log"
   local rc_file="${dir}/exit_code"
   local path_value="${dir}/fakebin:/usr/bin:/bin"
-  local run_cwd="${PI_INSTALLER_TEST_CWD:-$PWD}"
+  local run_cwd="${KODE_INSTALLER_TEST_CWD:-$PWD}"
 
   (
     set +e
@@ -523,8 +523,8 @@ test_installer_retain_temp_mode_preserves_owned_scratch() {
   lock_dir="${dir}/retained-install.lock.d"
   mkdir -p "$retained_tmp"
 
-  PI_INSTALLER_RETAIN_TEMP=1 \
-  PI_INSTALLER_LOCK_DIR="$lock_dir" \
+  KODE_INSTALLER_RETAIN_TEMP=1 \
+  KODE_INSTALLER_LOCK_DIR="$lock_dir" \
   TMPDIR="$retained_tmp" \
   run_installer "$dir" \
     --yes --no-gum --offline \
@@ -567,8 +567,8 @@ test_stale_lock_recovery_preserves_the_old_lock_receipt() {
   mkdir -p "$retained_tmp" "$lock_dir"
   printf '99999999\n' > "$lock_dir/pid"
 
-  PI_INSTALLER_RETAIN_TEMP=1 \
-  PI_INSTALLER_LOCK_DIR="$lock_dir" \
+  KODE_INSTALLER_RETAIN_TEMP=1 \
+  KODE_INSTALLER_LOCK_DIR="$lock_dir" \
   TMPDIR="$retained_tmp" \
   run_installer "$dir" \
     --yes --no-gum --offline \
@@ -610,11 +610,11 @@ test_lock_override_rejects_ambiguous_lexical_paths() {
     "${dir}/install.lock.d/.." \
     "${dir}//install.lock.d" \
     "${dir}/install.lock.d/../other.lock.d"; do
-    PI_INSTALLER_LOCK_DIR="$unsafe_lock" \
+    KODE_INSTALLER_LOCK_DIR="$unsafe_lock" \
     run_installer "$dir" --yes --no-gum
 
     assert_exit_code "$dir" 1
-    assert_output_contains "$dir" "PI_INSTALLER_LOCK_DIR is unsafe"
+    assert_output_contains "$dir" "KODE_INSTALLER_LOCK_DIR is unsafe"
   done
 }
 
@@ -868,7 +868,7 @@ test_wsl_detection_warning_is_emitted() {
   artifact_url="file://${artifact}"
   checksum="$(sha256_file "$artifact")"
 
-  PI_INSTALLER_TEST_FORCE_WSL=1 \
+  KODE_INSTALLER_TEST_FORCE_WSL=1 \
   run_installer "$dir" \
     --yes --no-gum --offline \
     --version v9.9.9 \
@@ -1181,7 +1181,7 @@ SKILL
   artifact_url="file://${artifact}"
   checksum="$(sha256_file "$artifact")"
 
-  PI_INSTALLER_TEST_CWD="${dir}/shadow" run_installer "$dir" \
+  KODE_INSTALLER_TEST_CWD="${dir}/shadow" run_installer "$dir" \
     --yes --no-gum --offline \
     --version v9.9.9 \
     --dest "${dir}/dest" \
@@ -1871,7 +1871,7 @@ test_completions_help_conclusive_no_command_skips_fast() {
   artifact_url="file://${artifact}"
   checksum="$(sha256_file "$artifact")"
 
-  PI_INSTALLER_COMPLETION_PROBE_TIMEOUT=1 \
+  KODE_INSTALLER_COMPLETION_PROBE_TIMEOUT=1 \
   STUB_COMPLETION_SLEEP_SECS=3 \
   run_installer "$dir" \
     --yes --no-gum --offline \
@@ -1922,7 +1922,7 @@ test_completions_probe_timeout_is_non_fatal() {
   artifact_url="file://${artifact}"
   checksum="$(sha256_file "$artifact")"
 
-  PI_INSTALLER_COMPLETION_PROBE_TIMEOUT=1 \
+  KODE_INSTALLER_COMPLETION_PROBE_TIMEOUT=1 \
   STUB_COMPLETION_SLEEP_SECS=3 \
   run_installer "$dir" \
     --yes --no-gum --offline \
@@ -1947,7 +1947,7 @@ test_completions_generation_timeout_is_non_fatal() {
   artifact_url="file://${artifact}"
   checksum="$(sha256_file "$artifact")"
 
-  PI_INSTALLER_COMPLETION_CMD_TIMEOUT=1 \
+  KODE_INSTALLER_COMPLETION_CMD_TIMEOUT=1 \
   STUB_COMPLETION_SLEEP_SECS=3 \
   run_installer "$dir" \
     --yes --no-gum --offline \

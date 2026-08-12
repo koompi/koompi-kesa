@@ -18,7 +18,7 @@
 ## [0.8.0] - 2026-01-30
 
 ### Added
-- **Planning progress file** - `.pi/messenger/crew/planning-progress.md` accumulates planner findings and reviewer feedback across passes and runs. Persists through plan deletions. User-editable: add steering notes that the planner reads on every run.
+- **Planning progress file** - `.kode/messenger/crew/planning-progress.md` accumulates planner findings and reviewer feedback across passes and runs. Persists through plan deletions. User-editable: add steering notes that the planner reads on every run.
 - `planning.maxPasses` config option (default: 3). Set to 1 for single-pass behavior.
 - JSON task block parsing (`tasks-json` fenced block) as the primary task extraction path, with the existing markdown regex as fallback.
 - Shared verdict parser (`crew/utils/verdict.ts`) used by both review and planning handlers.
@@ -26,7 +26,7 @@
 ### Changed
 - **Planning redesign: single planner agent** - Replaced the 5-scout + gap-analyst pipeline (6 LLM sessions) with a single `crew-planner` agent that explores the codebase iteratively in one session. Cheaper, faster, no information loss from truncation handoffs. Crew agent count: 10 to 5.
 - **Iterative planning with review** - Planner runs in a multi-pass loop with reviewer feedback until SHIP verdict or `maxPasses` reached. Falls back gracefully on reviewer/planner failures.
-- Deprecated scout and gap-analyst agent files auto-cleaned from `~/.pi/agent/agents/` on first use.
+- Deprecated scout and gap-analyst agent files auto-cleaned from `~/.kode/agent/agents/` on first use.
 
 ### Removed
 - 5 scout agents (`crew-repo-scout`, `crew-practice-scout`, `crew-docs-scout`, `crew-web-scout`, `crew-github-scout`) and `crew-gap-analyst`.
@@ -147,7 +147,7 @@
 
 New simplified storage structure:
 ```
-.pi/messenger/crew/
+.kode/messenger/crew/
 ├── plan.json              # Plan metadata (PRD path, progress)
 ├── plan.md                # Gap analyst output
 ├── tasks/
@@ -287,7 +287,7 @@ New simplified storage structure:
 
 ### Storage
 
-New directory `.pi/messenger/crew/` (per-project):
+New directory `.kode/messenger/crew/` (per-project):
 - `epics/*.json` - Epic metadata
 - `specs/*.md` - Epic specifications  
 - `tasks/*.json` - Task metadata
@@ -299,7 +299,7 @@ New directory `.pi/messenger/crew/` (per-project):
 
 ### Configuration
 
-New `crew` section in `~/.pi/agent/pi-messenger.json`:
+New `crew` section in `~/.kode/agent/pi-messenger.json`:
 ```json
 {
   "crew": {
@@ -363,7 +363,7 @@ New `crew` section in `~/.pi/agent/pi-messenger.json`:
 
 ### Storage
 
-New files in `~/.pi/agent/messenger/`:
+New files in `~/.kode/agent/messenger/`:
 - `claims.json` - Active task claims by spec
 - `completions.json` - Completed tasks by spec
 - `swarm.lock` - Atomic lock for claim/complete mutations
@@ -448,7 +448,7 @@ New files in `~/.pi/agent/messenger/`:
   - Registration message explaining multi-agent environment (once per session)
   - Reply hint showing how to respond to messages
   - Sender details (cwd, model) on first contact from each agent
-- **Configuration file** - `~/.pi/agent/pi-messenger.json` for customizing context injection. Supports `contextMode: "full" | "minimal" | "none"`.
+- **Configuration file** - `~/.kode/agent/pi-messenger.json` for customizing context injection. Supports `contextMode: "full" | "minimal" | "none"`.
 
 ### Changed
 

@@ -7,8 +7,8 @@ This repository contains a pi extension for git-based orchestration logging. Rea
 To use the shadow-git extension in your agent workflow:
 
 ```bash
-PI_WORKSPACE_ROOT="/path/to/workspace" \
-PI_AGENT_NAME="your-agent-name" \
+KODE_WORKSPACE_ROOT="/path/to/workspace" \
+KODE_AGENT_NAME="your-agent-name" \
   pi -e /path/to/src/shadow-git.ts "your prompt"
 ```
 
@@ -45,16 +45,16 @@ This design ensures git issues never block agent work.
 
 | Variable | Purpose |
 |----------|---------|
-| `PI_WORKSPACE_ROOT` | Absolute path to the shadow git workspace (must be git-initialized) |
-| `PI_AGENT_NAME` | Name of this agent (used in commit messages and file paths) |
+| `KODE_WORKSPACE_ROOT` | Absolute path to the shadow git workspace (must be git-initialized) |
+| `KODE_AGENT_NAME` | Name of this agent (used in commit messages and file paths) |
 
 ## Optional Environment Variables
 
 | Variable | Purpose |
 |----------|---------|
-| `PI_TARGET_REPOS` | Comma-separated paths to target repos (for patch capture) |
-| `PI_TARGET_BRANCH` | Branch name to include in commits (for linkage) |
-| `PI_SHADOW_GIT_DISABLED` | Set to `1` or `true` to disable (killswitch) |
+| `KODE_TARGET_REPOS` | Comma-separated paths to target repos (for patch capture) |
+| `KODE_TARGET_BRANCH` | Branch name to include in commits (for linkage) |
+| `KODE_SHADOW_GIT_DISABLED` | Set to `1` or `true` to disable (killswitch) |
 
 ## Runtime Commands
 
@@ -73,10 +73,10 @@ Use these commands during agent execution:
 The extension now uses **per-agent git repos** for isolation:
 
 ```
-{PI_WORKSPACE_ROOT}/
+{KODE_WORKSPACE_ROOT}/
 ├── manifest.json                 # Agent registry (auto-created)
 └── agents/
-    └── {PI_AGENT_NAME}/
+    └── {KODE_AGENT_NAME}/
         ├── .git/                 # Agent's OWN git repo (auto-created)
         ├── .gitignore            # Excludes audit.jsonl from git
         ├── audit.jsonl           # Real-time event log (NOT in git)
@@ -111,8 +111,8 @@ cd workspace && git init
 
 # Option 2: Set env vars before tmux to avoid quoting issues
 WORKSPACE="$(pwd)"
-PI_WORKSPACE_ROOT="$WORKSPACE" \
-PI_AGENT_NAME="scout1" \
+KODE_WORKSPACE_ROOT="$WORKSPACE" \
+KODE_AGENT_NAME="scout1" \
   tmux new-session -d -s scout1 \
     "cd $WORKSPACE/agents/scout1 && \
      pi -e /path/to/src/shadow-git.ts \
@@ -135,7 +135,7 @@ If an agent's logging is causing problems:
 
 **Via environment (for new agents):**
 ```bash
-PI_SHADOW_GIT_DISABLED=1 pi -e shadow-git.ts ...
+KODE_SHADOW_GIT_DISABLED=1 pi -e shadow-git.ts ...
 ```
 
 The agent continues running; only logging stops.
@@ -166,7 +166,7 @@ git log --oneline
 git checkout -b alternative abc1234
 
 # Continue with new agent from that point
-PI_WORKSPACE_ROOT="$(pwd)" PI_AGENT_NAME="scout1-v2" \
+KODE_WORKSPACE_ROOT="$(pwd)" KODE_AGENT_NAME="scout1-v2" \
   pi -e /path/to/src/shadow-git.ts ...
 ```
 

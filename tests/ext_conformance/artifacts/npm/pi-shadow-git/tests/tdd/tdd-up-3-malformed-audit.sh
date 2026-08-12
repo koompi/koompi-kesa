@@ -2,7 +2,7 @@
 # TDD-UP-3: Malformed audit.jsonl should not crash Mission Control
 # Behavior: Mission Control handles bad JSON gracefully
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
@@ -10,7 +10,7 @@ mkdir -p "$TEST_WS/agents/test1"
 echo "this is not json at all" > "$TEST_WS/agents/test1/audit.jsonl"
 echo '{"event":"session_start","ts":12345}' >> "$TEST_WS/agents/test1/audit.jsonl"
 
-OUTPUT=$(PI_WORKSPACE_ROOT="$TEST_WS" \
+OUTPUT=$(KODE_WORKSPACE_ROOT="$TEST_WS" \
   pi --max-turns 1 --no-input -p \
   -e "$EXT" "/mc" 2>&1 || true)
 

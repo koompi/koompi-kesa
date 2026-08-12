@@ -17,7 +17,7 @@ pi install npm:pi-poly-notify
 
 From the dot314 git bundle (filtered install):
 
-Add to `~/.pi/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
+Add to `~/.kode/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
 
 ```json
 {
@@ -41,7 +41,7 @@ Create your config file:
 
 Location:
 
-- `~/.pi/agent/extensions/poly-notify/notify.json`
+- `~/.kode/agent/extensions/poly-notify/notify.json`
 
 ## Usage
 

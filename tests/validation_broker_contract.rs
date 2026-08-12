@@ -926,7 +926,7 @@ fn validation_broker_operator_docs_cover_workflow_privacy_and_cli_flags() -> Tes
         "pi validation-broker acquire",
         "pi validation-broker renew",
         "pi validation-broker release",
-        "--store \"$PI_VALIDATION_BROKER_STORE\"",
+        "--store \"$KODE_VALIDATION_BROKER_STORE\"",
         "--request \"$capture_dir/validation-request.json\"",
         "--inputs \"$capture_dir/validation-inputs.json\"",
         "--slot-id \"$slot_id\"",

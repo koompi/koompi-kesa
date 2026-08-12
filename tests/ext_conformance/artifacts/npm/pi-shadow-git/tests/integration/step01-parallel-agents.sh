@@ -3,7 +3,7 @@
 set -e
 
 echo "=== STEP-01 INTEGRATION TEST: PARALLEL AGENTS ==="
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents"/{a1,a2,a3}
@@ -11,7 +11,7 @@ mkdir -p "$TEST_WS/agents"/{a1,a2,a3}
 echo "Spawning 3 agents in parallel..."
 
 for agent in a1 a2 a3; do
-  PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="$agent" \
+  KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="$agent" \
     timeout 60 pi --max-turns 3 --no-input -p \
     -e "$EXT" \
     "Write 'hello from $agent' to output/greeting.txt" 2>&1 > /tmp/agent-$agent.log &

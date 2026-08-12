@@ -544,10 +544,10 @@ The auth system (`src/auth.rs`) resolves credentials in this order:
 
 1. **Explicit override** — `--api-key` flag or per-request key
 2. **Stored OAuth or bearer token** — an unexpired OAuth access token or a
-   `BearerToken` entry in `~/.pi/agent/auth.json`
+   `BearerToken` entry in `~/.kode/agent/auth.json`
 3. **Environment variables** — provider-specific vars from
    `provider_auth_env_keys()`, in their documented order
-4. **Stored API key** — an `ApiKey` entry in `~/.pi/agent/auth.json`
+4. **Stored API key** — an `ApiKey` entry in `~/.kode/agent/auth.json`
 5. **External coding-CLI credential** — supported credentials auto-detected
    from another local coding CLI, only when using Pi's global auth storage
 

@@ -6,7 +6,7 @@
   - `session_ask({ question, sessionPath? })` queries the current (or specified) session JSONL (including pre-compaction history) without bloating the current model context; `/session-ask ...` is a UI wrapper
   - `session_lineage({ ... })` returns fork ancestry (parentSession chain)
   - Optional minimal fork-lineage system prompt injection via `injectForkHintSystemPrompt` (see README)
-  - Configurable model/prompt via `config.json`, optionally pointing at an agent definition under `~/.pi/agent/agents/`
+  - Configurable model/prompt via `config.json`, optionally pointing at an agent definition under `~/.kode/agent/agents/`
 
 - ● [`repoprompt-mcp/`](repoprompt-mcp/) ([README](./repoprompt-mcp/README.md))
   - Pi-compatible, token-efficient proxy for the RepoPrompt MCP server with RP-bespoke features:
@@ -42,7 +42,7 @@
 </p>
 
 - ● [`md.ts`](md.ts)
-  - `/md` exports the current Pi session to a legible Markdown transcript in `~/.pi/agent/pi-sessions-extracted/`
+  - `/md` exports the current Pi session to a legible Markdown transcript in `~/.kode/agent/pi-sessions-extracted/`
   - `/md t*` includes thinking blocks (any arg starting with `t`, e.g. `/md t`, `/md think`, `/md thinking`)
   - `/md <N>` exports only the last **N turns** (a turn is `[user message → assistant message]`), e.g. `/md 2`, `/md t 2`, `/md think 1`
   - `/md all` (or `/md file`) exports the full session file instead of the current `/tree` branch
@@ -87,14 +87,14 @@
   - Token-efficient Brave web search with optional content extraction/clipping for “read the docs / answer from sources” workflows
   - Manual command: `/ws <query> ... [--content]` (no model turn)
   - LLM tool: `brave_search({ query, count, country, freshness, fetchContent, format })`
-  - With `fetchContent=true` / `--content`: extracts readable markdown, saves full content to `~/.pi/agent/extensions/brave-search/.clips/`, returns a preview + a `Saved:` path
+  - With `fetchContent=true` / `--content`: extracts readable markdown, saves full content to `~/.kode/agent/extensions/brave-search/.clips/`, returns a preview + a `Saved:` path
   - Direct URL mode: if `query` is a URL (including `raw.githubusercontent.com/...`) and `fetchContent=true`, it fetches and clips directly (no search step)
   - Optional LLM tool: `brave_grounding({ question, enableResearch, enableCitations, enableEntities, maxAnswerChars })` (requires `BRAVE_API_KEY_AI_GROUNDING`)
   - Search results are shown to the user but filtered out of LLM context via the `context` hook
 
 - ● [`dedup-agents-files.ts`](dedup-agents-files.ts)
   - Removes duplicate AGENTS.md content from the system prompt when the same file is loaded via different paths (e.g., symlinks)
-  - **Why it's here:** This repo is symlinked to `~/.pi/agent/` (as suggested in the root README). Pi loads AGENTS.md from both `agentDir` and the cwd walk, but since they resolve to the same file, the content appears twice. This extension deduplicates by resolving real paths.
+  - **Why it's here:** This repo is symlinked to `~/.kode/agent/` (as suggested in the root README). Pi loads AGENTS.md from both `agentDir` and the cwd walk, but since they resolve to the same file, the content appears twice. This extension deduplicates by resolving real paths.
 
 - ● [`editor-enhancements/`](editor-enhancements/)
   - Composite editor extension that makes multiple `setEditorComponent()`-based UX tweaks simultaneously compatible
@@ -110,7 +110,7 @@
       - This version adds `alt+v` performing both arm + paste directly from the clipboard, preserving newlines and bypassing Pi’s large-paste markers (e.g. `[paste #3 +122 lines]`)
   - When enabled, disable the standalone `shell-completions/`, `file-picker.ts`, and `raw-paste.ts` extensions to avoid editor-component conflicts
 
-- ◐ [`agentic-compaction/`](agentic-compaction/) ([README](./agentic-compaction/README.md); upstream: [laulauland/dotfiles](https://github.com/laulauland/dotfiles/tree/main/shared/.pi/agent/extensions/file-based-compaction))
+- ◐ [`agentic-compaction/`](agentic-compaction/) ([README](./agentic-compaction/README.md); upstream: [laulauland/dotfiles](https://github.com/laulauland/dotfiles/tree/main/shared/.kode/agent/extensions/file-based-compaction))
   - Agentic compaction via a virtual filesystem: mounts `/conversation.json` and lets a summarizer model explore it with portable bash/zsh commands
   - Emphasizes deterministic, tool-result-verified modified-file tracking (native + `rp`), filters likely temp artifacts, supports `/compact <note>`, and can parallelize tool calls via `toolCallConcurrency`
 

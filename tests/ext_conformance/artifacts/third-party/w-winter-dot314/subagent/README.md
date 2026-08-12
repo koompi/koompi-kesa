@@ -14,7 +14,7 @@ https://github.com/user-attachments/assets/702554ec-faaf-4635-80aa-fb5d6e292fd1
 npx pi-subagents
 ```
 
-This clones the extension to `~/.pi/agent/extensions/subagent/`. To update, run the same command. To remove:
+This clones the extension to `~/.kode/agent/extensions/subagent/`. To update, run the same command. To remove:
 
 ```bash
 npx pi-subagents --remove
@@ -124,8 +124,8 @@ interactive: true            # (parsed but not enforced in v1)
 Skills are specialized instructions loaded from SKILL.md files and injected into the agent's system prompt.
 
 **Skill locations:**
-- Project: `.pi/skills/{name}/SKILL.md` (higher priority)
-- User: `~/.pi/agent/skills/{name}/SKILL.md`
+- Project: `.kode/skills/{name}/SKILL.md` (higher priority)
+- User: `~/.kode/agent/skills/{name}/SKILL.md`
 
 **Usage:**
 ```typescript

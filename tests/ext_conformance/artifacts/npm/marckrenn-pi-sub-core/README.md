@@ -29,10 +29,10 @@ Manual install (local development):
 
 ```bash
 git clone https://github.com/marckrenn/pi-sub.git
-ln -s /path/to/pi-sub/packages/sub-core ~/.pi/agent/extensions/sub-core
+ln -s /path/to/pi-sub/packages/sub-core ~/.kode/agent/extensions/sub-core
 ```
 
-Alternative (no symlink): add it to `~/.pi/agent/settings.json`:
+Alternative (no symlink): add it to `~/.kode/agent/settings.json`:
 
 ```json
 {
@@ -42,7 +42,7 @@ Alternative (no symlink): add it to `~/.pi/agent/settings.json`:
 
 ## Tool Access
 
-Tool registration is gated by `tools` in `~/.pi/agent/pi-sub-core-settings.json`.
+Tool registration is gated by `tools` in `~/.kode/agent/pi-sub-core-settings.json`.
 By default, both tools are **off**. To enable them, set:
 
 ```json
@@ -67,11 +67,11 @@ Use `sub-core:settings` to configure shared provider settings plus **Usage Refre
 
 Usage refresh controls cache/usage updates, while status refresh controls incident polling (you can keep status on a slower interval). The Minimum Refresh Interval caps how often refresh triggers can fetch new data even if you refresh every turn.
 
-Antigravity usage requires an OAuth token in `~/.pi/agent/auth.json` under the `google-antigravity` key.
+Antigravity usage requires an OAuth token in `~/.kode/agent/auth.json` under the `google-antigravity` key.
 
 Anthropic extra usage formatting is controlled in Provider Settings (currency symbol + decimal separator).
 
-Settings are stored in `~/.pi/agent/pi-sub-core-settings.json` (migrated from the legacy extension `settings.json` when present; the legacy file is removed after a successful migration).
+Settings are stored in `~/.kode/agent/pi-sub-core-settings.json` (migrated from the legacy extension `settings.json` when present; the legacy file is removed after a successful migration).
 
 **Settings migrations:** settings are merged with defaults on load, but renames/removals are not migrated automatically. When adding new settings or changing schema, update the defaults/merge logic and provide a migration (or instruct users to reset `pi-sub-core-settings.json`).
 
@@ -79,14 +79,14 @@ Settings are stored in `~/.pi/agent/pi-sub-core-settings.json` (migrated from th
 
 Sub-core stores a shared cache and lock file:
 
-- `~/.pi/agent/cache/sub-core/cache.json`
-- `~/.pi/agent/cache/sub-core/cache.lock`
+- `~/.kode/agent/cache/sub-core/cache.json`
+- `~/.kode/agent/cache/sub-core/cache.lock`
 
 Legacy cache files next to the extension entry or in the agent root are migrated to the cache directory and removed on first run.
 
 ## Security notes
 
-- Keep `~/.pi/agent/auth.json` readable only by your user (e.g. `chmod 600 ~/.pi/agent/auth.json`).
+- Keep `~/.kode/agent/auth.json` readable only by your user (e.g. `chmod 600 ~/.kode/agent/auth.json`).
 - Avoid logging token-bearing headers or auth config when troubleshooting provider calls.
 
 ## Provider comparison

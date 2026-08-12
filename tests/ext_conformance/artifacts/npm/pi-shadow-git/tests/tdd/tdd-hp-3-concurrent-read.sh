@@ -2,12 +2,12 @@
 # TDD-HP-3: Mission Control can read audit.jsonl while agent writes
 # Behavior: Reading audit.jsonl doesn't fail during agent execution
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Start agent in background
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   pi --max-turns 3 --no-input -p \
   -e "$EXT" "Count 1, 2, 3 writing each to output/count.txt" 2>&1 >/dev/null &
 PID=$!

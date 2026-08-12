@@ -343,7 +343,7 @@ impl ResourceLoader {
         // Extension entries:
         // - `--no-extensions` disables configured + auto discovery but still allows CLI `-e` sources.
         // - Deduplicate by canonical extension ID so that transpiled cache copies
-        //   in `~/.pi/agent/cache/modules/` don't cause command collisions with
+        //   in `~/.kode/agent/cache/modules/` don't cause command collisions with
         //   the original source `.ts` extensions (Issue #37).
         let extension_entries = dedupe_extension_entries_by_id(merge_resource_paths(
             &[],
@@ -1983,7 +1983,7 @@ fn module_cache_dir() -> Option<PathBuf> {
             Some(PathBuf::from(raw))
         };
     }
-    dirs::home_dir().map(|home| home.join(".pi").join("agent").join("cache").join("modules"))
+    dirs::home_dir().map(|home| home.join(".kode").join("agent").join("cache").join("modules"))
 }
 
 fn is_cache_module_path_with_cache_dir(path: &Path, cache_dir: Option<&Path>) -> bool {
@@ -2026,7 +2026,7 @@ fn extension_dedupe_key_from_path(path: &Path) -> Option<String> {
 /// entries over transpiled cache copies (Issue #37).
 ///
 /// When both a source `.ts` extension and its transpiled cache copy in
-/// `~/.pi/agent/cache/modules/` are discovered, the cache entry is dropped to
+/// `~/.kode/agent/cache/modules/` are discovered, the cache entry is dropped to
 /// prevent command collisions at load time.
 fn dedupe_extension_entries_by_id(entries: Vec<PathBuf>) -> Vec<PathBuf> {
     let cache_dir = module_cache_dir();
@@ -2721,7 +2721,7 @@ mod tests {
             let extension_path = temp_dir.path().join("ext.native.json");
             fs::write(&extension_path, "{}").expect("write extension");
 
-            let settings_dir = temp_dir.path().join(".pi");
+            let settings_dir = temp_dir.path().join(".kode");
             fs::create_dir_all(&settings_dir).expect("create settings dir");
             let settings_path = settings_dir.join("settings.json");
             let settings = json!({
@@ -3011,7 +3011,7 @@ still frontmatter",
                 },
             },
             ResolvedResource {
-                path: PathBuf::from("/project/.pi/prompts/review.md"),
+                path: PathBuf::from("/project/.kode/prompts/review.md"),
                 enabled: true,
                 metadata: crate::package_manager::PathMetadata {
                     source: "local:project".to_string(),
@@ -3021,7 +3021,7 @@ still frontmatter",
                 },
             },
             ResolvedResource {
-                path: PathBuf::from("/global/.pi/prompts/review.md"),
+                path: PathBuf::from("/global/.kode/prompts/review.md"),
                 enabled: true,
                 metadata: crate::package_manager::PathMetadata {
                     source: "local:user".to_string(),
@@ -3067,8 +3067,8 @@ still frontmatter",
             sorted,
             vec![
                 PathBuf::from("/tmp/cli-ext/review.md"),
-                PathBuf::from("/project/.pi/prompts/review.md"),
-                PathBuf::from("/global/.pi/prompts/review.md"),
+                PathBuf::from("/project/.kode/prompts/review.md"),
+                PathBuf::from("/global/.kode/prompts/review.md"),
                 PathBuf::from("/project/package/review.md"),
                 PathBuf::from("/global/package/review.md"),
             ]
@@ -3099,7 +3099,7 @@ still frontmatter",
                 },
             },
             ResolvedResource {
-                path: PathBuf::from("/project/.pi/prompts/review.md"),
+                path: PathBuf::from("/project/.kode/prompts/review.md"),
                 enabled: true,
                 metadata: crate::package_manager::PathMetadata {
                     source: "local:project".to_string(),
@@ -3116,7 +3116,7 @@ still frontmatter",
             vec![
                 PathBuf::from("/tmp/cli-ext/zeta/review.md"),
                 PathBuf::from("/tmp/cli-ext/alpha/review.md"),
-                PathBuf::from("/project/.pi/prompts/review.md"),
+                PathBuf::from("/project/.kode/prompts/review.md"),
             ],
             "same-tier resources should keep their original source order"
         );
@@ -3139,7 +3139,7 @@ still frontmatter",
             }],
             vec![
                 ResolvedResource {
-                    path: PathBuf::from("/project/.pi/prompts/review.md"),
+                    path: PathBuf::from("/project/.kode/prompts/review.md"),
                     enabled: true,
                     metadata: crate::package_manager::PathMetadata {
                         source: "local:project".to_string(),
@@ -3149,7 +3149,7 @@ still frontmatter",
                     },
                 },
                 ResolvedResource {
-                    path: PathBuf::from("/global/.pi/prompts/review.md"),
+                    path: PathBuf::from("/global/.kode/prompts/review.md"),
                     enabled: true,
                     metadata: crate::package_manager::PathMetadata {
                         source: "local:user".to_string(),
@@ -3167,8 +3167,8 @@ still frontmatter",
             vec![
                 explicit_path,
                 PathBuf::from("/tmp/cli-ext/review.md"),
-                PathBuf::from("/project/.pi/prompts/review.md"),
-                PathBuf::from("/global/.pi/prompts/review.md"),
+                PathBuf::from("/project/.kode/prompts/review.md"),
+                PathBuf::from("/global/.kode/prompts/review.md"),
             ]
         );
     }

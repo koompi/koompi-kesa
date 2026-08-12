@@ -16,7 +16,7 @@ Intelligently prunes conversation context to optimize token usage while preservi
 Clone the repository into your pi agent extensions directory:
 
 ```bash
-git clone https://github.com/zenobi-us/pi-dcp.git ~/.pi/agent/extensions/pi-dcp
+git clone https://github.com/zenobi-us/pi-dcp.git ~/.kode/agent/extensions/pi-dcp
 ```
 
 ## Usage

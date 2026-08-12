@@ -30,7 +30,7 @@ Token-efficient Brave web search as a Pi extension, with optional content extrac
   - If you installed by copying the folder manually, run:
 
 ```bash
-cd ~/.pi/agent/extensions/brave-search
+cd ~/.kode/agent/extensions/brave-search
 npm install
 ```
 
@@ -48,7 +48,7 @@ Note: Avoid wrapping the whole query in quotes. Brave can return empty results f
 - `--content`:
   - Fetches and extracts readable content (slow)
   - Caps the number of results fetched to **3**
-  - Saves full extracted markdown to: `~/.pi/agent/extensions/brave-search/.clips/`
+  - Saves full extracted markdown to: `~/.kode/agent/extensions/brave-search/.clips/`
   - Includes a short preview + a `Saved: ...` file path in the output
 
 ### Tools for the agent

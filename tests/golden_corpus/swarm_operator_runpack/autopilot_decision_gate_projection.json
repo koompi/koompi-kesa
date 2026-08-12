@@ -241,12 +241,12 @@
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/goldenglacier_bd_h3uv0_8/target TMPDIR=[PI_AGENT_CARGO_TMP]/goldenglacier_bd_h3uv0_8/tmp rch exec -- cargo check --all-targets",
+              "command": "CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/goldenglacier_bd_h3uv0_8/target TMPDIR=[KODE_AGENT_CARGO_TMP]/goldenglacier_bd_h3uv0_8/tmp rch exec -- cargo check --all-targets",
               "id": "cargo_check_all_targets_rch",
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/goldenglacier_bd_h3uv0_8/target TMPDIR=[PI_AGENT_CARGO_TMP]/goldenglacier_bd_h3uv0_8/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
+              "command": "CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/goldenglacier_bd_h3uv0_8/target TMPDIR=[KODE_AGENT_CARGO_TMP]/goldenglacier_bd_h3uv0_8/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
               "id": "cargo_clippy_all_targets_rch",
               "status": "pass"
             },

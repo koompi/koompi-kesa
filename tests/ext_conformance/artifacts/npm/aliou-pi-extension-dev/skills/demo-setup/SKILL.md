@@ -42,7 +42,7 @@ Themes show better as images (screenshots of dark and light variants side by sid
 
 ```
 <demo-dir>/
-├── .pi/
+├── .kode/
 │   ├── settings.json              # Registers the extension as a local path
 │   ├── prompts/
 │   │   └── demo.md                # The /demo prompt
@@ -62,12 +62,12 @@ Check `package.json` in the target directory for a `pi` key with `extensions`, `
 
 ```bash
 demo_dir=$(mktemp -d)
-mkdir -p "$demo_dir/.pi/prompts"
+mkdir -p "$demo_dir/.kode/prompts"
 ```
 
 ### 3. Register the Extension
 
-Create `.pi/settings.json` pointing to the extension's absolute path:
+Create `.kode/settings.json` pointing to the extension's absolute path:
 
 ```json
 {
@@ -82,7 +82,7 @@ Use `defaultThinkingLevel: "off"` to keep responses fast and visible during demo
 
 ### 4. Write the Demo Prompt
 
-Create `.pi/prompts/demo.md`. Structure it as numbered steps, one feature per step. Each step should produce visible output.
+Create `.kode/prompts/demo.md`. Structure it as numbered steps, one feature per step. Each step should produce visible output.
 
 ```markdown
 ---
@@ -107,7 +107,7 @@ Create any files the demo needs to function. Examples by extension type:
 **Hook-based extensions** (e.g., guardrails):
 - `.env` with fake secrets (to trigger env file protection)
 - `.env.example` (to show allowed patterns)
-- `.pi/extensions/<name>.json` with feature toggles enabled
+- `.kode/extensions/<name>.json` with feature toggles enabled
 
 **Tool-based extensions** (e.g., processes, linkup):
 - Fake project files (package.json, scripts/) that the tools operate on

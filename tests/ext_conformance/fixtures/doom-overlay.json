@@ -45,7 +45,7 @@
       },
       "outputs": {
         "stdout_normalized_jsonl": [
-          "{\"cwd\":\"<PI_MONO_ROOT>\",\"id\":\"<UUID>\",\"timestamp\":\"<TIMESTAMP>\",\"type\":\"session\",\"version\":3}"
+          "{\"cwd\":\"<KODE_MONO_ROOT>\",\"id\":\"<UUID>\",\"timestamp\":\"<TIMESTAMP>\",\"type\":\"session\",\"version\":3}"
         ],
         "meta_normalized": {
           "agent_dir": "target/legacy_capture/scn-doom-overlay-001/<RUN_ID>/agent",

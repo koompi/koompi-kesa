@@ -530,7 +530,7 @@
         "kind": "cargo_target_dir",
         "last_observed_at": "[TIMESTAMP]",
         "owner": "Codex",
-        "path": "[PI_AGENT_CARGO_TMP]/test/target",
+        "path": "[KODE_AGENT_CARGO_TMP]/test/target",
         "reason": "active cargo_headroom target dir",
         "state": "active"
       },
@@ -558,7 +558,7 @@
         "id": "stale_unknown_target",
         "kind": "cargo_target_dir",
         "last_observed_at": "[TIMESTAMP]",
-        "path": "[PI_AGENT_CARGO_TMP]/unknown/stale-target",
+        "path": "[KODE_AGENT_CARGO_TMP]/unknown/stale-target",
         "reason": "stale unknown-owner fixture",
         "state": "stale_candidate"
       }
@@ -1621,7 +1621,7 @@
   "purpose": "operator_handoff_not_release_performance_claim",
   "rch_admission": {
     "allow_local_fallback": false,
-    "cargo_target_dir": "[PI_AGENT_CARGO_TMP]/test/target",
+    "cargo_target_dir": "[KODE_AGENT_CARGO_TMP]/test/target",
     "command_class": "heavy",
     "decision": "backoff",
     "queue_forecast": {
@@ -1682,7 +1682,7 @@
     },
     "status": "ok",
     "storage_remediation": null,
-    "tmpdir": "[PI_AGENT_CARGO_TMP]/test/tmp"
+    "tmpdir": "[KODE_AGENT_CARGO_TMP]/test/tmp"
   },
   "redaction_summary": {
     "fields": [
@@ -1773,10 +1773,10 @@
         },
         "paths": {
           "artifact_paths": [],
-          "cargo_target_dir": "[PI_AGENT_CARGO_TMP]/test/target",
+          "cargo_target_dir": "[KODE_AGENT_CARGO_TMP]/test/target",
           "remote_target_dir": null,
           "remote_tmpdir": null,
-          "tmpdir": "[PI_AGENT_CARGO_TMP]/test/tmp"
+          "tmpdir": "[KODE_AGENT_CARGO_TMP]/test/tmp"
         },
         "runner": {
           "command_rewrite": {},
@@ -1874,11 +1874,11 @@
       "purpose": "Check Beads/drop-in ledger invariant"
     },
     {
-      "command": "CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp rch exec -- cargo check --all-targets",
+      "command": "CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp rch exec -- cargo check --all-targets",
       "purpose": "Run compiler check through RCH"
     },
     {
-      "command": "CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
+      "command": "CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
       "purpose": "Run clippy through RCH"
     }
   ],
@@ -2321,12 +2321,12 @@
         "kind": "cargo_target_dir",
         "last_observed_at": "[TIMESTAMP]",
         "owner": "Codex",
-        "path": "[PI_AGENT_CARGO_TMP]/test/target",
+        "path": "[KODE_AGENT_CARGO_TMP]/test/target",
         "permission_boundary": "No deletion command emitted. Explicit written operator approval is required before deleting any file or directory.",
         "reason": "cargo_headroom selected target directory",
         "review_commands": [
-          "test -e [PI_AGENT_CARGO_TMP]/test/target && stat [PI_AGENT_CARGO_TMP]/test/target",
-          "du -sh [PI_AGENT_CARGO_TMP]/test/target"
+          "test -e [KODE_AGENT_CARGO_TMP]/test/target && stat [KODE_AGENT_CARGO_TMP]/test/target",
+          "du -sh [KODE_AGENT_CARGO_TMP]/test/target"
         ],
         "source": "cargo_admission",
         "state": "active"
@@ -2342,12 +2342,12 @@
         "kind": "cargo_tmpdir",
         "last_observed_at": "[TIMESTAMP]",
         "owner": null,
-        "path": "[PI_AGENT_CARGO_TMP]/test/tmp",
+        "path": "[KODE_AGENT_CARGO_TMP]/test/tmp",
         "permission_boundary": "No deletion command emitted. Explicit written operator approval is required before deleting any file or directory.",
         "reason": "cargo_headroom selected TMPDIR",
         "review_commands": [
-          "test -e [PI_AGENT_CARGO_TMP]/test/tmp && stat [PI_AGENT_CARGO_TMP]/test/tmp",
-          "du -sh [PI_AGENT_CARGO_TMP]/test/tmp"
+          "test -e [KODE_AGENT_CARGO_TMP]/test/tmp && stat [KODE_AGENT_CARGO_TMP]/test/tmp",
+          "du -sh [KODE_AGENT_CARGO_TMP]/test/tmp"
         ],
         "source": "cargo_admission",
         "state": "active"
@@ -2447,12 +2447,12 @@
         "kind": "cargo_target_dir",
         "last_observed_at": "[TIMESTAMP]",
         "owner": null,
-        "path": "[PI_AGENT_CARGO_TMP]/unknown/stale-target",
+        "path": "[KODE_AGENT_CARGO_TMP]/unknown/stale-target",
         "permission_boundary": "No deletion command emitted. Explicit written operator approval is required before deleting any file or directory.",
         "reason": "stale unknown-owner fixture",
         "review_commands": [
-          "test -e [PI_AGENT_CARGO_TMP]/unknown/stale-target && stat [PI_AGENT_CARGO_TMP]/unknown/stale-target",
-          "du -sh [PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "test -e [KODE_AGENT_CARGO_TMP]/unknown/stale-target && stat [KODE_AGENT_CARGO_TMP]/unknown/stale-target",
+          "du -sh [KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "source": "capture_manifest.temp_artifacts",
         "state": "stale_candidate"
@@ -2467,7 +2467,7 @@
       "unknown_owner_deletion_protected": true
     },
     "known_temp_roots": [
-      "[PI_AGENT_CARGO_TMP]",
+      "[KODE_AGENT_CARGO_TMP]",
       "[DATA_TMP]",
       "[TMP]",
       ".rch-target*",
@@ -2757,7 +2757,7 @@
           "decision=backoff",
           "queue_recommended_action=backoff",
           "slot_pressure=saturated",
-          "stale_target_cache=[PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "stale_target_cache=[KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "cache_reuse": "target_dir_reuse_if_clean",
         "command_class": "cargo_test_focused",
@@ -2768,14 +2768,14 @@
           "rch_admission.queue_forecast"
         ],
         "exact_commands": [
-          "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test conformance"
+          "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test conformance"
         ],
         "id": "focused_tests",
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
         "no_local_fallback": true,
         "required_env": {
-          "CARGO_TARGET_DIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/target",
-          "TMPDIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
+          "CARGO_TARGET_DIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target",
+          "TMPDIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
         },
         "requires_rch": true,
         "risk": "medium",
@@ -2787,7 +2787,7 @@
           "decision=backoff",
           "queue_recommended_action=backoff",
           "slot_pressure=saturated",
-          "stale_target_cache=[PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "stale_target_cache=[KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "cache_reuse": "target_dir_reuse_if_clean",
         "command_class": "cargo_test_e2e_conformance",
@@ -2798,14 +2798,14 @@
           "rch_admission.queue_forecast"
         ],
         "exact_commands": [
-          "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test e2e"
+          "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test e2e"
         ],
         "id": "e2e_conformance",
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
         "no_local_fallback": true,
         "required_env": {
-          "CARGO_TARGET_DIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/target",
-          "TMPDIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
+          "CARGO_TARGET_DIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target",
+          "TMPDIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
         },
         "requires_rch": true,
         "risk": "medium",
@@ -2817,7 +2817,7 @@
           "decision=backoff",
           "queue_recommended_action=backoff",
           "slot_pressure=saturated",
-          "stale_target_cache=[PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "stale_target_cache=[KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "cache_reuse": "target_dir_reuse_if_clean",
         "command_class": "cargo_check_all_targets",
@@ -2828,14 +2828,14 @@
           "remote_validation_proof_ledger.summary"
         ],
         "exact_commands": [
-          "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets"
+          "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets"
         ],
         "id": "all_targets_check",
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
         "no_local_fallback": true,
         "required_env": {
-          "CARGO_TARGET_DIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/target",
-          "TMPDIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
+          "CARGO_TARGET_DIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target",
+          "TMPDIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
         },
         "requires_rch": true,
         "risk": "high",
@@ -2847,7 +2847,7 @@
           "decision=backoff",
           "queue_recommended_action=backoff",
           "slot_pressure=saturated",
-          "stale_target_cache=[PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "stale_target_cache=[KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "cache_reuse": "target_dir_reuse_if_clean",
         "command_class": "cargo_clippy_all_targets",
@@ -2858,14 +2858,14 @@
           "remote_validation_proof_ledger.summary"
         ],
         "exact_commands": [
-          "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings"
+          "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings"
         ],
         "id": "clippy",
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
         "no_local_fallback": true,
         "required_env": {
-          "CARGO_TARGET_DIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/target",
-          "TMPDIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
+          "CARGO_TARGET_DIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target",
+          "TMPDIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
         },
         "requires_rch": true,
         "risk": "high",
@@ -2888,22 +2888,22 @@
     },
     "local_fallback_rejections": [
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test conformance",
+        "command": "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test conformance",
         "group_id": "focused_tests",
         "reason": "RCH-required validation must not fail open into a local cargo build."
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test e2e",
+        "command": "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test e2e",
         "group_id": "e2e_conformance",
         "reason": "RCH-required validation must not fail open into a local cargo build."
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets",
+        "command": "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets",
         "group_id": "all_targets_check",
         "reason": "RCH-required validation must not fail open into a local cargo build."
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+        "command": "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
         "group_id": "clippy",
         "reason": "RCH-required validation must not fail open into a local cargo build."
       }
@@ -2938,7 +2938,7 @@
       {
         "action": "defer",
         "commands": [
-          "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test conformance"
+          "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test conformance"
         ],
         "group_id": "focused_tests",
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
@@ -2946,18 +2946,18 @@
           "decision=backoff",
           "queue_recommended_action=backoff",
           "slot_pressure=saturated",
-          "stale_target_cache=[PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "stale_target_cache=[KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "required_env": {
-          "CARGO_TARGET_DIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/target",
-          "TMPDIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
+          "CARGO_TARGET_DIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target",
+          "TMPDIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
         },
         "requires_rch": true
       },
       {
         "action": "defer",
         "commands": [
-          "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test e2e"
+          "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo test e2e"
         ],
         "group_id": "e2e_conformance",
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
@@ -2965,18 +2965,18 @@
           "decision=backoff",
           "queue_recommended_action=backoff",
           "slot_pressure=saturated",
-          "stale_target_cache=[PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "stale_target_cache=[KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "required_env": {
-          "CARGO_TARGET_DIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/target",
-          "TMPDIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
+          "CARGO_TARGET_DIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target",
+          "TMPDIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
         },
         "requires_rch": true
       },
       {
         "action": "defer",
         "commands": [
-          "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets"
+          "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets"
         ],
         "group_id": "all_targets_check",
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
@@ -2984,18 +2984,18 @@
           "decision=backoff",
           "queue_recommended_action=backoff",
           "slot_pressure=saturated",
-          "stale_target_cache=[PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "stale_target_cache=[KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "required_env": {
-          "CARGO_TARGET_DIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/target",
-          "TMPDIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
+          "CARGO_TARGET_DIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target",
+          "TMPDIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
         },
         "requires_rch": true
       },
       {
         "action": "defer",
         "commands": [
-          "rch exec -- env CARGO_TARGET_DIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings"
+          "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings"
         ],
         "group_id": "clippy",
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
@@ -3003,11 +3003,11 @@
           "decision=backoff",
           "queue_recommended_action=backoff",
           "slot_pressure=saturated",
-          "stale_target_cache=[PI_AGENT_CARGO_TMP]/unknown/stale-target"
+          "stale_target_cache=[KODE_AGENT_CARGO_TMP]/unknown/stale-target"
         ],
         "required_env": {
-          "CARGO_TARGET_DIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/target",
-          "TMPDIR": "[PI_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
+          "CARGO_TARGET_DIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target",
+          "TMPDIR": "[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp"
         },
         "requires_rch": true
       }

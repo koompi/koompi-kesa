@@ -276,7 +276,7 @@ pi --provider mistralrs --model default        -p "hi"
 ```
 
 To point at any other OpenAI-compatible server (a custom host/port, vLLM, etc.),
-add it to `~/.pi/agent/models.json`:
+add it to `~/.kode/agent/models.json`:
 
 ```json
 {
@@ -317,7 +317,7 @@ Each standalone CLI invocation starts a new process, so its in-memory cache is
 fresh. The five-minute cache only avoids repeat discovery calls made within one
 long-lived process by SDK/library users; `--refresh-models` bypasses that cache.
 
-Persistence is opt-in. The v2 `~/.pi/agent/models.fetched.json` schema stores
+Persistence is opt-in. The v2 `~/.kode/agent/models.fetched.json` schema stores
 provider/model IDs, the fetch timestamp, and a non-secret SHA-256 identity
 binding membership to the provider, API, query-free endpoint, auth-header
 mode, recognized credential-query ordered name/presence shape, and
@@ -335,7 +335,7 @@ endpoint/transport shape can retain the prior account's saved model list until
 you rerun `--fetch-models <provider> --refresh-models --persist-models`.
 Inference still resolves and sends the current account's credential; only the
 opt-in model-membership list can be stale across that switch. The generated
-catalog is loaded first; your hand-written `~/.pi/agent/models.json` is loaded
+catalog is loaded first; your hand-written `~/.kode/agent/models.json` is loaded
 afterward and remains authoritative. Pi does not rewrite or merge that
 user-authored file.
 Legacy `pi.models.fetched.v1` files cannot be rebound safely because they lack
@@ -389,14 +389,14 @@ pi --tools read,bash,edit,write,grep,find,ls,hashline_edit,subagent \
 Rust Pi includes a native `subagent` tool; it does not depend on a QuickJS
 extension and never resolves a child executable by assuming a `pi` binary on
 `PATH`. By default it starts the current Rust Pi executable. Set
-`PI_SUBAGENT_PI_BINARY=/absolute/path/to/rpi` only when an explicit binary
+`KODE_SUBAGENT_PI_BINARY=/absolute/path/to/rpi` only when an explicit binary
 override is needed.
 
-Agent definitions are Markdown files in `$PI_CODING_AGENT_DIR/agents/*.md`
-(normally `~/.pi/agent/agents/*.md`) or the nearest
-`.pi/agents/*.md`. Project definitions take precedence over same-named user
+Agent definitions are Markdown files in `$KODE_CODING_AGENT_DIR/agents/*.md`
+(normally `~/.kode/agent/agents/*.md`) or the nearest
+`.kode/agents/*.md`. Project definitions take precedence over same-named user
 definitions. The process inherits the parent's provider, router, authentication,
-and model-registry environment, including `PI_CODING_AGENT_DIR`.
+and model-registry environment, including `KODE_CODING_AGENT_DIR`.
 
 ```markdown
 ---
@@ -429,7 +429,7 @@ Sessions persist as JSONL files with full conversation history:
 pi --continue
 
 # Open specific session
-pi --session ~/.pi/agent/sessions/--home-user-project--/2024-01-15T10-30-00.jsonl
+pi --session ~/.kode/agent/sessions/--home-user-project--/2024-01-15T10-30-00.jsonl
 
 # Ephemeral (no persistence)
 pi --no-session
@@ -452,8 +452,8 @@ Thinking levels: `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`
 
 ### Customization (Skills & Prompt Templates)
 
-- **Skills**: Drop `SKILL.md` under `~/.pi/agent/skills/` or `.pi/skills/` and invoke with `/skill:name`.
-- **Prompt templates**: Markdown files under `~/.pi/agent/prompts/` or `.pi/prompts/`; invoke via `/<template> [args]`.
+- **Skills**: Drop `SKILL.md` under `~/.kode/agent/skills/` or `.kode/skills/` and invoke with `/skill:name`.
+- **Prompt templates**: Markdown files under `~/.kode/agent/prompts/` or `.kode/prompts/`; invoke via `/<template> [args]`.
 - **Packages**: Share bundles with `pi install npm:@org/pi-packages` (skills, prompts, themes, extensions).
 
 ### Autocomplete
@@ -562,7 +562,7 @@ This project validates extension compatibility with a three-track pipeline:
    - Binary: `ext_release_binary_e2e`
    - Typical command:
      - `cargo build --bin pi --bin ext_release_binary_e2e`
-     - `PI_HTTP_REQUEST_TIMEOUT_SECS=0 target/debug/ext_release_binary_e2e --pi-bin target/debug/pi --provider ollama --model qwen2.5:0.5b --jobs 10 --timeout-secs 600 --max-cases 20 --extension-policy balanced --out-json tests/ext_conformance/reports/release_binary_e2e/ollama_firstset_dev_20260219_jobs10_timeout600.json --out-md tests/ext_conformance/reports/release_binary_e2e/ollama_firstset_dev_20260219_jobs10_timeout600.md`
+     - `KODE_HTTP_REQUEST_TIMEOUT_SECS=0 target/debug/ext_release_binary_e2e --pi-bin target/debug/pi --provider ollama --model qwen2.5:0.5b --jobs 10 --timeout-secs 600 --max-cases 20 --extension-policy balanced --out-json tests/ext_conformance/reports/release_binary_e2e/ollama_firstset_dev_20260219_jobs10_timeout600.json --out-md tests/ext_conformance/reports/release_binary_e2e/ollama_firstset_dev_20260219_jobs10_timeout600.md`
    - Purpose:
      - Proves the current codepath works end-to-end on a representative first-set before paying release-build cost.
      - Serves as the promotion gate to full release-binary validation.
@@ -576,7 +576,7 @@ This project validates extension compatibility with a three-track pipeline:
    - Binary: `ext_release_binary_e2e`
    - Typical command:
      - `cargo build --release --bin pi --bin ext_release_binary_e2e`
-     - `PI_HTTP_REQUEST_TIMEOUT_SECS=0 target/release/ext_release_binary_e2e --pi-bin target/release/pi --provider ollama --model qwen2.5:0.5b --jobs 10 --timeout-secs 600 --extension-policy balanced --out-json tests/ext_conformance/reports/release_binary_e2e/ollama_full_release_20260219_jobs10_timeout600.json --out-md tests/ext_conformance/reports/release_binary_e2e/ollama_full_release_20260219_jobs10_timeout600.md`
+     - `KODE_HTTP_REQUEST_TIMEOUT_SECS=0 target/release/ext_release_binary_e2e --pi-bin target/release/pi --provider ollama --model qwen2.5:0.5b --jobs 10 --timeout-secs 600 --extension-policy balanced --out-json tests/ext_conformance/reports/release_binary_e2e/ollama_full_release_20260219_jobs10_timeout600.json --out-md tests/ext_conformance/reports/release_binary_e2e/ollama_full_release_20260219_jobs10_timeout600.md`
    - Purpose:
      - Executes `target/release/pi` directly for each selected extension case.
      - Uses a live provider/model path (default `ollama` + `qwen2.5:0.5b`) to exercise non-mocked end-to-end behavior.
@@ -844,8 +844,8 @@ pi swarm-progress --input progress-slo-input.json --format json
 pi swarm-progress --input progress-slo-input.json --since HEAD~1 --out-json progress-slo.json
 
 # Session storage migration (JSONL -> v2 sidecar store)
-pi migrate ~/.pi/agent/sessions --dry-run
-pi migrate ~/.pi/agent/sessions
+pi migrate ~/.kode/agent/sessions --dry-run
+pi migrate ~/.kode/agent/sessions
 ```
 
 - `update-index` refreshes extension index metadata used by `search` and `info`.
@@ -858,7 +858,7 @@ pi migrate ~/.pi/agent/sessions
 
 ## Configuration
 
-Pi reads configuration from `~/.pi/agent/settings.json`:
+Pi reads configuration from `~/.kode/agent/settings.json`:
 
 ```json
 {
@@ -899,9 +899,9 @@ Pi reads configuration from `~/.pi/agent/settings.json`:
 Settings are resolved in priority order (first match wins):
 
 1. **CLI flags** (`--model`, `--thinking`, `--provider`, etc.)
-2. **Environment variables** (`ANTHROPIC_API_KEY`, `PI_CONFIG_PATH`, etc.)
-3. **Project settings** (`.pi/settings.json` in the working directory)
-4. **Global settings** (`~/.pi/agent/settings.json`)
+2. **Environment variables** (`ANTHROPIC_API_KEY`, `KODE_CONFIG_PATH`, etc.)
+3. **Project settings** (`.kode/settings.json` in the working directory)
+4. **Global settings** (`~/.kode/agent/settings.json`)
 5. **Built-in defaults**
 
 This means a CLI flag always overrides a `settings.json` value, and a project-level setting overrides the global one.
@@ -911,9 +911,9 @@ This means a CLI flag always overrides a `settings.json` value, and a project-le
 Skills, prompt templates, themes, and extensions follow the same resolution order:
 
 1. CLI-specified paths (`--skill`, `--prompt-template`, `--theme`, `-e`)
-2. Project directory (`.pi/skills/`, `.pi/prompts/`, `.pi/themes/`, `.pi/extensions/`)
-3. Global directory (`~/.pi/agent/skills/`, `~/.pi/agent/prompts/`, etc.)
-4. Installed packages (`~/.pi/agent/packages/`)
+2. Project directory (`.kode/skills/`, `.kode/prompts/`, `.kode/themes/`, `.kode/extensions/`)
+3. Global directory (`~/.kode/agent/skills/`, `~/.kode/agent/prompts/`, etc.)
+4. Installed packages (`~/.kode/agent/packages/`)
 
 When multiple resources share the same name, the first occurrence wins. Collisions are logged as diagnostics.
 
@@ -940,11 +940,11 @@ When multiple resources share the same name, the first occurrence wins. Collisio
 | `TOGETHER_API_KEY` | Together API key (OpenAI-compatible) |
 | `PERPLEXITY_API_KEY` | Perplexity API key (OpenAI-compatible) |
 | `XAI_API_KEY` | xAI API key (OpenAI-compatible) |
-| `PI_CONFIG_PATH` | Custom config file path |
-| `PI_CODING_AGENT_DIR` | Override the global config directory |
-| `PI_SUBAGENT_PI_BINARY` | Explicit Rust Pi executable for native child agents; defaults to the current executable |
-| `PI_PACKAGE_DIR` | Override the packages directory |
-| `PI_SESSIONS_DIR` | Custom sessions directory |
+| `KODE_CONFIG_PATH` | Custom config file path |
+| `KODE_CODING_AGENT_DIR` | Override the global config directory |
+| `KODE_SUBAGENT_PI_BINARY` | Explicit Rust Pi executable for native child agents; defaults to the current executable |
+| `KODE_PACKAGE_DIR` | Override the packages directory |
+| `KODE_SESSIONS_DIR` | Custom sessions directory |
 
 ---
 
@@ -1488,7 +1488,7 @@ User specifies --provider openai --model gpt-4o
   └───────────────────────────┘
 ```
 
-**`models.json` overrides**: Users can define custom providers in `~/.pi/agent/models.json` or `.pi/models.json`. Each entry specifies a model ID, base URL, API type, and optional compat flags, letting you route to self-hosted models, proxies, or providers that Pi does not natively support.
+**`models.json` overrides**: Users can define custom providers in `~/.kode/agent/models.json` or `.kode/models.json`. Each entry specifies a model ID, base URL, API type, and optional compat flags, letting you route to self-hosted models, proxies, or providers that Pi does not natively support.
 
 **Compat config** handles the differences between OpenAI-compatible APIs:
 
@@ -1778,7 +1778,7 @@ Pi also supports a v2 sidecar store next to JSONL sessions for faster resume and
 
 ### Authentication & Credential Management
 
-Beyond simple API keys, Pi supports OAuth, AWS credential chains, service key exchange, and bearer-token auth. Credentials are stored in `~/.pi/agent/auth.json` with file-locked access to prevent corruption from concurrent instances. Stored API keys can be literal strings, `$ENV:VAR_NAME` references, or `$CMD:shell command` / `$COMMAND:shell command` sources that resolve trimmed stdout at request time.
+Beyond simple API keys, Pi supports OAuth, AWS credential chains, service key exchange, and bearer-token auth. Credentials are stored in `~/.kode/agent/auth.json` with file-locked access to prevent corruption from concurrent instances. Stored API keys can be literal strings, `$ENV:VAR_NAME` references, or `$CMD:shell command` / `$COMMAND:shell command` sources that resolve trimmed stdout at request time.
 
 | Mechanism | Providers | Details |
 |-----------|-----------|---------|
@@ -2018,7 +2018,7 @@ Current checked-in performance evidence state:
   ID/correlation ID, host/toolchain provenance, checksum, and TTL validate; reused
   artifacts are labeled `source_kind=cache`/`evidence_source=cache` in the JSON
   outputs. Override the cache lifetime with
-  `PI_PERF_EVIDENCE_CACHE_TTL_HOURS`.
+  `KODE_PERF_EVIDENCE_CACHE_TTL_HOURS`.
 - `env_fingerprint.json` records cgroup-aware host topology with schema
   `pi.perf.host_topology_fingerprint.v1`: cgroup v2 CPU quota, cpuset size,
   memory limits, NUMA node count, caveats, and a constrained `budget_profile`
@@ -2398,7 +2398,7 @@ BENCH_ALLOCATORS_CSV=system,jemalloc \
 
 The benchmark harness records both requested and effective allocator metadata in
 its JSONL output (`allocator_requested`, `allocator_effective`,
-`allocator_fallback_reason`) via `PI_BENCH_ALLOCATOR`.
+`allocator_fallback_reason`) via `KODE_BENCH_ALLOCATOR`.
 
 - `system`: build with the explicit benchmark feature set except `jemalloc`
 - `jemalloc`: build with `--features jemalloc` where supported by the target
@@ -2488,7 +2488,7 @@ Sessions are append-only JSONL. If corruption occurs:
 pi --no-session
 
 # Or delete the problematic session
-rm ~/.pi/agent/sessions/--home-user-project--/corrupted-session.jsonl
+rm ~/.kode/agent/sessions/--home-user-project--/corrupted-session.jsonl
 ```
 
 ### "Streaming hangs"
@@ -2603,7 +2603,7 @@ pi --extension-policy balanced --explain-extension-policy
 pi --extension-policy standard --explain-extension-policy
 
 # Narrow dangerous-capability opt-in (preferred over permissive)
-PI_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 ```
 
 Operator rollout playbook (compatibility-first local defaults + explicit lock-down):
@@ -2619,7 +2619,7 @@ pi --extension-policy balanced --explain-extension-policy
 pi --extension-policy safe --explain-extension-policy
 
 # 4) Narrow opt-in for dangerous capabilities (preferred path)
-PI_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 
 # 5) Explicit permissive mode when you want to be unambiguous
 pi --extension-policy permissive --explain-extension-policy
@@ -2654,10 +2654,10 @@ CI guidance:
 pi --extension-policy safe --explain-extension-policy
 
 # CI opt-in job (only where required), keep explicit and auditable
-PI_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 ```
 
-Rollback rule: remove `PI_EXTENSION_ALLOW_DANGEROUS`, set `extensionPolicy.profile`
+Rollback rule: remove `KODE_EXTENSION_ALLOW_DANGEROUS`, set `extensionPolicy.profile`
 back to `safe` or set `extensionPolicy.defaultPermissive` to `false`, and re-run
 `pi --explain-extension-policy` to confirm deny decisions.
 
@@ -2706,13 +2706,13 @@ A: Pi focuses on core coding assistance. Features like web browsing, image gener
 A: When a conversation exceeds the model's context window, Pi summarizes older messages using the LLM itself, storing the summary as a session entry. Recent messages are kept verbatim. The cut point is chosen at a turn boundary, and the summary includes a record of which files were read or modified so the model retains that awareness. Compaction runs automatically after each agent turn when needed, or manually via `/compact`.
 
 **Q: Can I add a custom provider that Pi doesn't support natively?**
-A: Yes. Create a `models.json` file in `~/.pi/agent/` or `.pi/` with entries specifying the model ID, base URL, and API type (usually `openai-completions` for OpenAI-compatible endpoints). Pi's compat config system handles field name differences and feature flag overrides. Extensions can also register entirely custom providers.
+A: Yes. Create a `models.json` file in `~/.kode/agent/` or `.kode/` with entries specifying the model ID, base URL, and API type (usually `openai-completions` for OpenAI-compatible endpoints). Pi's compat config system handles field name differences and feature flag overrides. Extensions can also register entirely custom providers.
 
 **Q: How does Pi decide which session to resume?**
 A: Pi maintains a SQLite session metadata index sidecar with WAL/lock handling and stale-index reindexing. When you run `pi -c`, it queries that index for the most recently modified session whose working directory matches your current project, including JSONL sessions and configured SQLite-backed sessions. This avoids scanning the filesystem on every resume.
 
 **Q: What happens if an extension tries to access something dangerous?**
-A: Every hostcall from an extension is checked against the active capability policy before execution. Dangerous capabilities (`exec`, `env`) are denied by default under `safe` and `balanced` unless explicitly opted in (for example via `PI_EXTENSION_ALLOW_DANGEROUS=1`), and are available under `permissive`. For `exec`, Pi then applies command mediation before spawn: it classifies command+arg signatures and blocks critical classes by default (for example recursive delete, disk/device write, reverse shell), with strict/safe policy able to block high-tier classes as well (for example shutdown, process-kill, credential-file modification). Denied calls return errors to the extension Promise path, and denial events are recorded in redacted security-alert and exec-mediation audit artifacts. Sensitive env keys (API keys/tokens/secrets) remain filtered. If behavior escalates, you can kill-switch that extension into quarantined `killed` state immediately or force compatibility-lane routing as a containment step while investigating.
+A: Every hostcall from an extension is checked against the active capability policy before execution. Dangerous capabilities (`exec`, `env`) are denied by default under `safe` and `balanced` unless explicitly opted in (for example via `KODE_EXTENSION_ALLOW_DANGEROUS=1`), and are available under `permissive`. For `exec`, Pi then applies command mediation before spawn: it classifies command+arg signatures and blocks critical classes by default (for example recursive delete, disk/device write, reverse shell), with strict/safe policy able to block high-tier classes as well (for example shutdown, process-kill, credential-file modification). Denied calls return errors to the extension Promise path, and denial events are recorded in redacted security-alert and exec-mediation audit artifacts. Sensitive env keys (API keys/tokens/secrets) remain filtered. If behavior escalates, you can kill-switch that extension into quarantined `killed` state immediately or force compatibility-lane routing as a containment step while investigating.
 
 **Q: Does Pi work with self-hosted or proxied LLMs?**
 A: Yes. Point any provider at a custom base URL via `models.json`. Pi normalizes URL paths per API type and applies compatibility overrides for field-name and feature differences. This works with vLLM, Ollama, LiteLLM, and similar OpenAI-compatible servers.
@@ -2752,9 +2752,9 @@ When those variables are unset, `cargo_headroom.sh` defaults `CARGO_TARGET_DIR`
 and `TMPDIR` to a per-agent directory under `/data/tmp/koompi_code_cli_cargo/...`,
 writes a `CACHEDIR.TAG`, rejects accidental repo-root target directories, and
 fails before compilation if the target or temp mount has insufficient free
-space. Set `PI_CARGO_RUNNER=local` for a local-only run,
-`PI_CARGO_BUILD_ROOT=<dir>` for a different large volume, or
-`PI_CARGO_HEADROOM_MIN_FREE_MB=<mb>` for smaller focused checks.
+space. Set `KODE_CARGO_RUNNER=local` for a local-only run,
+`KODE_CARGO_BUILD_ROOT=<dir>` for a different large volume, or
+`KODE_CARGO_HEADROOM_MIN_FREE_MB=<mb>` for smaller focused checks.
 
 Before launching swarms or heavyweight all-target gates, run
 `pi doctor --only swarm --format json`. The
@@ -2764,8 +2764,8 @@ Before launching swarms or heavyweight all-target gates, run
 RCH fanout, queue-depth, and RSS budgets derived from the effective cgroup CPU,
 cpuset, NUMA, and memory limits. The same object includes budget explanations,
 local cargo/rustc pressure, and replayable RCH queue posture. For deterministic
-replays, provide `PI_DOCTOR_LOCAL_BUILD_PROCESS_COUNT`,
-`PI_DOCTOR_RCH_QUEUE_JSON`, or `PI_DOCTOR_RCH_QUEUE_JSON_PATH`; these inputs are
+replays, provide `KODE_DOCTOR_LOCAL_BUILD_PROCESS_COUNT`,
+`KODE_DOCTOR_RCH_QUEUE_JSON`, or `KODE_DOCTOR_RCH_QUEUE_JSON_PATH`; these inputs are
 advisory budget controls, not release-facing performance claims. The same
 finding also includes `lane_placement` (`pi.doctor.swarm_lane_placement.v1`),
 which groups the current cpuset/NUMA topology into read-only operator lanes with
@@ -2775,7 +2775,7 @@ recommendations. Doctor reports caveats such as unknown NUMA data, partial
 cpusets, tight memory limits, or RCH queue pressure, but it never pins processes
 or mutates OS/RCH state.
 
-When `PI_VALIDATION_BROKER_STORE` points at a validation-broker slot JSONL
+When `KODE_VALIDATION_BROKER_STORE` points at a validation-broker slot JSONL
 store, Doctor also emits `pi.doctor.validation_broker_posture.v1` with advisory
 slot posture for runpacks and operator handoff. Missing broker configuration is
 reported as optional and non-blocking; stale or degraded broker stores remain
@@ -2833,7 +2833,7 @@ Focused validation tools:
 ```bash
 # Dev-firstset gate before release build
 rch exec -- cargo build --bin pi --bin ext_release_binary_e2e
-PI_HTTP_REQUEST_TIMEOUT_SECS=0 rch exec -- \
+KODE_HTTP_REQUEST_TIMEOUT_SECS=0 rch exec -- \
   cargo run --example ext_release_binary_e2e -- \
   --pi-bin target/debug/pi \
   --provider ollama --model qwen2.5:0.5b \
@@ -2841,7 +2841,7 @@ PI_HTTP_REQUEST_TIMEOUT_SECS=0 rch exec -- \
 
 # Full optimized release-binary run after gate passes
 rch exec -- cargo build --release --bin pi --bin ext_release_binary_e2e
-PI_HTTP_REQUEST_TIMEOUT_SECS=0 target/release/ext_release_binary_e2e \
+KODE_HTTP_REQUEST_TIMEOUT_SECS=0 target/release/ext_release_binary_e2e \
   --pi-bin target/release/pi \
   --provider ollama --model qwen2.5:0.5b \
   --jobs 10 --timeout-secs 600 --extension-policy balanced

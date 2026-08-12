@@ -823,8 +823,8 @@ jobs:
           RELEASE_RUNNER_OS: ${{ runner.os }}
         run: |
           set -euo pipefail
-          PI_AGENT_RUST_SHA="$(git rev-parse 'HEAD^{commit}')"
-          if [ "$PI_AGENT_RUST_SHA" != "$RELEASE_COMMIT" ]; then
+          KODE_AGENT_RUST_SHA="$(git rev-parse 'HEAD^{commit}')"
+          if [ "$KODE_AGENT_RUST_SHA" != "$RELEASE_COMMIT" ]; then
             echo "::error::Manifest source commit differs from the frozen release commit"
             exit 1
           fi
@@ -838,7 +838,7 @@ jobs:
           MODELS_BLOB="$(git rev-parse 'HEAD:legacy_pi_mono_code/pi-mono/packages/ai/src/models.generated.ts')"
           RELEASE_RUSTC="$(rustc -Vv)"
           RELEASE_TOOLCHAIN="$(rustup show active-toolchain | awk '{print $1}')"
-          export PI_AGENT_RUST_SHA CARGO_TOML_BLOB CARGO_LOCK_BLOB RUST_TOOLCHAIN_BLOB
+          export KODE_AGENT_RUST_SHA CARGO_TOML_BLOB CARGO_LOCK_BLOB RUST_TOOLCHAIN_BLOB
           export LICENSE_BLOB README_BLOB INSTALL_BLOB DROPIN_VERDICT_BLOB
           export MODELS_BLOB RELEASE_RUSTC RELEASE_TOOLCHAIN
           if command -v python3 >/dev/null 2>&1; then
@@ -941,7 +941,7 @@ jobs:
               "target": os.environ["RELEASE_TARGET"],
               "asset": os.environ["RELEASE_ASSET"],
               "runner_os": os.environ["RELEASE_RUNNER_OS"],
-              "koompi_code_cli": os.environ["PI_AGENT_RUST_SHA"],
+              "koompi_code_cli": os.environ["KODE_AGENT_RUST_SHA"],
               "source_blobs": {
                   "cargo_toml": os.environ["CARGO_TOML_BLOB"],
                   "cargo_lock": os.environ["CARGO_LOCK_BLOB"],
@@ -1644,10 +1644,10 @@ jobs:
                   print("No existing release; a new draft will be created")
                   with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
                       output.write("release_state=absent\nupload_needed=true\n")
-                      output.write("missing_files<<PI_RELEASE_FILES\n")
+                      output.write("missing_files<<KODE_RELEASE_FILES\n")
                       for name in sorted(expected_names):
                           output.write(f"release/{name}\n")
-                      output.write("PI_RELEASE_FILES\n")
+                      output.write("KODE_RELEASE_FILES\n")
                   raise SystemExit(0)
               raise
 
@@ -1692,10 +1692,10 @@ jobs:
           upload_needed = "true" if missing else "false"
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"release_state={release_state}\nupload_needed={upload_needed}\n")
-              output.write("missing_files<<PI_RELEASE_FILES\n")
+              output.write("missing_files<<KODE_RELEASE_FILES\n")
               for name in sorted(missing):
                   output.write(f"release/{name}\n")
-              output.write("PI_RELEASE_FILES\n")
+              output.write("KODE_RELEASE_FILES\n")
           print(f"Reconciled existing {release_state} release; {len(missing)} assets remain")
           PY
 
@@ -2776,7 +2776,7 @@ jobs:
           if not isinstance(headers, list) or any(not isinstance(value, str) for value in headers) \
               or sum(len(value) for value in headers) > 8 * 1024:
               reject("registry authentication headers are malformed or oversized")
-          token = os.environ.get("PI_CRATES_IO_RELEASE_TOKEN", "")
+          token = os.environ.get("KODE_CRATES_IO_RELEASE_TOKEN", "")
           if not token or len(token) > 4096 or "\n" in token or "\r" in token:
               reject("release token is missing or malformed")
 
@@ -2790,9 +2790,9 @@ jobs:
           elif operation == "publish":
               if set(request) != common | {"name", "vers", "cksum"}:
                   reject("publish credential request contains unexpected fields")
-              expected_name = os.environ["PI_EXPECTED_CRATE_NAME"]
-              expected_version = os.environ["PI_EXPECTED_CRATE_VERSION"]
-              expected_checksum = os.environ["PI_EXPECTED_CRATE_SHA256"]
+              expected_name = os.environ["KODE_EXPECTED_CRATE_NAME"]
+              expected_version = os.environ["KODE_EXPECTED_CRATE_VERSION"]
+              expected_checksum = os.environ["KODE_EXPECTED_CRATE_SHA256"]
               if request.get("name") != expected_name \
                   or request.get("vers") != expected_version \
                   or request.get("cksum") != expected_checksum \
@@ -2806,7 +2806,7 @@ jobs:
                   "registry_name": registry["name"],
                   "registry_index_url": registry["index-url"],
               }
-              receipt_path = Path(os.environ["PI_CREDENTIAL_RECEIPT"])
+              receipt_path = Path(os.environ["KODE_CREDENTIAL_RECEIPT"])
               encoded = json.dumps(receipt, indent=2, sort_keys=True) + "\n"
               if receipt_path.exists():
                   if receipt_path.is_symlink() or receipt_path.read_text(encoding="utf-8") != encoded:
@@ -2838,10 +2838,10 @@ jobs:
           provider = os.environ["PROVIDER_PATH"]
           base_env = {
               **os.environ,
-              "PI_CRATES_IO_RELEASE_TOKEN": "self-test-token",
-              "PI_EXPECTED_CRATE_NAME": os.environ["PACKAGE_NAME"],
-              "PI_EXPECTED_CRATE_VERSION": os.environ["PACKAGE_VERSION"],
-              "PI_EXPECTED_CRATE_SHA256": os.environ["CRATE_SHA256"],
+              "KODE_CRATES_IO_RELEASE_TOKEN": "self-test-token",
+              "KODE_EXPECTED_CRATE_NAME": os.environ["PACKAGE_NAME"],
+              "KODE_EXPECTED_CRATE_VERSION": os.environ["PACKAGE_VERSION"],
+              "KODE_EXPECTED_CRATE_SHA256": os.environ["CRATE_SHA256"],
           }
           official = {
               "index-url": "sparse+https://index.crates.io/",
@@ -2852,7 +2852,7 @@ jobs:
               receipt = Path(os.environ["RUNNER_TEMP"]) / f"provider-self-test-{label}.json"
               if receipt.exists():
                   raise SystemExit(f"self-test receipt path unexpectedly exists: {receipt}")
-              env = {**base_env, "PI_CREDENTIAL_RECEIPT": str(receipt)}
+              env = {**base_env, "KODE_CREDENTIAL_RECEIPT": str(receipt)}
               process = subprocess.run(
                   [provider, "--cargo-plugin"],
                   input=json.dumps(request, separators=(",", ":")) + "\n",
@@ -2903,11 +2903,11 @@ jobs:
         id: cargo_publish
         if: steps.registry.outputs.publish_needed == 'true'
         env:
-          PI_CRATES_IO_RELEASE_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          PI_EXPECTED_CRATE_NAME: ${{ steps.payload.outputs.name }}
-          PI_EXPECTED_CRATE_VERSION: ${{ steps.payload.outputs.version }}
-          PI_EXPECTED_CRATE_SHA256: ${{ steps.payload.outputs.crate_sha256 }}
-          PI_CREDENTIAL_RECEIPT: ${{ steps.provider.outputs.receipt }}
+          KODE_CRATES_IO_RELEASE_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          KODE_EXPECTED_CRATE_NAME: ${{ steps.payload.outputs.name }}
+          KODE_EXPECTED_CRATE_VERSION: ${{ steps.payload.outputs.version }}
+          KODE_EXPECTED_CRATE_SHA256: ${{ steps.payload.outputs.crate_sha256 }}
+          KODE_CREDENTIAL_RECEIPT: ${{ steps.provider.outputs.receipt }}
           PROVIDER_PATH: ${{ steps.provider.outputs.path }}
           PROVIDER_SHA256: ${{ steps.provider.outputs.sha256 }}
           VERIFIED_CRATE: ${{ steps.payload.outputs.crate }}
@@ -2915,22 +2915,22 @@ jobs:
         run: |
           set -euo pipefail
           set +x
-          release_crates_io_token="${PI_CRATES_IO_RELEASE_TOKEN:-}"
+          release_crates_io_token="${KODE_CRATES_IO_RELEASE_TOKEN:-}"
           export -n release_crates_io_token
-          unset PI_CRATES_IO_RELEASE_TOKEN
+          unset KODE_CRATES_IO_RELEASE_TOKEN
           if [ -z "$release_crates_io_token" ]; then
             echo "::error::Registry publication token is empty"
             exit 1
           fi
           if [ ! -f "$PROVIDER_PATH" ] || [ -L "$PROVIDER_PATH" ] \
             || [ "$(sha256sum "$PROVIDER_PATH" | awk '{print $1}')" != "$PROVIDER_SHA256" ] \
-            || [ -e "$PI_CREDENTIAL_RECEIPT" ]; then
+            || [ -e "$KODE_CREDENTIAL_RECEIPT" ]; then
             echo "::error::Credential provider or receipt path changed after self-test"
             exit 1
           fi
           actual_crate_sha="$(sha256sum "$VERIFIED_CRATE" | awk '{print $1}')"
           actual_crate_size="$(stat -c '%s' "$VERIFIED_CRATE")"
-          if [ "$actual_crate_sha" != "$PI_EXPECTED_CRATE_SHA256" ] \
+          if [ "$actual_crate_sha" != "$KODE_EXPECTED_CRATE_SHA256" ] \
             || [ "$actual_crate_size" != "$VERIFIED_CRATE_SIZE" ]; then
             echo "::error::Verified crate handoff changed immediately before Cargo publication"
             exit 1
@@ -2963,7 +2963,7 @@ jobs:
           adversarial_registry_config='registry.credential-provider="/bin/false"'
           adversarial_named_config='registries.crates-io.credential-provider="/bin/false"'
           actual_registry_provider="$(
-            env -u PI_CRATES_IO_RELEASE_TOKEN \
+            env -u KODE_CRATES_IO_RELEASE_TOKEN \
               -u CARGO_REGISTRY_TOKEN \
               -u CARGO_REGISTRIES_CRATES_IO_TOKEN \
               cargo -Z unstable-options config get registry.credential-provider \
@@ -2974,7 +2974,7 @@ jobs:
                 --config "$named_credential_config"
           )"
           actual_named_provider="$(
-            env -u PI_CRATES_IO_RELEASE_TOKEN \
+            env -u KODE_CRATES_IO_RELEASE_TOKEN \
               -u CARGO_REGISTRY_TOKEN \
               -u CARGO_REGISTRIES_CRATES_IO_TOKEN \
               cargo -Z unstable-options config get registries.crates-io.credential-provider \
@@ -3011,7 +3011,7 @@ jobs:
           # secret-scoped step. --no-verify is mandatory here: Cargo's normal
           # publish verification builds the package and would expose the
           # credential environment to package/dependency build scripts.
-          PI_CRATES_IO_RELEASE_TOKEN="$release_crates_io_token" \
+          KODE_CRATES_IO_RELEASE_TOKEN="$release_crates_io_token" \
             env -u CARGO_REGISTRY_TOKEN -u CARGO_REGISTRIES_CRATES_IO_TOKEN \
             cargo publish \
               --manifest-path "$manifest_abs" \
@@ -3023,8 +3023,8 @@ jobs:
           cargo_status=$?
           unset release_crates_io_token
           set -e
-          if [ -f "$PI_CREDENTIAL_RECEIPT" ] && [ ! -L "$PI_CREDENTIAL_RECEIPT" ]; then
-            RECEIPT_PATH="$PI_CREDENTIAL_RECEIPT" python3 - <<'PY'
+          if [ -f "$KODE_CREDENTIAL_RECEIPT" ] && [ ! -L "$KODE_CREDENTIAL_RECEIPT" ]; then
+            RECEIPT_PATH="$KODE_CREDENTIAL_RECEIPT" python3 - <<'PY'
           import json
           import os
           from pathlib import Path
@@ -3046,9 +3046,9 @@ jobs:
           }
           if not isinstance(receipt, dict) or set(receipt) != expected_keys \
               or receipt.get("schema") != "pi.release.cargo_credential_receipt.v1" \
-              or receipt.get("name") != os.environ["PI_EXPECTED_CRATE_NAME"] \
-              or receipt.get("version") != os.environ["PI_EXPECTED_CRATE_VERSION"] \
-              or receipt.get("crate_sha256") != os.environ["PI_EXPECTED_CRATE_SHA256"] \
+              or receipt.get("name") != os.environ["KODE_EXPECTED_CRATE_NAME"] \
+              or receipt.get("version") != os.environ["KODE_EXPECTED_CRATE_VERSION"] \
+              or receipt.get("crate_sha256") != os.environ["KODE_EXPECTED_CRATE_SHA256"] \
               or receipt.get("registry_name") != "crates-io" \
               or receipt.get("registry_index_url") not in {
                   "sparse+https://index.crates.io/",

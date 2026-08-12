@@ -61,12 +61,12 @@ headroom wrapper because it emits a JSON admission decision before running:
 ./scripts/cargo_headroom.sh --runner auto --admit-only clippy --all-targets -- -D warnings
 
 # Run through rch with target/tmp directories outside the repo
-PI_CARGO_AGENT_SUFFIX="$USER" ./scripts/cargo_headroom.sh --runner rch clippy --all-targets -- -D warnings
+KODE_CARGO_AGENT_SUFFIX="$USER" ./scripts/cargo_headroom.sh --runner rch clippy --all-targets -- -D warnings
 ```
 
 In `--runner auto` mode, the wrapper falls back locally only for safe local
 commands such as `cargo fmt` or when the operator passes
-`--allow-local-fallback` / `PI_CARGO_ALLOW_LOCAL_FALLBACK=1`. If `rch` is
+`--allow-local-fallback` / `KODE_CARGO_ALLOW_LOCAL_FALLBACK=1`. If `rch` is
 missing, saturated, or unhealthy for a heavy command, the wrapper returns a
 machine-readable `backoff` decision instead of silently starting a broad local
 Cargo run.
@@ -153,7 +153,7 @@ These tests run the same unmodified extension in both the legacy TypeScript runt
 cargo test --test ext_conformance_diff --features ext-conformance -- --nocapture
 
 # Limit to first N official extensions (faster iteration)
-PI_OFFICIAL_MAX=5 cargo test --test ext_conformance_diff --features ext-conformance -- --nocapture
+KODE_OFFICIAL_MAX=5 cargo test --test ext_conformance_diff --features ext-conformance -- --nocapture
 
 # Scenario execution (tool calls, commands, events)
 cargo test --test ext_conformance_scenarios --features ext-conformance -- --nocapture
@@ -165,7 +165,7 @@ cargo test --test ext_conformance_generated --features ext-conformance -- --noca
 cargo test --test ext_conformance_diff --features ext-conformance -- --ignored --nocapture
 
 # Npm-registry differential lane (ignored opt-in, bounded to 5 by default)
-rch exec -- env PI_NPM_FILTER=aliou-pi-extension-dev PI_NPM_MAX=1 \
+rch exec -- env KODE_NPM_FILTER=aliou-pi-extension-dev KODE_NPM_MAX=1 \
   cargo test --test ext_conformance_diff --features ext-conformance diff_npm_manifest -- \
   --include-ignored --nocapture
 ```
@@ -174,12 +174,12 @@ rch exec -- env PI_NPM_FILTER=aliou-pi-extension-dev PI_NPM_MAX=1 \
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `PI_OFFICIAL_MAX` | (all) | Limit official extensions tested |
-| `PI_NPM_FILTER` | (none) | Filter npm-registry extensions by `dir/entry` substring |
-| `PI_NPM_MAX` | 5 | Limit the ignored npm-registry differential lane to a deterministic bounded sample |
-| `PI_TS_ORACLE_TIMEOUT_SECS` | 30 | TS oracle process timeout |
-| `PI_DETERMINISTIC_TIME_MS` | 1700000000000 | Fixed wall-clock for determinism |
-| `PI_DETERMINISTIC_RANDOM_SEED` | 1337 | Fixed random seed |
+| `KODE_OFFICIAL_MAX` | (all) | Limit official extensions tested |
+| `KODE_NPM_FILTER` | (none) | Filter npm-registry extensions by `dir/entry` substring |
+| `KODE_NPM_MAX` | 5 | Limit the ignored npm-registry differential lane to a deterministic bounded sample |
+| `KODE_TS_ORACLE_TIMEOUT_SECS` | 30 | TS oracle process timeout |
+| `KODE_DETERMINISTIC_TIME_MS` | 1700000000000 | Fixed wall-clock for determinism |
+| `KODE_DETERMINISTIC_RANDOM_SEED` | 1337 | Fixed random seed |
 
 **Reports:** Test results are written to `tests/ext_conformance/reports/` in JSONL and JSON formats.
 

@@ -132,8 +132,8 @@ For unpinned sources (non-exact semver for NPM, non-commit-SHA for Git):
 Every lockfile transition (success or failure) is appended to
 `package-trust-audit.jsonl` in the appropriate scope directory:
 
-- **Project**: `.pi/package-trust-audit.jsonl`
-- **User (global)**: `~/.pi/package-trust-audit.jsonl`
+- **Project**: `.kode/package-trust-audit.jsonl`
+- **User (global)**: `~/.kode/package-trust-audit.jsonl`
 
 ### Audit Event Schema (`pi.package_trust_audit.v1`)
 
@@ -174,8 +174,8 @@ JSON output.
 
 | Scope     | Lockfile path                | Audit log path                           |
 |-----------|------------------------------|------------------------------------------|
-| Project   | `.pi/packages.lock.json`     | `.pi/package-trust-audit.jsonl`          |
-| User      | `~/.pi/packages.lock.json`   | `~/.pi/package-trust-audit.jsonl`        |
+| Project   | `.kode/packages.lock.json`     | `.kode/package-trust-audit.jsonl`          |
+| User      | `~/.kode/packages.lock.json`   | `~/.kode/package-trust-audit.jsonl`        |
 | Temporary | *(no lockfile)*              | *(no audit log)*                         |
 
 ## Determinism Guarantee

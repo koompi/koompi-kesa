@@ -61,14 +61,14 @@ const SWARM_DOCTOR_CONFLICT_PREDICTOR_SCHEMA: &str = "pi.doctor.cross_agent_conf
 const SWARM_DOCTOR_RESERVATION_RECOMMENDATIONS_SCHEMA: &str =
     "pi.doctor.swarm_reservation_recommendations.v1";
 const SWARM_CARGO_SCRATCH_ROOT: &str = "/data/tmp/koompi_code_cli_cargo";
-const SWARM_RCH_AFFINITY_JOBS_ENV: &str = "PI_DOCTOR_RCH_AFFINITY_JOBS_JSON";
-const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV: &str = "PI_DOCTOR_RCH_QUEUE_JSON";
-const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV: &str = "PI_DOCTOR_RCH_QUEUE_JSON_PATH";
+const SWARM_RCH_AFFINITY_JOBS_ENV: &str = "KODE_DOCTOR_RCH_AFFINITY_JOBS_JSON";
+const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV: &str = "KODE_DOCTOR_RCH_QUEUE_JSON";
+const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV: &str = "KODE_DOCTOR_RCH_QUEUE_JSON_PATH";
 const SWARM_RESOURCE_PREFLIGHT_LOCAL_BUILD_PROCESS_COUNT_ENV: &str =
-    "PI_DOCTOR_LOCAL_BUILD_PROCESS_COUNT";
-const SWARM_RESOURCE_PREFLIGHT_LOGICAL_CPU_CORES_ENV: &str = "PI_DOCTOR_LOGICAL_CPU_CORES";
-const SWARM_VALIDATION_BROKER_STORE_ENV: &str = "PI_VALIDATION_BROKER_STORE";
-const SWARM_PROGRESS_SLO_JSON_ENV: &str = "PI_SWARM_PROGRESS_SLO_JSON";
+    "KODE_DOCTOR_LOCAL_BUILD_PROCESS_COUNT";
+const SWARM_RESOURCE_PREFLIGHT_LOGICAL_CPU_CORES_ENV: &str = "KODE_DOCTOR_LOGICAL_CPU_CORES";
+const SWARM_VALIDATION_BROKER_STORE_ENV: &str = "KODE_VALIDATION_BROKER_STORE";
+const SWARM_PROGRESS_SLO_JSON_ENV: &str = "KODE_SWARM_PROGRESS_SLO_JSON";
 const SWARM_BUILD_SLOT_SOON_EXPIRING_MINUTES: i64 = 30;
 const SWARM_ACTIVE_AGENT_WINDOW_HOURS: i64 = 24;
 const SWARM_DASHBOARD_AGENT_LIMIT: usize = 12;
@@ -488,7 +488,7 @@ fn check_config(cwd: &Path, findings: &mut Vec<Finding>) {
         check_settings_file(
             cat,
             &project_path,
-            "Project settings (.pi/settings.json)",
+            "Project settings (.kode/settings.json)",
             findings,
         );
     } else {
@@ -1443,14 +1443,14 @@ fn build_swarm_doctor_capacity_plan_with_inventory(
 fn live_load_from_beads_summary(summary: &BeadsLedgerSummary) -> SwarmLiveLoad {
     SwarmLiveLoad::empty()
         .with_active_agents(
-            env_u64("PI_DOCTOR_SWARM_ACTIVE_AGENTS")
+            env_u64("KODE_DOCTOR_SWARM_ACTIVE_AGENTS")
                 .unwrap_or_else(|| usize_to_u64(summary.in_progress)),
         )
-        .with_active_tool_calls(env_u64("PI_DOCTOR_SWARM_ACTIVE_TOOL_CALLS").unwrap_or(0))
+        .with_active_tool_calls(env_u64("KODE_DOCTOR_SWARM_ACTIVE_TOOL_CALLS").unwrap_or(0))
         .with_extension_hostcall_lanes(
-            env_u64("PI_DOCTOR_SWARM_EXTENSION_HOSTCALL_LANES").unwrap_or(0),
+            env_u64("KODE_DOCTOR_SWARM_EXTENSION_HOSTCALL_LANES").unwrap_or(0),
         )
-        .with_active_rch_jobs(env_u64("PI_DOCTOR_SWARM_ACTIVE_RCH_JOBS").unwrap_or(0))
+        .with_active_rch_jobs(env_u64("KODE_DOCTOR_SWARM_ACTIVE_RCH_JOBS").unwrap_or(0))
 }
 
 fn classify_swarm_admission(
@@ -2374,7 +2374,7 @@ fn format_swarm_resource_preflight_detail(
 
 fn read_cgroup_cpu_quota(source_errors: &mut Vec<String>) -> CgroupCpuQuota {
     if let Some((source, raw)) = read_first_existing_trimmed(
-        "PI_DOCTOR_CGROUP_CPU_MAX_PATH",
+        "KODE_DOCTOR_CGROUP_CPU_MAX_PATH",
         &["/sys/fs/cgroup/cpu.max"],
         source_errors,
     ) {
@@ -2386,12 +2386,12 @@ fn read_cgroup_cpu_quota(source_errors: &mut Vec<String>) -> CgroupCpuQuota {
     }
 
     let quota = read_first_existing_trimmed(
-        "PI_DOCTOR_CGROUP_CPU_CFS_QUOTA_US_PATH",
+        "KODE_DOCTOR_CGROUP_CPU_CFS_QUOTA_US_PATH",
         &["/sys/fs/cgroup/cpu/cpu.cfs_quota_us"],
         source_errors,
     );
     let period = read_first_existing_trimmed(
-        "PI_DOCTOR_CGROUP_CPU_CFS_PERIOD_US_PATH",
+        "KODE_DOCTOR_CGROUP_CPU_CFS_PERIOD_US_PATH",
         &["/sys/fs/cgroup/cpu/cpu.cfs_period_us"],
         source_errors,
     );
@@ -2416,7 +2416,7 @@ fn read_cgroup_cpu_quota(source_errors: &mut Vec<String>) -> CgroupCpuQuota {
 
 fn read_cpuset_snapshot(source_errors: &mut Vec<String>) -> CpuSetSnapshot {
     let Some((source, raw)) = read_first_existing_trimmed(
-        "PI_DOCTOR_CPUSET_CPUS_PATH",
+        "KODE_DOCTOR_CPUSET_CPUS_PATH",
         &[
             "/sys/fs/cgroup/cpuset.cpus.effective",
             "/sys/fs/cgroup/cpuset.cpus",
@@ -2449,7 +2449,7 @@ fn read_cpuset_snapshot(source_errors: &mut Vec<String>) -> CpuSetSnapshot {
 
 fn read_numa_topology(source_errors: &mut Vec<String>) -> NumaTopologySnapshot {
     let Some((source, raw)) = read_first_existing_trimmed(
-        "PI_DOCTOR_NUMA_ONLINE_PATH",
+        "KODE_DOCTOR_NUMA_ONLINE_PATH",
         &["/sys/devices/system/node/online"],
         source_errors,
     ) else {
@@ -2473,7 +2473,7 @@ fn read_numa_topology(source_errors: &mut Vec<String>) -> NumaTopologySnapshot {
 
 fn read_memory_limit_snapshot(source_errors: &mut Vec<String>) -> MemoryLimitSnapshot {
     let mem_total_bytes =
-        read_first_existing_trimmed("PI_DOCTOR_MEMINFO_PATH", &["/proc/meminfo"], source_errors)
+        read_first_existing_trimmed("KODE_DOCTOR_MEMINFO_PATH", &["/proc/meminfo"], source_errors)
             .and_then(|(source, raw)| {
                 let parsed = parse_mem_total_bytes(&raw);
                 if parsed.is_none() {
@@ -2482,7 +2482,7 @@ fn read_memory_limit_snapshot(source_errors: &mut Vec<String>) -> MemoryLimitSna
                 parsed
             });
     let (source, parsed_limit) = read_first_existing_trimmed(
-        "PI_DOCTOR_CGROUP_MEMORY_MAX_PATH",
+        "KODE_DOCTOR_CGROUP_MEMORY_MAX_PATH",
         &[
             "/sys/fs/cgroup/memory.max",
             "/sys/fs/cgroup/memory/memory.limit_in_bytes",
@@ -5738,7 +5738,7 @@ fn validation_broker_not_configured_json() -> serde_json::Value {
         },
         "degraded_reasons": ["validation_broker_store_not_configured"],
         "recommended_next_actions": [
-            "Set PI_VALIDATION_BROKER_STORE only when broker-guided validation handoff is in use"
+            "Set KODE_VALIDATION_BROKER_STORE only when broker-guided validation handoff is in use"
         ],
         "guards": {
             "advisory_only": true,
@@ -10806,11 +10806,11 @@ fn check_extension(
                 )
                 .with_detail(err.to_string())
                 .with_remediation(
-                    "Fix the malformed settings.json, point PI_CONFIG_PATH at a valid file, or rerun with `--policy <safe|balanced|permissive>` to inspect extension compatibility independently",
+                    "Fix the malformed settings.json, point KODE_CONFIG_PATH at a valid file, or rerun with `--policy <safe|balanced|permissive>` to inspect extension compatibility independently",
                 ),
             );
             let has_explicit_policy =
-                policy_override.is_some() || std::env::var_os("PI_EXTENSION_POLICY").is_some();
+                policy_override.is_some() || std::env::var_os("KODE_EXTENSION_POLICY").is_some();
             if has_explicit_policy {
                 Config::default().resolve_extension_policy_with_metadata(policy_override)
             } else {
@@ -14043,7 +14043,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
     #[test]
     fn run_doctor_extension_path_uses_supplied_cwd_for_policy_resolution() {
         let project = tempfile::tempdir().expect("project dir");
-        let config_dir = project.path().join(".pi");
+        let config_dir = project.path().join(".kode");
         std::fs::create_dir_all(&config_dir).expect("create project config dir");
         std::fs::write(
             config_dir.join("settings.json"),
@@ -14078,7 +14078,7 @@ export default function(pi) {
     #[test]
     fn run_doctor_extension_path_reports_config_load_failure_without_aborting() {
         let project = tempfile::tempdir().expect("project dir");
-        let config_dir = project.path().join(".pi");
+        let config_dir = project.path().join(".kode");
         std::fs::create_dir_all(&config_dir).expect("create project config dir");
         std::fs::write(config_dir.join("settings.json"), r#"{ "extensionPolicy": "#)
             .expect("write malformed project settings");
@@ -14122,7 +14122,7 @@ import net from "node:net";
     #[test]
     fn run_doctor_extension_path_config_load_failure_falls_back_to_safe_policy() {
         let project = tempfile::tempdir().expect("project dir");
-        let config_dir = project.path().join(".pi");
+        let config_dir = project.path().join(".kode");
         std::fs::create_dir_all(&config_dir).expect("create project config dir");
         std::fs::write(config_dir.join("settings.json"), r#"{ "extensionPolicy": "#)
             .expect("write malformed project settings");
@@ -14160,7 +14160,7 @@ export default function(pi) {
     #[test]
     fn run_doctor_extension_path_config_load_failure_honors_cli_policy_override() {
         let project = tempfile::tempdir().expect("project dir");
-        let config_dir = project.path().join(".pi");
+        let config_dir = project.path().join(".kode");
         std::fs::create_dir_all(&config_dir).expect("create project config dir");
         std::fs::write(config_dir.join("settings.json"), r#"{ "extensionPolicy": "#)
             .expect("write malformed project settings");

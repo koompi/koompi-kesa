@@ -59,7 +59,7 @@ Generate an image from a text prompt.
 | `prompt` | Image description (required) | -- |
 | `aspectRatio` | Image dimensions | `1:1` |
 | `save` | Save mode (`none`, `project`, `global`, `custom`) | `none` |
-| `saveDir` | Directory for `save=custom` | `PI_IMAGE_SAVE_DIR` |
+| `saveDir` | Directory for `save=custom` | `KODE_IMAGE_SAVE_DIR` |
 
 ### image_quota
 
@@ -78,16 +78,16 @@ The model can pass `save` directly when calling the tool.
 ### Environment variables
 
 ```bash
-export PI_IMAGE_SAVE_MODE=global        # none|project|global|custom
-export PI_IMAGE_SAVE_DIR=/path/to/dir   # required when mode=custom
+export KODE_IMAGE_SAVE_MODE=global        # none|project|global|custom
+export KODE_IMAGE_SAVE_DIR=/path/to/dir   # required when mode=custom
 ```
 
 ### Config file
 
 Create a JSON config file (project overrides global):
 
-**Global**: `~/.pi/agent/extensions/antigravity-image-gen.json`
-**Project**: `<repo>/.pi/extensions/antigravity-image-gen.json`
+**Global**: `~/.kode/agent/extensions/antigravity-image-gen.json`
+**Project**: `<repo>/.kode/extensions/antigravity-image-gen.json`
 
 If neither exists, the extension writes a default config to the global path with `save` set to `global`.
 
@@ -102,9 +102,9 @@ If neither exists, the extension writes a default config to the global path with
 | Mode | Directory |
 |------|-----------|
 | `none` | Not saved |
-| `project` | `<repo>/.pi/generated-images/` |
-| `global` | `~/.pi/agent/generated-images/` |
-| `custom` | `saveDir` param or `PI_IMAGE_SAVE_DIR` |
+| `project` | `<repo>/.kode/generated-images/` |
+| `global` | `~/.kode/agent/generated-images/` |
+| `custom` | `saveDir` param or `KODE_IMAGE_SAVE_DIR` |
 
 ## API Endpoints
 

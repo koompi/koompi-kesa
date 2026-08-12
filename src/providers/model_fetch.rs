@@ -20,7 +20,7 @@
 //! expire after [`MODEL_CACHE_TTL`] (5 minutes). It benefits repeated calls in
 //! one long-lived process; separate CLI invocations never share it. Hits within
 //! the TTL window do **not** issue a network call. Setting
-//! `PI_DISABLE_MODEL_CACHE=1` (or `true`/`yes`/`on`) bypasses both the read
+//! `KODE_DISABLE_MODEL_CACHE=1` (or `true`/`yes`/`on`) bypasses both the read
 //! and write paths for debugging. [`refresh_provider_models`] forces a strict
 //! live refetch regardless of cache state and returns an error rather than a
 //! static fallback when that refresh fails.
@@ -86,7 +86,7 @@ const MODEL_CACHE_MAX_MODEL_ID_BYTES: usize = 8 * 1024 * 1024;
 /// Environment variable that disables the cache entirely.  Useful for
 /// debugging and for ad-hoc verification of provider catalog changes without
 /// restarting the process.
-pub const DISABLE_CACHE_ENV: &str = "PI_DISABLE_MODEL_CACHE";
+pub const DISABLE_CACHE_ENV: &str = "KODE_DISABLE_MODEL_CACHE";
 
 #[derive(Debug, Clone)]
 struct CacheEntry {

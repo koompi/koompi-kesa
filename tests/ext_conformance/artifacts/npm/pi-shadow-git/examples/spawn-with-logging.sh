@@ -45,8 +45,8 @@ SPAWN_SCRIPT=$(mktemp)
 cat > "$SPAWN_SCRIPT" << SPAWN_EOF
 #!/bin/bash
 cd "$AGENT_DIR"
-export PI_WORKSPACE_ROOT="$WORKSPACE_DIR"
-export PI_AGENT_NAME="$AGENT_NAME"
+export KODE_WORKSPACE_ROOT="$WORKSPACE_DIR"
+export KODE_AGENT_NAME="$AGENT_NAME"
 
 pi \\
   --model claude-haiku-4-5 \\
@@ -76,4 +76,4 @@ echo "  cat $AGENT_DIR/audit.jsonl      # View events"
 echo ""
 echo "Killswitch (if needed):"
 echo "  In agent: /shadow-git disable"
-echo "  Or: PI_SHADOW_GIT_DISABLED=1 when spawning"
+echo "  Or: KODE_SHADOW_GIT_DISABLED=1 when spawning"

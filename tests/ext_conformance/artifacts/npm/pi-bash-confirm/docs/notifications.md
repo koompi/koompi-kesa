@@ -77,8 +77,8 @@ Telegram settings can also be configured via environment variables:
 
 | Variable | Description |
 |----------|-------------|
-| `TELEGRAM_BOT_TOKEN` or `PI_TELEGRAM_TOKEN` | Bot token |
-| `TELEGRAM_CHAT_ID` or `PI_TELEGRAM_CHAT_ID` | Chat ID |
+| `TELEGRAM_BOT_TOKEN` or `KODE_TELEGRAM_TOKEN` | Bot token |
+| `TELEGRAM_CHAT_ID` or `KODE_TELEGRAM_CHAT_ID` | Chat ID |
 
 **Priority:** Settings file values > Environment variables
 
@@ -255,7 +255,7 @@ Telegram Bot API has rate limits (approx. 30 messages/second):
 1. Never commit tokens to version control
 2. Add `settings.json` to `.gitignore` if it contains tokens
 3. Prefer environment variables in production
-4. Use file permissions: `chmod 600 ~/.pi/agent/settings.json`
+4. Use file permissions: `chmod 600 ~/.kode/agent/settings.json`
 5. Rotate tokens periodically via BotFather
 
 ### Chat ID Privacy
@@ -281,7 +281,7 @@ Be aware of what commands you run if notifications are enabled.
 
 Use project-specific settings to control notifications per workspace:
 
-`~/.pi/agent/settings.json` (global defaults):
+`~/.kode/agent/settings.json` (global defaults):
 ```json
 {
   "bashConfirm": {
@@ -294,7 +294,7 @@ Use project-specific settings to control notifications per workspace:
 }
 ```
 
-`.pi/settings.json` (project override):
+`.kode/settings.json` (project override):
 ```json
 {
   "bashConfirm": {

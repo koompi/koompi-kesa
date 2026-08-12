@@ -86,8 +86,8 @@ description: Helps with PDFs.
 ## Skill Discovery
 
 Pi automatically discovers skills from:
-- Global: `~/.pi/agent/skills/`
-- Project: `.pi/skills/`
+- Global: `~/.kode/agent/skills/`
+- Project: `.kode/skills/`
 - Packages: `skills/` directories in pi packages
 
 Use relative paths in your SKILL.md to reference scripts and assets:

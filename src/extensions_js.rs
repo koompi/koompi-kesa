@@ -138,11 +138,11 @@ fn parse_truthy_flag(value: &str) -> bool {
 
 fn is_global_compat_scan_mode() -> bool {
     cfg!(feature = "ext-conformance")
-        || std::env::var("PI_EXT_COMPAT_SCAN").is_ok_and(|value| parse_truthy_flag(&value))
+        || std::env::var("KODE_EXT_COMPAT_SCAN").is_ok_and(|value| parse_truthy_flag(&value))
 }
 
 fn is_compat_scan_mode(env: &HashMap<String, String>) -> bool {
-    env.get("PI_EXT_COMPAT_SCAN")
+    env.get("KODE_EXT_COMPAT_SCAN")
         .map_or_else(is_global_compat_scan_mode, |value| parse_truthy_flag(value))
 }
 
@@ -159,7 +159,7 @@ fn compat_env_fallback_value(key: &str, env: &HashMap<String, String>) -> Option
     if upper.ends_with("_API_KEY") {
         return Some(format!("pi-compat-{}", upper.to_ascii_lowercase()));
     }
-    if upper == "PI_SEMANTIC_LEGACY" {
+    if upper == "KODE_SEMANTIC_LEGACY" {
         return Some("1".to_string());
     }
 
@@ -2589,7 +2589,7 @@ impl Default for PiJsRuntimeLimits {
 /// Controls how the auto-repair pipeline behaves at extension load time.
 ///
 /// Precedence (highest to lowest): CLI flag → environment variable
-/// `PI_REPAIR_MODE` → config file → default (`AutoSafe`).
+/// `KODE_REPAIR_MODE` → config file → default (`AutoSafe`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum RepairMode {
     /// No repairs are attempted; extensions that fail to load fail normally.
@@ -4579,7 +4579,7 @@ pub struct PiJsRuntimeConfig {
     ///
     /// When set, transpiled module sources are cached on disk keyed by a
     /// content-aware hash so that SWC transpilation is skipped across process
-    /// restarts. Defaults to `~/.pi/agent/cache/modules/` (overridden by
+    /// restarts. Defaults to `~/.kode/agent/cache/modules/` (overridden by
     /// `PIJS_MODULE_CACHE_DIR`). Set to `None` to disable.
     pub disk_cache_dir: Option<PathBuf>,
 }
@@ -4616,7 +4616,7 @@ impl Default for PiJsRuntimeConfig {
 
 /// Resolve the persistent module disk cache directory.
 ///
-/// Priority: `PIJS_MODULE_CACHE_DIR` env var > `~/.pi/agent/cache/modules/`.
+/// Priority: `PIJS_MODULE_CACHE_DIR` env var > `~/.kode/agent/cache/modules/`.
 /// Set `PIJS_MODULE_CACHE_DIR=""` to explicitly disable the disk cache.
 fn runtime_disk_cache_dir() -> Option<PathBuf> {
     if let Some(raw) = std::env::var_os("PIJS_MODULE_CACHE_DIR") {
@@ -4626,7 +4626,7 @@ fn runtime_disk_cache_dir() -> Option<PathBuf> {
             Some(PathBuf::from(raw))
         };
     }
-    dirs::home_dir().map(|home| home.join(".pi").join("agent").join("cache").join("modules"))
+    dirs::home_dir().map(|home| home.join(".kode").join("agent").join("cache").join("modules"))
 }
 
 #[derive(Debug)]
@@ -4875,7 +4875,7 @@ struct PiJsModuleState {
     /// gate fallback patterns without executing any broken code.
     repair_mode: RepairMode,
     /// Whether conformance-only compatibility fallbacks are enabled for this
-    /// runtime. A per-runtime `PI_EXT_COMPAT_SCAN` value takes precedence over
+    /// runtime. A per-runtime `KODE_EXT_COMPAT_SCAN` value takes precedence over
     /// the compile-time feature so strict tests and callers remain strict even
     /// in an all-features build.
     compat_scan_mode: bool,
@@ -5833,7 +5833,7 @@ impl JsModuleResolver for PiJsResolver {
 
         // Pattern 4 (bd-k5q5.8.5): proxy-based stubs for allowlisted npm deps.
         // This fires in aggressive mode, and also in compatibility-scan mode
-        // (ext-conformance / PI_EXT_COMPAT_SCAN) so corpus runs can continue
+        // (ext-conformance / KODE_EXT_COMPAT_SCAN) so corpus runs can continue
         // past optional or non-essential package holes deterministically.
         // Blocklisted/system packages are never stubbed. Existing hand-written
         // virtual modules continue to win because we only reach this branch
@@ -9385,7 +9385,7 @@ export function getAgentDir() {
     globalThis.pi && globalThis.pi.env && typeof globalThis.pi.env.get === "function"
       ? globalThis.pi.env.get("HOME")
       : undefined;
-  return home ? `${home}/.pi/agent` : "/home/unknown/.pi/agent";
+  return home ? `${home}/.kode/agent` : "/home/unknown/.kode/agent";
 }
 
 // Canonical upstream action IDs used by extension-facing key hints. Keep the
@@ -16782,17 +16782,17 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
         #[cfg(target_arch = "x86_64")]
         config
             .env
-            .entry("PI_TARGET_ARCH".to_string())
+            .entry("KODE_TARGET_ARCH".to_string())
             .or_insert_with(|| "x64".to_string());
         #[cfg(target_arch = "aarch64")]
         config
             .env
-            .entry("PI_TARGET_ARCH".to_string())
+            .entry("KODE_TARGET_ARCH".to_string())
             .or_insert_with(|| "arm64".to_string());
         #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
         config
             .env
-            .entry("PI_TARGET_ARCH".to_string())
+            .entry("KODE_TARGET_ARCH".to_string())
             .or_insert_with(|| "x64".to_string());
 
         // Inject target platform so JS process.platform matches os.platform().
@@ -16805,7 +16805,7 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
             };
             config
                 .env
-                .entry("PI_PLATFORM".to_string())
+                .entry("KODE_PLATFORM".to_string())
                 .or_insert_with(|| platform.to_string());
         }
 
@@ -18392,7 +18392,7 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
                             // Compat fallback runs BEFORE deny_env so conformance
                             // scanning can inject deterministic dummy keys even when
                             // the policy denies env access (ext-conformance feature
-                            // or PI_EXT_COMPAT_SCAN=1 guard this path).
+                            // or KODE_EXT_COMPAT_SCAN=1 guard this path).
                             if let Some(value) = compat_env_fallback_value(&key, &env) {
                                 tracing::debug!(
                                     event = "pijs.env.get.compat",
@@ -19423,7 +19423,7 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
                     Err(rquickjs::Error::Exception) => {
                         let detail = format_quickjs_exception(&ctx, ctx.catch());
                         return Err(rquickjs::Error::new_into_js_message(
-                            "PI_BRIDGE_JS",
+                            "KODE_BRIDGE_JS",
                             "eval",
                             detail,
                         ));
@@ -19497,8 +19497,8 @@ fn random_bytes(len: usize) -> std::result::Result<Vec<u8>, getrandom::Error> {
     reason = "this function owns one indivisible embedded JavaScript bridge source"
 )]
 fn pi_bridge_js() -> &'static str {
-    static PI_BRIDGE_JS: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-    PI_BRIDGE_JS.get_or_init(|| {
+    static KODE_BRIDGE_JS: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    KODE_BRIDGE_JS.get_or_init(|| {
         [
             compressed_js_literal!(r"
 (() => {
@@ -22076,7 +22076,7 @@ pi.process = {
     args: __pi_process_args_native(),
 };
 
-const __pi_det_cwd = __pi_env_get('PI_DETERMINISTIC_CWD');
+const __pi_det_cwd = __pi_env_get('KODE_DETERMINISTIC_CWD');
 if (__pi_det_cwd) {
     try { pi.process.cwd = __pi_det_cwd; } catch (_) {}
 }
@@ -22138,13 +22138,15 @@ pi.time = {
     sleep: __pi_sleep,
 };
 
-// Make pi available globally
+// Make the host API available globally. `pi` stays bound so extensions
+// published against the upstream API keep working unchanged.
+globalThis.kode = pi;
 globalThis.pi = pi;
 
-const __pi_det_time_raw = __pi_env_get('PI_DETERMINISTIC_TIME_MS');
-const __pi_det_time_step_raw = __pi_env_get('PI_DETERMINISTIC_TIME_STEP_MS');
-const __pi_det_random_raw = __pi_env_get('PI_DETERMINISTIC_RANDOM');
-const __pi_det_random_seed_raw = __pi_env_get('PI_DETERMINISTIC_RANDOM_SEED');
+const __pi_det_time_raw = __pi_env_get('KODE_DETERMINISTIC_TIME_MS');
+const __pi_det_time_step_raw = __pi_env_get('KODE_DETERMINISTIC_TIME_STEP_MS');
+const __pi_det_random_raw = __pi_env_get('KODE_DETERMINISTIC_RANDOM');
+const __pi_det_random_seed_raw = __pi_env_get('KODE_DETERMINISTIC_RANDOM_SEED');
 
 if (__pi_det_time_raw !== undefined) {
     const __pi_det_base = Number(__pi_det_time_raw);
@@ -23217,7 +23219,7 @@ if (typeof globalThis.crypto.randomUUID !== 'function') {
 
 if (typeof globalThis.process === 'undefined') {
     const rawPlatform =
-        __pi_env_get_native('PI_PLATFORM') ||
+        __pi_env_get_native('KODE_PLATFORM') ||
         __pi_env_get_native('OSTYPE') ||
         __pi_env_get_native('OS') ||
         'linux';
@@ -23229,8 +23231,8 @@ if (typeof globalThis.process === 'undefined') {
         if (s === 'msys' || s === 'cygwin' || s === 'windows_nt') return 'win32';
         return s || 'linux';
     })();
-    const detHome = __pi_env_get_native('PI_DETERMINISTIC_HOME');
-    const detCwd = __pi_env_get_native('PI_DETERMINISTIC_CWD');
+    const detHome = __pi_env_get_native('KODE_DETERMINISTIC_HOME');
+    const detCwd = __pi_env_get_native('KODE_DETERMINISTIC_CWD');
 
     const envProxy = new Proxy(
         {},
@@ -23307,7 +23309,7 @@ if (typeof globalThis.process === 'undefined') {
         argv: __pi_process_args_native(),
         cwd: () => detCwd || __pi_process_cwd_native(),
         platform: String(platform).split('-')[0],
-        arch: __pi_env_get_native('PI_TARGET_ARCH') || 'x64',
+        arch: __pi_env_get_native('KODE_TARGET_ARCH') || 'x64',
         version: 'v20.0.0',
         versions: { node: '20.0.0', v8: '0.0.0', modules: '0' },
         pid: 1,
@@ -24442,10 +24444,10 @@ mod tests {
 
     #[test]
     fn per_runtime_compat_scan_flag_overrides_global_default() {
-        let disabled = HashMap::from([("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string())]);
+        let disabled = HashMap::from([("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string())]);
         assert!(!is_compat_scan_mode(&disabled));
 
-        let enabled = HashMap::from([("PI_EXT_COMPAT_SCAN".to_string(), "1".to_string())]);
+        let enabled = HashMap::from([("KODE_EXT_COMPAT_SCAN".to_string(), "1".to_string())]);
         assert!(is_compat_scan_mode(&enabled));
     }
 
@@ -25866,7 +25868,7 @@ import { isIPv4 as netIsIpv4 } from "node:net";
         let template = PiJsRuntimeConfig {
             cwd: "/tmp/warm-pool".to_string(),
             args: vec!["--flag".to_string()],
-            env: HashMap::from([("PI_POOL".to_string(), "yes".to_string())]),
+            env: HashMap::from([("KODE_POOL".to_string(), "yes".to_string())]),
             deny_env: false,
             disk_cache_dir: Some(cache_dir.path().join("module-cache")),
             ..PiJsRuntimeConfig::default()
@@ -25883,7 +25885,7 @@ import { isIPv4 as netIsIpv4 } from "node:net";
         assert_eq!(cfg_a.cwd, template.cwd);
         assert_eq!(cfg_b.cwd, template.cwd);
         assert_eq!(cfg_a.args, template.args);
-        assert_eq!(cfg_a.env.get("PI_POOL"), Some(&"yes".to_string()));
+        assert_eq!(cfg_a.env.get("KODE_POOL"), Some(&"yes".to_string()));
         assert_eq!(cfg_a.deny_env, template.deny_env);
         assert_eq!(cfg_a.disk_cache_dir, expected_disk_cache_dir);
 
@@ -27841,7 +27843,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
             let clock = Arc::new(DeterministicClock::new(0));
             let mut env = HashMap::new();
             env.insert("HOME".to_string(), "/virtual/home".to_string());
-            env.insert("PI_IMAGE_SAVE_MODE".to_string(), "tmp".to_string());
+            env.insert("KODE_IMAGE_SAVE_MODE".to_string(), "tmp".to_string());
             env.insert(
                 "AWS_SECRET_ACCESS_KEY".to_string(),
                 "nope-do-not-expose".to_string(),
@@ -27865,7 +27867,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
                 .eval(
                     r#"
                     globalThis.home = pi.env.get("HOME");
-                    globalThis.mode = pi.env.get("PI_IMAGE_SAVE_MODE");
+                    globalThis.mode = pi.env.get("KODE_IMAGE_SAVE_MODE");
                     globalThis.missing_is_undefined = (pi.env.get("NOPE") === undefined);
                     globalThis.secret_is_undefined = (pi.env.get("AWS_SECRET_ACCESS_KEY") === undefined);
                     globalThis.process_secret_is_undefined = (process.env.AWS_SECRET_ACCESS_KEY === undefined);
@@ -29842,7 +29844,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
                 .expect("system time")
                 .as_nanos();
             let workspace = std::env::temp_dir().join(format!("pijs-host-readdir-{unique}"));
-            let prompt_dir = workspace.join(".pi").join("prompts");
+            let prompt_dir = workspace.join(".kode").join("prompts");
             std::fs::create_dir_all(&prompt_dir).expect("mkdir prompt dir");
             std::fs::write(
                 prompt_dir.join("model-mode.md"),
@@ -29866,7 +29868,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
                     globalThis.hostReaddir = {};
                     import('node:fs').then((fs) => {
                         try {
-                            const dir = `${process.cwd()}/.pi/prompts`;
+                            const dir = `${process.cwd()}/.kode/prompts`;
                             const entries = fs.readdirSync(dir, { withFileTypes: true });
                             const names = entries.map((entry) => entry.name);
                             const prompt = entries.find((entry) => entry.name === 'model-mode.md');
@@ -32228,7 +32230,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
         });
     }
 
-    const PI_AI_BRIDGE_HELPER_SCRIPT: &str = r#"
+    const KODE_AI_BRIDGE_HELPER_SCRIPT: &str = r#"
                     globalThis.piAiBridge = {};
                     (async () => {
                         const ai = await import('@mariozechner/pi-ai');
@@ -32261,7 +32263,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
                 .expect("create runtime");
 
             runtime
-                .eval(PI_AI_BRIDGE_HELPER_SCRIPT)
+                .eval(KODE_AI_BRIDGE_HELPER_SCRIPT)
                 .await
                 .expect("eval pi-ai host bridge helpers");
 
@@ -32358,7 +32360,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
             );
             config
                 .env
-                .insert("PI_EXT_COMPAT_SCAN".to_string(), "1".to_string());
+                .insert("KODE_EXT_COMPAT_SCAN".to_string(), "1".to_string());
             config.deny_env = false;
             let runtime = PiJsRuntime::with_clock_and_config(Arc::clone(&clock), config)
                 .await

@@ -45,7 +45,7 @@
   - **Iterations:** 1
   - **Acceptance Criteria:**
     - Export default function receiving ExtensionAPI
-    - On session_start, check if ~/.pi/agent/mcp.json exists
+    - On session_start, check if ~/.kode/agent/mcp.json exists
     - If exists, create MCPClient and fetch tool list
     - Store tool list for later use
     - Notify user about loaded tools count

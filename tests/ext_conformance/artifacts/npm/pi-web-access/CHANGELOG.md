@@ -29,7 +29,7 @@ All notable changes to this project will be documented in this file.
 - **Video thumbnails**: YouTube results include the video thumbnail (fetched from `img.youtube.com`). Local video results include a frame extracted via ffmpeg (at ~1 second). Returned as image content parts alongside text — the agent sees the thumbnail as vision context.
 - **Configurable frame extraction**: `frames` parameter (1-12) on `fetch_content` for pulling visual frames from YouTube or local video. Works in five modes: frames alone (sample across entire video), single timestamp (one frame), single+frames (N frames at 5s intervals), range (default 6 frames), range+frames (N frames across the range). Endpoint-inclusive distribution with 5-second minimum spacing.
 - **Video duration in responses**: Frame extraction results include the video duration for context.
-- `searchProvider` config option in `~/.pi/web-search.json` for global provider default
+- `searchProvider` config option in `~/.kode/web-search.json` for global provider default
 - `video` config section: `enabled`, `preferredModel`, `maxSizeMB`
 
 ### Changed
@@ -64,10 +64,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - YouTube video understanding in `fetch_content` via three-tier fallback chain:
   - **Gemini Web** (primary): reads Chrome session cookies from macOS Keychain + SQLite, authenticates to gemini.google.com, sends YouTube URL via StreamGenerate endpoint. Full visual + audio understanding with timestamps. Zero config needed if signed into Google in Chrome.
-  - **Gemini API** (secondary): direct REST calls with `GEMINI_API_KEY`. YouTube URLs passed as `file_data.file_uri`. Configure via `GEMINI_API_KEY` env var or `geminiApiKey` in `~/.pi/web-search.json`.
+  - **Gemini API** (secondary): direct REST calls with `GEMINI_API_KEY`. YouTube URLs passed as `file_data.file_uri`. Configure via `GEMINI_API_KEY` env var or `geminiApiKey` in `~/.kode/web-search.json`.
   - **Perplexity** (fallback): uses existing `searchWithPerplexity` for a topic summary when neither Gemini path is available. Output labeled as "Summary (via Perplexity)" so the agent knows it's not a full transcript.
 - YouTube URL detection for all common formats: `/watch?v=`, `youtu.be/`, `/shorts/`, `/live/`, `/embed/`, `/v/`, `m.youtube.com`
-- Configurable via `~/.pi/web-search.json` under `youtube` key (`enabled`, `preferredModel`)
+- Configurable via `~/.kode/web-search.json` under `youtube` key (`enabled`, `preferredModel`)
 - Actionable error messages when extraction fails (directs user to sign into Chrome or set API key)
 - YouTube URLs no longer fall through to HTTP/Readability (which returns garbage); returns error instead
 
@@ -94,7 +94,7 @@ All notable changes to this project will be documented in this file.
 - Lightweight API fallback for oversized repos (>350MB) and commit SHA URLs via `gh api`
 - Clone cache with concurrent request deduplication (second request awaits first's clone)
 - `forceClone` parameter on `fetch_content` to override the size threshold
-- Configurable via `~/.pi/web-search.json` under `githubClone` key (enabled, maxRepoSizeMB, cloneTimeoutSeconds, clonePath)
+- Configurable via `~/.kode/web-search.json` under `githubClone` key (enabled, maxRepoSizeMB, cloneTimeoutSeconds, clonePath)
 - Falls back to `git clone` when `gh` CLI is unavailable (public repos only)
 - README: GitHub clone documentation with config, flow diagram, and limitations
 
@@ -205,7 +205,7 @@ Initial release. Designed for pi v0.37.3.
 - TUI rendering with progress bars, URL lists, and expandable previews
 - Session-aware storage with 1-hour TTL
 - Rate limiting (10 req/min for Perplexity API)
-- Config file support (`~/.pi/web-search.json`)
+- Config file support (`~/.kode/web-search.json`)
 - Content extraction via Readability + Turndown (max 10k chars)
 - Proper session isolation - pending fetches abort on session switch
 - URL validation before fetch attempts

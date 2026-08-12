@@ -611,7 +611,7 @@ fn main_impl() -> Result<()> {
     if cli.command.is_none()
         && let Some(pattern) = &cli.list_models
     {
-        let compat_scan_enabled = std::env::var("PI_EXT_COMPAT_SCAN").is_ok_and(|value| {
+        let compat_scan_enabled = std::env::var("KODE_EXT_COMPAT_SCAN").is_ok_and(|value| {
             matches!(
                 value.trim().to_ascii_lowercase().as_str(),
                 "1" | "true" | "yes" | "on"
@@ -949,7 +949,7 @@ fn extension_policy_migration_guardrails(
         "override_cli": {
             "safe_strict_mode": "pi --extension-policy safe <your command>",
             "balanced_prompt_mode": "pi --extension-policy balanced <your command>",
-            "balanced_with_dangerous_caps": "PI_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
+            "balanced_with_dangerous_caps": "KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
             "explicit_permissive": "pi --extension-policy permissive <your command>",
         },
         "settings_examples": {
@@ -989,7 +989,7 @@ fn capability_remediation(capability: Capability, decision: PolicyDecision) -> s
     let (to_allow_cli, to_allow_config, recommendation) = match (is_dangerous, decision) {
         (true, PolicyDecision::Deny) => (
             vec![
-                "PI_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
+                "KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
                 "pi --extension-policy permissive <your command>",
             ],
             vec![
@@ -1130,8 +1130,8 @@ fn print_resolved_extension_policy(resolved: &kode::config::ResolvedExtensionPol
         "allow_dangerous": resolved.allow_dangerous,
         "profile_presets": profile_presets,
         "dangerous_capability_opt_in": {
-            "cli": "PI_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
-            "env_var": "PI_EXTENSION_ALLOW_DANGEROUS=1",
+            "cli": "KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
+            "env_var": "KODE_EXTENSION_ALLOW_DANGEROUS=1",
             "config_example": policy_config_example("balanced", true),
         },
         "migration_guardrails": extension_policy_migration_guardrails(resolved),
@@ -1158,7 +1158,7 @@ fn print_resolved_repair_policy(resolved: &kode::config::ResolvedRepairPolicy) -
             "auto-strict": "Automatically apply all fixes including code changes.",
         },
         "cli_override": "pi --repair-policy <mode> <your command>",
-        "env_var": "PI_REPAIR_POLICY=<mode>",
+        "env_var": "KODE_REPAIR_POLICY=<mode>",
     });
 
     println!("{}", serde_json::to_string_pretty(&payload)?);
@@ -1175,7 +1175,7 @@ async fn run(
 
     // Resolve the HTTP request timeout before any provider HTTP client is
     // constructed so the client's single resolution path sees it. The
-    // `--request-timeout` flag is bound to the PI_HTTP_REQUEST_TIMEOUT_SECS env
+    // `--request-timeout` flag is bound to the KODE_HTTP_REQUEST_TIMEOUT_SECS env
     // var via clap, so `cli.request_timeout` already reflects either the flag
     // or that env var. Config-file values are applied at the lowest precedence
     // before the first provider request. See pi_agent_rust#90.
@@ -1218,7 +1218,7 @@ async fn run(
     }
     if cli.no_mouse_capture {
         // The CLI flag takes precedence over the persisted setting. The
-        // PI_NO_MOUSE_CAPTURE env var is read separately by run_interactive so
+        // KODE_NO_MOUSE_CAPTURE env var is read separately by run_interactive so
         // only the literal value `1` is truthy. Workaround for #78.
         config.disable_mouse_capture = Some(true);
     }
@@ -1553,7 +1553,7 @@ async fn run(
     } else {
         String::new()
     };
-    let test_mode = std::env::var_os("PI_TEST_MODE").is_some();
+    let test_mode = std::env::var_os("KODE_TEST_MODE").is_some();
     let system_prompt = kode::app::build_system_prompt(
         &cli,
         &cwd,
@@ -1572,7 +1572,7 @@ async fn run(
         providers::create_provider(&selection.model_entry, None).map_err(anyhow::Error::new)?;
     let stream_options =
         kode::app::build_stream_options(&config, resolved_key.clone(), &selection, &session);
-    // CLI flag wins; fall back to PI_MAX_TOOL_ITERATIONS env, then default.
+    // CLI flag wins; fall back to KODE_MAX_TOOL_ITERATIONS env, then default.
     // `clamp_max_tool_iterations` keeps invalid values out of the loop and
     // emits a warning instead of failing the run.
     let max_tool_iterations = if cli.max_tool_iterations.is_some() {
@@ -6280,7 +6280,7 @@ async fn run_first_time_setup(
 ) -> Result<bool> {
     let console = PiConsole::new();
 
-    console.render_rule(Some("Welcome to Pi"));
+    console.render_rule(Some("Welcome to KOOMPI Code"));
     match startup_error {
         StartupError::NoModelsAvailable { .. } => {
             console.print_markup("[bold]No authenticated models are available yet.[/]\n");
@@ -8476,7 +8476,7 @@ mod tests {
         let global_dir = temp.path().join("global");
         std::fs::create_dir_all(&cwd).expect("create cwd");
         std::fs::create_dir_all(&global_dir).expect("create global dir");
-        std::fs::create_dir_all(cwd.join(".pi")).expect("create project .pi");
+        std::fs::create_dir_all(cwd.join(".kode")).expect("create project .kode");
 
         std::fs::write(
             global_dir.join("settings.json"),
@@ -8488,7 +8488,7 @@ mod tests {
         .expect("write global settings");
 
         std::fs::write(
-            cwd.join(".pi").join("settings.json"),
+            cwd.join(".kode").join("settings.json"),
             serde_json::to_string_pretty(&json!({
                 "packages": [
                     {
@@ -8561,7 +8561,7 @@ mod tests {
         );
 
         let project_value: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(cwd.join(".pi").join("settings.json")).expect("read project"),
+            &std::fs::read_to_string(cwd.join(".kode").join("settings.json")).expect("read project"),
         )
         .expect("parse project json");
         let project_pkg = project_value["packages"]
@@ -8612,7 +8612,7 @@ mod tests {
         std::fs::create_dir_all(&cwd).expect("create cwd");
         std::fs::create_dir_all(&global_dir).expect("create global dir");
         std::fs::create_dir_all(&override_dir).expect("create override dir");
-        std::fs::create_dir_all(cwd.join(".pi")).expect("create project .pi");
+        std::fs::create_dir_all(cwd.join(".kode")).expect("create project .kode");
 
         let global_original = serde_json::to_string_pretty(&json!({
             "packages": ["npm:global-default"]
@@ -8625,7 +8625,7 @@ mod tests {
             "packages": ["npm:project-default"]
         }))
         .expect("serialize project settings");
-        std::fs::write(cwd.join(".pi").join("settings.json"), &project_original)
+        std::fs::write(cwd.join(".kode").join("settings.json"), &project_original)
             .expect("write project settings");
 
         std::fs::write(
@@ -8756,7 +8756,7 @@ mod tests {
             fixture.global_original
         );
         assert_eq!(
-            std::fs::read_to_string(fixture.cwd.join(".pi").join("settings.json"))
+            std::fs::read_to_string(fixture.cwd.join(".kode").join("settings.json"))
                 .expect("read project"),
             fixture.project_original
         );

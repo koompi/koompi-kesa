@@ -980,7 +980,7 @@ fn spawn_pi_mono_print_json(config: &PiMonoSpawnConfig<'_>, messages: &[String])
     if let Some(path) = reorder_path_for_system_node() {
         cmd.env("PATH", path);
     }
-    cmd.env("PI_CODING_AGENT_DIR", agent_dir);
+    cmd.env("KODE_CODING_AGENT_DIR", agent_dir);
     if let Some(preload) = config.node_preload {
         let preload = preload
             .canonicalize()
@@ -1088,7 +1088,7 @@ fn spawn_pi_mono_rpc(config: &PiMonoSpawnConfig<'_>) -> Result<Child> {
     if let Some(path) = reorder_path_for_system_node() {
         cmd.env("PATH", path);
     }
-    cmd.env("PI_CODING_AGENT_DIR", agent_dir);
+    cmd.env("KODE_CODING_AGENT_DIR", agent_dir);
     if let Some(preload) = config.node_preload {
         let preload = preload
             .canonicalize()
@@ -1622,7 +1622,7 @@ fn normalize_string(value: &str, ctx: &NormalizationContext) -> String {
 
     // Replace the pinned legacy root first (it includes the project_root prefix).
     if !ctx.pi_mono_root.is_empty() {
-        out = out.replace(&ctx.pi_mono_root, "<PI_MONO_ROOT>");
+        out = out.replace(&ctx.pi_mono_root, "<KODE_MONO_ROOT>");
     }
     if !ctx.project_root.is_empty() {
         out = out.replace(&ctx.project_root, "<PROJECT_ROOT>");
@@ -1655,7 +1655,7 @@ fn normalize_json_value(value: &mut Value, key: Option<&str>, ctx: &Normalizatio
             ) {
                 *s = "<TIMESTAMP>".to_string();
             } else if matches!(key, Some("cwd")) {
-                *s = "<PI_MONO_ROOT>".to_string();
+                *s = "<KODE_MONO_ROOT>".to_string();
             } else {
                 *s = normalize_string(s, ctx);
             }
@@ -2631,7 +2631,7 @@ mod tests {
         let out = normalize_string(input, &ctx);
         assert!(out.contains("<RUN_ID>"), "{out}");
         assert!(out.contains("http://127.0.0.1:<PORT>/v1"), "{out}");
-        assert!(out.contains("<PI_MONO_ROOT>"), "{out}");
+        assert!(out.contains("<KODE_MONO_ROOT>"), "{out}");
     }
 
     #[test]
@@ -2654,7 +2654,7 @@ mod tests {
                 "type": "session",
                 "id": "<UUID>",
                 "timestamp": "<TIMESTAMP>",
-                "cwd": "<PI_MONO_ROOT>"
+                "cwd": "<KODE_MONO_ROOT>"
             })
         );
     }

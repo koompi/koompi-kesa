@@ -147,7 +147,7 @@ fn e2e_tui_share_creates_gist_with_privacy_and_description() {
     write_mock_gh_script(&mock_bin, gist_url);
 
     // Write project settings with gh_path pointing to our mock.
-    let pi_dir = session.harness.temp_path(".pi");
+    let pi_dir = session.harness.temp_path(".kode");
     fs::create_dir_all(&pi_dir).expect("create .pi");
     let settings = json!({
         "ghPath": mock_bin.join("gh").display().to_string()
@@ -158,10 +158,10 @@ fn e2e_tui_share_creates_gist_with_privacy_and_description() {
     )
     .expect("write settings.json");
 
-    // Override PI_CONFIG_PATH so the binary reads our settings.json
-    // (TuiSession defaults PI_CONFIG_PATH to env_root/config.toml).
+    // Override KODE_CONFIG_PATH so the binary reads our settings.json
+    // (TuiSession defaults KODE_CONFIG_PATH to env_root/config.toml).
     session.set_env(
-        "PI_CONFIG_PATH",
+        "KODE_CONFIG_PATH",
         &pi_dir.join("settings.json").display().to_string(),
     );
 
@@ -229,7 +229,7 @@ fn e2e_tui_share_public_flag() {
     let gist_url = "https://gist.github.com/testuser/e2e_public_456";
     write_mock_gh_script(&mock_bin, gist_url);
 
-    let pi_dir = session.harness.temp_path(".pi");
+    let pi_dir = session.harness.temp_path(".kode");
     fs::create_dir_all(&pi_dir).expect("create .pi");
     let settings = json!({
         "ghPath": mock_bin.join("gh").display().to_string()
@@ -240,9 +240,9 @@ fn e2e_tui_share_public_flag() {
     )
     .expect("write settings.json");
 
-    // Override PI_CONFIG_PATH so the binary reads our settings.json.
+    // Override KODE_CONFIG_PATH so the binary reads our settings.json.
     session.set_env(
-        "PI_CONFIG_PATH",
+        "KODE_CONFIG_PATH",
         &pi_dir.join("settings.json").display().to_string(),
     );
 
@@ -294,7 +294,7 @@ fn e2e_tui_share_missing_gh_shows_install_instructions() {
     log_test_event(test_name, "test_start", &json!({}));
 
     // Point gh_path to a non-existent binary.
-    let pi_dir = session.harness.temp_path(".pi");
+    let pi_dir = session.harness.temp_path(".kode");
     fs::create_dir_all(&pi_dir).expect("create .pi");
     let settings = json!({
         "ghPath": session.harness.temp_path("nonexistent_gh").display().to_string()
@@ -305,9 +305,9 @@ fn e2e_tui_share_missing_gh_shows_install_instructions() {
     )
     .expect("write settings.json");
 
-    // Override PI_CONFIG_PATH so the binary reads our settings.json.
+    // Override KODE_CONFIG_PATH so the binary reads our settings.json.
     session.set_env(
-        "PI_CONFIG_PATH",
+        "KODE_CONFIG_PATH",
         &pi_dir.join("settings.json").display().to_string(),
     );
 

@@ -24,8 +24,8 @@
 
 | Flag | TS Pi | Rust Pi | Notes |
 |------|-------|---------|-------|
-| `--provider <name>` | Y | Y | env: PI_PROVIDER in both |
-| `--model <id>` | Y | Y | env: PI_MODEL in both |
+| `--provider <name>` | Y | Y | env: KODE_PROVIDER in both |
+| `--model <id>` | Y | Y | env: KODE_MODEL in both |
 | `--api-key <key>` | Y | Y | Overrides env vars |
 | `--models <patterns>` | Y | Y | Ctrl+P cycling, comma-separated globs |
 | `--list-models [search]` | Y | Y | Optional fuzzy search pattern |
@@ -370,27 +370,27 @@
 
 | Variable | TS Pi | Rust Pi | Notes |
 |----------|-------|---------|-------|
-| `PI_CODING_AGENT_DIR` | Y | Y | Config root |
-| `PI_PACKAGE_DIR` | Y | Y | Package directory |
-| `PI_SESSIONS_DIR` | N | Y | Rust-only |
-| `PI_CONFIG_PATH` | N | Y | Rust-only |
-| `PI_SHARE_VIEWER_URL` | Y | ? | Share viewer base URL |
+| `KODE_CODING_AGENT_DIR` | Y | Y | Config root |
+| `KODE_PACKAGE_DIR` | Y | Y | Package directory |
+| `KODE_SESSIONS_DIR` | N | Y | Rust-only |
+| `KODE_CONFIG_PATH` | N | Y | Rust-only |
+| `KODE_SHARE_VIEWER_URL` | Y | ? | Share viewer base URL |
 
 ### Development / Testing
 
 | Variable | TS Pi | Rust Pi | Notes |
 |----------|-------|---------|-------|
-| `PI_TEST_MODE` | Y | Y | Deterministic rendering |
-| `PI_TIMING` | Y | ? | Timing output |
-| `PI_SKIP_VERSION_CHECK` | Y | ? | Skip version check |
-| `PI_HARDWARE_CURSOR` | Y | ? | Hardware cursor |
-| `PI_CLEAR_ON_SHRINK` | Y | ? | Clear on shrink |
+| `KODE_TEST_MODE` | Y | Y | Deterministic rendering |
+| `KODE_TIMING` | Y | ? | Timing output |
+| `KODE_SKIP_VERSION_CHECK` | Y | ? | Skip version check |
+| `KODE_HARDWARE_CURSOR` | Y | ? | Hardware cursor |
+| `KODE_CLEAR_ON_SHRINK` | Y | ? | Clear on shrink |
 | `VCR_MODE` | N | Y | Rust-only VCR testing |
 | `VCR_CASSETTE_DIR` | N | Y | Rust-only VCR testing |
-| `PI_VCR_TEST_NAME` | N | Y | Rust-only VCR testing |
-| `PI_EXTENSION_ALLOW_DANGEROUS` | N | Y | Rust-only |
-| `PI_REPAIR_POLICY` | N | Y | Rust-only |
-| `PI_EXT_COMPAT_SCAN` | N | Y | Rust-only |
+| `KODE_VCR_TEST_NAME` | N | Y | Rust-only VCR testing |
+| `KODE_EXTENSION_ALLOW_DANGEROUS` | N | Y | Rust-only |
+| `KODE_REPAIR_POLICY` | N | Y | Rust-only |
+| `KODE_EXT_COMPAT_SCAN` | N | Y | Rust-only |
 
 ---
 
@@ -614,7 +614,7 @@
 
 | Feature | TS Pi | Rust Pi | Notes |
 |---------|-------|---------|-------|
-| `keybindings.json` | Y | Y | `~/.pi/agent/keybindings.json` |
+| `keybindings.json` | Y | Y | `~/.kode/agent/keybindings.json` |
 
 ---
 
@@ -732,7 +732,7 @@
 5. **Session**: Labels, branch markers, notes entry types; SQLite backend
 6. **Config**: sessionStore, sessionPickerInput, ghPath, extensionPolicy, repairPolicy, extensionRisk
 7. **Thinking aliases**: Numeric aliases (0-4) and short forms (min, med)
-8. **VCR test infrastructure**: VCR_MODE, VCR_CASSETTE_DIR, PI_VCR_TEST_NAME
+8. **VCR test infrastructure**: VCR_MODE, VCR_CASSETTE_DIR, KODE_VCR_TEST_NAME
 
 ---
 

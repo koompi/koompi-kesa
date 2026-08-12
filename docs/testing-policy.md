@@ -132,7 +132,7 @@ test file that imports from `pi::vcr` / references `cassette_root()` / loads JSO
 **How to run:**
 ```bash
 # With live providers (requires API keys)
-PI_E2E=1 cargo test --test e2e_cli --test e2e_tui --test e2e_tools
+KODE_E2E=1 cargo test --test e2e_cli --test e2e_tui --test e2e_tools
 
 # VCR-backed E2E (deterministic, no API keys needed)
 VCR_MODE=playback cargo test --test e2e_provider_streaming --test agent_loop_vcr
@@ -656,7 +656,7 @@ For tests currently in Suite 2 that should migrate to Suite 1:
 For VCR-heavy tests claiming "live" coverage:
 
 1. [ ] Verify the test actually exercises the code path (not just replaying a canned response).
-2. [ ] Add a live E2E variant that runs against real providers (gated on `PI_E2E=1`).
+2. [ ] Add a live E2E variant that runs against real providers (gated on `KODE_E2E=1`).
 3. [ ] Ensure VCR cassettes are regenerated periodically to catch API changes.
 4. [ ] Document the cassette regeneration process in the test file header.
 

@@ -23,7 +23,7 @@
 //!   cargo test --test `ci_evidence_bundle` -- --nocapture
 //!
 //! Regenerate the tracked bundle explicitly with:
-//!   `PI_GENERATE_EVIDENCE_BUNDLE=1 cargo test --test ci_evidence_bundle build_evidence_bundle -- --exact --nocapture`
+//!   `KODE_GENERATE_EVIDENCE_BUNDLE=1 cargo test --test ci_evidence_bundle build_evidence_bundle -- --exact --nocapture`
 
 use serde_json::Value;
 use sha1::Sha1;
@@ -31,7 +31,7 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-const GENERATE_EVIDENCE_BUNDLE_ENV: &str = "PI_GENERATE_EVIDENCE_BUNDLE";
+const GENERATE_EVIDENCE_BUNDLE_ENV: &str = "KODE_GENERATE_EVIDENCE_BUNDLE";
 
 fn evidence_bundle_generation_enabled(raw: Option<&str>) -> bool {
     raw == Some("1")

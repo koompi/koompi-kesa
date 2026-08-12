@@ -70,12 +70,12 @@ impl HostcallSuperinstructionCompiler {
 
     #[must_use]
     pub fn from_env() -> Self {
-        let enabled = bool_from_env("PI_HOSTCALL_SUPERINSTRUCTIONS", true);
-        let min_support = std::env::var("PI_HOSTCALL_SUPERINSTRUCTION_MIN_SUPPORT")
+        let enabled = bool_from_env("KODE_HOSTCALL_SUPERINSTRUCTIONS", true);
+        let min_support = std::env::var("KODE_HOSTCALL_SUPERINSTRUCTION_MIN_SUPPORT")
             .ok()
             .and_then(|raw| raw.trim().parse::<u32>().ok())
             .map_or(DEFAULT_MIN_SUPPORT, |value| value.max(2));
-        let max_window = std::env::var("PI_HOSTCALL_SUPERINSTRUCTION_MAX_WINDOW")
+        let max_window = std::env::var("KODE_HOSTCALL_SUPERINSTRUCTION_MAX_WINDOW")
             .ok()
             .and_then(|raw| raw.trim().parse::<usize>().ok())
             .map_or(DEFAULT_MAX_WINDOW, |value| value.max(2));

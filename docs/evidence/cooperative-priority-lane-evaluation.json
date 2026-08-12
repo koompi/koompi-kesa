@@ -29,7 +29,7 @@
       "coverage": "baseline_collected_candidate_timed_out",
       "baseline_run_id": "bd-2zcs5-29-baseline2",
       "candidate_run_id": "bd-2zcs5-29-candidate",
-      "notes": "The successful baseline exercises real extension hostcall dispatch through the ext_stress reactor path. The candidate used the same workload shape with PI_HOSTCALL_AMAC=1 and did not complete in the bounded probe window."
+      "notes": "The successful baseline exercises real extension hostcall dispatch through the ext_stress reactor path. The candidate used the same workload shape with KODE_HOSTCALL_AMAC=1 and did not complete in the bounded probe window."
     },
     {
       "surface": "provider_streaming",
@@ -95,10 +95,10 @@
   "experiments": {
     "baseline": {
       "environment": {
-        "PI_HOSTCALL_AMAC": "0",
+        "KODE_HOSTCALL_AMAC": "0",
         "binary": "/data/tmp/cargo-target/debug/examples/ext_stress"
       },
-      "command": "PI_HOSTCALL_AMAC=0 /data/tmp/cargo-target/debug/examples/ext_stress --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-events.jsonl --run-id bd-2zcs5-29-baseline2 --correlation-id bd-2zcs5-29-priority-lane",
+      "command": "KODE_HOSTCALL_AMAC=0 /data/tmp/cargo-target/debug/examples/ext_stress --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-events.jsonl --run-id bd-2zcs5-29-baseline2 --correlation-id bd-2zcs5-29-priority-lane",
       "status": "completed",
       "raw_report_path": "/tmp/pi-agent-rust-sunnybeacon-bd29-baseline2.json",
       "raw_events_path": "/tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-events.jsonl",
@@ -131,10 +131,10 @@
     },
     "candidate": {
       "environment": {
-        "PI_HOSTCALL_AMAC": "1",
+        "KODE_HOSTCALL_AMAC": "1",
         "binary": "/data/tmp/cargo-target/debug/examples/ext_stress"
       },
-      "command": "PI_HOSTCALL_AMAC=1 /data/tmp/cargo-target/debug/examples/ext_stress --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-candidate-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-candidate.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-candidate-events.jsonl --run-id bd-2zcs5-29-candidate --correlation-id bd-2zcs5-29-priority-lane",
+      "command": "KODE_HOSTCALL_AMAC=1 /data/tmp/cargo-target/debug/examples/ext_stress --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-candidate-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-candidate.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-candidate-events.jsonl --run-id bd-2zcs5-29-candidate --correlation-id bd-2zcs5-29-priority-lane",
       "status": "timed_out_no_report",
       "terminated_after_seconds": ">30",
       "terminated_signal": "SIGTERM",
@@ -151,9 +151,9 @@
   },
   "reproducibility": {
     "commands": [
-      "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/sunnybeacon/target TMPDIR=/data/tmp/koompi_code_cli_cargo/sunnybeacon/tmp PI_HOSTCALL_AMAC=0 cargo run --example ext_stress -- --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-events.jsonl --run-id bd-2zcs5-29-baseline2 --correlation-id bd-2zcs5-29-priority-lane",
-      "PI_HOSTCALL_AMAC=0 /data/tmp/cargo-target/debug/examples/ext_stress --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-events.jsonl --run-id bd-2zcs5-29-baseline2 --correlation-id bd-2zcs5-29-priority-lane",
-      "PI_HOSTCALL_AMAC=1 /data/tmp/cargo-target/debug/examples/ext_stress --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-candidate-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-candidate.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-candidate-events.jsonl --run-id bd-2zcs5-29-candidate --correlation-id bd-2zcs5-29-priority-lane"
+      "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/sunnybeacon/target TMPDIR=/data/tmp/koompi_code_cli_cargo/sunnybeacon/tmp KODE_HOSTCALL_AMAC=0 cargo run --example ext_stress -- --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-events.jsonl --run-id bd-2zcs5-29-baseline2 --correlation-id bd-2zcs5-29-priority-lane",
+      "KODE_HOSTCALL_AMAC=0 /data/tmp/cargo-target/debug/examples/ext_stress --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-baseline2-events.jsonl --run-id bd-2zcs5-29-baseline2 --correlation-id bd-2zcs5-29-priority-lane",
+      "KODE_HOSTCALL_AMAC=1 /data/tmp/cargo-target/debug/examples/ext_stress --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /tmp/pi-agent-rust-sunnybeacon-bd29-candidate-synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 4 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /tmp/pi-agent-rust-sunnybeacon-bd29-candidate.json --events-path /tmp/pi-agent-rust-sunnybeacon-bd29-candidate-events.jsonl --run-id bd-2zcs5-29-candidate --correlation-id bd-2zcs5-29-priority-lane"
     ],
     "path_caveats": [
       "For rch worker execution, keep CLI output paths under /tmp or another path that exists on the worker.",

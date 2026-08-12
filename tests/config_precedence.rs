@@ -105,7 +105,7 @@ fn config_load_pi_config_path_override_beats_project_and_global() {
         r#"{ "theme": "global", "default_provider": "anthropic" }"#,
     );
     write_file(
-        &cwd.join(".pi/settings.json"),
+        &cwd.join(".kode/settings.json"),
         r#"{ "theme": "project", "default_provider": "google" }"#,
     );
 
@@ -144,7 +144,7 @@ fn config_load_merges_project_over_global_when_no_override() {
         r#"{ "theme": "global", "default_model": "global" }"#,
     );
     write_file(
-        &cwd.join(".pi/settings.json"),
+        &cwd.join(".kode/settings.json"),
         r#"{ "default_model": "project" }"#,
     );
 
@@ -183,7 +183,7 @@ fn config_dirs_use_explicit_roots() {
     );
     assert_eq!(
         Config::settings_path_with_roots(SettingsScope::Project, &global_dir, &cwd),
-        cwd.join(".pi/settings.json")
+        cwd.join(".kode/settings.json")
     );
 }
 
@@ -248,7 +248,7 @@ fn config_load_pi_config_path_invalid_json_returns_error() {
         r#"{ "theme": "global", "default_provider": "anthropic" }"#,
     );
     write_file(
-        &cwd.join(".pi/settings.json"),
+        &cwd.join(".kode/settings.json"),
         r#"{ "theme": "project", "default_provider": "google" }"#,
     );
 

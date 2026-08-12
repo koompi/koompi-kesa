@@ -627,7 +627,7 @@ pub const GREP_MAX_LINE_LENGTH: usize = 500;
 ### 6.1 File Organization
 
 ```
-~/.pi/agent/sessions/
+~/.kode/agent/sessions/
 └── --{encoded-cwd}--/
     └── {timestamp}_{session-id}.jsonl
 ```
@@ -794,11 +794,11 @@ pub struct SessionInfoEntry {
 
 | Type | Path |
 |------|------|
-| Global settings | `~/.pi/agent/settings.json` |
-| Project settings | `./.pi/settings.json` |
-| Auth | `~/.pi/agent/auth.json` |
-| Models | `~/.pi/agent/models.json` |
-| Sessions | `~/.pi/agent/sessions/` |
+| Global settings | `~/.kode/agent/settings.json` |
+| Project settings | `./.kode/settings.json` |
+| Auth | `~/.kode/agent/auth.json` |
+| Models | `~/.kode/agent/models.json` |
+| Sessions | `~/.kode/agent/sessions/` |
 
 ### 7.2 Settings Structure
 
@@ -885,16 +885,16 @@ pub struct TerminalSettings {
 
 1. CLI flags (highest)
 2. Environment variables
-3. Project settings (`./.pi/settings.json`)
-4. Global settings (`~/.pi/agent/settings.json`)
+3. Project settings (`./.kode/settings.json`)
+4. Global settings (`~/.kode/agent/settings.json`)
 5. Built-in defaults (lowest)
 
 ### 7.4 Environment Variables
 
 ```rust
 // Config paths
-PI_CODING_AGENT_DIR     // Override ~/.pi/agent
-PI_PACKAGE_DIR          // Override package assets
+KODE_CODING_AGENT_DIR     // Override ~/.kode/agent
+KODE_PACKAGE_DIR          // Override package assets
 
 // API Keys (per provider)
 ANTHROPIC_API_KEY
@@ -916,7 +916,7 @@ MISTRAL_API_KEY
 
 ### 8.1 Auth File
 
-- **Path:** `~/.pi/agent/auth.json`
+- **Path:** `~/.kode/agent/auth.json`
 - **Permissions:** `0o600` (read-write owner only)
 - **Locking:** File lock with 30-second stale timeout
 
@@ -1740,8 +1740,8 @@ If `pi` field is absent, defaults apply:
 Skills are markdown files with YAML frontmatter defining agent capabilities.
 
 **File locations:**
-- Global: `~/.pi/agent/skills/*.md`
-- Project: `./.pi/skills/*.md`
+- Global: `~/.kode/agent/skills/*.md`
+- Project: `./.kode/skills/*.md`
 - Package: `<package>/skills/*.md`
 
 **Frontmatter schema:**
@@ -1778,8 +1778,8 @@ allowed_tools:             # Optional, restrict to specific tools
 Prompt templates are markdown files for reusable user prompts.
 
 **File locations:**
-- Global: `~/.pi/agent/prompts/*.md`
-- Project: `./.pi/prompts/*.md`
+- Global: `~/.kode/agent/prompts/*.md`
+- Project: `./.kode/prompts/*.md`
 - Package: `<package>/prompts/*.md`
 
 **Command format:** `/template-name arg1 arg2 ...`
@@ -1799,8 +1799,8 @@ Prompt templates are markdown files for reusable user prompts.
 Themes are JSON files defining terminal color schemes.
 
 **File locations:**
-- Global: `~/.pi/agent/themes/*.json`
-- Project: `./.pi/themes/*.json`
+- Global: `~/.kode/agent/themes/*.json`
+- Project: `./.kode/themes/*.json`
 - Package: `<package>/themes/*.json`
 
 **Schema:**

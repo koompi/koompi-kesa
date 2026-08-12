@@ -4,7 +4,7 @@
 //! - Sources: `npm:pkg`, `git:host/owner/repo[@ref]`, local paths
 //! - Scopes: user (global) and project (local)
 //! - Global npm installs use `npm install -g` (npm-managed global root)
-//! - Git installs are under Pi's agent/project directories (`~/.pi/agent/git`, `./.pi/git`)
+//! - Git installs are under Pi's agent/project directories (`~/.kode/agent/git`, `./.kode/git`)
 
 use crate::agent_cx::AgentCx;
 use crate::config::Config;
@@ -3469,7 +3469,7 @@ fn parse_git_source(spec: &str, cwd: &Path) -> ParsedSource {
         let repo_path = local_path_from_spec(repo_raw, cwd);
 
         // Use a short stable hash for the on-disk install directory to avoid embedding absolute
-        // paths (slashes, drive letters) into `.pi/git/**` paths.
+        // paths (slashes, drive letters) into `.kode/git/**` paths.
         let mut hasher = Sha256::new();
         hasher.update(repo_path.to_string_lossy().as_bytes());
         let digest = hasher.finalize();
@@ -4461,7 +4461,7 @@ fn write_settings_json_atomic(path: &Path, value: &Value) -> Result<()> {
 }
 
 fn compat_scan_enabled() -> bool {
-    let value = std::env::var("PI_EXT_COMPAT_SCAN").unwrap_or_default();
+    let value = std::env::var("KODE_EXT_COMPAT_SCAN").unwrap_or_default();
     matches!(
         value.trim().to_ascii_lowercase().as_str(),
         "1" | "true" | "yes" | "on"
@@ -4757,7 +4757,7 @@ mod tests {
         run_async(async {
             let temp_dir = tempfile::tempdir().expect("tempdir");
             let project_root = temp_dir.path().join("project");
-            fs::create_dir_all(project_root.join(".pi")).expect("create project settings dir");
+            fs::create_dir_all(project_root.join(".kode")).expect("create project settings dir");
 
             let package_root = temp_dir.path().join("pkg");
             fs::create_dir_all(package_root.join("extensions")).expect("create extensions dir");
@@ -4767,7 +4767,7 @@ mod tests {
                 .expect("write b.native.json");
 
             let global_settings_path = temp_dir.path().join("global-settings.json");
-            let project_settings_path = project_root.join(".pi/settings.json");
+            let project_settings_path = project_root.join(".kode/settings.json");
 
             let global_settings = json!({
                 "packages": [{
@@ -4798,7 +4798,7 @@ mod tests {
                 global_settings_path: global_settings_path.clone(),
                 project_settings_path: project_settings_path.clone(),
                 global_base_dir: temp_dir.path().join("global-base"),
-                project_base_dir: project_root.join(".pi"),
+                project_base_dir: project_root.join(".kode"),
                 project_settings_enabled: true,
             };
             fs::create_dir_all(&roots.global_base_dir).expect("create global base dir");
@@ -4835,10 +4835,10 @@ mod tests {
     fn test_list_packages_with_override_roots_ignores_project_settings() {
         let temp_dir = tempfile::tempdir().expect("tempdir");
         let project_root = temp_dir.path().join("project");
-        fs::create_dir_all(project_root.join(".pi")).expect("create project settings dir");
+        fs::create_dir_all(project_root.join(".kode")).expect("create project settings dir");
 
         let override_settings_path = temp_dir.path().join("override-settings.json");
-        let project_settings_path = project_root.join(".pi/settings.json");
+        let project_settings_path = project_root.join(".kode/settings.json");
 
         fs::write(
             &override_settings_path,
@@ -4875,8 +4875,8 @@ mod tests {
         run_async(async {
             let temp_dir = tempfile::tempdir().expect("tempdir");
             let project_root = temp_dir.path().join("project");
-            fs::create_dir_all(project_root.join(".pi")).expect("create project settings dir");
-            fs::create_dir_all(project_root.join(".pi/extensions"))
+            fs::create_dir_all(project_root.join(".kode")).expect("create project settings dir");
+            fs::create_dir_all(project_root.join(".kode/extensions"))
                 .expect("create project extension dir");
 
             let package_root = temp_dir.path().join("pkg");
@@ -4889,14 +4889,14 @@ mod tests {
             fs::write(package_root2.join("extensions/b.native.json"), "{}")
                 .expect("write b.native.json");
             let project_local_extension =
-                project_root.join(".pi/extensions/project-local.native.json");
+                project_root.join(".kode/extensions/project-local.native.json");
             let project_auto_extension =
-                project_root.join(".pi/extensions/project-auto.native.json");
+                project_root.join(".kode/extensions/project-auto.native.json");
             fs::write(&project_local_extension, "{}").expect("write project local extension");
             fs::write(&project_auto_extension, "{}").expect("write project auto extension");
 
             let override_settings_path = temp_dir.path().join("override-settings.json");
-            let project_settings_path = project_root.join(".pi/settings.json");
+            let project_settings_path = project_root.join(".kode/settings.json");
 
             let override_settings = json!({
                 "packages": [{
@@ -4929,7 +4929,7 @@ mod tests {
                 global_settings_path: override_settings_path.clone(),
                 project_settings_path: project_settings_path.clone(),
                 global_base_dir: temp_dir.path().join("global-base"),
-                project_base_dir: project_root.join(".pi"),
+                project_base_dir: project_root.join(".kode"),
                 project_settings_enabled: false,
             };
             fs::create_dir_all(&roots.global_base_dir).expect("create global base dir");
@@ -7605,11 +7605,11 @@ mod tests {
         run_async(async {
             let temp_dir = tempfile::tempdir().expect("tempdir");
             let project_root = temp_dir.path().join("project");
-            fs::create_dir_all(project_root.join(".pi")).expect("create project settings dir");
+            fs::create_dir_all(project_root.join(".kode")).expect("create project settings dir");
 
             // Pre-install a project-scoped npm package satisfying its range.
             let installed = project_root
-                .join(".pi")
+                .join(".kode")
                 .join("npm")
                 .join("node_modules")
                 .join("pi-test-preinstalled-pkg");
@@ -7621,7 +7621,7 @@ mod tests {
             .expect("write package.json");
             fs::write(installed.join("extensions/a.native.json"), "{}").expect("write extension");
 
-            let project_settings_path = project_root.join(".pi/settings.json");
+            let project_settings_path = project_root.join(".kode/settings.json");
             fs::write(
                 &project_settings_path,
                 serde_json::to_string_pretty(&json!({
@@ -7635,7 +7635,7 @@ mod tests {
                 global_settings_path: temp_dir.path().join("global-settings.json"),
                 project_settings_path,
                 global_base_dir: temp_dir.path().join("global-base"),
-                project_base_dir: project_root.join(".pi"),
+                project_base_dir: project_root.join(".kode"),
                 project_settings_enabled: true,
             };
             fs::create_dir_all(&roots.global_base_dir).expect("create global base dir");
@@ -7690,7 +7690,7 @@ mod tests {
 
     #[test]
     fn auto_dirs_constructs_correct_paths() {
-        let base = Path::new("/home/user/.pi/agent");
+        let base = Path::new("/home/user/.kode/agent");
         let dirs = AutoDirs::new(base);
         assert_eq!(dirs.extensions, base.join("extensions"));
         assert_eq!(dirs.skills, base.join("skills"));
@@ -7906,7 +7906,7 @@ mod tests {
             )
             .expect("first lock verification");
 
-        let lockfile_path = cwd.join(".pi").join("packages.lock.json");
+        let lockfile_path = cwd.join(".kode").join("packages.lock.json");
         let first = fs::read_to_string(&lockfile_path).expect("read first lockfile");
 
         manager
@@ -7978,8 +7978,8 @@ mod tests {
             fs::write(pkg.join("index.js"), "export const ok = true;\n").expect("write entry");
         }
 
-        let settings_path = cwd.join(".pi").join("settings.json");
-        fs::create_dir_all(settings_path.parent().unwrap()).expect("mkdir .pi");
+        let settings_path = cwd.join(".kode").join("settings.json");
+        fs::create_dir_all(settings_path.parent().unwrap()).expect("mkdir .kode");
         fs::write(
             &settings_path,
             json!({ "packages": ["./pkg1", "./pkg2"] }).to_string(),
@@ -7994,7 +7994,7 @@ mod tests {
             .verify_and_record_lock("./pkg2", PackageScope::Project, PackageLockAction::Install)
             .expect("lock pkg2");
 
-        let lockfile_path = cwd.join(".pi").join("packages.lock.json");
+        let lockfile_path = cwd.join(".kode").join("packages.lock.json");
         let before = read_package_lockfile(&lockfile_path).expect("read pre-reconcile lockfile");
         assert_eq!(
             before.entries.len(),
@@ -8044,7 +8044,7 @@ mod tests {
         assert!(again.is_empty(), "second reconcile should prune nothing");
 
         // Audit event should record the reconciled prune.
-        let audit_path = cwd.join(".pi").join("package-trust-audit.jsonl");
+        let audit_path = cwd.join(".kode").join("package-trust-audit.jsonl");
         let audit = fs::read_to_string(&audit_path).expect("read audit log");
         assert!(
             audit.lines().any(|line| line.contains("\"reconciled\"")),
@@ -8078,8 +8078,8 @@ mod tests {
         fs::create_dir_all(&pkg).expect("mkdir keep-me");
         fs::write(pkg.join("index.js"), "export const ok = true;\n").expect("write entry");
 
-        let settings_path = cwd.join(".pi").join("settings.json");
-        fs::create_dir_all(settings_path.parent().unwrap()).expect("mkdir .pi");
+        let settings_path = cwd.join(".kode").join("settings.json");
+        fs::create_dir_all(settings_path.parent().unwrap()).expect("mkdir .kode");
         fs::write(
             &settings_path,
             json!({ "packages": ["./keep-me"] }).to_string(),
@@ -8095,7 +8095,7 @@ mod tests {
             )
             .expect("lock keep-me");
 
-        let lockfile_path = cwd.join(".pi").join("packages.lock.json");
+        let lockfile_path = cwd.join(".kode").join("packages.lock.json");
         let before_len = read_package_lockfile(&lockfile_path)
             .expect("read lockfile")
             .entries

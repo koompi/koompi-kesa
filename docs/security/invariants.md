@@ -33,7 +33,7 @@ The authoritative flow is implemented in:
 Extension policy profile resolution precedence:
 
 1. CLI override (`--extension-policy`)
-2. `PI_EXTENSION_POLICY` env var
+2. `KODE_EXTENSION_POLICY` env var
 3. config `extension_policy.profile`
 4. default `safe`
 
@@ -46,7 +46,7 @@ Normalization and fail-closed semantics:
 
 Runtime-risk settings resolution precedence:
 
-1. `PI_EXTENSION_RISK_*` env vars
+1. `KODE_EXTENSION_RISK_*` env vars
 2. config `extension_risk.*`
 3. `RuntimeRiskConfig::default()`
 

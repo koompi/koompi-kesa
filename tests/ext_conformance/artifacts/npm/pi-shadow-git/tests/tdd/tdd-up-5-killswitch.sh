@@ -1,13 +1,13 @@
 #!/bin/bash
 # TDD-UP-5: Killswitch must disable all logging
-# Behavior: PI_SHADOW_GIT_DISABLED=1 prevents audit writes
+# Behavior: KODE_SHADOW_GIT_DISABLED=1 prevents audit writes
 set -e
-EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # First run WITHOUT killswitch
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
   pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 
@@ -15,7 +15,7 @@ AUDIT="$TEST_WS/agents/test1/audit.jsonl"
 BEFORE=$(wc -l < "$AUDIT" 2>/dev/null | tr -d ' ' || echo 0)
 
 # Second run WITH killswitch
-PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" PI_SHADOW_GIT_DISABLED=1 \
+KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" KODE_SHADOW_GIT_DISABLED=1 \
   pi --max-turns 1 --no-input -p \
   -e "$EXT" "bye" 2>&1 >/dev/null || true
 

@@ -17,7 +17,7 @@ fn config_with_env(env: Vec<(&str, &str)>) -> PiJsRuntimeConfig {
         .into_iter()
         .map(|(key, value)| (key.to_string(), value.to_string()))
         .collect();
-    env.insert("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+    env.insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
     PiJsRuntimeConfig {
         cwd: "/test".to_string(),
         env,
@@ -28,7 +28,7 @@ fn config_with_env(env: Vec<(&str, &str)>) -> PiJsRuntimeConfig {
 
 fn default_config() -> PiJsRuntimeConfig {
     let env: HashMap<String, String> =
-        HashMap::from([("PI_EXT_COMPAT_SCAN".to_string(), "0".to_string())]);
+        HashMap::from([("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string())]);
     PiJsRuntimeConfig {
         cwd: "/test".to_string(),
         env,
@@ -50,10 +50,10 @@ fn is_env_var_allowed_permits_common_vars() {
 #[test]
 fn is_env_var_allowed_permits_pi_prefix() {
     for key in &[
-        "PI_CONFIG",
-        "PI_IMAGE_SAVE_MODE",
-        "PI_PLATFORM",
-        "PI_TARGET_ARCH",
+        "KODE_CONFIG",
+        "KODE_IMAGE_SAVE_MODE",
+        "KODE_PLATFORM",
+        "KODE_TARGET_ARCH",
     ] {
         assert!(is_env_var_allowed(key), "{key} should be allowed");
     }
@@ -74,9 +74,9 @@ fn is_env_var_allowed_blocks_case_variants_of_sensitive_keys() {
 #[test]
 fn is_env_var_allowed_blocks_pi_prefixed_secret_like_keys() {
     for key in &[
-        "PI_OPENAI_API_KEY",
-        "PI_DEPLOY_SECRET",
-        "PI_AWS_SECRET_ACCESS_KEY",
+        "KODE_OPENAI_API_KEY",
+        "KODE_DEPLOY_SECRET",
+        "KODE_AWS_SECRET_ACCESS_KEY",
     ] {
         assert!(!is_env_var_allowed(key), "{key} should be blocked");
     }

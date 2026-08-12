@@ -41,7 +41,7 @@ Execute JavaScript code to orchestrate multiple MCP tool calls with logic.
 
 ## Configuration
 
-Create `~/.pi/agent/mcp.json` to configure MCP servers.
+Create `~/.kode/agent/mcp.json` to configure MCP servers.
 
 ## Requirements
 

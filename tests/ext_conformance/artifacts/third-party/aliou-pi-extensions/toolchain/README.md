@@ -50,8 +50,8 @@ These features block commands that have no clear rewrite target.
 
 Configuration is loaded from two optional JSON files, merged in order (project overrides global):
 
-- **Global**: `~/.pi/agent/extensions/toolchain.json`
-- **Project**: `.pi/extensions/toolchain.json`
+- **Global**: `~/.kode/agent/extensions/toolchain.json`
+- **Project**: `.kode/extensions/toolchain.json`
 
 ### Configuration Schema
 
@@ -133,7 +133,7 @@ All rewriters use structural shell parsing via `@aliou/sh` to identify command n
 If you were using `preventBrew`, `preventPython`, or `enforcePackageManager` in your guardrails config:
 
 1. Install `@aliou/pi-toolchain`
-2. Create `.pi/extensions/toolchain.json` with the equivalent config
+2. Create `.kode/extensions/toolchain.json` with the equivalent config
 3. Remove the deprecated features from your guardrails config
 
 The guardrails extension will continue to honor these features with a deprecation warning until they are removed in a future version.

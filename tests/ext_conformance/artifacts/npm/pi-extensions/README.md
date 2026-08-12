@@ -29,7 +29,7 @@ Personal extensions for the [Pi coding agent](https://github.com/badlogic/pi-mon
 pi install git:github.com/tmustier/pi-extensions
 ```
 
-To enable only a subset, replace the package entry in `~/.pi/agent/settings.json` with a filtered one:
+To enable only a subset, replace the package entry in `~/.kode/agent/settings.json` with a filtered one:
 
 ```json
 {
@@ -44,7 +44,7 @@ To enable only a subset, replace the package entry in `~/.pi/agent/settings.json
 
 ## Quick Setup
 
-If you keep a local clone, add extensions to your `~/.pi/agent/settings.json`:
+If you keep a local clone, add extensions to your `~/.kode/agent/settings.json`:
 
 ```json
 {

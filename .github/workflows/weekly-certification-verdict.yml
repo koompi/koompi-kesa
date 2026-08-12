@@ -96,7 +96,7 @@ jobs:
 
       - name: Refresh extension health delta
         env:
-          PI_HEALTH_FAIL_ON_REGRESSION: "1"
+          KODE_HEALTH_FAIL_ON_REGRESSION: "1"
         run: |
           set -euxo pipefail
           cargo test --locked --test ext_conformance_generated --features ext-conformance \

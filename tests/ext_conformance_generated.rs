@@ -715,10 +715,10 @@ fn hermetic_conformance_env(cwd: &Path) -> std::collections::HashMap<String, Str
     let home = home.display().to_string();
     let tmp = tmp.display().to_string();
     std::collections::HashMap::from([
-        ("PI_DETERMINISTIC_CWD".to_string(), cwd),
+        ("KODE_DETERMINISTIC_CWD".to_string(), cwd),
         ("HOME".to_string(), home.clone()),
         ("USERPROFILE".to_string(), home.clone()),
-        ("PI_DETERMINISTIC_HOME".to_string(), home),
+        ("KODE_DETERMINISTIC_HOME".to_string(), home),
         ("TMPDIR".to_string(), tmp.clone()),
         ("TEMP".to_string(), tmp.clone()),
         ("TMP".to_string(), tmp),
@@ -750,8 +750,8 @@ fn prepare_extension_fixture(ext_id: &str, cwd: &Path) {
     }
 
     for prompt_dir in [
-        cwd.join(".pi").join("prompts"),
-        cwd.join("home").join(".pi").join("agent").join("prompts"),
+        cwd.join(".kode").join("prompts"),
+        cwd.join("home").join(".kode").join("agent").join("prompts"),
     ] {
         std::fs::create_dir_all(&prompt_dir).expect("create prompt-template-model fixture dir");
         std::fs::write(
@@ -1945,19 +1945,19 @@ fn conformance_full_report() {
 // so CI matrix jobs can fan out.
 //
 // Environment variables:
-//   PI_SHARD_INDEX  — 0-based index of this shard (default: 0)
-//   PI_SHARD_TOTAL  — total number of shards (default: 1 = no sharding)
-//   PI_SHARD_PARALLELISM — max threads within a shard (default: num_cpus or 4)
+//   KODE_SHARD_INDEX  — 0-based index of this shard (default: 0)
+//   KODE_SHARD_TOTAL  — total number of shards (default: 1 = no sharding)
+//   KODE_SHARD_PARALLELISM — max threads within a shard (default: num_cpus or 4)
 //
 // Run:
 //   cargo test --test ext_conformance_generated --features ext-conformance \
 //     -- conformance_sharded_matrix --nocapture
 //
 // CI matrix example (4 shards):
-//   PI_SHARD_INDEX=0 PI_SHARD_TOTAL=4 cargo test ...
-//   PI_SHARD_INDEX=1 PI_SHARD_TOTAL=4 cargo test ...
-//   PI_SHARD_INDEX=2 PI_SHARD_TOTAL=4 cargo test ...
-//   PI_SHARD_INDEX=3 PI_SHARD_TOTAL=4 cargo test ...
+//   KODE_SHARD_INDEX=0 KODE_SHARD_TOTAL=4 cargo test ...
+//   KODE_SHARD_INDEX=1 KODE_SHARD_TOTAL=4 cargo test ...
+//   KODE_SHARD_INDEX=2 KODE_SHARD_TOTAL=4 cargo test ...
+//   KODE_SHARD_INDEX=3 KODE_SHARD_TOTAL=4 cargo test ...
 
 /// Failure category for triage.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
@@ -2029,16 +2029,16 @@ struct ShardConfig {
 impl ShardConfig {
     /// Read configuration from environment variables with sensible defaults.
     fn from_env() -> Self {
-        let shard_index: usize = std::env::var("PI_SHARD_INDEX")
+        let shard_index: usize = std::env::var("KODE_SHARD_INDEX")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(0);
-        let shard_total: usize = std::env::var("PI_SHARD_TOTAL")
+        let shard_total: usize = std::env::var("KODE_SHARD_TOTAL")
             .ok()
             .and_then(|v| v.parse().ok())
             .filter(|&v| v > 0)
             .unwrap_or(1);
-        let parallelism: usize = std::env::var("PI_SHARD_PARALLELISM")
+        let parallelism: usize = std::env::var("KODE_SHARD_PARALLELISM")
             .ok()
             .and_then(|v| v.parse().ok())
             .filter(|&v| v > 0)
@@ -4118,40 +4118,40 @@ fn provider_modes() -> Vec<ProviderMode> {
             name: "anthropic_streaming",
             description: "Anthropic Messages API with SSE streaming",
             env_overrides: vec![
-                ("PI_DETERMINISTIC_PROVIDER_HINT", "anthropic"),
-                ("PI_DETERMINISTIC_API_STYLE", "anthropic_messages"),
+                ("KODE_DETERMINISTIC_PROVIDER_HINT", "anthropic"),
+                ("KODE_DETERMINISTIC_API_STYLE", "anthropic_messages"),
             ],
         },
         ProviderMode {
             name: "openai_completions",
             description: "OpenAI Chat Completions API",
             env_overrides: vec![
-                ("PI_DETERMINISTIC_PROVIDER_HINT", "openai"),
-                ("PI_DETERMINISTIC_API_STYLE", "openai_completions"),
+                ("KODE_DETERMINISTIC_PROVIDER_HINT", "openai"),
+                ("KODE_DETERMINISTIC_API_STYLE", "openai_completions"),
             ],
         },
         ProviderMode {
             name: "openai_responses",
             description: "OpenAI Responses API (reasoning models)",
             env_overrides: vec![
-                ("PI_DETERMINISTIC_PROVIDER_HINT", "openai"),
-                ("PI_DETERMINISTIC_API_STYLE", "openai_responses"),
+                ("KODE_DETERMINISTIC_PROVIDER_HINT", "openai"),
+                ("KODE_DETERMINISTIC_API_STYLE", "openai_responses"),
             ],
         },
         ProviderMode {
             name: "gemini_generative",
             description: "Google Gemini / GenerativeAI",
             env_overrides: vec![
-                ("PI_DETERMINISTIC_PROVIDER_HINT", "google"),
-                ("PI_DETERMINISTIC_API_STYLE", "google_generative_ai"),
+                ("KODE_DETERMINISTIC_PROVIDER_HINT", "google"),
+                ("KODE_DETERMINISTIC_API_STYLE", "google_generative_ai"),
             ],
         },
         ProviderMode {
             name: "openai_compatible",
             description: "Generic OpenAI-compatible endpoint (e.g., groq, deepseek, xai)",
             env_overrides: vec![
-                ("PI_DETERMINISTIC_PROVIDER_HINT", "openai_compatible"),
-                ("PI_DETERMINISTIC_API_STYLE", "openai_completions"),
+                ("KODE_DETERMINISTIC_PROVIDER_HINT", "openai_compatible"),
+                ("KODE_DETERMINISTIC_API_STYLE", "openai_completions"),
             ],
         },
     ]
@@ -5432,10 +5432,10 @@ fn conformance_extension_journeys() {
 // development.
 //
 // Environment variables:
-//   PI_HEALTH_BASELINE_PATH  — override baseline file (default: auto-detected)
-//   PI_HEALTH_UPDATE_BASELINE — "true" to write a per-extension snapshot for
+//   KODE_HEALTH_BASELINE_PATH  — override baseline file (default: auto-detected)
+//   KODE_HEALTH_UPDATE_BASELINE — "true" to write a per-extension snapshot for
 //                               future comparisons (default: false)
-//   PI_HEALTH_FAIL_ON_REGRESSION — "true" to fail the test on regressions
+//   KODE_HEALTH_FAIL_ON_REGRESSION — "true" to fail the test on regressions
 //                                  (default: false)
 //
 // Run:
@@ -5531,7 +5531,7 @@ fn conformance_health_delta() {
     let _ = std::fs::create_dir_all(&report_dir);
 
     // ── Load baseline ──
-    let baseline_path = std::env::var("PI_HEALTH_BASELINE_PATH").ok().map_or_else(
+    let baseline_path = std::env::var("KODE_HEALTH_BASELINE_PATH").ok().map_or_else(
         || {
             Path::new(env!("CARGO_MANIFEST_DIR"))
                 .join("tests")
@@ -5543,9 +5543,9 @@ fn conformance_health_delta() {
     );
 
     let fail_on_regression =
-        std::env::var("PI_HEALTH_FAIL_ON_REGRESSION").is_ok_and(|v| v == "true" || v == "1");
+        std::env::var("KODE_HEALTH_FAIL_ON_REGRESSION").is_ok_and(|v| v == "true" || v == "1");
     let update_baseline =
-        std::env::var("PI_HEALTH_UPDATE_BASELINE").is_ok_and(|v| v == "true" || v == "1");
+        std::env::var("KODE_HEALTH_UPDATE_BASELINE").is_ok_and(|v| v == "true" || v == "1");
 
     let baseline_json: serde_json::Value = if baseline_path.exists() {
         let data = std::fs::read_to_string(&baseline_path).expect("Failed to read baseline");

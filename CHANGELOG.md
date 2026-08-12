@@ -101,7 +101,7 @@ Repository: <https://github.com/Dicklesworthstone/koompi_code_cli>
   validate the committed entry-point scan in place and keep auxiliary scan
   results in memory, so an ignored generated file cannot contaminate the
   fail-closed must-pass source snapshot. Maintainers can regenerate scan
-  artifacts explicitly with `PI_GENERATE_EXT_ENTRY_SCAN=1`.
+  artifacts explicitly with `KODE_GENERATE_EXT_ENTRY_SCAN=1`.
 - **Release builds no longer compile duplicate process-inspection stacks** —
   the direct `sysinfo` dependency now matches the version already used by the
   runtime. This preserves process-tree behavior while reducing binary-size
@@ -207,7 +207,7 @@ Repository: <https://github.com/Dicklesworthstone/koompi_code_cli>
   status in the interactive TUI instead of returning "Unknown command". Lists
   any MCP servers an installed extension has registered and clarifies that Pi
   does not read standalone MCP config files (`.agents/mcp.json`,
-  `.pi/mcp.json`, `~/.pi/agent/mcp.json`). Fixes
+  `.kode/mcp.json`, `~/.kode/agent/mcp.json`). Fixes
   [#112](https://github.com/Dicklesworthstone/koompi_code_cli/issues/112).
 
 ### Bug Fixes
@@ -404,7 +404,7 @@ tags never reached crates.io because the Publish workflow was missing the
 ### Features
 
 - **Configurable tool-iteration cap** — added `--max-tool-iterations <N>` CLI
-  flag and `PI_MAX_TOOL_ITERATIONS` env var. Both override the historical
+  flag and `KODE_MAX_TOOL_ITERATIONS` env var. Both override the historical
   hardcoded default of 50. Clamped to `[1, 1000]`; invalid or zero values
   fall back to 50 with a warning. Without this, long multi-step agentic
   tasks (multi-file refactors, multi-phase spec implementations) were
@@ -526,7 +526,7 @@ tags never reached crates.io because the Publish workflow was missing the
 ### Features
 
 - **User-overridable model list** — Drop a JSON file at
-  `<config_dir>/pi/models-override.json` (or set `PI_MODELS_OVERRIDE` to point
+  `<config_dir>/pi/models-override.json` (or set `KODE_MODELS_OVERRIDE` to point
   pi at a path elsewhere) to extend the bundled model snapshot at runtime. The
   override file uses the same shape as the bundled snapshot:
 

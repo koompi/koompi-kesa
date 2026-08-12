@@ -14,7 +14,7 @@
 - JSONL marker: file `mtime` + `size` (filesystem metadata)
 
 ## Concurrency
-- Lock file path: `~/.pi/agent/session-index.lock`
+- Lock file path: `~/.kode/agent/session-index.lock`
 - Busy timeout: 5 seconds (SQLite busy timeout)
 
 ## Failure Handling

@@ -40,20 +40,20 @@ pi install npm:@aliou/pi-guardrails
 
 All hooks use structural shell parsing via `@aliou/sh` to avoid false positives from keywords inside commit messages, grep patterns, heredocs, or file paths. On parse failure, each hook falls back to regex matching (previous behavior).
 
-> **Migration note**: The `preventBrew`, `preventPython`, `enforcePackageManager`, and `packageManager` fields have been removed from guardrails and moved to the [`@aliou/pi-toolchain`](../toolchain) extension. Old configs containing these fields are auto-cleaned on first load with a one-time warning. Install `@aliou/pi-toolchain` and configure `.pi/extensions/toolchain.json` instead.
+> **Migration note**: The `preventBrew`, `preventPython`, `enforcePackageManager`, and `packageManager` fields have been removed from guardrails and moved to the [`@aliou/pi-toolchain`](../toolchain) extension. Old configs containing these fields are auto-cleaned on first load with a one-time warning. Install `@aliou/pi-toolchain` and configure `.kode/extensions/toolchain.json` instead.
 
 ## Configuration
 
 Configuration is loaded from two optional JSON files, merged in order (project overrides global):
 
-- **Global**: `~/.pi/agent/extensions/guardrails.json`
-- **Project**: `.pi/extensions/guardrails.json`
+- **Global**: `~/.kode/agent/extensions/guardrails.json`
+- **Project**: `.kode/extensions/guardrails.json`
 
 ### Settings Command
 
 Run `/guardrails:settings` to open an interactive settings UI with two tabs:
-- **Local**: edit project-scoped config (`.pi/extensions/guardrails.json`)
-- **Global**: edit global config (`~/.pi/agent/extensions/guardrails.json`)
+- **Local**: edit project-scoped config (`.kode/extensions/guardrails.json`)
+- **Global**: edit global config (`~/.kode/agent/extensions/guardrails.json`)
 
 Use `Tab` / `Shift+Tab` to switch tabs. Boolean settings can be toggled directly.
 

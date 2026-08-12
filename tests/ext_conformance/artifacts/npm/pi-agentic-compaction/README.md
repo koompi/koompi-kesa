@@ -8,7 +8,7 @@ A [pi](https://github.com/badlogic/pi-mono) extension that provides conversation
 pi install npm:pi-agentic-compaction
 ```
 
-Or add to your `~/.pi/agent/settings.json`:
+Or add to your `~/.kode/agent/settings.json`:
 
 ```json
 {

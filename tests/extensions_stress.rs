@@ -1627,7 +1627,7 @@ const fn profile_rotation_latency_within_budget(
 }
 
 fn profile_rotation_duration_secs() -> u64 {
-    std::env::var("PI_STRESS_PROFILE_ROTATION_SECS")
+    std::env::var("KODE_STRESS_PROFILE_ROTATION_SECS")
         .ok()
         .and_then(|value| value.parse().ok())
         .unwrap_or(PROFILE_ROTATION_DURATION_SECS)

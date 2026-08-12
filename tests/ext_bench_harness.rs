@@ -7,9 +7,9 @@
 //!
 //! ## Modes
 //!
-//! - `PI_BENCH_MODE=pr`      — diverse subset (10 extensions, 10 iterations) for PR CI
-//! - `PI_BENCH_MODE=nightly`  — full corpus (all safe extensions, 50 iterations)
-//! - `PI_BENCH_MODE=custom`   — use `PI_BENCH_MAX` and `PI_BENCH_ITERATIONS`
+//! - `KODE_BENCH_MODE=pr`      — diverse subset (10 extensions, 10 iterations) for PR CI
+//! - `KODE_BENCH_MODE=nightly`  — full corpus (all safe extensions, 50 iterations)
+//! - `KODE_BENCH_MODE=custom`   — use `KODE_BENCH_MAX` and `KODE_BENCH_ITERATIONS`
 //!
 //! ## PR Subset Selection Policy (bd-2mb1)
 //!
@@ -19,7 +19,7 @@
 //! - 2 npm extensions (1 with commands, 1 with events)
 //! - Remaining slots filled from safe pool in manifest order
 //!
-//! Per-extension timeout: `PI_BENCH_TIMEOUT_SECS` (default 30s) aborts slow extensions.
+//! Per-extension timeout: `KODE_BENCH_TIMEOUT_SECS` (default 30s) aborts slow extensions.
 //!
 //! ## Scenarios
 //!
@@ -38,10 +38,10 @@
 //!
 //! ```bash
 //! # PR mode (quick)
-//! PI_BENCH_MODE=pr cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
+//! KODE_BENCH_MODE=pr cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 //!
 //! # Nightly mode (full)
-//! PI_BENCH_MODE=nightly cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
+//! KODE_BENCH_MODE=nightly cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 //! ```
 
 mod common;
@@ -70,7 +70,7 @@ enum BenchMode {
 }
 
 fn bench_mode() -> BenchMode {
-    match std::env::var("PI_BENCH_MODE")
+    match std::env::var("KODE_BENCH_MODE")
         .unwrap_or_else(|_| "pr".to_string())
         .trim()
         .to_ascii_lowercase()
@@ -83,7 +83,7 @@ fn bench_mode() -> BenchMode {
 }
 
 fn max_extensions() -> usize {
-    std::env::var("PI_BENCH_MAX")
+    std::env::var("KODE_BENCH_MAX")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or_else(|| match bench_mode() {
@@ -94,7 +94,7 @@ fn max_extensions() -> usize {
 }
 
 fn iterations() -> usize {
-    std::env::var("PI_BENCH_ITERATIONS")
+    std::env::var("KODE_BENCH_ITERATIONS")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or_else(|| match bench_mode() {
@@ -105,7 +105,7 @@ fn iterations() -> usize {
 }
 
 fn event_dispatch_count() -> usize {
-    std::env::var("PI_BENCH_EVENT_COUNT")
+    std::env::var("KODE_BENCH_EVENT_COUNT")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or_else(|| match bench_mode() {
@@ -117,7 +117,7 @@ fn event_dispatch_count() -> usize {
 
 /// Per-extension timeout: if a single extension's benchmark exceeds this, skip it.
 fn per_extension_timeout() -> Duration {
-    let secs: u64 = std::env::var("PI_BENCH_TIMEOUT_SECS")
+    let secs: u64 = std::env::var("KODE_BENCH_TIMEOUT_SECS")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(30);

@@ -76,11 +76,11 @@ fn test_session_error_constructor() {
 #[test]
 fn test_session_not_found_variant() {
     let err = Error::SessionNotFound {
-        path: "/home/user/.pi/sessions/test.jsonl".to_string(),
+        path: "/home/user/.kode/sessions/test.jsonl".to_string(),
     };
 
     assert_display_contains(&err, "Session not found");
-    assert_display_contains(&err, "/home/user/.pi/sessions/test.jsonl");
+    assert_display_contains(&err, "/home/user/.kode/sessions/test.jsonl");
 }
 
 #[test]
@@ -460,9 +460,9 @@ fn test_tool_error_preserves_tool_name() {
 #[test]
 fn test_session_not_found_preserves_path() {
     let paths = [
-        "/home/user/.pi/sessions/test.jsonl",
+        "/home/user/.kode/sessions/test.jsonl",
         "./relative/path.jsonl",
-        "~/.pi/sessions/session.jsonl",
+        "~/.kode/sessions/session.jsonl",
     ];
 
     for path in paths {
@@ -555,10 +555,10 @@ fn hints_config_serde_keyword() {
 
 #[test]
 fn hints_config_missing_file() {
-    let err = Error::config("config file not found at /home/user/.pi/settings");
+    let err = Error::config("config file not found at /home/user/.kode/settings");
     let h = err.hints();
     assert_summary_contains(&h, "missing");
-    assert_any_hint_contains(&h, "PI_CONFIG_PATH");
+    assert_any_hint_contains(&h, "KODE_CONFIG_PATH");
 }
 
 #[test]
@@ -619,7 +619,7 @@ fn hints_session_fallback() {
 #[test]
 fn hints_session_not_found() {
     let err = Error::SessionNotFound {
-        path: "/home/user/.pi/sessions/abc.jsonl".to_string(),
+        path: "/home/user/.kode/sessions/abc.jsonl".to_string(),
     };
     let h = err.hints();
     assert_summary_contains(&h, "not found");
