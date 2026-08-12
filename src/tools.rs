@@ -5782,10 +5782,9 @@ pub(crate) async fn run_bash_command(
 
     let cmd = command_with_default_sigpipe_in_dir(shell, cwd)
         .map_err(|e| Error::tool("bash", format!("Failed to prepare shell: {e}")))?;
-    // Wrapping here, before the shell's own `-c <command>` is appended, keeps
-    // the SIGPIPE trampoline innermost: the sandbox trampoline execs away
-    // before `trap - PIPE` runs, so the command still starts with SIGPIPE at
-    // the platform default.
+    // Wrap before the shell's own `-c <command>` is appended, so the chain is
+    // landlock -> `trap - PIPE` -> the command. Wrapping later would put the
+    // sandbox trampoline between the reset and the command it protects.
     let mut cmd =
         crate::sandbox::wrap_command(cmd, cwd).map_err(|e| Error::tool("bash", e.to_string()))?;
     cmd.arg("-c")
