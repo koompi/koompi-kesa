@@ -2762,6 +2762,7 @@ fn enforce_cwd_scope(path: &Path, cwd: &Path, action: &str) -> Result<PathBuf> {
 
 struct ScopedScanRoot {
     logical_path: PathBuf,
+    is_dir: bool,
     #[cfg(unix)]
     handle: std::fs::File,
     #[cfg(windows)]
@@ -2773,6 +2774,10 @@ impl ScopedScanRoot {
         &self.logical_path
     }
 
+    fn is_dir(&self) -> bool {
+        self.is_dir
+    }
+
     #[cfg(unix)]
     fn io_path(&self) -> PathBuf {
         use std::os::fd::AsRawFd as _;
@@ -2782,7 +2787,9 @@ impl ScopedScanRoot {
         let prefix = "/proc/self/fd";
         #[cfg(not(any(target_os = "linux", target_os = "android")))]
         let prefix = "/dev/fd";
-        PathBuf::from(prefix).join(descriptor.to_string()).join(".")
+        let path = PathBuf::from(prefix).join(descriptor.to_string());
+        // trailing `.` pins the open dir; on a file fd it is ENOTDIR
+        if self.is_dir { path.join(".") } else { path }
     }
 
     #[cfg(windows)]
@@ -2817,6 +2824,35 @@ impl ScopedScanRoot {
         self.logical_path.clone()
     }
 
+    /// Operand a scanner child uses to reach this root once the handle is its
+    /// stdin. A directory root is reached by `chdir`, so it is just `.`; a file
+    /// root cannot be a cwd and is named through the inherited descriptor.
+    #[cfg(unix)]
+    fn scan_operand(&self) -> PathBuf {
+        if self.is_dir {
+            return self.child_operand();
+        }
+        #[cfg(any(target_os = "linux", target_os = "android"))]
+        let path = "/proc/self/fd/0";
+        #[cfg(not(any(target_os = "linux", target_os = "android")))]
+        let path = "/dev/fd/0";
+        PathBuf::from(path)
+    }
+
+    #[cfg(windows)]
+    fn scan_operand(&self) -> PathBuf {
+        if self.is_dir {
+            self.child_operand()
+        } else {
+            self.logical_path.clone()
+        }
+    }
+
+    #[cfg(unix)]
+    fn pinned_reader(&self) -> std::io::Result<std::fs::File> {
+        self.handle.try_clone()
+    }
+
     #[cfg(unix)]
     fn child_stdin(&self) -> std::io::Result<Stdio> {
         Ok(Stdio::from(self.handle.try_clone()?))
@@ -2828,6 +2864,16 @@ impl ScopedScanRoot {
     }
 
     fn map_child_output(&self, child_path: &Path) -> std::io::Result<ScopedScanOutputPath> {
+        if !self.is_dir {
+            // a file root is the only result it can produce, whatever the
+            // scanner called it
+            return Ok(ScopedScanOutputPath {
+                read_path: self.io_path(),
+                logical_path: self.logical_path.clone(),
+                relative: PathBuf::new(),
+            });
+        }
+
         #[cfg(unix)]
         let relative = if child_path.is_absolute() {
             child_path
@@ -2965,6 +3011,7 @@ where
     after_open();
     Ok(ScopedScanRoot {
         logical_path: canonical_path,
+        is_dir: opened.is_dir(),
         handle,
     })
 }
@@ -3000,6 +3047,7 @@ where
     let components = canonical_path.components().collect::<Vec<_>>();
     let mut current = PathBuf::new();
     let mut guards = Vec::new();
+    let mut root_is_dir = true;
     for (index, component) in components.iter().enumerate() {
         match component {
             Component::Prefix(prefix) => {
@@ -3050,6 +3098,9 @@ where
                 "scan path component changed while it was being pinned",
             ));
         }
+        if is_final {
+            root_is_dir = opened.is_dir();
+        }
         guards.push(handle);
     }
     if guards.is_empty() {
@@ -3061,6 +3112,7 @@ where
     after_open();
     Ok(ScopedScanRoot {
         logical_path: canonical_path,
+        is_dir: root_is_dir,
         _component_guards: guards,
     })
 }
@@ -7834,7 +7886,7 @@ impl Tool for GrepTool {
 
         args.push(OsString::from("--"));
         args.push(OsString::from(&input.pattern));
-        args.push(scoped_root.child_operand().into_os_string());
+        args.push(scoped_root.scan_operand().into_os_string());
 
         let rg_cmd = find_rg_binary().ok_or_else(|| {
             Error::tool(
@@ -7843,7 +7895,15 @@ impl Tool for GrepTool {
             )
         })?;
 
-        let mut child = command_with_default_sigpipe_in_dir(rg_cmd, &scan_io_path)
+        // A file root cannot be a cwd, so the child sits in the pinned
+        // workspace and reaches the file through its own stdin descriptor.
+        let (child_cwd, pinned_stdin) = if scoped_root.is_dir() {
+            (scan_io_path.clone(), cwd_scope.child_stdin())
+        } else {
+            (cwd_scope.io_path(), scoped_root.child_stdin())
+        };
+
+        let mut child = command_with_default_sigpipe_in_dir(rg_cmd, &child_cwd)
             .map_err(|e| {
                 Error::tool(
                     "grep",
@@ -7851,8 +7911,8 @@ impl Tool for GrepTool {
                 )
             })?
             .args(args)
-            .current_dir(&scan_io_path)
-            .stdin(cwd_scope.child_stdin().map_err(|error| {
+            .current_dir(&child_cwd)
+            .stdin(pinned_stdin.map_err(|error| {
                 Error::tool(
                     "grep",
                     format!(
@@ -8089,6 +8149,13 @@ impl Tool for GrepTool {
                 .remove(&file_path)
                 .ok_or_else(|| Error::tool("grep", "missing logical scanner result path"))?;
             let relative_path = format_grep_path(&logical_path, cwd_scope.logical_path());
+            #[cfg(unix)]
+            let lines = if scoped_root.is_dir() {
+                get_file_lines_async(&file_path, &operation_cwd).await
+            } else {
+                get_scan_root_file_lines_async(&scoped_root).await
+            };
+            #[cfg(not(unix))]
             let lines = get_file_lines_async(&file_path, &operation_cwd).await;
 
             if lines.is_empty() {
@@ -9967,7 +10034,74 @@ async fn get_file_lines_async(path: &Path, cwd: &Path) -> Vec<String> {
             return Vec::new();
         }
     };
-    let content = String::from_utf8_lossy(&bytes);
+    grep_lines_from_bytes(&bytes, path)
+}
+
+/// Read a file-shaped scan root through its pinned descriptor. The descriptor
+/// path is a symlink and the scoped opener refuses to follow a terminal link,
+/// so a file root cannot go through [`get_file_lines_async`].
+#[cfg(unix)]
+async fn get_scan_root_file_lines_async(root: &ScopedScanRoot) -> Vec<String> {
+    let handle = match root.pinned_reader() {
+        Ok(handle) => handle,
+        Err(err) => {
+            tracing::debug!(
+                "Failed to clone pinned grep root {}: {}",
+                path_for_line_output(root.logical_path()),
+                error_for_line_output(&err)
+            );
+            return Vec::new();
+        }
+    };
+    let bytes = match asupersync::runtime::spawn_blocking_io(move || {
+        read_pinned_file_capped_sync(handle, GREP_CONTEXT_MAX_FILE_BYTES)
+    })
+    .await
+    {
+        Ok(bytes) => bytes,
+        Err(err) => {
+            tracing::debug!(
+                "Failed to read pinned grep root {}: {}",
+                path_for_line_output(root.logical_path()),
+                error_for_line_output(&err)
+            );
+            return Vec::new();
+        }
+    };
+    grep_lines_from_bytes(&bytes, root.logical_path())
+}
+
+#[cfg(unix)]
+fn read_pinned_file_capped_sync(
+    mut file: std::fs::File,
+    max_bytes: u64,
+) -> std::io::Result<Vec<u8>> {
+    use std::io::Seek as _;
+
+    // try_clone shares the offset with the pinned handle
+    file.seek(std::io::SeekFrom::Start(0))?;
+    let metadata = file.metadata()?;
+    if !metadata.is_file() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "pinned scan root is not a regular file",
+        ));
+    }
+    let mut contents = Vec::new();
+    (&mut file)
+        .take(max_bytes.saturating_add(1))
+        .read_to_end(&mut contents)?;
+    if u64::try_from(contents.len()).unwrap_or(u64::MAX) > max_bytes {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("pinned scan root exceeds {max_bytes} bytes"),
+        ));
+    }
+    Ok(contents)
+}
+
+fn grep_lines_from_bytes(bytes: &[u8], path: &Path) -> Vec<String> {
+    let content = String::from_utf8_lossy(bytes);
     let mut lines = Vec::new();
     for line in content.split('\n') {
         let trimmed = line.strip_suffix('\r').unwrap_or(line);
