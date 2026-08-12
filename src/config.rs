@@ -149,6 +149,9 @@ pub struct Config {
     // Runtime Risk Controller
     #[serde(alias = "extensionRisk")]
     pub extension_risk: Option<ExtensionRiskConfig>,
+
+    // Tool Permissions
+    pub permissions: Option<PermissionsConfig>,
 }
 
 /// Extension capability policy configuration.
@@ -178,6 +181,33 @@ pub struct ExtensionPolicyConfig {
     /// Allow dangerous capabilities (exec, env). Overrides profile's deny list.
     #[serde(alias = "allowDangerous")]
     pub allow_dangerous: Option<bool>,
+}
+
+/// Tool permission rules and starting mode.
+///
+/// Rules are `ToolName(pattern)` or bare `ToolName`; see [`crate::tool_policy`].
+///
+/// ```json
+/// {
+///   "permissions": {
+///     "mode": "default",
+///     "deny": ["Bash(rm:*)"],
+///     "allow": ["Bash(git commit:*)", "Read(src/**)"],
+///     "ask": ["Write"]
+///   }
+/// }
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PermissionsConfig {
+    /// Starting permission mode: "default", "accept-edits", "plan", "read-only".
+    pub mode: Option<crate::tool_policy::PermissionMode>,
+    /// Rules that refuse a call outright. Highest precedence.
+    pub deny: Option<Vec<String>>,
+    /// Rules that run a call without prompting.
+    pub allow: Option<Vec<String>>,
+    /// Rules that force a prompt even when the mode would auto-allow.
+    pub ask: Option<Vec<String>>,
 }
 
 /// Repair policy configuration.
@@ -573,6 +603,9 @@ impl Config {
 
             // Runtime Risk Controller
             extension_risk: merge_extension_risk(base.extension_risk, other.extension_risk),
+
+            // Tool Permissions
+            permissions: merge_permissions(base.permissions, other.permissions),
         }
     }
 
@@ -1232,6 +1265,41 @@ fn merge_extension_policy(
         (None, Some(other)) => Some(other),
         (Some(base), None) => Some(base),
         (None, None) => None,
+    }
+}
+
+/// Concatenates rule lists instead of overriding: a project settings file that
+/// lists an allow rule must not drop the global file's deny rules.
+fn merge_permissions(
+    base: Option<PermissionsConfig>,
+    other: Option<PermissionsConfig>,
+) -> Option<PermissionsConfig> {
+    match (base, other) {
+        (Some(base), Some(other)) => Some(PermissionsConfig {
+            mode: other.mode.or(base.mode),
+            deny: merge_rule_list(base.deny, other.deny),
+            allow: merge_rule_list(base.allow, other.allow),
+            ask: merge_rule_list(base.ask, other.ask),
+        }),
+        (None, Some(other)) => Some(other),
+        (Some(base), None) => Some(base),
+        (None, None) => None,
+    }
+}
+
+fn merge_rule_list(base: Option<Vec<String>>, other: Option<Vec<String>>) -> Option<Vec<String>> {
+    match (base, other) {
+        (Some(base), Some(other)) => {
+            let mut merged = base;
+            for rule in other {
+                if !merged.contains(&rule) {
+                    merged.push(rule);
+                }
+            }
+            Some(merged)
+        }
+        (None, other) => other,
+        (base, None) => base,
     }
 }
 
@@ -2213,7 +2281,10 @@ mod tests {
                 }
             }"#,
         );
-        write_file(&cwd.join(".kode/settings.json"), r#"{ "extensionRisk": {} }"#);
+        write_file(
+            &cwd.join(".kode/settings.json"),
+            r#"{ "extensionRisk": {} }"#,
+        );
 
         let config = Config::load_with_roots(None, &global_dir, &cwd).expect("load");
         let risk = config.extension_risk.expect("merged extension risk");
