@@ -62,6 +62,18 @@ pub(super) fn normalize_raw_terminal_newlines(input: String) -> String {
     out
 }
 
+pub(super) fn progress_suffix(elapsed: Option<std::time::Duration>, tokens: u64) -> String {
+    let mut parts = Vec::new();
+    if let Some(elapsed) = elapsed {
+        parts.push(format!("{}s", elapsed.as_secs()));
+    }
+    if tokens > 0 {
+        parts.push(format!("{} tokens", format_count(tokens as usize)));
+    }
+    parts.push("esc to interrupt".to_string());
+    format!("({})", parts.join(" \u{00b7} "))
+}
+
 /// Append one plain-text line with hard wrapping to `max_width` display cells.
 ///
 /// We do explicit wrapping here instead of relying on terminal auto-wrap so the
@@ -569,9 +581,10 @@ impl PiApp {
                 // we have visible streaming deltas.
                 let _ = write!(
                     output,
-                    "\n  {} {}\n",
+                    "\n  {} {} {}\n",
                     self.spinner.view(),
-                    self.styles.accent.render("Processing...")
+                    self.styles.accent.render("Working"),
+                    self.styles.muted.render(&self.render_progress_suffix()),
                 );
             }
 
@@ -669,6 +682,13 @@ impl PiApp {
         let mut buf = String::new();
         self.render_header_into(&mut buf);
         buf
+    }
+
+    fn render_progress_suffix(&self) -> String {
+        progress_suffix(
+            self.busy_since.map(|started| started.elapsed()),
+            self.total_usage.input + self.total_usage.output,
+        )
     }
 
     pub(super) fn render_input(&self) -> String {
@@ -1716,6 +1736,17 @@ impl PiApp {
 mod tests {
     use super::*;
     use crate::session::{AutosaveDurabilityMode, AutosaveQueueMetrics};
+
+    #[test]
+    fn progress_suffix_shows_elapsed_tokens_and_interrupt_hint() {
+        let suffix = progress_suffix(Some(std::time::Duration::from_secs(12)), 3_400);
+        assert_eq!(suffix, "(12s \u{00b7} 3.4K tokens \u{00b7} esc to interrupt)");
+    }
+
+    #[test]
+    fn progress_suffix_omits_missing_elapsed_and_zero_tokens() {
+        assert_eq!(progress_suffix(None, 0), "(esc to interrupt)");
+    }
 
     #[test]
     fn normalize_raw_terminal_newlines_inserts_crlf() {

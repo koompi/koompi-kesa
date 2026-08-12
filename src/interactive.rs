@@ -2358,6 +2358,7 @@ pub struct PiApp {
     last_ctrlc_time: Option<std::time::Instant>,
     // Track last Escape time for double-tap tree/fork
     last_escape_time: Option<std::time::Instant>,
+    busy_since: Option<std::time::Instant>,
 
     // Autocomplete state
     autocomplete: AutocompleteState,
@@ -2662,6 +2663,7 @@ impl PiApp {
             keybindings,
             last_ctrlc_time: None,
             last_escape_time: None,
+            busy_since: None,
             autocomplete,
             session_picker: None,
             settings_ui: None,
@@ -2858,6 +2860,11 @@ impl PiApp {
         let result = self.update_inner(msg);
         let became_busy = !was_busy && !matches!(self.agent_state, AgentState::Idle);
         let spinner_became_visible = !was_spinner_visible && self.spinner_visible();
+        if became_busy {
+            self.busy_since = Some(std::time::Instant::now());
+        } else if matches!(self.agent_state, AgentState::Idle) {
+            self.busy_since = None;
+        }
         let result = if became_busy || spinner_became_visible {
             batch(vec![result, self.spinner_init_cmd()])
         } else {
