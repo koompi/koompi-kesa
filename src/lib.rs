@@ -234,6 +234,8 @@ pub mod terminal_images;
 #[doc(hidden)]
 pub mod theme;
 #[doc(hidden)]
+pub mod tool_policy;
+#[doc(hidden)]
 pub mod tools;
 #[doc(hidden)]
 pub mod tui;
