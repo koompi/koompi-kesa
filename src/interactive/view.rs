@@ -1,6 +1,12 @@
 use super::*;
 use unicode_width::UnicodeWidthChar;
 
+/// Transcript gutter glyphs. One column each, so every speaker's text starts in
+/// the same place and the transcript reads as a single column.
+const USER_PROMPT_GLYPH: &str = "\u{203a}";
+const ASSISTANT_GLYPH: &str = "\u{25cf}";
+const TOOL_RESULT_GLYPH: &str = "\u{23bf}";
+
 /// Ensure the view output fits within `term_height` terminal rows.
 ///
 /// The output must contain at most `term_height - 1` newline characters so
@@ -825,19 +831,17 @@ impl PiApp {
         let mut output = String::new();
         match msg.role {
             MessageRole::User => {
-                let _ = write!(
-                    output,
-                    "\n  {} {}\n",
-                    self.styles.accent_bold.render("You:"),
-                    msg.content
-                );
+                let _ = writeln!(output);
+                for line in msg.content.lines() {
+                    let _ = writeln!(
+                        output,
+                        "  {} {line}",
+                        self.styles.accent_bold.render(USER_PROMPT_GLYPH)
+                    );
+                }
             }
             MessageRole::Assistant => {
-                let _ = write!(
-                    output,
-                    "\n  {}\n",
-                    self.styles.success_bold.render("Assistant:")
-                );
+                let _ = writeln!(output);
 
                 // Render thinking if present
                 if self.thinking_visible
@@ -858,8 +862,13 @@ impl PiApp {
                     .with_style_config(self.markdown_style.clone())
                     .with_word_wrap(self.term_width.saturating_sub(6).max(40))
                     .render(&msg.content);
-                for line in rendered.lines() {
-                    let _ = writeln!(output, "  {line}");
+                let bullet = self.styles.success_bold.render(ASSISTANT_GLYPH);
+                for (idx, line) in rendered.lines().enumerate() {
+                    if idx == 0 {
+                        let _ = writeln!(output, "  {bullet} {line}");
+                    } else {
+                        let _ = writeln!(output, "    {line}");
+                    }
                 }
             }
             MessageRole::Tool => {
@@ -867,12 +876,20 @@ impl PiApp {
                 let show_expanded = self.tools_expanded && !msg.collapsed;
                 if show_expanded {
                     let rendered = render_tool_message(&msg.content, &self.styles);
-                    let _ = write!(output, "\n  {rendered}\n");
+                    let gutter = self.styles.muted.render(TOOL_RESULT_GLYPH);
+                    let _ = writeln!(output);
+                    for (idx, line) in rendered.lines().enumerate() {
+                        if idx == 0 {
+                            let _ = writeln!(output, "  {gutter} {line}");
+                        } else {
+                            let _ = writeln!(output, "    {line}");
+                        }
+                    }
                 } else {
                     let header = msg.content.lines().next().unwrap_or("Tool output");
                     let line_count = memchr::memchr_iter(b'\n', msg.content.as_bytes()).count() + 1;
                     let summary = format!(
-                        "\u{25b6} {} ({line_count} lines, collapsed)",
+                        "{TOOL_RESULT_GLYPH} {} (+{line_count} lines, ctrl+o to expand)",
                         header.trim_end()
                     );
                     let _ = write!(

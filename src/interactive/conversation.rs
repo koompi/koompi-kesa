@@ -50,7 +50,10 @@ pub(super) fn content_blocks_to_text(blocks: &[ContentBlock]) -> String {
                 push_line(&mut output, &thinking_block.thinking);
             }
             ContentBlock::ToolCall(call) => {
-                push_line(&mut output, &format!("[tool call: {}]", call.name));
+                push_line(
+                    &mut output,
+                    &super::tool_render::format_tool_call_header(&call.name, &call.arguments),
+                );
             }
             // Opaque safety-redacted reasoning has no surfaceable text.
             ContentBlock::RedactedThinking(_) => {}
@@ -108,7 +111,10 @@ pub(super) fn tool_content_blocks_to_text(blocks: &[ContentBlock], show_images: 
                 push_line(&mut output, &thinking_block.thinking);
             }
             ContentBlock::ToolCall(call) => {
-                push_line(&mut output, &format!("[tool call: {}]", call.name));
+                push_line(
+                    &mut output,
+                    &super::tool_render::format_tool_call_header(&call.name, &call.arguments),
+                );
             }
             ContentBlock::RedactedThinking(_) => {}
         }
@@ -429,7 +435,19 @@ mod tests {
             thought_signature: None,
         })];
         let result = tool_content_blocks_to_text(&blocks, true);
-        assert!(result.contains("[tool call: read]"));
+        assert!(result.contains("Read"), "result: {result}");
+    }
+
+    #[test]
+    fn tool_content_tool_call_shows_its_subject() {
+        let blocks = vec![ContentBlock::ToolCall(ToolCall {
+            id: "tc_1".to_string(),
+            name: "read".to_string(),
+            arguments: serde_json::json!({"path": "src/main.rs"}),
+            thought_signature: None,
+        })];
+        let result = tool_content_blocks_to_text(&blocks, true);
+        assert!(result.contains("Read(src/main.rs)"), "result: {result}");
     }
 
     // ── add_usage ───────────────────────────────────────────────────────

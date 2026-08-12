@@ -35,6 +35,64 @@ pub(super) fn format_tool_output(
     }
 }
 
+/// Width budget for the argument shown beside a tool name in the call header.
+const TOOL_ARG_MAX_WIDTH: usize = 60;
+
+/// Render a tool invocation the way the transcript shows it: `Read(src/main.rs)`.
+///
+/// Falls back to the bare tool name when no argument reads as the subject of the
+/// call, which keeps unknown and extension-provided tools legible.
+pub(super) fn format_tool_call_header(name: &str, arguments: &Value) -> String {
+    let display = display_tool_name(name);
+    match tool_primary_arg(name, arguments) {
+        Some(arg) => format!("{display}({})", truncate_arg(&arg)),
+        None => display,
+    }
+}
+
+fn display_tool_name(name: &str) -> String {
+    match name {
+        "ls" => "List".to_string(),
+        "hashline_edit" => "Edit".to_string(),
+        _ => {
+            let mut chars = name.chars();
+            match chars.next() {
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                None => String::new(),
+            }
+        }
+    }
+}
+
+fn tool_primary_arg(name: &str, arguments: &Value) -> Option<String> {
+    let keys: &[&str] = match name {
+        "bash" => &["command"],
+        "read" | "write" | "edit" | "hashline_edit" | "ls" => &["path", "file_path"],
+        "grep" => &["pattern", "query"],
+        "find" => &["pattern", "glob", "name"],
+        "subagent" => &["agent", "name", "prompt"],
+        _ => &["path", "file_path", "command", "pattern", "query", "name"],
+    };
+    keys.iter()
+        .find_map(|key| arguments.get(*key).and_then(Value::as_str))
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToString::to_string)
+}
+
+/// Collapse an argument onto one line and cap its width.
+fn truncate_arg(arg: &str) -> String {
+    let mut flat = arg.split_whitespace().collect::<Vec<_>>().join(" ");
+    if flat.chars().count() > TOOL_ARG_MAX_WIDTH {
+        flat = flat
+            .chars()
+            .take(TOOL_ARG_MAX_WIDTH.saturating_sub(1))
+            .collect::<String>();
+        flat.push('…');
+    }
+    flat
+}
+
 /// Maximum number of diff lines to show before truncating.
 const DIFF_TRUNCATE_THRESHOLD: usize = 50;
 /// Lines to show at the beginning of a truncated diff.
@@ -291,6 +349,45 @@ mod tests {
         let (prefix, content) = split_diff_prefix("  5 unchanged");
         assert_eq!(prefix, "  5 ");
         assert_eq!(content, "unchanged");
+    }
+
+    // ── format_tool_call_header ─────────────────────────────────────────
+
+    #[test]
+    fn tool_call_header_uses_primary_arg_per_tool() {
+        let cases = [
+            ("read", serde_json::json!({"path": "src/main.rs"}), "Read(src/main.rs)"),
+            ("bash", serde_json::json!({"command": "cargo test"}), "Bash(cargo test)"),
+            ("grep", serde_json::json!({"pattern": "TODO"}), "Grep(TODO)"),
+            ("ls", serde_json::json!({"path": "src"}), "List(src)"),
+            ("hashline_edit", serde_json::json!({"path": "a.rs"}), "Edit(a.rs)"),
+        ];
+        for (name, args, expected) in cases {
+            assert_eq!(format_tool_call_header(name, &args), expected);
+        }
+    }
+
+    #[test]
+    fn tool_call_header_falls_back_to_bare_name() {
+        let args = serde_json::json!({"unrecognized": "x"});
+        assert_eq!(format_tool_call_header("bash", &args), "Bash");
+    }
+
+    #[test]
+    fn tool_call_header_flattens_and_truncates_long_commands() {
+        let args = serde_json::json!({"command": format!("echo {}", "x".repeat(120))});
+        let header = format_tool_call_header("bash", &args);
+        assert!(header.ends_with("\u{2026})"), "header: {header}");
+        assert_eq!(header.chars().count(), TOOL_ARG_MAX_WIDTH + "Bash()".len());
+    }
+
+    #[test]
+    fn tool_call_header_collapses_multiline_commands_to_one_line() {
+        let args = serde_json::json!({"command": "cd src\ncargo test"});
+        assert_eq!(
+            format_tool_call_header("bash", &args),
+            "Bash(cd src cargo test)"
+        );
     }
 
     // ── pretty_json ─────────────────────────────────────────────────────
