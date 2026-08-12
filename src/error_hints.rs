@@ -105,7 +105,7 @@ fn session_hints(error: &Error) -> ErrorHint {
         },
         Error::Session(msg) if msg.contains("locked") => ErrorHint {
             summary: "Session file is locked by another process",
-            hints: &["Close other Pi instances using this session"],
+            hints: &["Close other kode instances using this session"],
             context_fields: &["path"],
         },
         _ => ErrorHint {
@@ -160,7 +160,7 @@ fn auth_hints(msg: &str) -> ErrorHint {
     if msg.contains("lock") {
         return ErrorHint {
             summary: "Auth file locked by another process",
-            hints: &["Close other Pi instances that may be using auth.json"],
+            hints: &["Close other kode instances that may be using auth.json"],
             context_fields: &["path"],
         };
     }
@@ -457,7 +457,7 @@ fn sqlite_hints(err: &sqlmodel_core::Error) -> ErrorHint {
     if message.contains("locked") {
         return ErrorHint {
             summary: "Database locked",
-            hints: &["Close other Pi instances using this database"],
+            hints: &["Close other kode instances using this database"],
             context_fields: &["db_path"],
         };
     }

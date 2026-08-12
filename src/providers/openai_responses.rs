@@ -2621,7 +2621,7 @@ mod tests {
         assert_eq!(captured.header_count("authorization"), 1);
         assert_eq!(
             captured.headers.get("user-agent").map(String::as_str),
-            Some("koompi_code_cli")
+            Some("koompi-code-cli")
         );
         assert_eq!(captured.header_count("user-agent"), 1);
         assert_eq!(

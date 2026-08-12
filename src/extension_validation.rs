@@ -289,7 +289,7 @@ fn build_classification_reason(
 ) -> String {
     let mut parts = Vec::new();
     if has_api_import {
-        parts.push("Pi API import found");
+        parts.push("host API import found");
     }
     if has_export_default {
         parts.push("export default present");
@@ -298,7 +298,7 @@ fn build_classification_reason(
         parts.push("registration calls detected");
     }
     if parts.is_empty() {
-        "no Pi extension signals detected".to_string()
+        "no extension signals detected".to_string()
     } else {
         parts.join("; ")
     }
@@ -1134,7 +1134,7 @@ export default (api: ExtensionAPI) => { api.registerCommand({ name: "/test" }); 
                 has_export_default: true,
                 registrations: vec!["registerTool".to_string()],
                 sources: vec!["code_search".to_string()],
-                reason: "Pi API import found; export default present".to_string(),
+                reason: "host API import found; export default present".to_string(),
             },
             aliases: vec!["npm:@scope/repo".to_string()],
             source_tier: Some("community".to_string()),
@@ -1331,7 +1331,7 @@ export default (api: ExtensionAPI) => { api.registerCommand({ name: "/test" }); 
             #[test]
             fn reason_no_signals(_dummy in 0..1u8) {
                 let reason = build_classification_reason(false, false, &[]);
-                assert_eq!(reason, "no Pi extension signals detected");
+                assert_eq!(reason, "no extension signals detected");
             }
 
             /// `build_classification_reason` includes "import" when has_api_import.

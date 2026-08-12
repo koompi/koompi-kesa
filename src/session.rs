@@ -6390,7 +6390,7 @@ pub(crate) fn bash_execution_to_text(
 fn render_session_html(header: &SessionHeader, entries: &[SessionEntry]) -> String {
     let mut html = String::new();
     html.push_str("<!doctype html><html><head><meta charset=\"utf-8\">");
-    html.push_str("<title>Pi Session</title>");
+    html.push_str("<title>KOOMPI Code Session</title>");
     html.push_str("<style>");
     html.push_str(
         "body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px;background:#0b0c10;color:#e6e6e6;}
@@ -6412,7 +6412,7 @@ fn render_session_html(header: &SessionHeader, entries: &[SessionEntry]) -> Stri
 
     let _ = write!(
         html,
-        "<h1>Pi Session</h1><div class=\"meta\">Session {} • {} • cwd: {}</div>",
+        "<h1>KOOMPI Code Session</h1><div class=\"meta\">Session {} • {} • cwd: {}</div>",
         escape_html(&header.id),
         escape_html(&header.timestamp),
         escape_html(&header.cwd)
@@ -16574,7 +16574,7 @@ mod tests {
         let snapshot = session.export_snapshot();
         assert!(snapshot.entries.is_empty());
         let html = snapshot.to_html();
-        assert!(html.contains("Pi Session"));
+        assert!(html.contains("KOOMPI Code Session"));
         assert!(html.contains("</html>"));
     }
 

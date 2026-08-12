@@ -302,7 +302,7 @@ impl DoctorReport {
     /// Render human-friendly text output.
     pub fn render_text(&self) -> String {
         let mut out = String::with_capacity(2048);
-        out.push_str("Pi Doctor\n=========\n");
+        out.push_str("KOOMPI Code Doctor\n==================\n");
 
         // Group findings by category, preserving insertion order
         let mut seen_categories: Vec<CheckCategory> = Vec::new();
@@ -358,7 +358,7 @@ impl DoctorReport {
     /// Render as markdown.
     pub fn render_markdown(&self) -> String {
         let mut out = String::with_capacity(2048);
-        out.push_str("# Pi Doctor Report\n\n");
+        out.push_str("# KOOMPI Code Doctor Report\n\n");
 
         let mut seen_categories: Vec<CheckCategory> = Vec::new();
         for f in &self.findings {
@@ -11059,7 +11059,7 @@ mod tests {
         let report =
             DoctorReport::from_findings(vec![Finding::pass(CheckCategory::Config, "all good")]);
         let text = report.render_text();
-        assert!(text.contains("Pi Doctor"));
+        assert!(text.contains("KOOMPI Code Doctor"));
         assert!(text.contains("[PASS] Configuration"));
         assert!(text.contains("[PASS] all good"));
     }
@@ -11088,7 +11088,7 @@ mod tests {
         let report =
             DoctorReport::from_findings(vec![Finding::warn(CheckCategory::Auth, "expired")]);
         let md = report.render_markdown();
-        assert!(md.contains("# Pi Doctor Report"));
+        assert!(md.contains("# KOOMPI Code Doctor Report"));
         assert!(md.contains("## Authentication"));
     }
 

@@ -24359,7 +24359,19 @@ mod tests {
             bridge.len(),
             sha256_hex(bridge.as_bytes())
         );
-        for name in ["node:fs", "@mariozechner/pi-ai", "node:child_process"] {
+        for name in [
+            "node:fs",
+            "@mariozechner/pi-ai",
+            "node:child_process",
+            "node:stream",
+            "@mariozechner/pi-coding-agent",
+            "@mariozechner/pi-tui",
+            "typebox/compile",
+            "node:module",
+            "jsonwebtoken",
+            "node:net",
+            "node:url",
+        ] {
             let source = modules.get(name).expect("receipt module must exist");
             eprintln!(
                 "PiJS source receipt: {name} len={} sha256={}",
@@ -24367,10 +24379,10 @@ mod tests {
                 sha256_hex(source.as_bytes())
             );
         }
-        assert_eq!(bridge.len(), 193_144);
+        assert_eq!(bridge.len(), 193_288);
         assert_eq!(
             sha256_hex(bridge.as_bytes()),
-            "c3047ae81da821cf2eee265a6adc4a15a1d951268e40daaad8b2e2fa6540a5e8"
+            "0f7b344844433f7d14bb8e558349ab41325cd580e73b43a9dc681e68a9785814"
         );
 
         for (name, expected_len, expected_sha256) in [
@@ -24396,8 +24408,8 @@ mod tests {
             ),
             (
                 "@mariozechner/pi-coding-agent",
-                14_966,
-                "96be2fcee80995ef133943c300289b842e469adb7b5f0c58ce778b7eae09ad4d",
+                14_970,
+                "19715eefcb7cf4199da1db4a5d4bb500a3e3ff1455a6e6f6f81fca1e565dfdf9",
             ),
             (
                 "@mariozechner/pi-tui",

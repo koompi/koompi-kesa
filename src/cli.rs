@@ -270,18 +270,18 @@ pub fn parse_with_extension_flags(raw_args: Vec<String>) -> Result<ParsedCli, cl
     })
 }
 
-/// Pi - AI coding agent CLI
+/// KOOMPI Code - AI coding agent CLI
 #[derive(Parser, Debug)]
 #[allow(clippy::struct_excessive_bools)] // CLI flags are naturally boolean
 #[command(name = "pi")]
 #[command(version, about, long_about = None, disable_version_flag = true)]
 #[command(after_help = "Examples:
-  pi \"explain this code\"              Start new session with message
-  pi @file.rs \"review this\"           Include file in context
-  pi -c                                Continue previous session
-  pi -r                                Resume from session picker
-  pi -p \"what is 2+2\"                 Print mode (non-interactive)
-  pi --model claude-opus-4 \"help\"     Use specific model
+  kode \"explain this code\"            Start new session with message
+  kode @file.rs \"review this\"         Include file in context
+  kode -c                              Continue previous session
+  kode -r                              Resume from session picker
+  kode -p \"what is 2+2\"               Print mode (non-interactive)
+  kode --model claude-opus-4 \"help\"   Use specific model
 ")]
 pub struct Cli {
     // === Help & Version ===
@@ -369,7 +369,7 @@ pub struct Cli {
 
     /// Disable terminal mouse capture in the interactive TUI.
     ///
-    /// Pi normally captures all mouse motion to enable in-app wheel scrolling.
+    /// KOOMPI Code normally captures all mouse motion to enable in-app wheel scrolling.
     /// On Windows / CMD.exe / Windows Terminal that capture blocks the
     /// terminal-native click-to-select / right-click-paste / Shift-Insert
     /// behaviour, making it effectively impossible to copy out the OAuth
@@ -1898,7 +1898,7 @@ pub enum Commands {
     #[command(name = "update-index")]
     UpdateIndex,
 
-    /// Preview the semantic context bundle Pi would use for a task
+    /// Preview the semantic context bundle KOOMPI Code would use for a task
     #[command(name = "context-preview")]
     ContextPreview {
         /// Output format: text (default) or json

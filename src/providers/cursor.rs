@@ -1060,7 +1060,7 @@ mod tests {
     fn build_run_request_round_trips_all_fields() {
         let bytes = build_run_request(
             "claude-4.5-sonnet",
-            Some("You are Pi."),
+            Some("You are KOOMPI Code."),
             "hello cursor",
             "conv-123",
             "msg-456",
@@ -1075,7 +1075,7 @@ mod tests {
         );
         // conversation_id (5) + custom_system_prompt (8)
         assert_eq!(read_string(run_request, 5).as_deref(), Some("conv-123"));
-        assert_eq!(read_string(run_request, 8).as_deref(), Some("You are Pi."));
+        assert_eq!(read_string(run_request, 8).as_deref(), Some("You are KOOMPI Code."));
         // action (2) -> user_message_action (1) -> user_message (1) -> text (1)
         let action = descend(run_request, 2).expect("action");
         let uma = descend(action, 1).expect("user_message_action");
