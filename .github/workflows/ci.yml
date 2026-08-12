@@ -38,8 +38,8 @@ jobs:
           toolchain: nightly-2026-07-05
       - uses: Swatinem/rust-cache@v2
       # Two library tests fail on kernels without the filesystem access these
-      # fixtures assume. They are inherited from upstream and tracked in
-      # tasks/HANDOFF.md; the run gates on a seventeenth name appearing.
+      # fixtures assume. Inherited from upstream, red before the fork existed.
+      # The gate is on a third name appearing, not on green.
       - name: cargo test --lib, gated on the known failures
         run: |
           set -euo pipefail
