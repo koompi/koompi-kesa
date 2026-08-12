@@ -73,7 +73,10 @@ impl kode::extensions::ExtensionSession for BenchSession {
         Ok(())
     }
 
-    async fn append_message(&self, _message: kode::session::SessionMessage) -> kode::error::Result<()> {
+    async fn append_message(
+        &self,
+        _message: kode::session::SessionMessage,
+    ) -> kode::error::Result<()> {
         Ok(())
     }
 
@@ -101,7 +104,11 @@ impl kode::extensions::ExtensionSession for BenchSession {
         None
     }
 
-    async fn set_label(&self, _target_id: String, _label: Option<String>) -> kode::error::Result<()> {
+    async fn set_label(
+        &self,
+        _target_id: String,
+        _label: Option<String>,
+    ) -> kode::error::Result<()> {
         Ok(())
     }
 }
@@ -335,7 +342,11 @@ fn bench_snapshot_lookup(c: &mut Criterion) {
     });
 
     group.bench_function("compile", |b| {
-        b.iter(|| black_box(kode::extensions::PolicySnapshot::compile(black_box(&policy))));
+        b.iter(|| {
+            black_box(kode::extensions::PolicySnapshot::compile(black_box(
+                &policy,
+            )))
+        });
     });
 
     group.finish();
@@ -1211,6 +1222,208 @@ fn bench_dispatch_overhead_breakdown(c: &mut Criterion) {
     group.finish();
 }
 
+/// End-to-end hostcall dispatch with the optimizer stack engaged or disengaged.
+///
+/// `dispatch_host_call_shared` runs `HostcallPayloadArena::marshal()`, which calls
+/// the superinstruction + trace-JIT tiers on every hostcall. Session ops are served
+/// from memory, so no provider or filesystem latency is in these numbers.
+///
+/// Toggle the stack from the environment and re-run:
+/// `KODE_HOSTCALL_SUPERINSTRUCTIONS=0 KODE_HOSTCALL_TRACE_JIT=0 cargo bench --bench extensions hostcall_optimizer`
+fn bench_hostcall_optimizer_dispatch(c: &mut Criterion) {
+    use kode::connectors::http::{HttpConnector, HttpConnectorConfig};
+    use kode::extensions::{
+        ExtensionManager, ExtensionPolicy, HostCallContext, HostCallPayload,
+        dispatch_host_call_shared,
+    };
+    use std::cell::Cell;
+
+    let cwd = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let tools = Arc::new(ToolRegistry::new(&[], &cwd, None));
+    let http = Arc::new(HttpConnector::new(HttpConnectorConfig::default()));
+    let policy = ExtensionPolicy::default();
+
+    let manager = ExtensionManager::new();
+    let session: Arc<dyn kode::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
+    manager.set_session(session);
+
+    let session_call = |op: &str| HostCallPayload {
+        call_id: format!("call-opt-{op}"),
+        capability: "session".to_string(),
+        method: "session".to_string(),
+        params: json!({ "op": op }),
+        timeout_ms: None,
+        cancel_token: None,
+        context: None,
+    };
+
+    let ctx = HostCallContext {
+        runtime_name: "bench",
+        extension_id: Some("ext.bench"),
+        tools: &tools,
+        http: &http,
+        manager: Some(manager.clone()),
+        policy: &policy,
+        js_runtime: None,
+        interceptor: None,
+    };
+
+    let mut group = c.benchmark_group("hostcall_optimizer");
+    group.throughput(Throughput::Elements(1));
+
+    // Steady state on one opcode: the best case for a plan hit and JIT promotion.
+    let steady = session_call("get_state");
+    group.bench_function("dispatch_single_opcode", |b| {
+        b.iter(|| {
+            block_on(dispatch_host_call_shared(
+                black_box(&ctx),
+                black_box(steady.clone()),
+            ))
+        });
+    });
+
+    // Rotating opcodes: exercises trace-window churn and the periodic recompile.
+    let rotation: Vec<HostCallPayload> = ["get_state", "get_name", "get_model", "get_messages"]
+        .iter()
+        .map(|op| session_call(op))
+        .collect();
+    let cursor = Cell::new(0usize);
+    group.bench_function("dispatch_rotating_opcodes", |b| {
+        b.iter(|| {
+            let idx = cursor.get();
+            cursor.set(idx.wrapping_add(1));
+            let call = rotation[idx % rotation.len()].clone();
+            block_on(dispatch_host_call_shared(black_box(&ctx), black_box(call)))
+        });
+    });
+
+    group.finish();
+}
+
+/// Price each hostcall module's own hot function in isolation, so the
+/// end-to-end delta can be attributed.
+fn bench_hostcall_optimizer_modules(c: &mut Criterion) {
+    use kode::hostcall_amac::{AmacBatchExecutor, AmacBatchExecutorConfig};
+    use kode::hostcall_io_uring_lane::{
+        HostcallCapabilityClass, HostcallIoHint, IoUringLaneDecisionInput, IoUringLanePolicyConfig,
+        decide_io_uring_lane,
+    };
+    use kode::hostcall_s3_fifo::{S3FifoConfig, S3FifoPolicy};
+    use kode::hostcall_superinstructions::{
+        HostcallSuperinstructionCompiler, execute_with_superinstruction,
+    };
+    use kode::hostcall_trace_jit::{GuardContext, TraceJitCompiler, TraceJitConfig};
+
+    let mut group = c.benchmark_group("hostcall_modules");
+    group.throughput(Throughput::Elements(1));
+
+    // AMAC: the planning step is the module's whole runtime contribution;
+    // dispatch itself stays sequential in both branches.
+    let batch: Vec<HostcallRequest> = (0..16)
+        .map(|idx| HostcallRequest {
+            call_id: format!("call-{idx}"),
+            kind: if idx % 2 == 0 {
+                HostcallKind::Session {
+                    op: "get_state".to_string(),
+                }
+            } else {
+                HostcallKind::Tool {
+                    name: "read".to_string(),
+                }
+            },
+            payload: json!({ "idx": idx }),
+            trace_id: idx,
+            extension_id: Some("ext.bench".to_string()),
+        })
+        .collect();
+    let mut amac = AmacBatchExecutor::new(AmacBatchExecutorConfig::new(true, 4, 16));
+    group.bench_function("amac_plan_batch_16", |b| {
+        b.iter_batched(
+            || batch.clone(),
+            |requests| black_box(amac.plan_batch(black_box(requests))),
+            BatchSize::SmallInput,
+        );
+    });
+
+    // Superinstructions: the runtime recompiles from the full trace history
+    // every 16 observations, then scans every window suffix for a plan hit.
+    let compiler = HostcallSuperinstructionCompiler::new(true, 3, 4);
+    let history: Vec<String> = (0..256)
+        .map(|idx| format!("opcode_{}", idx % 6))
+        .collect::<Vec<_>>();
+    group.bench_function("superinstruction_compile_plans_256", |b| {
+        b.iter(|| black_box(compiler.compile_plans(black_box(&[history.clone()]))));
+    });
+
+    let plans = compiler.compile_plans(&[history.clone()]);
+    let window: Vec<String> = history[history.len() - 4..].to_vec();
+    group.bench_function("superinstruction_execute_window_4", |b| {
+        b.iter(|| {
+            black_box(execute_with_superinstruction(
+                black_box(&window),
+                black_box(&plans),
+            ))
+        });
+    });
+
+    // Trace JIT: promote a plan past the hotness threshold, then measure a
+    // steady-state guarded dispatch attempt.
+    let mut jit = TraceJitCompiler::new(TraceJitConfig::from_env());
+    if let Some(plan) = plans.first() {
+        for _ in 0..16 {
+            jit.record_plan_execution(plan);
+        }
+        let plan_id = plan.plan_id.clone();
+        let ctx = GuardContext::default();
+        group.bench_function("trace_jit_try_dispatch", |b| {
+            b.iter(|| {
+                black_box(jit.try_jit_dispatch(
+                    black_box(&plan_id),
+                    black_box(&window),
+                    black_box(&ctx),
+                ))
+            });
+        });
+    }
+
+    // S3-FIFO: the standalone policy module, which the live hostcall queue
+    // does not call - measured for comparison against the queue's own copy.
+    // Key set stays inside `max_entries_per_owner` (64), otherwise the policy
+    // trips its fairness-instability fallback and every later access is the
+    // one-branch bypass rather than real tier work.
+    let mut s3fifo = S3FifoPolicy::<u64>::new(S3FifoConfig::default());
+    let mut key = 0u64;
+    group.bench_function("s3fifo_access", |b| {
+        b.iter(|| {
+            key = key.wrapping_add(1);
+            black_box(s3fifo.access(black_box("ext.bench"), black_box(key % 32)))
+        });
+    });
+    assert!(
+        s3fifo.telemetry().fallback_reason.is_none(),
+        "s3fifo bench fell back to bypass; the reported figure would not be policy work"
+    );
+
+    // io_uring lane: a pure policy decision, no ring operation behind it.
+    let lane_config = IoUringLanePolicyConfig::conservative();
+    let lane_input = IoUringLaneDecisionInput {
+        capability: HostcallCapabilityClass::Filesystem,
+        io_hint: HostcallIoHint::IoHeavy,
+        queue_depth: 8,
+        force_compat_lane: false,
+    };
+    group.bench_function("io_uring_decide_lane", |b| {
+        b.iter(|| {
+            black_box(decide_io_uring_lane(
+                black_box(lane_config),
+                black_box(lane_input),
+            ))
+        });
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     name = benches;
     config = criterion_config();
@@ -1231,6 +1444,8 @@ criterion_group!(
         bench_dispatch_shared_session,
         bench_dispatch_shared_events,
         bench_js_serde_bridge,
-        bench_dispatch_overhead_breakdown
+        bench_dispatch_overhead_breakdown,
+        bench_hostcall_optimizer_dispatch,
+        bench_hostcall_optimizer_modules
 );
 criterion_main!(benches);

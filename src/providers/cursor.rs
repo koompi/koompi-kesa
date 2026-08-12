@@ -1075,7 +1075,10 @@ mod tests {
         );
         // conversation_id (5) + custom_system_prompt (8)
         assert_eq!(read_string(run_request, 5).as_deref(), Some("conv-123"));
-        assert_eq!(read_string(run_request, 8).as_deref(), Some("You are KOOMPI Code."));
+        assert_eq!(
+            read_string(run_request, 8).as_deref(),
+            Some("You are KOOMPI Code.")
+        );
         // action (2) -> user_message_action (1) -> user_message (1) -> text (1)
         let action = descend(run_request, 2).expect("action");
         let uma = descend(action, 1).expect("user_message_action");

@@ -1983,7 +1983,12 @@ fn module_cache_dir() -> Option<PathBuf> {
             Some(PathBuf::from(raw))
         };
     }
-    dirs::home_dir().map(|home| home.join(".kode").join("agent").join("cache").join("modules"))
+    dirs::home_dir().map(|home| {
+        home.join(".kode")
+            .join("agent")
+            .join("cache")
+            .join("modules")
+    })
 }
 
 fn is_cache_module_path_with_cache_dir(path: &Path, cache_dir: Option<&Path>) -> bool {

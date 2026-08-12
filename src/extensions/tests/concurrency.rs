@@ -681,6 +681,18 @@ fn assert_coalescer_idle(coalescer: &EventCoalescer) {
     );
 }
 
+// wall clock, not a yield count: a fixed count starves under machine load
+async fn await_settled(what: &str, settled: impl Fn() -> bool) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    while !settled() {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "{what} did not become idle"
+        );
+        asupersync::runtime::yield_now().await;
+    }
+}
+
 #[test]
 fn event_coalescer_characterization_replacement_keeps_first_and_latest_payload() {
     let runtime = RuntimeBuilder::current_thread()
@@ -716,20 +728,13 @@ fn event_coalescer_characterization_replacement_keeps_first_and_latest_payload()
         "only the latest replacement may remain pending"
     );
 
-    runtime.block_on(async {
-        for _ in 0..256 {
-            if coalescer
-                .in_flight
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .is_empty()
-            {
-                return;
-            }
-            asupersync::runtime::yield_now().await;
-        }
-        panic!("coalesced dispatch did not become idle");
-    });
+    runtime.block_on(await_settled("coalesced dispatch", || {
+        coalescer
+            .in_flight
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .is_empty()
+    }));
 
     assert_eq!(
         *resolved
@@ -782,23 +787,17 @@ fn event_coalescer_characterization_batch_drain_resolves_every_payload_in_order(
         "exactly one drain task should be scheduled for the buffered batch"
     );
 
-    runtime.block_on(async {
-        for _ in 0..256 {
-            let buffer_empty = coalescer
-                .batch_buffer
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .is_empty();
-            let drain_scheduled = coalescer
-                .batch_drain_scheduled
-                .load(std::sync::atomic::Ordering::Acquire);
-            if buffer_empty && !drain_scheduled {
-                return;
-            }
-            asupersync::runtime::yield_now().await;
-        }
-        panic!("batch drain did not become idle");
-    });
+    runtime.block_on(await_settled("batch drain", || {
+        let buffer_empty = coalescer
+            .batch_buffer
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .is_empty();
+        let drain_scheduled = coalescer
+            .batch_drain_scheduled
+            .load(std::sync::atomic::Ordering::Acquire);
+        buffer_empty && !drain_scheduled
+    }));
 
     assert_eq!(
         *resolved
@@ -853,20 +852,13 @@ fn event_coalescer_characterization_handoff_does_not_strand_payload() {
         producer_release.wait();
     });
 
-    runtime.block_on(async {
-        for _ in 0..256 {
-            if coalescer
-                .in_flight
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .is_empty()
-            {
-                return;
-            }
-            asupersync::runtime::yield_now().await;
-        }
-        panic!("replacement handoff did not become idle");
-    });
+    runtime.block_on(await_settled("replacement handoff", || {
+        coalescer
+            .in_flight
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .is_empty()
+    }));
     producer.join().expect("replacement producer thread");
 
     assert_eq!(

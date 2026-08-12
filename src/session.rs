@@ -2992,7 +2992,9 @@ impl Session {
         let durability_mode = resolve_autosave_durability_mode(
             cli.session_durability.as_deref(),
             config.session_durability.as_deref(),
-            std::env::var("KODE_SESSION_DURABILITY_MODE").ok().as_deref(),
+            std::env::var("KODE_SESSION_DURABILITY_MODE")
+                .ok()
+                .as_deref(),
         );
         if cli.no_session {
             let mut session = Self::in_memory();
