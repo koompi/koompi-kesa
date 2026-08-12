@@ -1,10 +1,10 @@
 # Conformance Testing Strategy
 
-> **Purpose:** Document how pi_agent_rust validates behavioral compatibility with Pi Agent (TypeScript).
+> **Purpose:** Document how koompi_code_cli validates behavioral compatibility with Pi Agent (TypeScript).
 
 ## Overview
 
-pi_agent_rust must behave identically to the TypeScript reference implementation for all observable behaviors. This document describes the conformance testing approach used to verify this compatibility.
+koompi_code_cli must behave identically to the TypeScript reference implementation for all observable behaviors. This document describes the conformance testing approach used to verify this compatibility.
 
 ## Testing Architecture
 
@@ -397,7 +397,7 @@ cd pi-mono
 node capture-fixtures.js --tool read --output fixtures/read_tool.json
 
 # Run Rust implementation against same fixtures
-cd ../pi_agent_rust
+cd ../koompi_code_cli
 cargo test --test conformance_fixtures
 ```
 

@@ -71,14 +71,14 @@ jobs:
       - name: Checkout release tag for commit resolution
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: refs/tags/${{ steps.tag.outputs.tag }}
 
       - name: Freeze release source commit
         id: source
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         env:
           RELEASE_TAG: ${{ steps.tag.outputs.tag }}
         run: |
@@ -133,13 +133,13 @@ jobs:
     if: ${{ needs.plan.outputs.prerelease == 'false' }}
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ needs.plan.outputs.commit }}
@@ -205,8 +205,8 @@ jobs:
           package_fields="$(cargo metadata --no-deps --locked --format-version 1 \
             | python3 -c 'import json, pathlib, sys; data=json.load(sys.stdin); root=pathlib.Path("Cargo.toml").resolve(); matches=[p for p in data["packages"] if pathlib.Path(p["manifest_path"]) == root]; assert len(matches) == 1; print(matches[0]["name"], matches[0]["version"])')"
           read -r cargo_name cargo_version <<< "$package_fields"
-          if [[ "$cargo_name" != "pi_agent_rust" || "$cargo_version" != "$RELEASE_VERSION" ]]; then
-            echo "Package mismatch: root=${cargo_name}@${cargo_version}, expected=pi_agent_rust@${RELEASE_VERSION}"
+          if [[ "$cargo_name" != "koompi_code_cli" || "$cargo_version" != "$RELEASE_VERSION" ]]; then
+            echo "Package mismatch: root=${cargo_name}@${cargo_version}, expected=koompi_code_cli@${RELEASE_VERSION}"
             exit 1
           fi
           {
@@ -387,7 +387,7 @@ jobs:
           {
             echo "## Crates.io package validation"
             echo ""
-            echo "Validated pi_agent_rust v${{ needs.plan.outputs.version }} with cargo publish --dry-run."
+            echo "Validated koompi_code_cli v${{ needs.plan.outputs.version }} with cargo publish --dry-run."
             echo "This is a non-authoritative manual diagnostic: no registry mutation is performed."
             echo "Only release.yml's full frozen-SHA gate and ordered reconciliation may authorize publication."
           } >> "$GITHUB_STEP_SUMMARY"

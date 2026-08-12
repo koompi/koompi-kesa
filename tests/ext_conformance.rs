@@ -10,11 +10,11 @@
 //! - Diffs are grouped by `event` and correlation IDs to speed triage.
 //!
 //! **Normalization rules are defined in the canonical contract** at
-//! [`pi::conformance::normalization`].  This test file delegates to that
+//! [`kode::conformance::normalization`].  This test file delegates to that
 //! module so there is one source of truth.
 #![forbid(unsafe_code)]
 
-use pi::conformance::normalization::{
+use kode::conformance::normalization::{
     self, NormalizationContext, PLACEHOLDER_ARTIFACT_ID, PLACEHOLDER_HOST,
     PLACEHOLDER_PI_MONO_ROOT, PLACEHOLDER_RUN_ID, PLACEHOLDER_SESSION_ID, PLACEHOLDER_SPAN_ID,
     PLACEHOLDER_TIMESTAMP, PLACEHOLDER_TRACE_ID, is_path_key, path_suffix_match,
@@ -297,7 +297,7 @@ fn trace_viewer_renders_pretty_and_exports_jsonl() {
     writeln!(log_file, "{line2}").expect("write log line2");
     writeln!(log_file, "{line3}").expect("write log line3");
 
-    let binary_path = PathBuf::from(env!("CARGO_BIN_EXE_pi_legacy_capture"));
+    let binary_path = PathBuf::from(env!("CARGO_BIN_EXE_kode_legacy_capture"));
 
     let pretty = Command::new(&binary_path)
         .args([

@@ -10,7 +10,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
 
-const PI_TEST_RUNNER: &str = env!("CARGO_BIN_EXE_pi");
+const PI_TEST_RUNNER: &str = env!("CARGO_BIN_EXE_kode");
 const RPC_TEST_PROVIDER: &str = "ollama";
 const RPC_TEST_MODEL: &str = "qwen2.5:0.5b";
 const UI_SCENARIOS: &str =

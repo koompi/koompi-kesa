@@ -3,10 +3,10 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use pi::package_manager::{
+use kode::package_manager::{
     PackageManager, PackageScope, ResolveRoots, ResolvedResource, ResourceOrigin,
 };
-use pi::resources::{
+use kode::resources::{
     DiagnosticKind, LoadPromptTemplatesOptions, LoadSkillsOptions, LoadThemesOptions,
     dedupe_prompts, dedupe_themes, load_prompt_templates, load_skills, load_themes,
 };

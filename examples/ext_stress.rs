@@ -12,11 +12,11 @@ use asupersync::runtime::reactor::create_reactor;
 use asupersync::time::{timeout, wall_now};
 use chrono::{SecondsFormat, Utc};
 use clap::{ArgAction, Parser};
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, HostcallReactorConfig, JsExtensionLoadSpec,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use serde_json::Value;
 
 #[derive(Parser, Debug)]
@@ -183,7 +183,7 @@ async fn run(args: Args) -> Result<()> {
         cwd: cwd.clone(),
         ..Default::default()
     };
-    let runtime = pi::extensions::JsExtensionRuntimeHandle::start(
+    let runtime = kode::extensions::JsExtensionRuntimeHandle::start(
         js_config,
         Arc::clone(&tools),
         manager.clone(),

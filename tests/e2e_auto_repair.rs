@@ -11,9 +11,9 @@
 
 mod common;
 
-use pi::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use pi::extensions_js::{ExtensionRepairEvent, PiJsRuntimeConfig, RepairMode};
-use pi::tools::ToolRegistry;
+use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kode::extensions_js::{ExtensionRepairEvent, PiJsRuntimeConfig, RepairMode};
+use kode::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Write as _;

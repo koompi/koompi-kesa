@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use chrono::{DateTime, SecondsFormat, Utc};
 use clap::{Parser, ValueEnum};
-use pi::conformance::report::{
+use kode::conformance::report::{
     ConformanceRegression, ConformanceReport, ExtensionConformanceResult, compute_regression,
     generate_report,
 };

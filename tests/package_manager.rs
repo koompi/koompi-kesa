@@ -4,7 +4,7 @@ mod common;
 
 use asupersync::runtime::RuntimeBuilder;
 use common::TestHarness;
-use pi::package_manager::{
+use kode::package_manager::{
     PackageManager, PackageScope, ResolveExtensionSourcesOptions, ResolveRoots, ResolvedResource,
     ResourceOrigin,
 };

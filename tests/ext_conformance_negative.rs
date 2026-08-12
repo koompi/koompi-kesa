@@ -6,9 +6,9 @@
 
 mod common;
 
-use pi::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

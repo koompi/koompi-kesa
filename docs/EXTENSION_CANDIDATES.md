@@ -398,7 +398,7 @@ from repo names/descriptions and should be validated in follow‑up.
         {"repo": "nicobailon/pi-interview-tool", "stars": 73, "forks": 7, "updated_at": "2026-02-05T17:36:33Z", "license": "", "url": "https://github.com/nicobailon/pi-interview-tool"},
         {"repo": "dannote/dot-pi", "stars": 10, "forks": 3, "updated_at": "2026-02-04T19:37:14Z", "license": "mit", "url": "https://github.com/dannote/dot-pi"},
         {"repo": "melihmucuk/leash", "stars": 37, "forks": 6, "updated_at": "2026-01-28T08:37:17Z", "license": "mit", "url": "https://github.com/melihmucuk/leash"},
-        {"repo": "Dicklesworthstone/pi_agent_rust", "stars": 15, "forks": 4, "updated_at": "2026-02-05T19:28:47Z", "license": "mit", "url": "https://github.com/Dicklesworthstone/pi_agent_rust"},
+        {"repo": "Dicklesworthstone/koompi_code_cli", "stars": 15, "forks": 4, "updated_at": "2026-02-05T19:28:47Z", "license": "mit", "url": "https://github.com/Dicklesworthstone/koompi_code_cli"},
         {"repo": "nicobailon/mcp-to-pi-tools", "stars": 13, "forks": 2, "updated_at": "2026-02-02T18:56:42Z", "license": "", "url": "https://github.com/nicobailon/mcp-to-pi-tools"}
       ]
     },
@@ -557,9 +557,9 @@ Validation pass (51 unique entrypoints; export‑default + registration/event ho
 | `nexxeln/dots` | `config/pi/agent/extensions/review.ts` | `export default` + `registerCommand(...)` |
 | `richardgill/nix` | `out-of-store-config/ai-agents/pi/extensions/process-info.ts` | `export default` + `pi.on(...)` |
 | `default-anton/dotfiles` | `pi/agent/extensions/inject-context.impl.mjs` | `export default` + `pi.on(...)` |
-| `Dicklesworthstone/pi_agent_rust` | `tests/ext_conformance/artifacts/community/prateekmedia-lsp/lsp.ts` | `export default` + `registerMessageRenderer(...)` |
-| `Dicklesworthstone/pi_agent_rust` | `tests/ext_conformance/artifacts/npm/lsp-pi/lsp.ts` | `export default` + `registerMessageRenderer(...)` |
-| `Dicklesworthstone/pi_agent_rust` | `tests/ext_conformance/artifacts/npm/pi-mermaid/index.ts` | `export default` + `registerMessageRenderer(...)` |
+| `Dicklesworthstone/koompi_code_cli` | `tests/ext_conformance/artifacts/community/prateekmedia-lsp/lsp.ts` | `export default` + `registerMessageRenderer(...)` |
+| `Dicklesworthstone/koompi_code_cli` | `tests/ext_conformance/artifacts/npm/lsp-pi/lsp.ts` | `export default` + `registerMessageRenderer(...)` |
+| `Dicklesworthstone/koompi_code_cli` | `tests/ext_conformance/artifacts/npm/pi-mermaid/index.ts` | `export default` + `registerMessageRenderer(...)` |
 | `Dwsy/agent` | `extensions/ralph/index.ts` | `export default` + `registerFlag(...)` |
 | `Graffioh/dotfiles` | `pi/agent/extensions/pi-web-search/index.ts` | `export default` + `pi.on(...)` |
 | `badlogic/pi-mono` | `packages/coding-agent/examples/extensions/message-renderer.ts` | `export default` + `registerMessageRenderer(...)` |
@@ -591,7 +591,7 @@ Validation pass (51 unique entrypoints; export‑default + registration/event ho
 Notes / next pass:
 - 9 queries hit the 100‑result cap; additional candidates remain unreviewed.
 - 3 queries were rate‑limited by GitHub Search API (see table); rerun after limit reset.
-- 4 entries are already vendored artifacts or official examples (pi_agent_rust artifacts x3 + pi‑mono message‑renderer) and were included for completeness.
+- 4 entries are already vendored artifacts or official examples (koompi_code_cli artifacts x3 + pi‑mono message‑renderer) and were included for completeness.
 - Current validated count: **51 / 50** target. Next pass should validate remaining candidates from the queued list and add code‑search queries for `registerFlag(`, `registerShortcut(`, `registerMessageRenderer(`, plus `pi.registerTool(` with TS/JS language filters.
 
 ### D) npm discovery (distribution layer) — Researched 2026‑02‑06 (bd‑kcj6)
@@ -734,7 +734,7 @@ OpenClaw extends this with its own **plugin architecture** (4 types: channels, t
 |--------|--------------|------------------|-------------|
 | API import | `import { ExtensionAPI } from "@mariozechner/pi-coding-agent"` | `openclaw.extensions` manifest in package.json | NO (different APIs) |
 | Registration | `pi.registerTool()`, `pi.registerProvider()`, etc. | Gateway plugin lifecycle (discovery/validation/loading/init/runtime) | NO |
-| Runtime | QuickJS/WASM in pi_agent_rust | Node.js process in OpenClaw Gateway | NO |
+| Runtime | QuickJS/WASM in koompi_code_cli | Node.js process in OpenClaw Gateway | NO |
 | Tool calls | Pi tool registry | OpenClaw Gateway tool routing | STRUCTURAL OVERLAP |
 
 **Verdict on code extension compatibility:**

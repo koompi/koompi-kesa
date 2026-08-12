@@ -3174,13 +3174,13 @@ mod tests {
             1_000,
             SwarmActivityKind::Verification,
             SwarmActivityIds::new("verify-a").with_agent_name("MagentaOak"),
-            "cargo check failed for pid 12345 in /data/tmp/pi_agent_rust_cargo/agent_a/target after 1200ms",
+            "cargo check failed for pid 12345 in /data/tmp/koompi_code_cli_cargo/agent_a/target after 1200ms",
             [
                 (
                     "command",
-                    "cargo check --all-targets --target-dir /data/tmp/pi_agent_rust_cargo/agent_a/target",
+                    "cargo check --all-targets --target-dir /data/tmp/koompi_code_cli_cargo/agent_a/target",
                 ),
-                ("stderr", "error[E0308]: mismatched types at /data/projects/pi_agent_rust/src/lib.rs:123:45"),
+                ("stderr", "error[E0308]: mismatched types at /data/projects/koompi_code_cli/src/lib.rs:123:45"),
                 ("status", "failed"),
             ],
         );
@@ -3188,13 +3188,13 @@ mod tests {
             2_000,
             SwarmActivityKind::Verification,
             SwarmActivityIds::new("verify-b").with_agent_name("CopperOx"),
-            "cargo check failed for pid 98765 in /data/tmp/pi_agent_rust_cargo/agent_b/target after 980ms",
+            "cargo check failed for pid 98765 in /data/tmp/koompi_code_cli_cargo/agent_b/target after 980ms",
             [
                 (
                     "command",
-                    "cargo check --all-targets --target-dir /data/tmp/pi_agent_rust_cargo/agent_b/target",
+                    "cargo check --all-targets --target-dir /data/tmp/koompi_code_cli_cargo/agent_b/target",
                 ),
-                ("stderr", "error[E0308]: mismatched types at /data/projects/pi_agent_rust/src/lib.rs:777:8"),
+                ("stderr", "error[E0308]: mismatched types at /data/projects/koompi_code_cli/src/lib.rs:777:8"),
                 ("status", "failure"),
             ],
         );
@@ -3234,7 +3234,7 @@ mod tests {
             blocker
                 .sample
                 .as_deref()
-                .is_some_and(|sample| sample.contains("/data/tmp/pi_agent_rust_cargo/agent_a"))
+                .is_some_and(|sample| sample.contains("/data/tmp/koompi_code_cli_cargo/agent_a"))
         );
         assert!(
             digest

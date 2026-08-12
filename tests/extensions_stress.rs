@@ -12,13 +12,13 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, ExtensionPolicy, HostcallReactorConfig,
     JsExtensionLoadSpec, PolicyProfile,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::hostcall_s3_fifo::{S3FifoConfig, S3FifoDecisionKind, S3FifoPolicy};
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::hostcall_s3_fifo::{S3FifoConfig, S3FifoDecisionKind, S3FifoPolicy};
+use kode::tools::ToolRegistry;
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, HashMap};
@@ -1845,7 +1845,7 @@ fn load_extensions_with_policy(
         let manager = manager.clone();
         let tools = Arc::clone(&tools);
         async move {
-            pi::extensions::JsExtensionRuntimeHandle::start_with_policy(
+            kode::extensions::JsExtensionRuntimeHandle::start_with_policy(
                 js_config, tools, manager, policy,
             )
             .await

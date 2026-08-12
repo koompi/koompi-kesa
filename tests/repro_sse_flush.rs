@@ -1,4 +1,4 @@
-use pi::sse::SseParser;
+use kode::sse::SseParser;
 
 #[test]
 fn sse_flush_processes_data_field_without_colon() {

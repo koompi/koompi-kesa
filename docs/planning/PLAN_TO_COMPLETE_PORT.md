@@ -1,4 +1,4 @@
-# Plan: Complete pi_agent_rust Port
+# Plan: Complete koompi_code_cli Port
 
 > **Goal:** 100% feature/functionality coverage with clear conformance harness and benchmarking, fully leveraging asupersync, rich_rust, and charmed_rust.
 
@@ -38,7 +38,7 @@
 
 ### 1.1 asupersync Integration
 
-**Status (today):** `pi_agent_rust` runs on `asupersync` for runtime + HTTP/TLS and provider streaming (see `src/http/client.rs` + `src/sse.rs`).
+**Status (today):** `koompi_code_cli` runs on `asupersync` for runtime + HTTP/TLS and provider streaming (see `src/http/client.rs` + `src/sse.rs`).
 
 **Remaining:** Capability wrapper (`AgentCx`) and deeper context wiring are tracked in `bd-3i7u` and `bd-1xf`.
 

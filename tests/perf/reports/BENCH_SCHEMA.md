@@ -41,7 +41,7 @@ Every benchmark record SHOULD include an `env` object with:
 | Field | Type | Description |
 |---|---|---|
 | `schema` | string | Always `"pi.ext.rust_bench.v1"` |
-| `runtime` | string | Always `"pi_agent_rust"` |
+| `runtime` | string | Always `"koompi_code_cli"` |
 | `scenario` | string | Benchmark scenario (e.g., `ext_load_init/load_init_cold`) |
 | `extension` | string | Extension ID being benchmarked |
 | `runs` | integer | Number of runs (load scenarios) |

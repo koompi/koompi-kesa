@@ -498,12 +498,12 @@
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_63x3v_7_9/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_63x3v_7_9/tmp rch exec -- cargo check --all-targets",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_63x3v_7_9/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_63x3v_7_9/tmp rch exec -- cargo check --all-targets",
               "id": "cargo_check_all_targets_rch",
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_63x3v_7_9/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_63x3v_7_9/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_63x3v_7_9/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_63x3v_7_9/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
               "id": "cargo_clippy_all_targets_rch",
               "status": "pass"
             },
@@ -761,12 +761,12 @@
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_63x3v_7_9/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_63x3v_7_9/tmp rch exec -- cargo check --all-targets",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_63x3v_7_9/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_63x3v_7_9/tmp rch exec -- cargo check --all-targets",
       "id": "cargo_check_all_targets_rch",
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_63x3v_7_9/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_63x3v_7_9/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_63x3v_7_9/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_63x3v_7_9/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
       "id": "cargo_clippy_all_targets_rch",
       "status": "pass"
     },

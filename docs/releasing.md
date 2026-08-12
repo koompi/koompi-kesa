@@ -1,7 +1,7 @@
-# Releasing pi_agent_rust
+# Releasing koompi_code_cli
 
 This repo ships:
-- A crates.io package: `pi_agent_rust` (Cargo `[package].name`)
+- A crates.io package: `koompi_code_cli` (Cargo `[package].name`)
 - A library crate: `pi` (Cargo `[lib].name`)
 - A binary: `pi` (Cargo `[[bin]].name`)
 
@@ -9,7 +9,7 @@ The Cargo source package also retains the internal `pi_legacy_capture`
 conformance utility because integration tests execute it through
 `CARGO_BIN_EXE_pi_legacy_capture`. It is gated by the non-default
 `internal-legacy-capture` feature and is not a supported release artifact.
-Ordinary `cargo install pi_agent_rust --locked` therefore installs only `pi`;
+Ordinary `cargo install koompi_code_cli --locked` therefore installs only `pi`;
 repository gates that cover the utility explicitly enable its internal feature.
 
 ## Versioning + tags (source of truth)
@@ -17,7 +17,7 @@ repository gates that cover the utility explicitly enable its internal feature.
 
 - **Tag format:** `vX.Y.Z` (SemVer). Example: `v0.2.0`.
 - **Pre-releases:** `vX.Y.Z-rc.1` (or similar). Example: `v0.2.0-rc.1`.
-- **Coupling:** `pi_agent_rust` (crate), `pi` (lib), and `pi` (binary) are all built from the same package, so they share one version number.
+- **Coupling:** `koompi_code_cli` (crate), `pi` (lib), and `pi` (binary) are all built from the same package, so they share one version number.
 - **Sibling repos:** `asupersync`, `rich_rust`, `charmed_rust`, `sqlmodel_rust` are versioned independently in their own repos.
 
 ### Publishing to crates.io
@@ -396,7 +396,7 @@ export WINDOWS_AMD64_SMOKE_HOST="wlap"
 export RELEASE_TAG="v${RELEASE_VERSION}"
 test "$RELEASE_TAG" != "vX.Y.Z"
 release_source_checkout="$(builtin pwd -P)"
-test "$release_source_checkout" = /data/projects/pi_agent_rust
+test "$release_source_checkout" = /data/projects/koompi_code_cli
 test -z "$(git status --porcelain=v2 --untracked-files=all)"
 source_commit="$(git rev-parse 'HEAD^{commit}')"
 case "$(git show -s --format=%s "$source_commit")" in
@@ -405,11 +405,11 @@ case "$(git show -s --format=%s "$source_commit")" in
 esac
 release_clone_id="$(uuidgen | tr '[:upper:]' '[:lower:]')"
 [[ "$release_clone_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$ ]]
-export MANUAL_RELEASE_ROOT="/data/tmp/pi_agent_rust-v${RELEASE_VERSION}-release-$release_clone_id"
+export MANUAL_RELEASE_ROOT="/data/tmp/koompi_code_cli-v${RELEASE_VERSION}-release-$release_clone_id"
 export MANUAL_RELEASE_STATE_DIR="$MANUAL_RELEASE_ROOT/state"
 release_checkout="$MANUAL_RELEASE_ROOT/checkout"
 case "$MANUAL_RELEASE_ROOT" in
-  /data/tmp/pi_agent_rust-v"$RELEASE_VERSION"-release-"$release_clone_id") ;;
+  /data/tmp/koompi_code_cli-v"$RELEASE_VERSION"-release-"$release_clone_id") ;;
   *) exit 1 ;;
 esac
 case "$MANUAL_RELEASE_ROOT" in
@@ -424,7 +424,7 @@ git clone --no-local --no-hardlinks --single-branch --branch main \
   "$release_source_checkout" "$release_checkout"
 test "$(git -C "$release_checkout" rev-parse 'HEAD^{commit}')" = "$source_commit"
 test -z "$(git -C "$release_checkout" status --porcelain=v2 --untracked-files=all)"
-release_remote_url="https://github.com/Dicklesworthstone/pi_agent_rust.git"
+release_remote_url="https://github.com/Dicklesworthstone/koompi_code_cli.git"
 git -C "$release_checkout" remote set-url origin "$release_remote_url"
 git -C "$release_checkout" remote set-url --push origin \
   no-push://pi-agent-rust-v0.2.0-release-guard
@@ -680,7 +680,7 @@ release_build_env() {
 release_build_env cargo --version >/dev/null
 RELEASE_REPOSITORY="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 export RELEASE_REPOSITORY
-test "$RELEASE_REPOSITORY" = "Dicklesworthstone/pi_agent_rust"
+test "$RELEASE_REPOSITORY" = "Dicklesworthstone/koompi_code_cli"
 test -z "$(git status --porcelain=v2 --untracked-files=all)"
 
 # This lane intentionally has no GitHub Actions dependency. Every build,
@@ -984,17 +984,17 @@ proof is not proof of an empty bypass list.
    set -euo pipefail
    verify_operator_tools
    release_build_env cargo package --locked
-   crate_path="${CARGO_TARGET_DIR:-target}/package/pi_agent_rust-${RELEASE_VERSION}.crate"
+   crate_path="${CARGO_TARGET_DIR:-target}/package/koompi_code_cli-${RELEASE_VERSION}.crate"
    test -f "$crate_path" && test ! -L "$crate_path"
    source_commit="$(git rev-parse 'HEAD^{commit}')"
    test "$(tar -xOf "$crate_path" \
-     "pi_agent_rust-${RELEASE_VERSION}/.cargo_vcs_info.json" \
+     "koompi_code_cli-${RELEASE_VERSION}/.cargo_vcs_info.json" \
      | jq -er --arg commit "$source_commit" \
        'select(.git.sha1 == $commit and (.git.dirty // false) == false) | .git.sha1')" \
      = "$source_commit"
    package_sha256="$(sha256sum "$crate_path" | awk '{print $1}')"
    package_size="$(wc -c < "$crate_path" | tr -d '[:space:]')"
-   proof_file="$MANUAL_RELEASE_STATE_DIR/pi_agent_rust-${RELEASE_VERSION}-crate.txt"
+   proof_file="$MANUAL_RELEASE_STATE_DIR/koompi_code_cli-${RELEASE_VERSION}-crate.txt"
    test ! -e "$proof_file"
    umask 077
    (set -C; printf 'source_commit=%s\npackage_sha256=%s\npackage_size=%s\n' \
@@ -1003,7 +1003,7 @@ proof is not proof of an empty bypass list.
    release_build_env cargo publish --dry-run --locked
    test -f "$crate_path" && test ! -L "$crate_path"
    test "$(tar -xOf "$crate_path" \
-     "pi_agent_rust-${RELEASE_VERSION}/.cargo_vcs_info.json" \
+     "koompi_code_cli-${RELEASE_VERSION}/.cargo_vcs_info.json" \
      | jq -er --arg commit "$source_commit" \
        'select(.git.sha1 == $commit and (.git.dirty // false) == false) | .git.sha1')" \
      = "$source_commit"
@@ -1067,7 +1067,7 @@ proof is not proof of an empty bypass list.
    # project path. Prove that a child-only bubblewrap mount presents this exact
    # private clone there without modifying, moving, or fast-forwarding the
    # shared checkout outside the namespace.
-   test "$release_source_checkout" = /data/projects/pi_agent_rust
+   test "$release_source_checkout" = /data/projects/koompi_code_cli
    test "$release_checkout" != "$release_source_checkout"
    bwrap_source_receipt="$MANUAL_RELEASE_STATE_DIR/bwrap-source-preflight.txt"
    test ! -e "$bwrap_source_receipt"
@@ -1075,13 +1075,13 @@ proof is not proof of an empty bypass list.
      set -C
      "$release_bwrap_path" \
        --die-with-parent --new-session --bind / / --dev-bind /dev /dev \
-       --bind "$release_checkout" /data/projects/pi_agent_rust \
-       --chdir /data/projects/pi_agent_rust \
+       --bind "$release_checkout" /data/projects/koompi_code_cli \
+       --chdir /data/projects/koompi_code_cli \
        "$release_bash_path" --noprofile --norc -c '
          set -euo pipefail
          git_path="$1"
          expected_commit="$2"
-         test "$(builtin pwd -P)" = /data/projects/pi_agent_rust
+         test "$(builtin pwd -P)" = /data/projects/koompi_code_cli
          test "$("$git_path" rev-parse "HEAD^{commit}")" = "$expected_commit"
          test "$("$git_path" rev-parse "main^{commit}")" = "$expected_commit"
          test -z "$("$git_path" status --porcelain=v2 --untracked-files=all)"
@@ -1380,8 +1380,8 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
      "$release_bwrap_path" \
        --die-with-parent --new-session --bind / / --dev-bind /dev /dev \
        --ro-bind "$PRESERVED_DSR_LANE" "$PRESERVED_DSR_LANE" \
-       --bind "$release_checkout" /data/projects/pi_agent_rust \
-       --chdir /data/projects/pi_agent_rust \
+       --bind "$release_checkout" /data/projects/koompi_code_cli \
+       --chdir /data/projects/koompi_code_cli \
        "$release_bash_path" --noprofile --norc -c '
          set -euo pipefail
          sha256sum_path="$1"
@@ -1945,7 +1945,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
            "dsr_target": dsr_target,
            "asset": spec["asset"],
            "runner_os": spec["runner_os"],
-           "pi_agent_rust": commit,
+           "koompi_code_cli": commit,
            "source_blobs": source_blobs,
            "selected_locked_registry_packages": selected,
            "raw_build": {
@@ -2070,7 +2070,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
          --arg preservation_manifest "$preservation_manifest_sha256" '
          .schema == "pi.release.dsr_build_manifest.v1" and
          .tag == $tag and .version == $version and
-         .pi_agent_rust == $commit and .raw_build.run_id == $run and
+         .koompi_code_cli == $commit and .raw_build.run_id == $run and
          .raw_build.operator_retained_aggregate_manifest.sha256 == $aggregate and
          .raw_build.operator_retained_aggregate_manifest.schema_version == "1.0.0" and
          .raw_build.build_environment.dsr_method_label == "native" and
@@ -2271,13 +2271,13 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
      printf '%s\n' \
        "# ${RELEASE_TAG}" \
        "" \
-       "Manual DSR release of pi_agent_rust ${RELEASE_VERSION}." \
+       "Manual DSR release of koompi_code_cli ${RELEASE_VERSION}." \
        "" \
        "### Drop-in certification status" \
        "" \
        "**NOT_CERTIFIED** — This release is not certified as a strict drop-in replacement and must not be described as one." \
        "" \
-       "Evidence: https://github.com/Dicklesworthstone/pi_agent_rust/blob/${RELEASE_TAG}/docs/evidence/dropin-certification-verdict.json" \
+       "Evidence: https://github.com/Dicklesworthstone/koompi_code_cli/blob/${RELEASE_TAG}/docs/evidence/dropin-certification-verdict.json" \
        "" \
        "### Changelog" \
        ""
@@ -3249,7 +3249,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
    official = {"index-url": "sparse+https://index.crates.io/", "name": "crates-io"}
    publish = {
        "v": 1, "kind": "get", "operation": "publish",
-       "name": "pi_agent_rust", "vers": os.environ["PACKAGE_VERSION"],
+       "name": "koompi_code_cli", "vers": os.environ["PACKAGE_VERSION"],
        "cksum": os.environ["CRATE_SHA256"], "registry": official, "args": [],
    }
 
@@ -3260,7 +3260,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
        env = {
            **os.environ,
            "PI_CRATES_IO_RELEASE_TOKEN": "self-test-token",
-           "PI_EXPECTED_CRATE_NAME": "pi_agent_rust",
+           "PI_EXPECTED_CRATE_NAME": "koompi_code_cli",
            "PI_EXPECTED_CRATE_VERSION": os.environ["PACKAGE_VERSION"],
            "PI_EXPECTED_CRATE_SHA256": os.environ["CRATE_SHA256"],
            "PI_CREDENTIAL_RECEIPT": str(receipt),
@@ -3287,7 +3287,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
        raise SystemExit("exact publish allow self-test failed")
    expected_receipt = {
        "schema": "pi.release.cargo_credential_receipt.v1",
-       "name": "pi_agent_rust", "version": os.environ["PACKAGE_VERSION"],
+       "name": "koompi_code_cli", "version": os.environ["PACKAGE_VERSION"],
        "crate_sha256": os.environ["CRATE_SHA256"],
        "registry_name": "crates-io", "registry_index_url": official["index-url"],
    }
@@ -3373,7 +3373,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
      publisher_env cargo publish --manifest-path "$manifest_abs" \
        --dry-run --locked --registry crates-io
    )
-   publisher_crate="$publisher_target_dir/package/pi_agent_rust-${RELEASE_VERSION}.crate"
+   publisher_crate="$publisher_target_dir/package/koompi_code_cli-${RELEASE_VERSION}.crate"
    test -f "$publisher_crate" && test ! -L "$publisher_crate"
    test "$(sha256sum "$publisher_crate" | awk '{print $1}')" = "$expected_crate_sha256"
    test "$(wc -c < "$publisher_crate" | tr -d '[:space:]')" = "$expected_crate_size"
@@ -3426,7 +3426,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
      # cannot consume credential bytes, and then execs the no-verify upload.
      builtin printf '%s\n' "$controller_token" |
        publisher_env \
-         PI_EXPECTED_CRATE_NAME=pi_agent_rust \
+         PI_EXPECTED_CRATE_NAME=koompi_code_cli \
          PI_EXPECTED_CRATE_VERSION="$RELEASE_VERSION" \
          PI_EXPECTED_CRATE_SHA256="$expected_crate_sha256" \
          PI_CREDENTIAL_RECEIPT="$credential_receipt" \
@@ -3493,7 +3493,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
        return result
 
    endpoint = (
-       "https://crates.io/api/v1/crates/pi_agent_rust/"
+       "https://crates.io/api/v1/crates/koompi_code_cli/"
        + urllib.parse.quote(os.environ["PACKAGE_VERSION"], safe="")
    )
    max_attempts = int(os.environ["MAX_ATTEMPTS"])
@@ -3518,7 +3518,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
            payload = json.loads(body, object_pairs_hook=strict_object)
            version = payload.get("version") if isinstance(payload, dict) else None
            if not isinstance(version, dict) \
-               or version.get("crate") != "pi_agent_rust" \
+               or version.get("crate") != "koompi_code_cli" \
                or version.get("num") != os.environ["PACKAGE_VERSION"] \
                or version.get("yanked") is not False \
                or version.get("checksum") != os.environ["CRATE_SHA256"] \
@@ -3534,7 +3534,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
        "schema": "pi.release.crates_reconciliation.v1",
        "state": state,
        "attempts": attempt,
-       "name": "pi_agent_rust",
+       "name": "koompi_code_cli",
        "version": os.environ["PACKAGE_VERSION"],
        "expected_checksum": os.environ["CRATE_SHA256"],
    }
@@ -3587,7 +3587,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
            --arg version "$RELEASE_VERSION" \
            --arg sha "$expected_crate_sha256" '
            .schema == "pi.release.cargo_credential_receipt.v1" and
-           .name == "pi_agent_rust" and .version == $version and
+           .name == "koompi_code_cli" and .version == $version and
            .crate_sha256 == $sha and .registry_name == "crates-io" and
            (.registry_index_url == "sparse+https://index.crates.io/" or
             .registry_index_url == "https://github.com/rust-lang/crates.io-index")
@@ -3715,18 +3715,18 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
      ' "$prepublic_ruleset" >/dev/null
 
      registry_checksum="$(curl -fsS -A 'pi-agent-rust-manual-release' \
-       "https://crates.io/api/v1/crates/pi_agent_rust/${RELEASE_VERSION}" \
+       "https://crates.io/api/v1/crates/koompi_code_cli/${RELEASE_VERSION}" \
        | jq -er --arg version "$RELEASE_VERSION" '
-         select(.version.crate == "pi_agent_rust" and
+         select(.version.crate == "koompi_code_cli" and
                 .version.num == $version and .version.yanked == false and
                 (.version.checksum | test("^[0-9a-f]{64}$"))) |
          .version.checksum')"
      test "$registry_checksum" = "$expected_crate_sha256"
      reconcile_exact_github_publication "$attempt_id" "$attempt_dir"
      post_registry_checksum="$(curl -fsS -A 'pi-agent-rust-manual-release' \
-       "https://crates.io/api/v1/crates/pi_agent_rust/${RELEASE_VERSION}" \
+       "https://crates.io/api/v1/crates/koompi_code_cli/${RELEASE_VERSION}" \
        | jq -er --arg version "$RELEASE_VERSION" '
-         select(.version.crate == "pi_agent_rust" and
+         select(.version.crate == "koompi_code_cli" and
                 .version.num == $version and .version.yanked == false and
                 (.version.checksum | test("^[0-9a-f]{64}$"))) |
          .version.checksum')"
@@ -3873,11 +3873,11 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
     grep -Fx 'post_public_installer_status=success' "$installer_receipt" >/dev/null
 
     curl -fsS -A 'pi-agent-rust-manual-release' \
-      "https://crates.io/api/v1/crates/pi_agent_rust/${RELEASE_VERSION}" \
+      "https://crates.io/api/v1/crates/koompi_code_cli/${RELEASE_VERSION}" \
       | jq -e \
         --arg version "$RELEASE_VERSION" \
         --arg checksum "$expected_crate_sha256" '
-        .version.crate == "pi_agent_rust" and
+        .version.crate == "koompi_code_cli" and
         .version.num == $version and .version.yanked == false and
         .version.checksum == $checksum
       ' >/dev/null

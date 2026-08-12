@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# pi_agent_rust uninstaller
+# koompi_code_cli uninstaller
 #
 # One-liner uninstall:
-#   curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/uninstall.sh" | bash
+#   curl -fsSL "https://raw.githubusercontent.com/koompi/koompi-code-cli/main/uninstall.sh" | bash
 
 set -euo pipefail
 
@@ -14,26 +14,26 @@ KEEP_PATH=0
 NO_RESTORE_LEGACY=0
 PURGE_STATE=0
 
-PATH_MARKER="# pi-agent-rust installer PATH"
+PATH_MARKER="# koompi-code-cli installer PATH"
 
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/pi-agent-rust"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/koompi-code-cli"
 STATE_FILE="$STATE_DIR/install-state.env"
 
-PIAR_INSTALL_BIN=""
-PIAR_ADOPTED_TYPESCRIPT="0"
-PIAR_LEGACY_ALIAS_PATH=""
-PIAR_LEGACY_MOVED_FROM=""
-PIAR_LEGACY_MOVED_TO=""
-PIAR_COMPAT_ALIAS_PATH=""
-PIAR_COMPAT_ALIAS_STATUS=""
-PIAR_PATH_MARKER=""
-PIAR_AGENT_SKILL_STATUS=""
-PIAR_AGENT_SKILL_CLAUDE_PATH=""
-PIAR_AGENT_SKILL_CODEX_PATH=""
+KODE_INSTALL_BIN=""
+KODE_ADOPTED_TYPESCRIPT="0"
+KODE_LEGACY_ALIAS_PATH=""
+KODE_LEGACY_MOVED_FROM=""
+KODE_LEGACY_MOVED_TO=""
+KODE_COMPAT_ALIAS_PATH=""
+KODE_COMPAT_ALIAS_STATUS=""
+KODE_PATH_MARKER=""
+KODE_AGENT_SKILL_STATUS=""
+KODE_AGENT_SKILL_CLAUDE_PATH=""
+KODE_AGENT_SKILL_CODEX_PATH=""
 RESTORE_CONFLICT=0
 
-AGENT_SKILL_NAME="pi-agent-rust"
-AGENT_SKILL_MARKER="pi_agent_rust installer managed skill"
+AGENT_SKILL_NAME="koompi-code"
+AGENT_SKILL_MARKER="koompi-code-cli installer managed skill"
 
 HAS_GUM=0
 if command -v gum >/dev/null 2>&1 && [ -t 1 ]; then
@@ -133,11 +133,11 @@ show_header() {
       --padding "0 1" \
       --margin "1 0" \
       "$(gum style --foreground 196 --bold 'pi uninstaller')" \
-      "$(gum style --foreground 245 'Removes installer-managed pi_agent_rust artifacts')"
+      "$(gum style --foreground 245 'Removes installer-managed koompi_code_cli artifacts')"
   else
     echo ""
     echo -e "\033[1;31mpi uninstaller\033[0m"
-    echo -e "\033[0;90mRemoves installer-managed pi_agent_rust artifacts\033[0m"
+    echo -e "\033[0;90mRemoves installer-managed koompi_code_cli artifacts\033[0m"
     echo ""
   fi
 }
@@ -197,8 +197,8 @@ load_state() {
   # shellcheck disable=SC1090
   source "$STATE_FILE"
 
-  if [ -n "${PIAR_PATH_MARKER:-}" ]; then
-    PATH_MARKER="$PIAR_PATH_MARKER"
+  if [ -n "${KODE_PATH_MARKER:-}" ]; then
+    PATH_MARKER="$KODE_PATH_MARKER"
   fi
 }
 
@@ -245,7 +245,7 @@ is_rust_pi_binary() {
 is_managed_alias() {
   local path="$1"
   [ -f "$path" ] || return 1
-  grep -q "pi_agent_rust installer managed alias" "$path" 2>/dev/null
+  grep -q "koompi-code-cli installer managed alias" "$path" 2>/dev/null
 }
 
 is_expected_legacy_agent_settings_path() {
@@ -430,20 +430,20 @@ PYEOF
 
 cleanup_legacy_agent_settings() {
   local bin_candidates=()
-  if [ -n "$PIAR_INSTALL_BIN" ]; then
-    bin_candidates+=("$PIAR_INSTALL_BIN")
+  if [ -n "$KODE_INSTALL_BIN" ]; then
+    bin_candidates+=("$KODE_INSTALL_BIN")
   fi
   while IFS= read -r candidate; do
     [ -n "$candidate" ] || continue
-    if [ "$candidate" != "$PIAR_INSTALL_BIN" ]; then
+    if [ "$candidate" != "$KODE_INSTALL_BIN" ]; then
       bin_candidates+=("$candidate")
     fi
   done < <(fallback_binary_candidates)
   [ "${#bin_candidates[@]}" -gt 0 ] || return 0
 
   local claude_candidates=()
-  if [ -n "${PIAR_CLAUDE_HOOK_SETTINGS:-}" ]; then
-    claude_candidates+=("${PIAR_CLAUDE_HOOK_SETTINGS}")
+  if [ -n "${KODE_CLAUDE_HOOK_SETTINGS:-}" ]; then
+    claude_candidates+=("${KODE_CLAUDE_HOOK_SETTINGS}")
   fi
   claude_candidates+=(
     "$HOME/.claude/settings.json"
@@ -452,8 +452,8 @@ cleanup_legacy_agent_settings() {
   )
 
   local gemini_candidates=()
-  if [ -n "${PIAR_GEMINI_HOOK_SETTINGS:-}" ]; then
-    gemini_candidates+=("${PIAR_GEMINI_HOOK_SETTINGS}")
+  if [ -n "${KODE_GEMINI_HOOK_SETTINGS:-}" ]; then
+    gemini_candidates+=("${KODE_GEMINI_HOOK_SETTINGS}")
   fi
   gemini_candidates+=(
     "$HOME/.gemini/settings.json"
@@ -468,7 +468,7 @@ cleanup_legacy_agent_settings() {
   done
   for settings_path in "${gemini_candidates[@]}"; do
     if is_expected_legacy_agent_settings_path "$settings_path" "gemini"; then
-      cleanup_legacy_settings_entries "$settings_path" "BeforeTool" "run_shell_command" "pi-agent-rust" "${bin_candidates[@]}"
+      cleanup_legacy_settings_entries "$settings_path" "BeforeTool" "run_shell_command" "koompi-code-cli" "${bin_candidates[@]}"
     fi
   done
 }
@@ -560,12 +560,12 @@ EOF_CAND
 remove_installed_binary() {
   local removed=0
 
-  if [ -n "$PIAR_INSTALL_BIN" ] && [ -e "$PIAR_INSTALL_BIN" ]; then
-    if is_rust_pi_binary "$PIAR_INSTALL_BIN"; then
-      remove_file_if_exists "$PIAR_INSTALL_BIN" && removed=1
-      ok "Removed Rust binary: $PIAR_INSTALL_BIN"
+  if [ -n "$KODE_INSTALL_BIN" ] && [ -e "$KODE_INSTALL_BIN" ]; then
+    if is_rust_pi_binary "$KODE_INSTALL_BIN"; then
+      remove_file_if_exists "$KODE_INSTALL_BIN" && removed=1
+      ok "Removed Rust binary: $KODE_INSTALL_BIN"
     else
-      warn "Skipping non-Rust binary at recorded path: $PIAR_INSTALL_BIN"
+      warn "Skipping non-Rust binary at recorded path: $KODE_INSTALL_BIN"
     fi
   fi
 
@@ -587,35 +587,35 @@ restore_moved_typescript_pi() {
     return 0
   fi
 
-  if [ "${PIAR_ADOPTED_TYPESCRIPT:-0}" != "1" ]; then
+  if [ "${KODE_ADOPTED_TYPESCRIPT:-0}" != "1" ]; then
     return 0
   fi
 
-  if [ -z "$PIAR_LEGACY_MOVED_FROM" ] || [ -z "$PIAR_LEGACY_MOVED_TO" ]; then
+  if [ -z "$KODE_LEGACY_MOVED_FROM" ] || [ -z "$KODE_LEGACY_MOVED_TO" ]; then
     return 0
   fi
 
-  if [ ! -e "$PIAR_LEGACY_MOVED_TO" ]; then
-    warn "Legacy backup not found for restore: $PIAR_LEGACY_MOVED_TO"
+  if [ ! -e "$KODE_LEGACY_MOVED_TO" ]; then
+    warn "Legacy backup not found for restore: $KODE_LEGACY_MOVED_TO"
     return 0
   fi
 
-  if [ -e "$PIAR_LEGACY_MOVED_FROM" ]; then
-    if is_rust_pi_binary "$PIAR_LEGACY_MOVED_FROM"; then
-      remove_file_if_exists "$PIAR_LEGACY_MOVED_FROM" || true
+  if [ -e "$KODE_LEGACY_MOVED_FROM" ]; then
+    if is_rust_pi_binary "$KODE_LEGACY_MOVED_FROM"; then
+      remove_file_if_exists "$KODE_LEGACY_MOVED_FROM" || true
     else
-      warn "Skipping restore because destination already exists: $PIAR_LEGACY_MOVED_FROM"
+      warn "Skipping restore because destination already exists: $KODE_LEGACY_MOVED_FROM"
       RESTORE_CONFLICT=1
       return 0
     fi
   fi
 
-  mv "$PIAR_LEGACY_MOVED_TO" "$PIAR_LEGACY_MOVED_FROM"
-  ok "Restored original pi binary: $PIAR_LEGACY_MOVED_FROM"
+  mv "$KODE_LEGACY_MOVED_TO" "$KODE_LEGACY_MOVED_FROM"
+  ok "Restored original pi binary: $KODE_LEGACY_MOVED_FROM"
 }
 
 remove_legacy_alias() {
-  local alias_path="$PIAR_LEGACY_ALIAS_PATH"
+  local alias_path="$KODE_LEGACY_ALIAS_PATH"
   if [ -z "$alias_path" ]; then
     return 0
   fi
@@ -634,12 +634,12 @@ remove_legacy_alias() {
 remove_compat_alias() {
   local removed=0
 
-  if [ -n "$PIAR_COMPAT_ALIAS_PATH" ] && [ -e "$PIAR_COMPAT_ALIAS_PATH" ]; then
-    if is_managed_alias "$PIAR_COMPAT_ALIAS_PATH"; then
-      remove_file_if_exists "$PIAR_COMPAT_ALIAS_PATH" && removed=1
-      ok "Removed compatibility alias: $PIAR_COMPAT_ALIAS_PATH"
+  if [ -n "$KODE_COMPAT_ALIAS_PATH" ] && [ -e "$KODE_COMPAT_ALIAS_PATH" ]; then
+    if is_managed_alias "$KODE_COMPAT_ALIAS_PATH"; then
+      remove_file_if_exists "$KODE_COMPAT_ALIAS_PATH" && removed=1
+      ok "Removed compatibility alias: $KODE_COMPAT_ALIAS_PATH"
     else
-      warn "Skipping non-managed compatibility alias: $PIAR_COMPAT_ALIAS_PATH"
+      warn "Skipping non-managed compatibility alias: $KODE_COMPAT_ALIAS_PATH"
     fi
   fi
 
@@ -656,8 +656,8 @@ remove_compat_alias() {
 
 remove_installed_skills() {
   local codex_home="${CODEX_HOME:-$HOME/.codex}"
-  local claude_dir="${PIAR_AGENT_SKILL_CLAUDE_PATH:-$HOME/.claude/skills/${AGENT_SKILL_NAME}}"
-  local codex_dir="${PIAR_AGENT_SKILL_CODEX_PATH:-${codex_home}/skills/${AGENT_SKILL_NAME}}"
+  local claude_dir="${KODE_AGENT_SKILL_CLAUDE_PATH:-$HOME/.claude/skills/${AGENT_SKILL_NAME}}"
+  local codex_dir="${KODE_AGENT_SKILL_CODEX_PATH:-${codex_home}/skills/${AGENT_SKILL_NAME}}"
 
   local dir=""
   for dir in "$claude_dir" "$codex_dir"; do
@@ -702,23 +702,23 @@ plan_summary() {
   [ "$QUIET" -eq 1 ] && return 0
 
   local lines=()
-  if [ -n "$PIAR_INSTALL_BIN" ]; then
-    lines+=("Rust binary: $PIAR_INSTALL_BIN")
+  if [ -n "$KODE_INSTALL_BIN" ]; then
+    lines+=("Rust binary: $KODE_INSTALL_BIN")
   fi
-  if [ -n "$PIAR_LEGACY_ALIAS_PATH" ]; then
-    lines+=("Legacy alias: $PIAR_LEGACY_ALIAS_PATH")
+  if [ -n "$KODE_LEGACY_ALIAS_PATH" ]; then
+    lines+=("Legacy alias: $KODE_LEGACY_ALIAS_PATH")
   fi
-  if [ -n "$PIAR_COMPAT_ALIAS_PATH" ] || [ -n "$PIAR_COMPAT_ALIAS_STATUS" ]; then
-    lines+=("Compatibility alias: ${PIAR_COMPAT_ALIAS_PATH:-$PIAR_COMPAT_ALIAS_STATUS}")
+  if [ -n "$KODE_COMPAT_ALIAS_PATH" ] || [ -n "$KODE_COMPAT_ALIAS_STATUS" ]; then
+    lines+=("Compatibility alias: ${KODE_COMPAT_ALIAS_PATH:-$KODE_COMPAT_ALIAS_STATUS}")
   fi
-  if [ -n "$PIAR_AGENT_SKILL_CLAUDE_PATH" ] || [ -n "$PIAR_AGENT_SKILL_CODEX_PATH" ]; then
+  if [ -n "$KODE_AGENT_SKILL_CLAUDE_PATH" ] || [ -n "$KODE_AGENT_SKILL_CODEX_PATH" ]; then
     lines+=("Agent skills: remove installer-managed Claude/Codex skill dirs")
   fi
-  if [ -n "$PIAR_AGENT_SKILL_STATUS" ]; then
-    lines+=("Recorded skill status: $PIAR_AGENT_SKILL_STATUS")
+  if [ -n "$KODE_AGENT_SKILL_STATUS" ]; then
+    lines+=("Recorded skill status: $KODE_AGENT_SKILL_STATUS")
   fi
-  if [ "${PIAR_ADOPTED_TYPESCRIPT:-0}" = "1" ] && [ "$NO_RESTORE_LEGACY" -eq 0 ]; then
-    lines+=("Restore TS pi: ${PIAR_LEGACY_MOVED_TO:-<none>} -> ${PIAR_LEGACY_MOVED_FROM:-<none>}")
+  if [ "${KODE_ADOPTED_TYPESCRIPT:-0}" = "1" ] && [ "$NO_RESTORE_LEGACY" -eq 0 ]; then
+    lines+=("Restore TS pi: ${KODE_LEGACY_MOVED_TO:-<none>} -> ${KODE_LEGACY_MOVED_FROM:-<none>}")
   fi
   if [ "$KEEP_PATH" -eq 0 ]; then
     lines+=("PATH cleanup: remove installer PATH marker lines")

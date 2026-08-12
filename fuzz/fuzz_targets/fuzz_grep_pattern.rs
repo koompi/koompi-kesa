@@ -7,7 +7,7 @@
 
 use futures::executor::block_on;
 use libfuzzer_sys::fuzz_target;
-use pi::tools::{GrepTool, Tool};
+use kode::tools::{GrepTool, Tool};
 use serde_json::json;
 use tempfile::tempdir;
 

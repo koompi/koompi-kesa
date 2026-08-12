@@ -43,7 +43,7 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
       - name: Free disk space
@@ -61,10 +61,10 @@ jobs:
           sudo apt-get clean || true
           df -h /
 
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@v4
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
 
       - name: Install system deps
@@ -102,8 +102,8 @@ jobs:
       - name: Check public API SemVer compatibility
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
-          manifest-path: pi_agent_rust/Cargo.toml
-          package: pi_agent_rust
+          manifest-path: koompi_code_cli/Cargo.toml
+          package: koompi_code_cli
           baseline-rev: ${{ steps.baseline.outputs.rev }}
           rust-toolchain: nightly-2026-07-05
           shared-key: pi-agent-rust-semver

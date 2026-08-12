@@ -6,9 +6,9 @@
 mod common;
 
 use common::TestHarness;
-use pi::extensions::{ExtensionManager, ExtensionRegion};
-use pi::theme::{Theme, looks_like_theme_path};
-use pi::tui::PiConsole;
+use kode::extensions::{ExtensionManager, ExtensionRegion};
+use kode::theme::{Theme, looks_like_theme_path};
+use kode::tui::PiConsole;
 use proptest::prelude::*;
 use std::fmt::Write;
 use std::time::Duration;
@@ -358,7 +358,7 @@ fn theme_discover_from_temp_dirs() {
     let theme_json = serde_json::to_string_pretty(&Theme::dark()).unwrap();
     std::fs::write(global_themes_dir.join("custom.json"), &theme_json).unwrap();
 
-    let roots = pi::theme::ThemeRoots {
+    let roots = kode::theme::ThemeRoots {
         global_dir,
         project_dir,
     };

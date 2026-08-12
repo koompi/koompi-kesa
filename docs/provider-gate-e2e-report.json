@@ -5,7 +5,7 @@
   "generated_by": "TopazFalcon (Claude Opus 4.6)",
   "description": "Provider E2E gate: scenario execution, streaming, cross-provider parity, failure injection, and structured logging validation",
   "environment": {
-    "cargo_target_dir": "/data/projects/pi_agent_rust/_target_topaz",
+    "cargo_target_dir": "/data/projects/koompi_code_cli/_target_topaz",
     "vcr_mode": "playback",
     "vcr_cassette_dir": "tests/fixtures/vcr",
     "ollama_live": true,

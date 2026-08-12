@@ -13,12 +13,12 @@
 
 mod common;
 
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
     PROTOCOL_VERSION, RegisterPayload,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::HashSet;
 use std::path::PathBuf;

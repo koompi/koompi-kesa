@@ -7,13 +7,13 @@
 
 mod common;
 
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::{
+use kode::extensions_js::{
     PiJsRuntimeConfig, RepairMode, RepairPattern, extract_import_names, generate_monorepo_stub,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use std::sync::Arc;
 
 // ─── Test Infrastructure ─────────────────────────────────────────────────────
@@ -501,7 +501,7 @@ fn repair_mode_auto_strict_applies_all() {
 
 #[test]
 fn safe_patterns_in_auto_safe() {
-    use pi::extensions_js::RepairRisk;
+    use kode::extensions_js::RepairRisk;
     assert_eq!(RepairPattern::DistToSrc.risk(), RepairRisk::Safe);
     assert_eq!(RepairPattern::MissingAsset.risk(), RepairRisk::Safe);
     assert_eq!(
@@ -512,7 +512,7 @@ fn safe_patterns_in_auto_safe() {
 
 #[test]
 fn aggressive_patterns_require_strict() {
-    use pi::extensions_js::RepairRisk;
+    use kode::extensions_js::RepairRisk;
     assert_eq!(RepairPattern::MonorepoEscape.risk(), RepairRisk::Aggressive);
     assert_eq!(RepairPattern::MissingNpmDep.risk(), RepairRisk::Aggressive);
     assert_eq!(RepairPattern::ExportShape.risk(), RepairRisk::Aggressive);

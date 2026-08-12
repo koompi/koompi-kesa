@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
 
     strategy:
@@ -125,11 +125,11 @@ jobs:
           sudo apt-get clean || true
           df -h /
 
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         if: env.SHOULD_RUN == 'true'
         uses: actions/checkout@v4
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
 
       - name: Checkout asupersync
         if: env.SHOULD_RUN == 'true'
@@ -186,8 +186,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            pi_agent_rust/target/
-          key: conformance-${{ runner.os }}-${{ hashFiles('pi_agent_rust/Cargo.lock') }}
+            koompi_code_cli/target/
+          key: conformance-${{ runner.os }}-${{ hashFiles('koompi_code_cli/Cargo.lock') }}
           restore-keys: conformance-${{ runner.os }}-
 
       - name: Install Bun
@@ -198,7 +198,7 @@ jobs:
 
       - name: Install pi-mono dependencies
         if: env.SHOULD_RUN == 'true'
-        working-directory: pi_agent_rust/legacy_pi_mono_code/pi-mono
+        working-directory: koompi_code_cli/legacy_pi_mono_code/pi-mono
         run: npm ci
 
       - name: Symlink bun for conformance tests
@@ -229,11 +229,11 @@ jobs:
         with:
           name: conformance-${{ matrix.name }}-${{ github.sha }}
           path: |
-            pi_agent_rust/conformance-${{ matrix.name }}.log
-            pi_agent_rust/flake_events.jsonl
-            pi_agent_rust/tests/ext_conformance/reports/**/*.json
-            pi_agent_rust/tests/ext_conformance/reports/**/*.jsonl
-            pi_agent_rust/tests/ext_conformance/reports/**/*.md
+            koompi_code_cli/conformance-${{ matrix.name }}.log
+            koompi_code_cli/flake_events.jsonl
+            koompi_code_cli/tests/ext_conformance/reports/**/*.json
+            koompi_code_cli/tests/ext_conformance/reports/**/*.jsonl
+            koompi_code_cli/tests/ext_conformance/reports/**/*.md
           if-no-files-found: warn
 
   # ─── Trend report (nightly only) ──────────────────────────────────────
@@ -256,7 +256,7 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p tests/ext_conformance/reports
-          # download-artifact strips the common pi_agent_rust/ prefix, so the
+          # download-artifact strips the common koompi_code_cli/ prefix, so the
           # summary lands directly in tests/ext_conformance/reports/.
           # Verify it exists (it may also already be there from the checkout).
           if [ -f tests/ext_conformance/reports/conformance_summary.json ]; then

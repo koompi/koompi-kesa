@@ -1,5 +1,5 @@
 use chrono::{TimeZone, Utc};
-use pi::extension_scoring::{VoiCandidate, VoiPlannerConfig, plan_voi_candidates};
+use kode::extension_scoring::{VoiCandidate, VoiPlannerConfig, plan_voi_candidates};
 
 const CANDIDATES_PER_SEED: usize = 24;
 const SEED_COUNT: u64 = 128;
@@ -71,7 +71,7 @@ fn seeded_candidates(seed: u64, fresh: &str) -> Vec<VoiCandidate> {
         .collect()
 }
 
-fn assert_selected_by_priority_order(selected: &[pi::extension_scoring::VoiPlannedCandidate]) {
+fn assert_selected_by_priority_order(selected: &[kode::extension_scoring::VoiPlannedCandidate]) {
     for window in selected.windows(2) {
         assert!(
             window[0].utility_per_ms >= window[1].utility_per_ms,

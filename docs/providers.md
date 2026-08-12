@@ -1,6 +1,6 @@
 # Providers
 
-This document is the canonical in-repo provider baseline for `pi_agent_rust`.
+This document is the canonical in-repo provider baseline for `koompi_code_cli`.
 It summarizes provider IDs, aliases, API families, auth behavior, and current implementation mode.
 
 Snapshot basis:

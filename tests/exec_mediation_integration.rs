@@ -5,7 +5,7 @@
 //! classification, exec mediation evaluation, secret broker detection and
 //! redaction, ledger entry accumulation, and artifact export.
 
-use pi::extensions::{
+use kode::extensions::{
     DangerousCommandClass, ExecMediationArtifact, ExecMediationLedgerEntry, ExecMediationPolicy,
     ExecMediationResult, ExecRiskTier, ExtensionManager, ExtensionPolicy, PolicyProfile,
     SecretBrokerArtifact, SecretBrokerLedgerEntry, SecretBrokerPolicy, classify_dangerous_command,

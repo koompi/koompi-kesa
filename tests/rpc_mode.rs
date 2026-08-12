@@ -6,18 +6,18 @@ mod common;
 
 use common::logging::TestLogger;
 use common::{TestEnv, TestHarness};
-use pi::agent::{Agent, AgentConfig, AgentSession};
-use pi::auth::AuthStorage;
-use pi::config::Config;
-use pi::http::client::Client;
-use pi::model::{AssistantMessage, ContentBlock, StopReason, TextContent, ToolCall, Usage};
-use pi::provider::Provider;
-use pi::providers::openai::OpenAIProvider;
-use pi::resources::ResourceLoader;
-use pi::rpc::{RpcOptions, run};
-use pi::session::{Session, SessionMessage};
-use pi::tools::ToolRegistry;
-use pi::vcr::{VcrMode, VcrRecorder};
+use kode::agent::{Agent, AgentConfig, AgentSession};
+use kode::auth::AuthStorage;
+use kode::config::Config;
+use kode::http::client::Client;
+use kode::model::{AssistantMessage, ContentBlock, StopReason, TextContent, ToolCall, Usage};
+use kode::provider::Provider;
+use kode::providers::openai::OpenAIProvider;
+use kode::resources::ResourceLoader;
+use kode::rpc::{RpcOptions, run};
+use kode::session::{Session, SessionMessage};
+use kode::tools::ToolRegistry;
+use kode::vcr::{VcrMode, VcrRecorder};
 use std::env;
 use std::path::Path;
 use std::path::PathBuf;
@@ -175,7 +175,7 @@ fn rpc_get_state_and_prompt() {
             agent,
             session,
             false,
-            pi::compaction::ResolvedCompactionSettings::default(),
+            kode::compaction::ResolvedCompactionSettings::default(),
         );
 
         let auth_dir = tempfile::tempdir().unwrap();
@@ -443,7 +443,7 @@ fn rpc_session_stats_counts_tool_calls_and_results() {
         session.header.model_id = Some(model);
         session.header.thinking_level = Some("off".to_string());
         session.append_message(SessionMessage::User {
-            content: pi::model::UserContent::Text("hi".to_string()),
+            content: kode::model::UserContent::Text("hi".to_string()),
             timestamp: Some(now),
         });
         session.append_message(SessionMessage::Assistant {
@@ -483,7 +483,7 @@ fn rpc_session_stats_counts_tool_calls_and_results() {
             agent,
             session,
             false,
-            pi::compaction::ResolvedCompactionSettings::default(),
+            kode::compaction::ResolvedCompactionSettings::default(),
         );
 
         let auth_dir = tempfile::tempdir().unwrap();

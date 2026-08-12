@@ -1,4 +1,4 @@
-use pi::extensions::CompatibilityScanner;
+use kode::extensions::CompatibilityScanner;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -934,7 +934,7 @@ fn test_ext_conformance_pinned_sample_compat_ledger_snapshot() {
         .collect::<Vec<_>>();
     ids.sort();
 
-    let mut ledgers: BTreeMap<String, pi::extensions::CompatLedger> = BTreeMap::new();
+    let mut ledgers: BTreeMap<String, kode::extensions::CompatLedger> = BTreeMap::new();
     for id in ids {
         let artifact_dir = repo_root.join("tests/ext_conformance/artifacts").join(&id);
         assert!(
@@ -2146,7 +2146,7 @@ fn test_tier_classification_logic() {
 /// - Checksums match actual artifacts on disk
 #[test]
 fn test_snapshot_protocol_provenance_entries_valid() {
-    use pi::conformance::snapshot::{
+    use kode::conformance::snapshot::{
         SourceTier, digest_artifact_dir as lib_digest, validate_directory, validate_id,
     };
 
@@ -2207,7 +2207,7 @@ fn test_snapshot_protocol_provenance_entries_valid() {
 /// to the test-local implementation, ensuring protocol consistency.
 #[test]
 fn test_snapshot_protocol_digest_matches_local_implementation() {
-    use pi::conformance::snapshot::digest_artifact_dir as lib_digest;
+    use kode::conformance::snapshot::digest_artifact_dir as lib_digest;
 
     let repo_root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let artifacts_root = repo_root.join("tests/ext_conformance/artifacts");

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use pi::scheduler::{Clock, Scheduler};
+    use kode::scheduler::{Clock, Scheduler};
     use std::sync::Arc;
     use std::sync::atomic::AtomicU64;
 

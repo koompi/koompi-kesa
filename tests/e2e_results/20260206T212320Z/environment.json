@@ -7,6 +7,6 @@
   "git_branch": "main",
   "parallelism": 1,
   "log_level": "info",
-  "artifact_dir": "/data/projects/pi_agent_rust/tests/e2e_results/20260206T212320Z",
+  "artifact_dir": "/data/projects/koompi_code_cli/tests/e2e_results/20260206T212320Z",
   "vcr_mode": "unset"
 }

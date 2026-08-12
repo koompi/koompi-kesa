@@ -3,7 +3,7 @@
   "bead_id": "bd-1f42.8.1",
   "status": "complete_with_partial_branch",
   "generated_at": "2026-02-14T14:00:00Z",
-  "workspace": "/data/projects/pi_agent_rust",
+  "workspace": "/data/projects/koompi_code_cli",
   "collection": {
     "status": "partial_branch_via_per_file_export",
     "blockers": [
@@ -12,13 +12,13 @@
     ],
     "workaround": "Per-file llvm-cov export with -sources flag. Files that SIGSEGV individually are excluded from branch totals and use line/function-only fallback. Branch instrumentation is enabled via cargo llvm-cov --branch, and the profdata is generated with branch counters; only the export phase crashes for certain files.",
     "deterministic_command_path": [
-      "Step 1: Build with branch instrumentation: CARGO_TARGET_DIR=/data/tmp/pi_agent_rust/cov cargo llvm-cov --lib --branch --ignore-run-fail --no-report",
+      "Step 1: Build with branch instrumentation: CARGO_TARGET_DIR=/data/tmp/koompi_code_cli/cov cargo llvm-cov --lib --branch --ignore-run-fail --no-report",
       "Step 2: For each src/*.rs file, run: llvm-cov export -format=text -instr-profile=PROFDATA -object OBJECT -sources FILE -summary-only",
       "Step 3: Files that exit 0 have real branch metrics; files that exit 139 (SIGSEGV) use line/function from non-branch run",
       "Step 4: Merge per-file summaries into combined baseline JSON"
     ],
     "successful_branch_command": "Per-file: llvm-cov export -format=text -instr-profile=$PROFDATA -object $OBJECT -sources $FILE -summary-only",
-    "successful_nonbranch_command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust/cov_nobranch cargo llvm-cov --lib --json --summary-only --output-path cov_nobranch_result.json --ignore-run-fail",
+    "successful_nonbranch_command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli/cov_nobranch cargo llvm-cov --lib --json --summary-only --output-path cov_nobranch_result.json --ignore-run-fail",
     "artifacts": {
       "branch_ok_files_json": "target/branch_coverage_ok_files.json",
       "nobranch_full_json": "target/cov_nobranch_result.json",

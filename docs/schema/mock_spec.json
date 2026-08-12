@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Pi Extension Mock Specification",
-  "description": "Shared mock specification for deterministic extension conformance testing. Both TS (pi-mono) and Rust (pi_agent_rust) runtimes consume this format to produce identical hostcall responses.",
+  "description": "Shared mock specification for deterministic extension conformance testing. Both TS (pi-mono) and Rust (koompi_code_cli) runtimes consume this format to produce identical hostcall responses.",
   "type": "object",
   "required": ["schema", "extension_id"],
   "properties": {

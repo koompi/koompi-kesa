@@ -8,7 +8,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
-use pi::validation_broker::{
+use kode::validation_broker::{
     VALIDATION_BROKER_CLI_PLAN_SCHEMA, VALIDATION_BROKER_CLI_STATUS_SCHEMA,
     ValidationAdmissionPolicy, ValidationAdmissionRequestContext, ValidationBrokerInputParts,
     ValidationBrokerInputSnapshot, ValidationSlotArtifact, ValidationSlotLease,
@@ -147,7 +147,7 @@ fn repo_root() -> PathBuf {
 }
 
 fn binary_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_pi"))
+    PathBuf::from(env!("CARGO_BIN_EXE_kode"))
 }
 
 fn test_temp_dir() -> Result<TempDir, io::Error> {
@@ -379,11 +379,11 @@ fn base_request(slot_id: &str) -> ValidationSlotRequest {
     let mut environment = BTreeMap::new();
     environment.insert(
         "CARGO_TARGET_DIR".to_string(),
-        "/data/tmp/pi_agent_rust_cargo/e2e/target".to_string(),
+        "/data/tmp/koompi_code_cli_cargo/e2e/target".to_string(),
     );
     environment.insert(
         "TMPDIR".to_string(),
-        "/data/tmp/pi_agent_rust_cargo/e2e/tmp".to_string(),
+        "/data/tmp/koompi_code_cli_cargo/e2e/tmp".to_string(),
     );
 
     ValidationSlotRequest {
@@ -399,11 +399,11 @@ fn base_request(slot_id: &str) -> ValidationSlotRequest {
             "--all-targets".to_string(),
         ],
         command_class: "cargo_check".to_string(),
-        cwd: "/data/projects/pi_agent_rust".to_string(),
+        cwd: "/data/projects/koompi_code_cli".to_string(),
         git_head: "validation-broker-e2e-head".to_string(),
         feature_flags: vec!["default".to_string()],
-        target_dir: "/data/tmp/pi_agent_rust_cargo/e2e/target".to_string(),
-        tmpdir: "/data/tmp/pi_agent_rust_cargo/e2e/tmp".to_string(),
+        target_dir: "/data/tmp/koompi_code_cli_cargo/e2e/target".to_string(),
+        tmpdir: "/data/tmp/koompi_code_cli_cargo/e2e/tmp".to_string(),
         runner: "rch_required".to_string(),
         rust_toolchain: Some("nightly".to_string()),
         rch_job_id: Some("rch-job-validation-broker-e2e".to_string()),
@@ -607,7 +607,7 @@ fn build_input_snapshot(
         scratch_headroom,
         agent_mail,
     })
-    .map_err(|err: pi::error::Error| {
+    .map_err(|err: kode::error::Error| {
         test_error(format!(
             "input snapshot failed for {}: {err}",
             scenario_dir.display()
@@ -619,7 +619,7 @@ fn provenance(source: &str, path: &Path) -> TestResult<ValidationSourceProvenanc
     ValidationSourceProvenance::new(
         source,
         vec![source.to_string(), "--json".to_string()],
-        "/data/projects/pi_agent_rust",
+        "/data/projects/koompi_code_cli",
         PLAN_AT,
         Some(path.display().to_string()),
     )
@@ -737,7 +737,7 @@ fn fault_slot_request(
     match slot.equivalence.as_str() {
         "matching" => {}
         "target_dir_mismatch" => {
-            slot_request.target_dir = "/data/tmp/pi_agent_rust_cargo/other/target".to_string();
+            slot_request.target_dir = "/data/tmp/koompi_code_cli_cargo/other/target".to_string();
         }
         other => {
             return Err(test_error(format!(
@@ -1099,8 +1099,8 @@ fn write_runpack_sources(root: &Path, doctor_path: &Path, broker_status_path: &P
             "resolved_runner": "rch",
             "command_class": "heavy",
             "allow_local_fallback": false,
-            "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/e2e/target",
-            "tmpdir": "/data/tmp/pi_agent_rust_cargo/e2e/tmp",
+            "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/e2e/target",
+            "tmpdir": "/data/tmp/koompi_code_cli_cargo/e2e/tmp",
             "rch_queue_forecast": {
                 "schema": "pi.cargo_headroom.rch_queue_forecast.v1",
                 "status": "ok",

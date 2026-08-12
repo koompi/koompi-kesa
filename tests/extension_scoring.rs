@@ -4,7 +4,7 @@ mod common;
 
 use chrono::{DateTime, TimeZone, Utc};
 use common::TestHarness;
-use pi::extension_scoring::{
+use kode::extension_scoring::{
     CandidateInput, CompatStatus, Compatibility, Gates, InterferenceMatrixCompletenessReport,
     LicenseInfo, MarketplaceSignals, Recency, Redistribution, RiskInfo, RiskLevel, Signals, Tags,
     evaluate_interference_matrix_completeness, format_interference_pair_key,
@@ -28,7 +28,7 @@ fn load_fixture_candidates() -> Vec<CandidateInput> {
 fn scoring_examples_match_rubric() {
     let as_of = fixed_as_of();
     let report = score_candidates(&load_fixture_candidates(), as_of, as_of, 10);
-    let by_id: HashMap<&str, &pi::extension_scoring::ScoredCandidate> = report
+    let by_id: HashMap<&str, &kode::extension_scoring::ScoredCandidate> = report
         .items
         .iter()
         .map(|item| (item.id.as_str(), item))

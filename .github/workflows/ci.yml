@@ -26,7 +26,7 @@ jobs:
       CI_GATE_MAX_NA_COUNT: ${{ vars.CI_GATE_MAX_NA_COUNT || '170' }}
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
       - name: Free disk space [linux]
@@ -45,10 +45,10 @@ jobs:
           sudo apt-get clean || true
           df -h /
 
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@v4
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
 
       - name: PR Definition-of-Done evidence guard [linux]
@@ -746,8 +746,8 @@ jobs:
         with:
           name: inclusion-manifest-${{ matrix.os }}-${{ github.sha }}
           path: |
-            pi_agent_rust/docs/extension-inclusion-list.json
-            pi_agent_rust/tests/ext_conformance/reports/inclusion_manifest/**
+            koompi_code_cli/docs/extension-inclusion-list.json
+            koompi_code_cli/tests/ext_conformance/reports/inclusion_manifest/**
           if-no-files-found: warn
 
       - name: Reclaim disk space before wasm-host tests [linux]
@@ -857,8 +857,8 @@ jobs:
         with:
           name: scenario-cell-gate-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            pi_agent_rust/${{ env.PERF_SCENARIO_CELL_STATUS_JSON }}
-            pi_agent_rust/${{ env.PERF_SCENARIO_CELL_STATUS_MD }}
+            koompi_code_cli/${{ env.PERF_SCENARIO_CELL_STATUS_JSON }}
+            koompi_code_cli/${{ env.PERF_SCENARIO_CELL_STATUS_MD }}
           if-no-files-found: warn
 
       - name: CI gate promotion (strict/rollback) [linux]
@@ -1632,9 +1632,9 @@ jobs:
         with:
           name: coverage
           path: |
-            pi_agent_rust/llvm-cov-summary.txt
-            pi_agent_rust/lcov.info
-            pi_agent_rust/target/llvm-cov/html
+            koompi_code_cli/llvm-cov-summary.txt
+            koompi_code_cli/lcov.info
+            koompi_code_cli/target/llvm-cov/html
 
       - name: Upload conformance reports
         if: runner.os == 'Linux' && always()
@@ -1642,14 +1642,14 @@ jobs:
         with:
           name: conformance-reports
           path: |
-            pi_agent_rust/tests/ext_conformance/reports/**/*.json
-            pi_agent_rust/tests/ext_conformance/reports/**/*.jsonl
-            pi_agent_rust/tests/e2e_results/**/*.json
-            pi_agent_rust/tests/e2e_results/**/*.jsonl
-            pi_agent_rust/tests/e2e_results/**/*.log
-            pi_agent_rust/tests/quarantine_report.json
-            pi_agent_rust/tests/quarantine_audit.jsonl
-            pi_agent_rust/release_gate_report.json
+            koompi_code_cli/tests/ext_conformance/reports/**/*.json
+            koompi_code_cli/tests/ext_conformance/reports/**/*.jsonl
+            koompi_code_cli/tests/e2e_results/**/*.json
+            koompi_code_cli/tests/e2e_results/**/*.jsonl
+            koompi_code_cli/tests/e2e_results/**/*.log
+            koompi_code_cli/tests/quarantine_report.json
+            koompi_code_cli/tests/quarantine_audit.jsonl
+            koompi_code_cli/release_gate_report.json
           if-no-files-found: ignore
           retention-days: 30
 
@@ -1659,10 +1659,10 @@ jobs:
         with:
           name: provider-test-artifacts-${{ github.sha }}
           path: |
-            pi_agent_rust/tests/full_suite_gate/**/*.json
-            pi_agent_rust/tests/full_suite_gate/**/*.jsonl
-            pi_agent_rust/tests/full_suite_gate/**/*.md
-            pi_agent_rust/tests/cross_platform_reports/**/*.json
+            koompi_code_cli/tests/full_suite_gate/**/*.json
+            koompi_code_cli/tests/full_suite_gate/**/*.jsonl
+            koompi_code_cli/tests/full_suite_gate/**/*.md
+            koompi_code_cli/tests/cross_platform_reports/**/*.json
           if-no-files-found: ignore
           retention-days: 30
 
@@ -1676,13 +1676,13 @@ jobs:
       CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@v4
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
 
       - name: Install Rust toolchain (nightly)
@@ -1694,7 +1694,7 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: pi_agent_rust -> target
+          workspaces: koompi_code_cli -> target
           prefix-key: release-evidence-gate
 
       - name: Release evidence gate
@@ -1764,18 +1764,18 @@ jobs:
       RUST_BACKTRACE: "1"
       CARGO_INCREMENTAL: "0"
       CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
-      SHARD_ARTIFACT_DIR: ${{ github.workspace }}/pi_agent_rust/tests/e2e_results/ci-shards/${{ matrix.shard.name }}
+      SHARD_ARTIFACT_DIR: ${{ github.workspace }}/koompi_code_cli/tests/e2e_results/ci-shards/${{ matrix.shard.name }}
       SHARD_CORRELATION_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.shard.name }}
-      CARGO_TARGET_DIR: ${{ github.workspace }}/pi_agent_rust/target/ci-shards/${{ matrix.shard.name }}
+      CARGO_TARGET_DIR: ${{ github.workspace }}/koompi_code_cli/target/ci-shards/${{ matrix.shard.name }}
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@v4
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
 
       - name: Install system deps (fd, rg)
@@ -1794,7 +1794,7 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: pi_agent_rust -> target
+          workspaces: koompi_code_cli -> target
           prefix-key: qa-shards-${{ matrix.shard.name }}
 
       - name: Execute shard lane
@@ -1948,7 +1948,7 @@ jobs:
         with:
           name: ci-shard-${{ matrix.shard.name }}-${{ github.sha }}
           path: |
-            pi_agent_rust/tests/e2e_results/ci-shards/${{ matrix.shard.name }}/
+            koompi_code_cli/tests/e2e_results/ci-shards/${{ matrix.shard.name }}/
           if-no-files-found: warn
           retention-days: 30
 
@@ -2484,13 +2484,13 @@ jobs:
       CARGO_PROFILE_DEV_DEBUG: "line-tables-only"
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@v4
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
 
       - name: Install Rust toolchain (nightly)
@@ -2502,7 +2502,7 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: pi_agent_rust -> target
+          workspaces: koompi_code_cli -> target
           prefix-key: library-no-default-features
 
       - name: cargo check (lib, no default features, no TUI)

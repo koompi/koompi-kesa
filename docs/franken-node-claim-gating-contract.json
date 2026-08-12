@@ -75,7 +75,7 @@
         "compatibility remediation backlog generator evidence for bd-3ar8v.7.16",
         "benchmark and resource gate pass with confidence-tagged evidence",
         "migration assistant and shadow-canary rollback safeguards",
-        "crate reintegration evidence into pi_agent_rust"
+        "crate reintegration evidence into koompi_code_cli"
       ],
       "forbidden_claim_language": [
         "Replacement claim when any hard gate is missing",
@@ -108,7 +108,7 @@
   "future_crate_reintegration_obligations": {
     "required_bead": "bd-3ar8v.7.13",
     "obligations": [
-      "Integrate franken_node runtime crate(s) into pi_agent_rust.",
+      "Integrate franken_node runtime crate(s) into koompi_code_cli.",
       "Retire duplicate runtime logic after reintegration verification.",
       "Retain parity and certification gates post-reintegration."
     ]

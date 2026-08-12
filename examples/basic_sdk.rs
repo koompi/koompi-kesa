@@ -27,7 +27,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use pi::sdk::{AgentEvent, AgentSessionHandle, ContentBlock, SessionOptions, create_agent_session};
+use kode::sdk::{AgentEvent, AgentSessionHandle, ContentBlock, SessionOptions, create_agent_session};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the async runtime (pi uses asupersync, not tokio).
@@ -109,7 +109,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
                     ..
                 } => {
                     // Print streaming text deltas to stderr as they arrive.
-                    use pi::model::AssistantMessageEvent;
+                    use kode::model::AssistantMessageEvent;
                     if let AssistantMessageEvent::TextDelta { delta, .. } = assistant_message_event
                     {
                         eprint!("{delta}");

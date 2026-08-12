@@ -23,13 +23,13 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use pi::extension_license::{ScreeningReport, VerdictStatus};
-use pi::extension_popularity::{CandidateItem, CandidatePool};
-use pi::extension_scoring::{
+use kode::extension_license::{ScreeningReport, VerdictStatus};
+use kode::extension_popularity::{CandidateItem, CandidatePool};
+use kode::extension_scoring::{
     CandidateInput, CompatStatus, Compatibility, Gates, LicenseInfo, MarketplaceSignals, Recency,
     Redistribution, RiskInfo, Signals, Tags, score_candidates,
 };
-use pi::extension_validation::{ValidationReport, ValidationStatus};
+use kode::extension_validation::{ValidationReport, ValidationStatus};
 
 #[derive(Debug, Parser)]
 #[command(name = "ext_tiered_corpus")]

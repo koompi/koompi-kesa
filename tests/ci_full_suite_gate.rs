@@ -5432,7 +5432,7 @@ fn perf3x_bead_coverage_evaluator_fails_closed_when_evidence_paths_are_missing()
         .duration_since(std::time::UNIX_EPOCH)
         .expect("clock before unix epoch")
         .as_nanos();
-    temp.push(format!("pi_agent_rust_per3x_coverage_warn_{nonce}"));
+    temp.push(format!("koompi_code_cli_per3x_coverage_warn_{nonce}"));
     std::fs::create_dir_all(&temp).expect("create temp root");
 
     let (status, detail) = evaluate_perf3x_bead_coverage(&temp, &perf3x_bead_coverage_contract());
@@ -5553,7 +5553,7 @@ fn perf3x_bead_coverage_audit_report_tracks_missing_evidence_fail_closed() {
         .expect("clock before unix epoch")
         .as_nanos();
     temp.push(format!(
-        "pi_agent_rust_perf3x_coverage_audit_missing_{nonce}"
+        "koompi_code_cli_perf3x_coverage_audit_missing_{nonce}"
     ));
     std::fs::create_dir_all(&temp).expect("create temp root");
 
@@ -6848,7 +6848,7 @@ fn assert_non_empty_text_artifact_rejects_whitespace_only_file() {
         .expect("clock before unix epoch")
         .as_nanos();
     path.push(format!(
-        "pi_agent_rust_certification_report_empty_{nonce}.md"
+        "koompi_code_cli_certification_report_empty_{nonce}.md"
     ));
 
     std::fs::write(&path, " \n\t").expect("write whitespace artifact");

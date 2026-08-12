@@ -1,4 +1,4 @@
-use pi::extensions::{SecretBrokerPolicy, redact_command_for_logging};
+use kode::extensions::{SecretBrokerPolicy, redact_command_for_logging};
 
 #[test]
 fn test_redaction_escaped_quotes() {

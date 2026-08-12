@@ -71,7 +71,7 @@
         "provider defaults"
       ],
       "provider_defaults": {
-        "HTTP-Referer": "https://github.com/Dicklesworthstone/pi_agent_rust",
+        "HTTP-Referer": "https://github.com/Dicklesworthstone/koompi_code_cli",
         "X-Title": "Pi Agent Rust"
       },
       "env_overrides": {

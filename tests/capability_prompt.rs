@@ -17,17 +17,17 @@ use asupersync::sync::Mutex;
 use bubbletea::{KeyMsg, KeyType, Message, Model as BubbleteaModel};
 use common::TestHarness;
 use futures::stream;
-use pi::agent::{Agent, AgentConfig};
-use pi::config::Config;
-use pi::extensions::{ExtensionManager, ExtensionUiRequest, ExtensionUiResponse};
-use pi::interactive::{PiApp, PiMsg};
-use pi::keybindings::KeyBindings;
-use pi::model::{StreamEvent, Usage};
-use pi::models::ModelEntry;
-use pi::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
-use pi::resources::{ResourceCliOptions, ResourceLoader};
-use pi::session::Session;
-use pi::tools::ToolRegistry;
+use kode::agent::{Agent, AgentConfig};
+use kode::config::Config;
+use kode::extensions::{ExtensionManager, ExtensionUiRequest, ExtensionUiResponse};
+use kode::interactive::{PiApp, PiMsg};
+use kode::keybindings::KeyBindings;
+use kode::model::{StreamEvent, Usage};
+use kode::models::ModelEntry;
+use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
+use kode::resources::{ResourceCliOptions, ResourceLoader};
+use kode::session::Session;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::HashMap;
 use std::pin::Pin;
@@ -67,8 +67,8 @@ impl Provider for DummyProvider {
         &self,
         _context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> pi::error::Result<
-        Pin<Box<dyn futures::Stream<Item = pi::error::Result<StreamEvent>> + Send>>,
+    ) -> kode::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kode::error::Result<StreamEvent>> + Send>>,
     > {
         Ok(Box::pin(stream::empty()))
     }
@@ -217,7 +217,7 @@ fn cap_prompt_request(
 // ===========================================================================
 
 mod permission_store {
-    use pi::permissions::PermissionStore;
+    use kode::permissions::PermissionStore;
 
     #[test]
     fn corrupt_json_returns_error() {
@@ -341,7 +341,7 @@ mod permission_store {
 // ===========================================================================
 
 mod policy_evaluation {
-    use pi::extensions::{ExtensionPolicy, ExtensionPolicyMode, PolicyDecision};
+    use kode::extensions::{ExtensionPolicy, ExtensionPolicyMode, PolicyDecision};
 
     fn default_policy(mode: ExtensionPolicyMode) -> ExtensionPolicy {
         ExtensionPolicy {
@@ -888,7 +888,7 @@ mod tui_prompt {
 
 mod prompt_persistence_integration {
     use super::*;
-    use pi::permissions::PermissionStore;
+    use kode::permissions::PermissionStore;
 
     #[test]
     fn allow_always_persists_to_disk() {

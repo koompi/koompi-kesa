@@ -4,8 +4,8 @@
 //! - `format_extension_ui_prompt`: provenance display, all methods, edge cases
 //! - `parse_extension_ui_response`: confirm, select, input, editor, cancel, errors
 
-use pi::extensions::ExtensionUiRequest;
-use pi::interactive::{format_extension_ui_prompt, parse_extension_ui_response};
+use kode::extensions::ExtensionUiRequest;
+use kode::interactive::{format_extension_ui_prompt, parse_extension_ui_response};
 use serde_json::{Value, json};
 
 // ---------------------------------------------------------------------------

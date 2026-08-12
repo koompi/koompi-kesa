@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
-use pi::PiResult;
-use pi::session_store_v2::SessionStoreV2;
+use kode::PiResult;
+use kode::session_store_v2::SessionStoreV2;
 use serde_json::json;
 use std::fs;
 use tempfile::tempdir;

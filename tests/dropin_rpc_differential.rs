@@ -14,7 +14,7 @@ const SURFACE_DIFF: &str = include_str!("../docs/dropin-rpc-surface-diff.json");
 const SCENARIOS: &str =
     include_str!("dropin_rpc_differential/fixtures/g05_rpc_surface_scenarios.json");
 const RPC_RESPONSE_TIMEOUT: Duration = Duration::from_secs(15);
-const PI_TEST_RUNNER: &str = env!("CARGO_BIN_EXE_pi");
+const PI_TEST_RUNNER: &str = env!("CARGO_BIN_EXE_kode");
 const RPC_TEST_PROVIDER: &str = "ollama";
 const RPC_TEST_MODEL: &str = "qwen2.5:0.5b";
 

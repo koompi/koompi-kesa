@@ -1,4 +1,4 @@
-# Feature Parity: pi_agent_rust vs Pi Agent (TypeScript)
+# Feature Parity: koompi_code_cli vs Pi Agent (TypeScript)
 
 > **Purpose:** Authoritative single-source-of-truth for implementation status.
 > **Last Updated:** 2026-02-18 (implementation snapshot refresh)

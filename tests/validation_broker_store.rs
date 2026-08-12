@@ -7,7 +7,7 @@ use std::io::{Error as IoError, ErrorKind};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use pi::validation_broker::{
+use kode::validation_broker::{
     VALIDATION_BROKER_DECISION_SCHEMA, VALIDATION_BROKER_INPUT_SCHEMA,
     VALIDATION_BROKER_SLOT_RECORD_SCHEMA, VALIDATION_BROKER_SLOT_SCHEMA,
     VALIDATION_BROKER_SLOT_STORE_SCHEMA, VALIDATION_BROKER_STRESS_EVIDENCE_SCHEMA,
@@ -65,11 +65,11 @@ fn base_request(slot_id: &str) -> ValidationSlotRequest {
     let mut environment = BTreeMap::new();
     environment.insert(
         "CARGO_TARGET_DIR".to_string(),
-        "/data/tmp/pi_agent_rust_cargo/silentreef/target".to_string(),
+        "/data/tmp/koompi_code_cli_cargo/silentreef/target".to_string(),
     );
     environment.insert(
         "TMPDIR".to_string(),
-        "/data/tmp/pi_agent_rust_cargo/silentreef/tmp".to_string(),
+        "/data/tmp/koompi_code_cli_cargo/silentreef/tmp".to_string(),
     );
 
     ValidationSlotRequest {
@@ -85,11 +85,11 @@ fn base_request(slot_id: &str) -> ValidationSlotRequest {
             "--all-targets".to_string(),
         ],
         command_class: "cargo_check".to_string(),
-        cwd: "/data/projects/pi_agent_rust".to_string(),
+        cwd: "/data/projects/koompi_code_cli".to_string(),
         git_head: "cf653c29b5836afabf979bb44325d4712de7088d".to_string(),
         feature_flags: vec!["default".to_string()],
-        target_dir: "/data/tmp/pi_agent_rust_cargo/silentreef/target".to_string(),
-        tmpdir: "/data/tmp/pi_agent_rust_cargo/silentreef/tmp".to_string(),
+        target_dir: "/data/tmp/koompi_code_cli_cargo/silentreef/target".to_string(),
+        tmpdir: "/data/tmp/koompi_code_cli_cargo/silentreef/tmp".to_string(),
         runner: "rch_required".to_string(),
         rust_toolchain: Some("nightly".to_string()),
         rch_job_id: Some("rch-job-123".to_string()),
@@ -113,7 +113,7 @@ fn provenance(source: &str) -> Result<ValidationSourceProvenance, String> {
     ValidationSourceProvenance::new(
         source,
         vec![source.to_string(), "--json".to_string()],
-        "/data/projects/pi_agent_rust",
+        "/data/projects/koompi_code_cli",
         START,
         Some(format!("artifacts/{source}.json")),
     )
@@ -597,7 +597,7 @@ fn apply_slot_equivalence(
     match equivalence {
         "matching" => Ok(()),
         "target_dir_mismatch" => {
-            request.target_dir = "/data/tmp/pi_agent_rust_cargo/other/target".to_string();
+            request.target_dir = "/data/tmp/koompi_code_cli_cargo/other/target".to_string();
             Ok(())
         }
         "git_mismatch" => {
@@ -682,7 +682,7 @@ const fn source_state_key(state: &ValidationSourceState) -> &'static str {
 }
 
 fn assert_expected_policy(
-    decision: &pi::validation_broker::ValidationAdmissionDecisionRecord,
+    decision: &kode::validation_broker::ValidationAdmissionDecisionRecord,
     expected: &BTreeMap<String, Value>,
 ) -> TestResult {
     for (field, expected_value) in expected {
@@ -705,7 +705,7 @@ fn policy_field_mismatch(field: &str) -> String {
 }
 
 fn policy_field_value(
-    decision: &pi::validation_broker::ValidationAdmissionDecisionRecord,
+    decision: &kode::validation_broker::ValidationAdmissionDecisionRecord,
     field: &str,
 ) -> Option<Value> {
     match field {

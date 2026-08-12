@@ -40,13 +40,13 @@ is_positive_int() {
 }
 
 resolve_shared_tmp_root() {
-    local root="/data/tmp/pi_agent_rust/${USER:-agent}"
+    local root="/data/tmp/koompi_code_cli/${USER:-agent}"
     local resolved=""
 
-    if [ -e /data/tmp/pi_agent_rust ] && resolved="$(cd /data/tmp/pi_agent_rust && pwd -P 2>/dev/null)"; then
+    if [ -e /data/tmp/koompi_code_cli ] && resolved="$(cd /data/tmp/koompi_code_cli && pwd -P 2>/dev/null)"; then
         case "$resolved" in
             "$PROJECT_ROOT"|"$PROJECT_ROOT"/*)
-                root="/data/tmp/pi_agent_rust_cargo/${USER:-agent}"
+                root="/data/tmp/koompi_code_cli_cargo/${USER:-agent}"
                 ;;
         esac
     fi

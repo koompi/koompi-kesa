@@ -5,7 +5,7 @@
 //! extension dispatcher + VCR matching layers.
 #![forbid(unsafe_code)]
 
-use pi::extensions_js::{HostcallKind, HostcallRequest};
+use kode::extensions_js::{HostcallKind, HostcallRequest};
 use proptest::prelude::*;
 use serde_json::{Value, json};
 

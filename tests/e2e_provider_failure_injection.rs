@@ -28,10 +28,10 @@ mod common;
 
 use common::{MockHttpResponse, TestHarness};
 use futures::StreamExt;
-use pi::model::{Message, UserContent, UserMessage};
-use pi::models::ModelEntry;
-use pi::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions};
-use pi::providers::create_provider;
+use kode::model::{Message, UserContent, UserMessage};
+use kode::models::ModelEntry;
+use kode::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions};
+use kode::providers::create_provider;
 use serde::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
@@ -94,7 +94,7 @@ fn make_sse_response(body: &str) -> MockHttpResponse {
 }
 
 fn collect_events(
-    provider: Arc<dyn pi::provider::Provider>,
+    provider: Arc<dyn kode::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) -> Result<Vec<StreamEvent>, String> {
@@ -234,7 +234,7 @@ fn anthropic_route() -> String {
 fn setup_openai(
     harness: &TestHarness,
     response: MockHttpResponse,
-) -> (Arc<dyn pi::provider::Provider>, common::MockHttpServer) {
+) -> (Arc<dyn kode::provider::Provider>, common::MockHttpServer) {
     let server = harness.start_mock_http_server();
     let route = oai_route();
     server.add_route("POST", &route, response);
@@ -248,7 +248,7 @@ fn setup_openai(
 fn setup_anthropic(
     harness: &TestHarness,
     response: MockHttpResponse,
-) -> (Arc<dyn pi::provider::Provider>, common::MockHttpServer) {
+) -> (Arc<dyn kode::provider::Provider>, common::MockHttpServer) {
     let server = harness.start_mock_http_server();
     let route = anthropic_route();
     server.add_route("POST", &route, response);
@@ -971,7 +971,7 @@ fn comprehensive_failure_injection_report() {
 fn setup_gemini(
     harness: &TestHarness,
     response: MockHttpResponse,
-) -> (Arc<dyn pi::provider::Provider>, common::MockHttpServer) {
+) -> (Arc<dyn kode::provider::Provider>, common::MockHttpServer) {
     let server = harness.start_mock_http_server();
     // Gemini sends the API key in x-goog-api-key and keeps only alt=sse in the URL.
     server.add_route("POST", "/models/fail-test:streamGenerateContent", response);

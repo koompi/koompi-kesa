@@ -19,12 +19,12 @@ use clap::Parser as _;
 use common::run_async;
 use common::tmux::TuiSession;
 use fs4::fs_std::FileExt as _;
-use pi::app::build_system_prompt;
-use pi::cli;
-use pi::model::ContentBlock;
-use pi::session::SESSION_VERSION;
-use pi::tools::{ReadTool, Tool};
-use pi::vcr::{
+use kode::app::build_system_prompt;
+use kode::cli;
+use kode::model::ContentBlock;
+use kode::session::SESSION_VERSION;
+use kode::tools::{ReadTool, Tool};
+use kode::vcr::{
     Cassette, Interaction, RecordedRequest, RecordedResponse, VCR_ENV_DIR, VCR_ENV_MODE,
 };
 use serde_json::{Value, json};
@@ -88,7 +88,7 @@ impl TmuxE2eLock {
         let thread_guard = TMUX_E2E_IN_PROCESS_LOCK
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let path = std::env::temp_dir().join("pi_agent_rust.tmux-e2e.lock");
+        let path = std::env::temp_dir().join("koompi_code_cli.tmux-e2e.lock");
         let file = OpenOptions::new()
             .create(true)
             .read(true)

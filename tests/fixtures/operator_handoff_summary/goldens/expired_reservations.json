@@ -97,14 +97,14 @@
       "summary": "completion audit source=not_provided"
     }
   ],
-  "markdown": "# Operator Handoff Summary\n\n- Status: watch\n- Project: pi_agent_rust\n- Branch: main\n- Head: abc1234\n- Generated: [GENERATED_AT]\n\n## What Changed\n- No recently closed beads were provided.\n\n## Safe Next Actions\n- Refresh or release expired reservations before treating ownership as current.\n\n## Must Not Touch\n- No additional protected paths beyond repo instructions and active Beads ownership.\n\n## Gates\n- No validation gates were provided.\n\n## Completion Audit\n- source_present: false\n- status: not_provided\n- completion_allowed: none\n- blocked_requirements: 0\n- unresolved_gaps: 0\n\n## Open Action-Plan Decisions\n- None.\n\n## Invariants\n- git_worktree_clean: pass - Worktree is clean\n- git_pushed: pass - HEAD matches upstream\n- validation_gates: pass - validation status=pass\n- evidence_freshness: pass - evidence freshness=fresh\n- agent_mail_usable: pass - agent mail health=green semantic=pass\n- reservations_current: warn - 1 expired reservation(s)\n- rch_available: pass - rch status=ok\n- action_plan_decisions: pass - No open action-plan decisions\n- completion_audit: pass - completion audit source=not_provided\n",
+  "markdown": "# Operator Handoff Summary\n\n- Status: watch\n- Project: koompi_code_cli\n- Branch: main\n- Head: abc1234\n- Generated: [GENERATED_AT]\n\n## What Changed\n- No recently closed beads were provided.\n\n## Safe Next Actions\n- Refresh or release expired reservations before treating ownership as current.\n\n## Must Not Touch\n- No additional protected paths beyond repo instructions and active Beads ownership.\n\n## Gates\n- No validation gates were provided.\n\n## Completion Audit\n- source_present: false\n- status: not_provided\n- completion_allowed: none\n- blocked_requirements: 0\n- unresolved_gaps: 0\n\n## Open Action-Plan Decisions\n- None.\n\n## Invariants\n- git_worktree_clean: pass - Worktree is clean\n- git_pushed: pass - HEAD matches upstream\n- validation_gates: pass - validation status=pass\n- evidence_freshness: pass - evidence freshness=fresh\n- agent_mail_usable: pass - agent mail health=green semantic=pass\n- reservations_current: warn - 1 expired reservation(s)\n- rch_available: pass - rch status=ok\n- action_plan_decisions: pass - No open action-plan decisions\n- completion_audit: pass - completion audit source=not_provided\n",
   "must_not_touch": [
     "No additional protected paths beyond repo instructions and active Beads ownership."
   ],
   "open_action_plan_decisions": [],
   "project": {
-    "name": "pi_agent_rust",
-    "root": "/data/projects/pi_agent_rust"
+    "name": "koompi_code_cli",
+    "root": "/data/projects/koompi_code_cli"
   },
   "purpose": "operator_handoff_invariant_summary",
   "redaction_summary": {

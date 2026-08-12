@@ -6,8 +6,8 @@
 
 use std::sync::Arc;
 
-use pi::extensions_js::{PiJsRuntime, PiJsRuntimeConfig};
-use pi::scheduler::DeterministicClock;
+use kode::extensions_js::{PiJsRuntime, PiJsRuntimeConfig};
+use kode::scheduler::DeterministicClock;
 
 fn default_config() -> PiJsRuntimeConfig {
     PiJsRuntimeConfig {

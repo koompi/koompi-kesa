@@ -13,9 +13,9 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use pi::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -249,7 +249,7 @@ fn ts_oracle_node_path() -> &'static Path {
         fn symlink_pkg(_scope_dir: &Path, _name: &str, _target: &Path) {}
 
         let base = PathBuf::from(format!(
-            "/tmp/pi_agent_rust_ts_oracle_node_path-{}",
+            "/tmp/koompi_code_cli_ts_oracle_node_path-{}",
             std::process::id()
         ));
 

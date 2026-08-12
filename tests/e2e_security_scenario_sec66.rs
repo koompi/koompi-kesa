@@ -16,12 +16,12 @@
 mod common;
 
 use common::TestHarness;
-use pi::connectors::http::HttpConnector;
-use pi::extension_preflight::{
+use kode::connectors::http::HttpConnector;
+use kode::extension_preflight::{
     ExtensionTrustState, ExtensionTrustTracker, InstallRecommendation,
     is_hostcall_allowed_for_trust,
 };
-use pi::extensions::{
+use kode::extensions::{
     ExecMediationLedgerEntry, ExtensionManager, ExtensionPolicy, ExtensionPolicyMode,
     HostCallContext, HostCallPayload, IncidentBundleFilter, IncidentBundleRedactionPolicy,
     IncidentEvidenceBundle, RuntimeRiskConfig, SecretBrokerLedgerEntry, SecurityAlert,
@@ -29,7 +29,7 @@ use pi::extensions::{
     build_incident_evidence_bundle, dispatch_host_call_shared, query_security_alerts,
     verify_incident_evidence_bundle,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 
 // ============================================================================

@@ -7,11 +7,11 @@
 
 mod common;
 
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use std::sync::Arc;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ fn eval_crypto_without_hostcalls(js_expr: &str) -> String {
             let (module, evaluation) = rquickjs::Module::declare(
                 ctx.clone(),
                 "node:crypto",
-                pi::crypto_shim::NODE_CRYPTO_JS,
+                kode::crypto_shim::NODE_CRYPTO_JS,
             )?
             .eval()?;
             evaluation.finish::<()>()?;

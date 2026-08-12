@@ -56,7 +56,7 @@
               ],
               "title": "Add no-mock swarm lifecycle E2E scenario harness",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test --test e2e_swarm_flight_recorder no_mock_swarm_lifecycle_e2e_emits_guarded_jsonl",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test --test e2e_swarm_flight_recorder no_mock_swarm_lifecycle_e2e_emits_guarded_jsonl",
                 "cargo fmt --check",
                 "rch exec -- env ... cargo check --all-targets",
                 "rch exec -- env ... cargo clippy --all-targets -- -D warnings",
@@ -90,7 +90,7 @@
               "title": "Add cross-surface swarm conformance matrix",
               "validation_commands": [
                 "python3 -m json.tool docs/evidence/cross-surface-swarm-conformance-matrix.json",
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test --test cross_surface_swarm_conformance_matrix -- --nocapture",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test --test cross_surface_swarm_conformance_matrix -- --nocapture",
                 "cargo fmt --check",
                 "git diff --check",
                 "rch exec -- env ... cargo check --all-targets",
@@ -187,7 +187,7 @@
               ],
               "title": "Add metamorphic swarm replay and compaction equivalence tests",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test --test swarm_replay_ingestor metamorphic_swarm -- --nocapture",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test --test swarm_replay_ingestor metamorphic_swarm -- --nocapture",
                 "cargo fmt --check",
                 "rch exec -- env ... cargo check --all-targets",
                 "rch exec -- env ... cargo clippy --all-targets -- -D warnings",
@@ -404,7 +404,7 @@
               "status": "pass"
             },
             {
-              "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/tmp cargo test --test proof_carrying_swarm_test_fabric_closeout_gate_contract -- --nocapture",
+              "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/tmp cargo test --test proof_carrying_swarm_test_fabric_closeout_gate_contract -- --nocapture",
               "id": "proof_carrying_swarm_test_fabric_closeout_gate_contract_rch",
               "status": "pass"
             },
@@ -414,12 +414,12 @@
               "status": "pass"
             },
             {
-              "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/tmp cargo check --all-targets",
+              "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/tmp cargo check --all-targets",
               "id": "cargo_check_all_targets_rch",
               "status": "pass"
             },
             {
-              "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/tmp cargo clippy --all-targets -- -D warnings",
+              "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/tmp cargo clippy --all-targets -- -D warnings",
               "id": "cargo_clippy_all_targets_rch",
               "status": "pass"
             },
@@ -486,7 +486,7 @@
       ],
       "title": "Add no-mock swarm lifecycle E2E scenario harness",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test --test e2e_swarm_flight_recorder no_mock_swarm_lifecycle_e2e_emits_guarded_jsonl",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test --test e2e_swarm_flight_recorder no_mock_swarm_lifecycle_e2e_emits_guarded_jsonl",
         "cargo fmt --check",
         "rch exec -- env ... cargo check --all-targets",
         "rch exec -- env ... cargo clippy --all-targets -- -D warnings",
@@ -520,7 +520,7 @@
       "title": "Add cross-surface swarm conformance matrix",
       "validation_commands": [
         "python3 -m json.tool docs/evidence/cross-surface-swarm-conformance-matrix.json",
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test --test cross_surface_swarm_conformance_matrix -- --nocapture",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test --test cross_surface_swarm_conformance_matrix -- --nocapture",
         "cargo fmt --check",
         "git diff --check",
         "rch exec -- env ... cargo check --all-targets",
@@ -617,7 +617,7 @@
       ],
       "title": "Add metamorphic swarm replay and compaction equivalence tests",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test --test swarm_replay_ingestor metamorphic_swarm -- --nocapture",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test --test swarm_replay_ingestor metamorphic_swarm -- --nocapture",
         "cargo fmt --check",
         "rch exec -- env ... cargo check --all-targets",
         "rch exec -- env ... cargo clippy --all-targets -- -D warnings",
@@ -697,7 +697,7 @@
       "status": "pass"
     },
     {
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/tmp cargo test --test proof_carrying_swarm_test_fabric_closeout_gate_contract -- --nocapture",
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/tmp cargo test --test proof_carrying_swarm_test_fabric_closeout_gate_contract -- --nocapture",
       "id": "proof_carrying_swarm_test_fabric_closeout_gate_contract_rch",
       "status": "pass"
     },
@@ -707,12 +707,12 @@
       "status": "pass"
     },
     {
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/tmp cargo check --all-targets",
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/tmp cargo check --all-targets",
       "id": "cargo_check_all_targets_rch",
       "status": "pass"
     },
     {
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_zeccr_6/tmp cargo clippy --all-targets -- -D warnings",
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_zeccr_6/tmp cargo clippy --all-targets -- -D warnings",
       "id": "cargo_clippy_all_targets_rch",
       "status": "pass"
     },

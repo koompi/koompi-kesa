@@ -17,7 +17,7 @@
 //! for auditability. Maintainers can regenerate that file explicitly with
 //! `PI_GENERATE_PROVENANCE_VERIFICATION=1`.
 
-use pi::conformance::snapshot::{SourceTier, digest_artifact_dir, validate_directory, validate_id};
+use kode::conformance::snapshot::{SourceTier, digest_artifact_dir, validate_directory, validate_id};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;

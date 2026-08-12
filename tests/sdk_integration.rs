@@ -1,6 +1,6 @@
 //! SDK integration test suite (bd-2hcex: PARITY-V3).
 //!
-//! Validates that the programmatic SDK API (`pi::sdk`) works correctly:
+//! Validates that the programmatic SDK API (`kode::sdk`) works correctly:
 //! session creation, model selection, event streaming, tool execution,
 //! persistence, abort, compaction, error handling.
 //!
@@ -14,20 +14,20 @@ mod common;
 use async_trait::async_trait;
 use common::{TestHarness, run_async};
 use futures::Stream;
-use pi::agent::{AgentConfig, AgentEvent, AgentSession};
-use pi::compaction::ResolvedCompactionSettings;
-use pi::error::{Error, Result};
-use pi::extensions::SecurityAlertCategory;
-use pi::model::{
+use kode::agent::{AgentConfig, AgentEvent, AgentSession};
+use kode::compaction::ResolvedCompactionSettings;
+use kode::error::{Error, Result};
+use kode::extensions::SecurityAlertCategory;
+use kode::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall, Usage,
     UserContent, UserMessage,
 };
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::sdk::{
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::sdk::{
     AgentSessionHandle, AgentSessionState, SessionOptions, SubscriptionId, create_agent_session,
 };
-use pi::session::Session;
-use pi::tools::ToolRegistry;
+use kode::session::Session;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -194,7 +194,7 @@ fn run_scripted(
             fail_closed_hooks: false,
             tool_approval: None,
         };
-        let agent = pi::agent::Agent::new(provider, tools, config);
+        let agent = kode::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));
@@ -640,7 +640,7 @@ fn sdk_thinking_level() {
     let harness = TestHarness::new("sdk_thinking_level");
     let options = SessionOptions {
         api_key: Some(TEST_API_KEY.to_string()),
-        thinking: Some(pi::model::ThinkingLevel::High),
+        thinking: Some(kode::model::ThinkingLevel::High),
         working_directory: Some(harness.temp_dir().to_path_buf()),
         no_session: true,
         ..SessionOptions::default()
@@ -649,7 +649,7 @@ fn sdk_thinking_level() {
     let handle = run_async(create_agent_session(options)).expect("create session");
     assert_eq!(
         handle.thinking_level(),
-        Some(pi::model::ThinkingLevel::High),
+        Some(kode::model::ThinkingLevel::High),
         "thinking level should be High"
     );
 
@@ -988,7 +988,7 @@ fn sdk_conformance_agent_event_json_schema() {
         AgentEvent::ToolExecutionEnd {
             tool_call_id: "tc-1".to_string(),
             tool_name: "read".to_string(),
-            result: pi::tools::ToolOutput {
+            result: kode::tools::ToolOutput {
                 content: vec![ContentBlock::Text(TextContent::new("file contents"))],
                 details: None,
                 is_error: false,
@@ -1029,7 +1029,7 @@ fn sdk_conformance_agent_event_json_schema() {
 /// callbacks.
 #[test]
 fn sdk_conformance_session_tool_hooks() {
-    use pi::sdk::EventListeners;
+    use kode::sdk::EventListeners;
 
     let harness = TestHarness::new("sdk_conformance_session_tool_hooks");
     let target = harness.temp_dir().join("hook_test.txt");
@@ -1063,7 +1063,7 @@ fn sdk_conformance_session_tool_hooks() {
             fail_closed_hooks: false,
             tool_approval: None,
         };
-        let agent = pi::agent::Agent::new(provider, tools, config);
+        let agent = kode::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));
@@ -1121,7 +1121,7 @@ fn sdk_conformance_session_tool_hooks() {
 /// the same events, and that session-level subscribers fire before per-prompt.
 #[test]
 fn sdk_conformance_combined_callback_ordering() {
-    use pi::sdk::EventListeners;
+    use kode::sdk::EventListeners;
 
     let harness = TestHarness::new("sdk_conformance_combined_callback_ordering");
     let cwd = harness.temp_dir().to_path_buf();
@@ -1147,7 +1147,7 @@ fn sdk_conformance_combined_callback_ordering() {
             fail_closed_hooks: false,
             tool_approval: None,
         };
-        let agent = pi::agent::Agent::new(provider, tools, config);
+        let agent = kode::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));
@@ -1232,7 +1232,7 @@ fn sdk_conformance_combined_callback_ordering() {
 
 #[test]
 fn sdk_continue_turn_uses_combined_listener_path() {
-    use pi::sdk::EventListeners;
+    use kode::sdk::EventListeners;
 
     let harness = TestHarness::new("sdk_continue_turn_uses_combined_listener_path");
     let cwd = harness.temp_dir().to_path_buf();
@@ -1258,7 +1258,7 @@ fn sdk_continue_turn_uses_combined_listener_path() {
             fail_closed_hooks: false,
             tool_approval: None,
         };
-        let agent = pi::agent::Agent::new(provider, tools, config);
+        let agent = kode::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));
@@ -1270,7 +1270,7 @@ fn sdk_continue_turn_uses_combined_listener_path() {
         );
 
         {
-            let cx = pi::agent_cx::AgentCx::for_request();
+            let cx = kode::agent_cx::AgentCx::for_request();
             let mut guard = session.lock(cx.cx()).await.expect("lock session");
             guard.append_model_message(Message::User(UserMessage {
                 content: UserContent::Text("prior user message".to_string()),
@@ -1325,7 +1325,7 @@ fn sdk_continue_turn_uses_combined_listener_path() {
 
 #[test]
 fn sdk_continue_turn_with_abort_returns_aborted_message() {
-    use pi::sdk::EventListeners;
+    use kode::sdk::EventListeners;
 
     let harness = TestHarness::new("sdk_continue_turn_with_abort_returns_aborted_message");
     let cwd = harness.temp_dir().to_path_buf();
@@ -1346,7 +1346,7 @@ fn sdk_continue_turn_with_abort_returns_aborted_message() {
             fail_closed_hooks: false,
             tool_approval: None,
         };
-        let agent = pi::agent::Agent::new(provider, tools, config);
+        let agent = kode::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));

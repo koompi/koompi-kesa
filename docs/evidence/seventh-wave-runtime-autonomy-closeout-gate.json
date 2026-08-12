@@ -52,7 +52,7 @@
               ],
               "title": "Expose deterministic effect-aware parallel tool batch evidence",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test compatible_tool_parallelism tool_effect",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test compatible_tool_parallelism tool_effect",
                 "cargo fmt --check",
                 "ubs --staged --only=rust .",
                 "./scripts/reconcile_beads_ledger.sh"
@@ -101,7 +101,7 @@
               ],
               "title": "Add advisory NUMA/cgroup swarm lane placement planner",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test swarm_resource_preflight numa",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test swarm_resource_preflight numa",
                 "cargo fmt --check",
                 "ubs --staged --only=rust .",
                 "./scripts/reconcile_beads_ledger.sh"
@@ -127,7 +127,7 @@
               ],
               "title": "Add large-session replay acceleration correctness harness",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test session replay index",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test session replay index",
                 "cargo fmt --check",
                 "ubs --staged --only=rust .",
                 "./scripts/reconcile_beads_ledger.sh"
@@ -205,8 +205,8 @@
               ],
               "title": "Add extension hostcall QoS starvation regression evidence",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test --test extensions_stress hostcall_qos_starvation_projection_preserves_non_flooding_progress",
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test scheduler_fairness",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test --test extensions_stress hostcall_qos_starvation_projection_preserves_non_flooding_progress",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test scheduler_fairness",
                 "python3 scripts/report_swarm_claim_readiness.py --self-test",
                 "cargo fmt --check",
                 "ubs --staged --only=rust .",
@@ -506,7 +506,7 @@
       ],
       "title": "Expose deterministic effect-aware parallel tool batch evidence",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test compatible_tool_parallelism tool_effect",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test compatible_tool_parallelism tool_effect",
         "cargo fmt --check",
         "ubs --staged --only=rust .",
         "./scripts/reconcile_beads_ledger.sh"
@@ -555,7 +555,7 @@
       ],
       "title": "Add advisory NUMA/cgroup swarm lane placement planner",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test swarm_resource_preflight numa",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test swarm_resource_preflight numa",
         "cargo fmt --check",
         "ubs --staged --only=rust .",
         "./scripts/reconcile_beads_ledger.sh"
@@ -581,7 +581,7 @@
       ],
       "title": "Add large-session replay acceleration correctness harness",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test session replay index",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test session replay index",
         "cargo fmt --check",
         "ubs --staged --only=rust .",
         "./scripts/reconcile_beads_ledger.sh"
@@ -659,8 +659,8 @@
       ],
       "title": "Add extension hostcall QoS starvation regression evidence",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test --test extensions_stress hostcall_qos_starvation_projection_preserves_non_flooding_progress",
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test scheduler_fairness",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test --test extensions_stress hostcall_qos_starvation_projection_preserves_non_flooding_progress",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test scheduler_fairness",
         "python3 scripts/report_swarm_claim_readiness.py --self-test",
         "cargo fmt --check",
         "ubs --staged --only=rust .",

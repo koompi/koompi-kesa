@@ -218,7 +218,7 @@
       "id": "cargo_headroom",
       "status": "pass",
       "evidence": [
-        "Validation commands use /data/tmp/pi_agent_rust_cargo/amberosprey target and tmp directories instead of repo-local target output."
+        "Validation commands use /data/tmp/koompi_code_cli_cargo/amberosprey target and tmp directories instead of repo-local target output."
       ]
     },
     {
@@ -283,42 +283,42 @@
     {
       "id": "progress_slo_contract_rch",
       "status": "pass",
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey/tmp cargo test --test swarm_progress_slo_contract -- --nocapture"
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey/tmp cargo test --test swarm_progress_slo_contract -- --nocapture"
     },
     {
       "id": "progress_slo_cli_rch",
       "status": "pass",
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey/tmp cargo test --test swarm_progress_cli -- --nocapture"
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey/tmp cargo test --test swarm_progress_cli -- --nocapture"
     },
     {
       "id": "progress_slo_doctor_runpack_rch",
       "status": "pass",
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey/tmp cargo test --test doctor_swarm_temp_dir_json -- --nocapture"
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey/tmp cargo test --test doctor_swarm_temp_dir_json -- --nocapture"
     },
     {
       "id": "progress_slo_e2e_rch",
       "status": "pass",
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey/tmp cargo test --test swarm_progress_slo_e2e -- --nocapture"
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey/tmp cargo test --test swarm_progress_slo_e2e -- --nocapture"
     },
     {
       "id": "progress_slo_stress_rch",
       "status": "pass",
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey/tmp cargo test swarm_progress_slo::tests --lib -- --nocapture"
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey/tmp cargo test swarm_progress_slo::tests --lib -- --nocapture"
     },
     {
       "id": "progress_slo_closeout_gate_contract_rch",
       "status": "pass",
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey/tmp cargo test --test swarm_progress_slo_closeout_gate_contract -- --nocapture"
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey/tmp cargo test --test swarm_progress_slo_closeout_gate_contract -- --nocapture"
     },
     {
       "id": "cargo_check_all_targets_rch",
       "status": "pass",
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey/tmp cargo check --all-targets"
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey/tmp cargo check --all-targets"
     },
     {
       "id": "cargo_clippy_all_targets_rch",
       "status": "pass",
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey/tmp cargo clippy --all-targets -- -D warnings"
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey/tmp cargo clippy --all-targets -- -D warnings"
     },
     {
       "id": "staged_ubs",

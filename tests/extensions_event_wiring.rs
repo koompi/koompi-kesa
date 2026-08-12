@@ -12,13 +12,13 @@
 
 mod common;
 
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
     PROTOCOL_VERSION, RegisterPayload,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::model::ToolCall;
-use pi::tools::{ToolOutput, ToolRegistry};
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::model::ToolCall;
+use kode::tools::{ToolOutput, ToolRegistry};
 use serde_json::{Value, json};
 use std::sync::Arc;
 
@@ -89,7 +89,7 @@ fn make_tool_call(name: &str, args: Value) -> ToolCall {
 
 fn make_tool_output(text: &str) -> ToolOutput {
     ToolOutput {
-        content: vec![pi::model::ContentBlock::Text(pi::model::TextContent {
+        content: vec![kode::model::ContentBlock::Text(kode::model::TextContent {
             text: text.to_string(),
             text_signature: None,
         })],
@@ -991,7 +991,7 @@ fn event_ordering_startup_then_tool_call_then_agent_end() {
                 .expect("dispatch tool_call");
 
             let output = ToolOutput {
-                content: vec![pi::model::ContentBlock::Text(pi::model::TextContent {
+                content: vec![kode::model::ContentBlock::Text(kode::model::TextContent {
                     text: "ok".to_string(),
                     text_signature: None,
                 })],

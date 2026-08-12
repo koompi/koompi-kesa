@@ -7,8 +7,8 @@
 mod common;
 
 use common::TestHarness;
-use pi::http::client::Client;
-use pi::vcr::{VcrMode, VcrRecorder};
+use kode::http::client::Client;
+use kode::vcr::{VcrMode, VcrRecorder};
 use std::io::{Read as _, Write as _};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Mutex, mpsc};
@@ -131,7 +131,7 @@ fn request_builder_sends_headers_and_json_body() {
     let request_text = String::from_utf8_lossy(&request);
     assert!(request_text.starts_with("POST /hello HTTP/1.1\r\n"));
     assert!(request_text.contains("Host: 127.0.0.1:"));
-    assert!(request_text.contains("User-Agent: pi_agent_rust/"));
+    assert!(request_text.contains("User-Agent: koompi_code_cli/"));
     assert!(request_text.contains("Content-Type: application/json\r\n"));
     assert!(request_text.contains("X-Test: 1\r\n"));
 

@@ -7,7 +7,7 @@
 mod common;
 
 use common::TestHarness;
-use pi::model::{
+use kode::model::{
     AssistantMessage, AssistantMessageEvent, ContentBlock, Cost, ImageContent, Message, StopReason,
     TextContent, ThinkingContent, ThinkingLevel, ToolCall, ToolResultMessage, Usage, UserContent,
     UserMessage,
@@ -331,7 +331,7 @@ fn test_tool_result_details_omitted_when_none() {
 fn test_custom_message_round_trip() {
     let harness = TestHarness::new("custom_message_round_trip");
 
-    let msg = Message::Custom(pi::model::CustomMessage {
+    let msg = Message::Custom(kode::model::CustomMessage {
         content: "Host-injected status update".to_string(),
         custom_type: "status".to_string(),
         display: true,

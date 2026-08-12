@@ -1,7 +1,7 @@
 # Operator Handoff Summary
 
 - Status: blocked
-- Project: pi_agent_rust
+- Project: koompi_code_cli
 - Branch: main
 - Head: abc1234
 - Generated: [GENERATED_AT]

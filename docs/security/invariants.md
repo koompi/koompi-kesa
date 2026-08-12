@@ -7,7 +7,7 @@ Related baseline: `docs/security/threat-model.md`
 
 ## 1. Purpose and Scope
 
-This document defines non-negotiable invariants for extension hostcall security in `pi_agent_rust`.
+This document defines non-negotiable invariants for extension hostcall security in `koompi_code_cli`.
 It is normative for:
 
 - capability derivation and hostcall validation

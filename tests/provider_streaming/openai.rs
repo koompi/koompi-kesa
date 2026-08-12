@@ -8,11 +8,11 @@ use super::{
     user_text, vcr_mode, vcr_strict,
 };
 use crate::common::TestHarness;
-use pi::http::client::Client;
-use pi::model::{Message, StopReason};
-use pi::provider::{Context, Provider, StreamOptions, ToolDef};
-use pi::providers::openai::OpenAIProvider;
-use pi::vcr::{VcrMode, VcrRecorder};
+use kode::http::client::Client;
+use kode::model::{Message, StopReason};
+use kode::provider::{Context, Provider, StreamOptions, ToolDef};
+use kode::providers::openai::OpenAIProvider;
+use kode::vcr::{VcrMode, VcrRecorder};
 use serde_json::json;
 use std::env;
 

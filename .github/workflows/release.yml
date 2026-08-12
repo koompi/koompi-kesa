@@ -193,14 +193,14 @@ jobs:
       - name: Checkout release tag for commit resolution
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: refs/tags/${{ steps.tag.outputs.tag }}
 
       - name: Freeze release source commit
         id: source
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         env:
           RELEASE_TAG: ${{ steps.tag.outputs.tag }}
         run: |
@@ -263,13 +263,13 @@ jobs:
       CARGO_INCREMENTAL: "0"
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ needs.plan.outputs.commit }}
@@ -345,7 +345,7 @@ jobs:
       - name: Cache frozen release gate artifacts
         uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
-          workspaces: pi_agent_rust -> target
+          workspaces: koompi_code_cli -> target
           key: release-gate-${{ needs.plan.outputs.commit }}-internal-legacy-capture
 
       - name: Run mandatory frozen-SHA Cargo gates
@@ -425,13 +425,13 @@ jobs:
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ needs.plan.outputs.commit }}
@@ -511,13 +511,13 @@ jobs:
       RUST_BACKTRACE: "1"
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ needs.plan.outputs.commit }}
@@ -526,7 +526,7 @@ jobs:
           # which then fails because legacy_pi_mono_code/pi-mono has no
           # .gitmodules entry. Omitting the key entirely gives the correct
           # default (string "false" = don't checkout submodules).
-          # See: https://github.com/Dicklesworthstone/pi_agent_rust/issues/34
+          # See: https://github.com/Dicklesworthstone/koompi_code_cli/issues/34
 
       - name: Verify frozen release source
         env:
@@ -651,7 +651,7 @@ jobs:
       - name: Cargo cache
         uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
-          workspaces: pi_agent_rust -> target
+          workspaces: koompi_code_cli -> target
           key: release-${{ needs.plan.outputs.commit }}-${{ matrix.target }}
 
       - name: Build release binary
@@ -941,7 +941,7 @@ jobs:
               "target": os.environ["RELEASE_TARGET"],
               "asset": os.environ["RELEASE_ASSET"],
               "runner_os": os.environ["RELEASE_RUNNER_OS"],
-              "pi_agent_rust": os.environ["PI_AGENT_RUST_SHA"],
+              "koompi_code_cli": os.environ["PI_AGENT_RUST_SHA"],
               "source_blobs": {
                   "cargo_toml": os.environ["CARGO_TOML_BLOB"],
                   "cargo_lock": os.environ["CARGO_LOCK_BLOB"],
@@ -1014,7 +1014,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: dist-${{ matrix.target }}
-          path: pi_agent_rust/dist/*
+          path: koompi_code_cli/dist/*
           if-no-files-found: error
 
   release:
@@ -1034,13 +1034,13 @@ jobs:
       - name: Checkout (for install script + changelog)
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ needs.plan.outputs.commit }}
 
       - name: Verify frozen release source
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         env:
           RELEASE_TAG: ${{ needs.plan.outputs.tag }}
           RELEASE_COMMIT: ${{ needs.plan.outputs.commit }}
@@ -1108,7 +1108,7 @@ jobs:
           import zipfile
           from pathlib import Path
 
-          root = Path("pi_agent_rust")
+          root = Path("koompi_code_cli")
           dist = Path("dist")
           tag = os.environ["RELEASE_TAG"]
           version = os.environ["RELEASE_VERSION"]
@@ -1330,7 +1330,7 @@ jobs:
 
           manifest_keys = {
               "schema", "tag", "version", "target", "asset", "runner_os",
-              "pi_agent_rust", "source_blobs", "selected_locked_registry_packages",
+              "koompi_code_cli", "source_blobs", "selected_locked_registry_packages",
               "rustc", "archive", "binary",
           }
           rustc_keys = {
@@ -1346,7 +1346,7 @@ jobs:
               expected_fields = {
                   "schema": "pi.release.build_manifest.v1", "tag": tag, "version": version,
                   "target": target, "asset": asset, "runner_os": runner_os,
-                  "pi_agent_rust": commit, "source_blobs": source_blobs,
+                  "koompi_code_cli": commit, "source_blobs": source_blobs,
                   "selected_locked_registry_packages": selected,
               }
               for field, expected in expected_fields.items():
@@ -1393,12 +1393,12 @@ jobs:
           done
 
           # Include install script
-          if [ ! -f pi_agent_rust/install.sh ] || [ -L pi_agent_rust/install.sh ]; then
+          if [ ! -f koompi_code_cli/install.sh ] || [ -L koompi_code_cli/install.sh ]; then
             echo "::error::Frozen install.sh is missing, non-regular, or a symlink"
             exit 1
           fi
-          cp pi_agent_rust/install.sh release/
-          cmp --silent pi_agent_rust/install.sh release/install.sh
+          cp koompi_code_cli/install.sh release/
+          cmp --silent koompi_code_cli/install.sh release/install.sh
 
           ls -lah release/
 
@@ -1422,7 +1422,7 @@ jobs:
         run: |
           set -euxo pipefail
           TAG="${{ needs.plan.outputs.tag }}"
-          CHANGELOG="pi_agent_rust/CHANGELOG.md"
+          CHANGELOG="koompi_code_cli/CHANGELOG.md"
 
           # Extract only the exact `## [vX.Y.Z] ...` heading and its body.
           CHANGELOG="$CHANGELOG" TAG="$TAG" python3 - <<'PY'
@@ -1453,7 +1453,7 @@ jobs:
           # Every release must disclose the strict drop-in claim status. A
           # missing verdict is allowed for an ordinary early-development
           # release, but is represented honestly as NOT_CERTIFIED.
-          DROPIN_VERDICT_PATH="pi_agent_rust/docs/evidence/dropin-certification-verdict.json"
+          DROPIN_VERDICT_PATH="koompi_code_cli/docs/evidence/dropin-certification-verdict.json"
           DROPIN_STATUS="$(python3 - "$DROPIN_VERDICT_PATH" <<'PY'
           import json
           import sys
@@ -1486,7 +1486,7 @@ jobs:
 
           **${DROPIN_STATUS}** — ${DROPIN_COPY}
 
-          Evidence: [drop-in certification verdict](https://github.com/Dicklesworthstone/pi_agent_rust/blob/${TAG}/docs/evidence/dropin-certification-verdict.json)
+          Evidence: [drop-in certification verdict](https://github.com/Dicklesworthstone/koompi_code_cli/blob/${TAG}/docs/evidence/dropin-certification-verdict.json)
           EOF
 
           # Append install instructions
@@ -1497,7 +1497,7 @@ jobs:
           ### Quick Install
 
           ```bash
-          curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/TAG_PLACEHOLDER/install.sh | bash -s -- --version TAG_PLACEHOLDER
+          curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/TAG_PLACEHOLDER/install.sh | bash -s -- --version TAG_PLACEHOLDER
           ```
 
           ### Manual Install
@@ -1700,7 +1700,7 @@ jobs:
           PY
 
       - name: Revalidate frozen source before draft creation
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         env:
           RELEASE_TAG: ${{ needs.plan.outputs.tag }}
           RELEASE_COMMIT: ${{ needs.plan.outputs.commit }}
@@ -1884,7 +1884,7 @@ jobs:
           PY
 
       - name: Revalidate frozen source before draft handoff
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         env:
           RELEASE_TAG: ${{ needs.plan.outputs.tag }}
           RELEASE_COMMIT: ${{ needs.plan.outputs.commit }}
@@ -2053,7 +2053,7 @@ jobs:
           PY
 
       - name: Revalidate frozen source after draft handoff
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         env:
           RELEASE_TAG: ${{ needs.plan.outputs.tag }}
           RELEASE_COMMIT: ${{ needs.plan.outputs.commit }}
@@ -2088,13 +2088,13 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
       - name: Checkout frozen release commit
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ needs.plan.outputs.commit }}
@@ -2157,7 +2157,7 @@ jobs:
           print(package["name"], package["version"])
           ' <<< "$metadata")"
           read -r package_name package_version <<< "$package_fields"
-          if [ "$package_name" != "pi_agent_rust" ] || [ "$package_version" != "$RELEASE_VERSION" ]; then
+          if [ "$package_name" != "koompi_code_cli" ] || [ "$package_version" != "$RELEASE_VERSION" ]; then
             echo "::error::Root package identity differs from release tag: ${package_name} ${package_version}"
             exit 1
           fi
@@ -2488,13 +2488,13 @@ jobs:
       HAS_CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN != '' }}
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
       - name: Checkout frozen release commit without credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ needs.plan.outputs.commit }}
@@ -2529,7 +2529,7 @@ jobs:
               return result
 
           directory = Path("../crate-payload")
-          crate_name = f"pi_agent_rust-{os.environ['PACKAGE_VERSION']}.crate"
+          crate_name = f"koompi_code_cli-{os.environ['PACKAGE_VERSION']}.crate"
           expected_names = {crate_name, "pi-crates-publish-receipt.json"}
           entries = list(directory.iterdir()) if directory.is_dir() and not directory.is_symlink() else []
           if len(entries) != 2 or {entry.name for entry in entries} != expected_names:
@@ -2552,7 +2552,7 @@ jobs:
               or receipt.get("schema") != "pi.release.verified_crate.v1" \
               or receipt.get("commit") != os.environ["RELEASE_COMMIT"] \
               or receipt.get("tag_oid") != os.environ["RELEASE_TAG_OID"] \
-              or receipt.get("name") != "pi_agent_rust" \
+              or receipt.get("name") != "koompi_code_cli" \
               or receipt.get("version") != os.environ["PACKAGE_VERSION"] \
               or receipt.get("crate_sha256") != digest \
               or receipt.get("crate_size") != len(crate_bytes) \
@@ -3175,7 +3175,7 @@ jobs:
       - name: Checkout frozen release commit
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ needs.plan.outputs.commit }}
@@ -3187,7 +3187,7 @@ jobs:
           path: publication
 
       - name: Revalidate annotated tag and synchronized branches before publication
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         env:
           RELEASE_TAG: ${{ needs.plan.outputs.tag }}
           RELEASE_COMMIT: ${{ needs.plan.outputs.commit }}
@@ -3386,7 +3386,7 @@ jobs:
 
           if not expected_prerelease:
               endpoint = (
-                  "https://crates.io/api/v1/crates/pi_agent_rust/"
+                  "https://crates.io/api/v1/crates/koompi_code_cli/"
                   f"{urllib.parse.quote(os.environ['RELEASE_TAG'][1:], safe='')}"
               )
               request = urllib.request.Request(
@@ -3403,7 +3403,7 @@ jobs:
               crate_payload = json.loads(crate_body, object_pairs_hook=strict_object)
               version = crate_payload.get("version") if isinstance(crate_payload, dict) else None
               if not isinstance(version, dict) \
-                  or version.get("crate") != "pi_agent_rust" \
+                  or version.get("crate") != "koompi_code_cli" \
                   or version.get("num") != os.environ["RELEASE_TAG"][1:] \
                   or version.get("yanked") is not False \
                   or version.get("checksum") != os.environ["CRATE_SHA256"] \
@@ -3445,7 +3445,7 @@ jobs:
           PY
 
       - name: Revalidate release source after final publication
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         env:
           RELEASE_TAG: ${{ needs.plan.outputs.tag }}
           RELEASE_COMMIT: ${{ needs.plan.outputs.commit }}

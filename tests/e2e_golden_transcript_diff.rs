@@ -31,10 +31,10 @@ mod common;
 
 use common::{MockHttpResponse, MockHttpServer, TestHarness};
 use futures::StreamExt;
-use pi::model::{Message, StreamEvent, UserContent, UserMessage};
-use pi::models::ModelEntry;
-use pi::provider::{Context, InputType, Model, ModelCost, StreamOptions, ToolDef};
-use pi::providers::create_provider;
+use kode::model::{Message, StreamEvent, UserContent, UserMessage};
+use kode::models::ModelEntry;
+use kode::provider::{Context, InputType, Model, ModelCost, StreamOptions, ToolDef};
+use kode::providers::create_provider;
 use serde::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
@@ -200,7 +200,7 @@ fn make_sse_response(body: &str) -> MockHttpResponse {
 }
 
 fn collect_events(
-    provider: Arc<dyn pi::provider::Provider>,
+    provider: Arc<dyn kode::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) -> Result<Vec<StreamEvent>, String> {
@@ -798,7 +798,7 @@ fn gemini_tool_sse() -> String {
 fn setup_openai_responses(
     harness: &TestHarness,
     sse: &str,
-) -> (Arc<dyn pi::provider::Provider>, MockHttpServer) {
+) -> (Arc<dyn kode::provider::Provider>, MockHttpServer) {
     let server = harness.start_mock_http_server();
     server.add_route("POST", "/v1/responses", make_sse_response(sse));
     let base_url = format!("{}/v1", server.base_url());
@@ -811,7 +811,7 @@ fn setup_openai_responses(
 fn setup_openai_completions(
     harness: &TestHarness,
     sse: &str,
-) -> (Arc<dyn pi::provider::Provider>, MockHttpServer) {
+) -> (Arc<dyn kode::provider::Provider>, MockHttpServer) {
     let server = harness.start_mock_http_server();
     server.add_route(
         "POST",
@@ -828,7 +828,7 @@ fn setup_openai_completions(
 fn setup_anthropic(
     harness: &TestHarness,
     sse: &str,
-) -> (Arc<dyn pi::provider::Provider>, MockHttpServer) {
+) -> (Arc<dyn kode::provider::Provider>, MockHttpServer) {
     let server = harness.start_mock_http_server();
     server.add_route("POST", "/v1/messages", make_sse_response(sse));
     let base_url = format!("{}/v1/messages", server.base_url());
@@ -841,7 +841,7 @@ fn setup_anthropic(
 fn setup_gemini(
     harness: &TestHarness,
     sse: &str,
-) -> (Arc<dyn pi::provider::Provider>, MockHttpServer) {
+) -> (Arc<dyn kode::provider::Provider>, MockHttpServer) {
     let server = harness.start_mock_http_server();
     let route = "/v1beta/models/golden-gemini:streamGenerateContent?alt=sse";
     server.add_route("POST", route, make_sse_response(sse));
@@ -925,7 +925,7 @@ fn text_transcripts_all_extract_hello_world() {
         &str,
         &str,
         String,
-        Box<dyn Fn(&TestHarness, &str) -> (Arc<dyn pi::provider::Provider>, MockHttpServer)>,
+        Box<dyn Fn(&TestHarness, &str) -> (Arc<dyn kode::provider::Provider>, MockHttpServer)>,
     )> = vec![
         (
             "openai-responses",
@@ -974,7 +974,7 @@ fn text_transcripts_all_have_stop_reason() {
     let setups: Vec<(
         &str,
         String,
-        Box<dyn Fn(&TestHarness, &str) -> (Arc<dyn pi::provider::Provider>, MockHttpServer)>,
+        Box<dyn Fn(&TestHarness, &str) -> (Arc<dyn kode::provider::Provider>, MockHttpServer)>,
     )> = vec![
         (
             "openai-responses",
@@ -1073,7 +1073,7 @@ fn tool_transcripts_all_call_echo() {
     let setups: Vec<(
         &str,
         String,
-        Box<dyn Fn(&TestHarness, &str) -> (Arc<dyn pi::provider::Provider>, MockHttpServer)>,
+        Box<dyn Fn(&TestHarness, &str) -> (Arc<dyn kode::provider::Provider>, MockHttpServer)>,
     )> = vec![
         (
             "openai-responses",
@@ -1113,7 +1113,7 @@ fn tool_transcripts_have_valid_arguments() {
     let setups: Vec<(
         &str,
         String,
-        Box<dyn Fn(&TestHarness, &str) -> (Arc<dyn pi::provider::Provider>, MockHttpServer)>,
+        Box<dyn Fn(&TestHarness, &str) -> (Arc<dyn kode::provider::Provider>, MockHttpServer)>,
     )> = vec![
         (
             "openai-responses",

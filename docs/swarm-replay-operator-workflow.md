@@ -64,7 +64,7 @@ When producing runpack evidence, keep replay artifacts beside the runpack captur
 python3 scripts/build_swarm_operator_runpack.py \
   --capture-current \
   --capture-dir "$capture_dir/runpack" \
-  --project-root /data/projects/pi_agent_rust \
+  --project-root /data/projects/koompi_code_cli \
   --agent-name "${AGENT_NAME:-agent}" \
   --out-json "$capture_dir/operator-runpack.json" \
   --out-md "$capture_dir/operator-runpack.md"
@@ -102,7 +102,7 @@ Feed the preview into the runpack only after the JSON exists:
 python3 scripts/build_swarm_operator_runpack.py \
   --capture-current \
   --capture-dir "$capture_dir/runpack" \
-  --project-root /data/projects/pi_agent_rust \
+  --project-root /data/projects/koompi_code_cli \
   --agent-name "${AGENT_NAME:-agent}" \
   --swarm-replay-preview-json "$capture_dir/swarm-replay-preview.json" \
   --out-json "$capture_dir/operator-runpack.json" \
@@ -198,8 +198,8 @@ Use captured replay as a warning, then refresh live state:
 ```bash
 rch status
 rch queue
-env CARGO_TARGET_DIR="/data/tmp/pi_agent_rust_cargo/${AGENT_NAME:-agent}/target" \
-  TMPDIR="/data/tmp/pi_agent_rust_cargo/${AGENT_NAME:-agent}/tmp" \
+env CARGO_TARGET_DIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME:-agent}/target" \
+  TMPDIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME:-agent}/tmp" \
   rch exec -- cargo check --all-targets
 ```
 
@@ -232,8 +232,8 @@ git diff --check
 If examples or CLI flags change, also run the focused CLI test through RCH:
 
 ```bash
-env CARGO_TARGET_DIR="/data/tmp/pi_agent_rust_cargo/${AGENT_NAME:-agent}/target" \
-  TMPDIR="/data/tmp/pi_agent_rust_cargo/${AGENT_NAME:-agent}/tmp" \
+env CARGO_TARGET_DIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME:-agent}/target" \
+  TMPDIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME:-agent}/tmp" \
   rch exec -- cargo test --test swarm_replay_preview_cli -- --nocapture
 ```
 

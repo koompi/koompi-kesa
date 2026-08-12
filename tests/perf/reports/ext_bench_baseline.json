@@ -217,12 +217,12 @@
     {
       "extension": "community/qualisero-background-notify",
       "scenario": "cold_load",
-      "error": "Load error: Extension error: Error resolving module '../../shared' from '/data/projects/pi_agent_rust/tests/ext_conformance/artifacts/community/qualisero-background-notify/index.ts': Unsupported modul"
+      "error": "Load error: Extension error: Error resolving module '../../shared' from '/data/projects/koompi_code_cli/tests/ext_conformance/artifacts/community/qualisero-background-notify/index.ts': Unsupported modul"
     },
     {
       "extension": "community/qualisero-safe-git",
       "scenario": "cold_load",
-      "error": "Load error: Extension error: Error resolving module '../../shared' from '/data/projects/pi_agent_rust/tests/ext_conformance/artifacts/community/qualisero-safe-git/index.ts': Unsupported module specifi"
+      "error": "Load error: Extension error: Error resolving module '../../shared' from '/data/projects/koompi_code_cli/tests/ext_conformance/artifacts/community/qualisero-safe-git/index.ts': Unsupported module specifi"
     },
     {
       "extension": "npm/verioussmith-pi-openrouter",
@@ -232,12 +232,12 @@
     {
       "extension": "community/qualisero-background-notify",
       "scenario": "warm_load",
-      "error": "Warmup load error: Extension error: Error resolving module '../../shared' from '/data/projects/pi_agent_rust/tests/ext_conformance/artifacts/community/qualisero-background-notify/index.ts': Unsupporte"
+      "error": "Warmup load error: Extension error: Error resolving module '../../shared' from '/data/projects/koompi_code_cli/tests/ext_conformance/artifacts/community/qualisero-background-notify/index.ts': Unsupporte"
     },
     {
       "extension": "community/qualisero-safe-git",
       "scenario": "warm_load",
-      "error": "Warmup load error: Extension error: Error resolving module '../../shared' from '/data/projects/pi_agent_rust/tests/ext_conformance/artifacts/community/qualisero-safe-git/index.ts': Unsupported module "
+      "error": "Warmup load error: Extension error: Error resolving module '../../shared' from '/data/projects/koompi_code_cli/tests/ext_conformance/artifacts/community/qualisero-safe-git/index.ts': Unsupported module "
     },
     {
       "extension": "npm/verioussmith-pi-openrouter",
@@ -247,7 +247,7 @@
     {
       "extension": "103_extensions",
       "scenario": "event_dispatch",
-      "error": "Load error: Extension error: registerTool: tool name collision: bash\n    at __pi_register_tool (eval_script:339:23)\n    at default (/data/projects/pi_agent_rust/tests/ext_conformance/artifacts/communi"
+      "error": "Load error: Extension error: registerTool: tool name collision: bash\n    at __pi_register_tool (eval_script:339:23)\n    at default (/data/projects/koompi_code_cli/tests/ext_conformance/artifacts/communi"
     }
   ],
   "per_extension": {

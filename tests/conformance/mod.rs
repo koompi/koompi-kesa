@@ -1,4 +1,4 @@
-//! Conformance testing infrastructure for `pi_agent_rust`.
+//! Conformance testing infrastructure for `koompi_code_cli`.
 //!
 //! This module provides fixture-based conformance testing to ensure the Rust
 //! implementation matches the behavior of the TypeScript pi-mono reference.

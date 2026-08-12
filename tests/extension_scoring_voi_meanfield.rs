@@ -6,7 +6,7 @@
 //! candidate ordering, empty inputs, and mean-field convergence/oscillation/clipping.
 
 use chrono::{TimeZone, Utc};
-use pi::extension_scoring::{
+use kode::extension_scoring::{
     MeanFieldControllerConfig, MeanFieldControllerReport, MeanFieldShardObservation,
     MeanFieldShardState, VoiCandidate, VoiPlan, VoiPlannerConfig, VoiSkipReason,
     compute_mean_field_controls, plan_voi_candidates,

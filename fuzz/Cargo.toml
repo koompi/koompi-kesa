@@ -1,5 +1,5 @@
 [package]
-name = "pi_agent_rust-fuzz"
+name = "koompi_code_cli-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2024"
@@ -10,7 +10,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
-pi = { package = "pi_agent_rust", path = "..", default-features = false, features = ["fuzzing"] }
+pi = { package = "koompi_code_cli", path = "..", default-features = false, features = ["fuzzing"] }
 futures = "0.3"
 serde_json = "1"
 tempfile = "3"

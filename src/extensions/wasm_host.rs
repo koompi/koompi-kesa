@@ -16,7 +16,7 @@ wasmtime::component::bindgen!({
     exports: { default: async },
 });
 
-use self::pi::extension::host;
+use self::kode::extension::host;
 
 pub(super) struct HostState {
     policy: ExtensionPolicy,

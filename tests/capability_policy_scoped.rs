@@ -14,14 +14,14 @@
 use std::future::Future;
 
 use asupersync::runtime::RuntimeBuilder;
-use pi::config::{Config, ExtensionPolicyConfig};
-use pi::connectors::http::HttpConnector;
-use pi::extensions::{
+use kode::config::{Config, ExtensionPolicyConfig};
+use kode::connectors::http::HttpConnector;
+use kode::extensions::{
     Capability, ExtensionManager, ExtensionOverride, ExtensionPolicy, ExtensionPolicyMode,
     HostCallContext, HostCallErrorCode, HostCallPayload, PolicyDecision, PolicyProfile,
     dispatch_host_call_shared, required_capability_for_host_call,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use tempfile::tempdir;
 

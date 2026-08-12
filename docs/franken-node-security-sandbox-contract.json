@@ -7,7 +7,7 @@
   "effective_date_utc": "2026-02-17T08:40:00Z",
   "scope": {
     "target_project_root": "/dp/franken_node",
-    "source_project_root": "/data/projects/pi_agent_rust",
+    "source_project_root": "/data/projects/koompi_code_cli",
     "security_objective": "Extend Pi extension-host capability policy and sandbox isolation to general runtime workloads without capability drift, privilege escalation, or implicit trust expansion."
   },
   "capability_model": {

@@ -49,8 +49,8 @@
               ],
               "title": "Replay provider streaming backpressure across native providers",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test provider_streaming -- --nocapture",
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo check --all-targets"
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test provider_streaming -- --nocapture",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo check --all-targets"
               ]
             },
             {
@@ -70,7 +70,7 @@
               ],
               "title": "Gate tool artifact lifecycle quotas and redaction",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test tools::tests conformance::test_read conformance::test_grep conformance::test_bash"
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test tools::tests conformance::test_read conformance::test_grep conformance::test_bash"
               ]
             },
             {
@@ -90,7 +90,7 @@
               ],
               "title": "Add branch-heavy session replay minimization gate",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test session::tests session_index::tests"
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test session::tests session_index::tests"
               ]
             },
             {
@@ -110,7 +110,7 @@
               ],
               "title": "Drill TUI degradation under sustained event pressure",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test interactive tui -- --nocapture"
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test interactive tui -- --nocapture"
               ]
             },
             {
@@ -130,7 +130,7 @@
               ],
               "title": "Detect extension permission drift against provenance manifests",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test extension_policy ext_conformance"
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test extension_policy ext_conformance"
               ]
             },
             {
@@ -394,8 +394,8 @@
       ],
       "title": "Replay provider streaming backpressure across native providers",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test provider_streaming -- --nocapture",
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo check --all-targets"
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test provider_streaming -- --nocapture",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo check --all-targets"
       ]
     },
     {
@@ -415,7 +415,7 @@
       ],
       "title": "Gate tool artifact lifecycle quotas and redaction",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test tools::tests conformance::test_read conformance::test_grep conformance::test_bash"
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test tools::tests conformance::test_read conformance::test_grep conformance::test_bash"
       ]
     },
     {
@@ -435,7 +435,7 @@
       ],
       "title": "Add branch-heavy session replay minimization gate",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test session::tests session_index::tests"
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test session::tests session_index::tests"
       ]
     },
     {
@@ -455,7 +455,7 @@
       ],
       "title": "Drill TUI degradation under sustained event pressure",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test interactive tui -- --nocapture"
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test interactive tui -- --nocapture"
       ]
     },
     {
@@ -475,7 +475,7 @@
       ],
       "title": "Detect extension permission drift against provenance manifests",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test extension_policy ext_conformance"
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test extension_policy ext_conformance"
       ]
     },
     {

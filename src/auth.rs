@@ -255,9 +255,9 @@ pub enum AuthCredential {
     /// (`@earendil-works/pi-coding-agent`) reads and writes to the shared
     /// `~/.pi/agent/auth.json`: `{"type":"oauth","access":..,"refresh":..,"expires":..}`
     /// (see `pi-ai` `dist/auth/types.d.ts` `OAuthCredential`). The variant tag and
-    /// field names carry `alias`es for the historical pi_agent_rust shape
+    /// field names carry `alias`es for the historical koompi_code_cli shape
     /// (`o_auth` / `access_token` / `refresh_token`) so previously-written
-    /// credentials keep loading. `token_url`/`client_id` are pi_agent_rust-only
+    /// credentials keep loading. `token_url`/`client_id` are koompi_code_cli-only
     /// extras for self-contained refresh; upstream tolerates them via its
     /// `[key: string]: unknown` credential type, and `extra` captures any extra
     /// upstream keys so a rust round-trip is lossless.

@@ -6,7 +6,7 @@
 //! possible, `Config::patch_settings_with_roots` for merge/serialization paths.
 
 use libfuzzer_sys::fuzz_target;
-use pi::config::{Config, SettingsScope};
+use kode::config::{Config, SettingsScope};
 
 const MAX_INPUT_BYTES: usize = 64 * 1024;
 

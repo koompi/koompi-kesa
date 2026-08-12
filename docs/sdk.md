@@ -12,12 +12,12 @@ certification contract and its provenance-matched verdict.
 
 ```toml
 [dependencies]
-pi = { package = "pi_agent_rust", version = "0.2.0" }
+pi = { package = "koompi_code_cli", version = "0.2.0" }
 futures = "0.3"
 ```
 
 When developing against a local checkout, replace `version = "0.2.0"` with
-`path = "/path/to/pi_agent_rust"` while retaining `package = "pi_agent_rust"`.
+`path = "/path/to/koompi_code_cli"` while retaining `package = "koompi_code_cli"`.
 
 ## SemVer Surface
 

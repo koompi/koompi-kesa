@@ -22,18 +22,18 @@ mod common;
 
 use common::TestHarness;
 use futures::StreamExt;
-use pi::auth::AuthStorage;
-use pi::config::Config;
-use pi::model::{Message, StopReason, StreamEvent, UserContent, UserMessage};
-use pi::models::{ModelEntry, ModelRegistry, default_models_path};
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::provider_metadata::provider_auth_env_keys;
-use pi::providers::anthropic::AnthropicProvider;
-use pi::providers::azure::AzureOpenAIProvider;
-use pi::providers::gemini::GeminiProvider;
-use pi::providers::openai::OpenAIProvider;
-use pi::providers::openai_responses::OpenAIResponsesProvider;
-use pi::providers::{normalize_openai_base, normalize_openai_responses_base};
+use kode::auth::AuthStorage;
+use kode::config::Config;
+use kode::model::{Message, StopReason, StreamEvent, UserContent, UserMessage};
+use kode::models::{ModelEntry, ModelRegistry, default_models_path};
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::provider_metadata::provider_auth_env_keys;
+use kode::providers::anthropic::AnthropicProvider;
+use kode::providers::azure::AzureOpenAIProvider;
+use kode::providers::gemini::GeminiProvider;
+use kode::providers::openai::OpenAIProvider;
+use kode::providers::openai_responses::OpenAIResponsesProvider;
+use kode::providers::{normalize_openai_base, normalize_openai_responses_base};
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::env;
@@ -396,27 +396,27 @@ fn oai_auth_failure_script_matrix_maps_to_taxonomy() {
         (
             "openrouter",
             "You didn't provide an API key in the Authorization header",
-            pi::error::AuthDiagnosticCode::MissingApiKey,
+            kode::error::AuthDiagnosticCode::MissingApiKey,
         ),
         (
             "xai",
             "Malformed API key: expected Bearer token format",
-            pi::error::AuthDiagnosticCode::InvalidApiKey,
+            kode::error::AuthDiagnosticCode::InvalidApiKey,
         ),
         (
             "deepseek",
             "API key revoked for this project",
-            pi::error::AuthDiagnosticCode::InvalidApiKey,
+            kode::error::AuthDiagnosticCode::InvalidApiKey,
         ),
         (
             "openai",
             "HTTP 429 insufficient_quota: You exceeded your current quota",
-            pi::error::AuthDiagnosticCode::QuotaExceeded,
+            kode::error::AuthDiagnosticCode::QuotaExceeded,
         ),
     ];
 
     for (provider, message, expected_code) in cases {
-        let err = pi::Error::provider(provider, message);
+        let err = kode::Error::provider(provider, message);
         let diagnostic = err
             .auth_diagnostic()
             .unwrap_or_else(|| panic!("expected auth diagnostic for {provider}: {message}"));
@@ -867,7 +867,7 @@ fn assert_basic_stream_success(
         StreamEvent::Done { message, .. } => message
             .content
             .iter()
-            .any(|c| matches!(c, pi::model::ContentBlock::Text(tc) if !tc.text.is_empty())),
+            .any(|c| matches!(c, kode::model::ContentBlock::Text(tc) if !tc.text.is_empty())),
         _ => false,
     });
     assert!(
@@ -1068,7 +1068,7 @@ mod azure_openai {
         Context::owned(
             Some("You are a test harness assistant. Use tools when explicitly asked.".to_string()),
             vec![user_text(prompt)],
-            vec![pi::provider::ToolDef {
+            vec![kode::provider::ToolDef {
                 name: "list_dir".to_string(),
                 description: "List files in a directory".to_string(),
                 parameters: serde_json::json!({
@@ -1497,7 +1497,7 @@ mod cross_provider {
                 });
                 let done_has_text = events.iter().any(|e| match e {
                     StreamEvent::Done { message, .. } => message.content.iter().any(
-                        |c| matches!(c, pi::model::ContentBlock::Text(tc) if !tc.text.is_empty()),
+                        |c| matches!(c, kode::model::ContentBlock::Text(tc) if !tc.text.is_empty()),
                     ),
                     _ => false,
                 });
@@ -1512,7 +1512,7 @@ mod cross_provider {
                                 .content
                                 .iter()
                                 .filter_map(|c| match c {
-                                    pi::model::ContentBlock::Text(tc) => Some(tc.text.as_str()),
+                                    kode::model::ContentBlock::Text(tc) => Some(tc.text.as_str()),
                                     _ => None,
                                 })
                                 .collect();

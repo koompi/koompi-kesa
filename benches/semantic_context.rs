@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use criterion::{BatchSize, BenchmarkId, Criterion, criterion_group, criterion_main};
-use pi::semantic_workspace_graph::{
+use kode::semantic_workspace_graph::{
     ContextBundleBudget, ContextBundleRequest, SemanticContextBundle, SemanticContextBundlePlanner,
     SemanticWorkspaceGraph, SemanticWorkspaceGraphBuilder,
 };

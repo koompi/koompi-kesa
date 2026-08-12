@@ -1351,7 +1351,7 @@
       "delta_type": "unchanged_fail",
       "current_status": "fail",
       "baseline_status": "fail",
-      "failure_reason": "Load error: Extension error: Error loading module '/data/tmp/pi_agent_rust_cargo/codex-evidence-030/tmp/pi-processes-1777608581425': host write denied: path outside extension root\n    at checkWriteAccess (node:fs:32:47)\n    at mkdirSync (node:fs:572:29)\n    at ProcessManager (/data/projects/pi_agent_rust/tests/ext_conformance/artifacts/npm/aliou-pi-processes/manager.ts:17:19)\n    at default (/data/projects/pi_agent_rust/tests/ext_conformance/artifacts/npm/aliou-pi-processes/index.ts:14:25)\n    at __pi_load_extension (eval_script:472:20)\n",
+      "failure_reason": "Load error: Extension error: Error loading module '/data/tmp/koompi_code_cli_cargo/codex-evidence-030/tmp/pi-processes-1777608581425': host write denied: path outside extension root\n    at checkWriteAccess (node:fs:32:47)\n    at mkdirSync (node:fs:572:29)\n    at ProcessManager (/data/projects/koompi_code_cli/tests/ext_conformance/artifacts/npm/aliou-pi-processes/manager.ts:17:19)\n    at default (/data/projects/koompi_code_cli/tests/ext_conformance/artifacts/npm/aliou-pi-processes/index.ts:14:25)\n    at __pi_load_extension (eval_script:472:20)\n",
       "baseline_failure_reason": "Extension uses relative imports to unbundled sibling/parent modules.",
       "taxonomy_key": "health_delta_host_write_policy_or_packaging_gap",
       "recommended_owner_child": "bd-d7v9g.5"
@@ -1373,7 +1373,7 @@
       "delta_type": "new_failure",
       "current_status": "fail",
       "baseline_status": null,
-      "failure_reason": "Load error: Extension error: Error loading module '/tmp/pi-async-subagent-results': host write denied: path outside extension root\n    at checkWriteAccess (node:fs:32:47)\n    at mkdirSync (node:fs:572:29)\n    at registerSubagentExtension (/data/projects/pi_agent_rust/tests/ext_conformance/artifacts/community/nicobailon-subagents/index.ts:29:18)\n    at __pi_load_extension (eval_script:472:20)\n",
+      "failure_reason": "Load error: Extension error: Error loading module '/tmp/pi-async-subagent-results': host write denied: path outside extension root\n    at checkWriteAccess (node:fs:32:47)\n    at mkdirSync (node:fs:572:29)\n    at registerSubagentExtension (/data/projects/koompi_code_cli/tests/ext_conformance/artifacts/community/nicobailon-subagents/index.ts:29:18)\n    at __pi_load_extension (eval_script:472:20)\n",
       "baseline_failure_reason": null,
       "taxonomy_key": "health_delta_host_write_policy_or_packaging_gap",
       "recommended_owner_child": "bd-d7v9g.5"

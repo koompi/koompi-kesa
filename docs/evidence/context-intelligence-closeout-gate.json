@@ -281,27 +281,27 @@
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
               "id": "semantic_workspace_graph_builder_rch",
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
               "id": "context_intelligence_e2e_rch",
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
               "id": "doctor_context_intelligence_rch",
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
               "id": "context_perf_budgets_rch",
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test context_intelligence_closeout_gate_contract -- --nocapture",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test context_intelligence_closeout_gate_contract -- --nocapture",
               "id": "context_intelligence_closeout_gate_contract_rch",
               "status": "pass"
             },
@@ -311,12 +311,12 @@
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo check --all-targets",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo check --all-targets",
               "id": "cargo_check_all_targets_rch",
               "status": "pass"
             },
             {
-              "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
+              "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
               "id": "cargo_clippy_all_targets_rch",
               "status": "pass"
             },
@@ -622,27 +622,27 @@
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
       "id": "semantic_workspace_graph_builder_rch",
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
       "id": "context_intelligence_e2e_rch",
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
       "id": "doctor_context_intelligence_rch",
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test semantic_workspace_graph_builder --test e2e_agent_loop --test doctor_swarm_temp_dir_json --test perf_budgets context -- --nocapture",
       "id": "context_perf_budgets_rch",
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test context_intelligence_closeout_gate_contract -- --nocapture",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo test --test context_intelligence_closeout_gate_contract -- --nocapture",
       "id": "context_intelligence_closeout_gate_contract_rch",
       "status": "pass"
     },
@@ -652,12 +652,12 @@
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo check --all-targets",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo check --all-targets",
       "id": "cargo_check_all_targets_rch",
       "status": "pass"
     },
     {
-      "command": "CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
+      "command": "CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_ircr3_11/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
       "id": "cargo_clippy_all_targets_rch",
       "status": "pass"
     },

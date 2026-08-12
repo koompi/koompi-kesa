@@ -1,9 +1,9 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use pi::auth::{AuthCredential, AuthStorage};
-use pi::http::client::Client;
-use pi::vcr::{VcrMode, VcrRecorder};
+use kode::auth::{AuthCredential, AuthStorage};
+use kode::http::client::Client;
+use kode::vcr::{VcrMode, VcrRecorder};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;

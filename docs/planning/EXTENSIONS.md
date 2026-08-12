@@ -1,6 +1,6 @@
 # Extension System (Big‑Guns Plan)
 
-This document defines the extension architecture for **pi_agent_rust** with the
+This document defines the extension architecture for **koompi_code_cli** with the
 goal of **maximum compatibility**, **formal safety guarantees**, and **measurable
 performance**. The system is **best‑effort** by default, but designed to
 converge to full parity with legacy Pi extensions.

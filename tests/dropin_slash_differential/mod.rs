@@ -526,7 +526,7 @@ struct RunnerPaths {
 
 impl RunnerPaths {
     fn discover() -> anyhow::Result<Self> {
-        let rust_pi = PathBuf::from(env!("CARGO_BIN_EXE_pi"));
+        let rust_pi = PathBuf::from(env!("CARGO_BIN_EXE_kode"));
         if !rust_pi.is_file() {
             anyhow::bail!("missing Rust Pi test binary: {}", rust_pi.display());
         }

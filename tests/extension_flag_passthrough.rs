@@ -6,7 +6,7 @@
 use serde_json::{Value, json};
 use std::collections::HashMap;
 
-use pi::cli::{ExtensionCliFlag, parse_with_extension_flags};
+use kode::cli::{ExtensionCliFlag, parse_with_extension_flags};
 
 /// Test that extension CLI flags are parsed correctly from command line arguments.
 #[test]

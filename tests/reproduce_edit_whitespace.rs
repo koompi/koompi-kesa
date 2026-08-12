@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use pi::tools::{EditTool, Tool};
+    use kode::tools::{EditTool, Tool};
     use serde_json::json;
     use std::fs;
     use tempfile::tempdir;

@@ -135,7 +135,7 @@ fn run_resolution_regression_checks() {
     assert_eq!(infer_binary_kind(path), BinaryKind::Unknown);
 
     // Relative CARGO_TARGET_DIR is resolved from manifest dir.
-    let manifest_dir = Path::new("/workspace/pi_agent_rust");
+    let manifest_dir = Path::new("/workspace/koompi_code_cli");
     let roots = target_roots_with(manifest_dir, Some(Path::new("target/agents/blackglen")));
     assert_eq!(roots.len(), 2);
     assert_eq!(roots[0], manifest_dir.join("target/agents/blackglen"));

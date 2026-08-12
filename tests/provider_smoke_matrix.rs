@@ -16,11 +16,11 @@ mod common;
 
 use common::{MockHttpResponse, TestHarness};
 use futures::StreamExt;
-use pi::model::{Message, UserContent, UserMessage};
-use pi::models::ModelEntry;
-use pi::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions};
-use pi::provider_metadata::{PROVIDER_METADATA, ProviderOnboardingMode, canonical_provider_id};
-use pi::providers::create_provider;
+use kode::model::{Message, UserContent, UserMessage};
+use kode::models::ModelEntry;
+use kode::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions};
+use kode::provider_metadata::{PROVIDER_METADATA, ProviderOnboardingMode, canonical_provider_id};
+use kode::providers::create_provider;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -65,7 +65,7 @@ fn request_header(headers: &[(String, String)], key: &str) -> Option<String> {
 }
 
 fn drive_to_done(
-    provider: Arc<dyn pi::provider::Provider>,
+    provider: Arc<dyn kode::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) {
@@ -1065,7 +1065,7 @@ fn smoke_report_artifact() {
 fn run_smoke_stream(
     harness: &TestHarness,
     provider_id: &str,
-    defaults: pi::provider_metadata::ProviderRoutingDefaults,
+    defaults: kode::provider_metadata::ProviderRoutingDefaults,
 ) -> bool {
     let server = harness.start_mock_http_server();
     let safe_id = provider_id.replace('-', "_");

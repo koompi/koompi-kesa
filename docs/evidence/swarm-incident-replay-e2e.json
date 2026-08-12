@@ -31,7 +31,7 @@
   "scenario_count": 8,
   "scenarios": {
     "agent_mail_corrupt_soft_lock": {
-      "artifact_dir": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/agent_mail_corrupt_soft_lock",
+      "artifact_dir": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/agent_mail_corrupt_soft_lock",
       "command_count": 8,
       "details": {
         "agent_mail_semantic_readiness": "fail",
@@ -58,7 +58,7 @@
       "scenario_id": "agent_mail_corrupt_soft_lock",
       "source_paths": [
         "tests/fixtures/agent_mail/schema_corrupt_health.json",
-        "/data/projects/pi_agent_rust/docs/evidence/swarm-incident-replay.json"
+        "/data/projects/koompi_code_cli/docs/evidence/swarm-incident-replay.json"
       ],
       "status": "pass",
       "uses_real_temp_beads": true,
@@ -66,7 +66,7 @@
       "verdict": "pass"
     },
     "dirty_worktree_denial": {
-      "artifact_dir": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/dirty_worktree_denial",
+      "artifact_dir": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/dirty_worktree_denial",
       "command_count": 8,
       "details": {
         "dirty_paths": [
@@ -92,8 +92,8 @@
       "recommended_action": "stop_and_surface_dirty_worktree_blocker",
       "scenario_id": "dirty_worktree_denial",
       "source_paths": [
-        "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/dirty_worktree_denial/git-status.json",
-        "/data/projects/pi_agent_rust/docs/evidence/operator-work-recommendation.json"
+        "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/dirty_worktree_denial/git-status.json",
+        "/data/projects/koompi_code_cli/docs/evidence/operator-work-recommendation.json"
       ],
       "status": "pass",
       "uses_real_temp_beads": false,
@@ -101,7 +101,7 @@
       "verdict": "pass"
     },
     "duplicate_work_risk": {
-      "artifact_dir": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/duplicate_work_risk",
+      "artifact_dir": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/duplicate_work_risk",
       "command_count": 0,
       "details": {
         "confidence": 0.82,
@@ -124,8 +124,8 @@
       "recommended_action": "open_follow_up_bead_or_choose_non_overlapping_surface",
       "scenario_id": "duplicate_work_risk",
       "source_paths": [
-        "/data/projects/pi_agent_rust/docs/evidence/swarm-incident-replay.json",
-        "/data/projects/pi_agent_rust/docs/evidence/operator-work-recommendation.json"
+        "/data/projects/koompi_code_cli/docs/evidence/swarm-incident-replay.json",
+        "/data/projects/koompi_code_cli/docs/evidence/operator-work-recommendation.json"
       ],
       "status": "pass",
       "uses_real_temp_beads": false,
@@ -133,7 +133,7 @@
       "verdict": "pass"
     },
     "extension_resource_firewall_failure": {
-      "artifact_dir": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/extension_resource_firewall_failure",
+      "artifact_dir": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/extension_resource_firewall_failure",
       "command_count": 0,
       "details": {
         "contract_schema": "pi.ext.resource_firewall_matrix_contract.v1",
@@ -163,8 +163,8 @@
       "recommended_action": "surface_extension_resource_firewall_failure",
       "scenario_id": "extension_resource_firewall_failure",
       "source_paths": [
-        "/data/projects/pi_agent_rust/docs/contracts/extension-resource-firewall-matrix-contract.json",
-        "/data/projects/pi_agent_rust/tests/extensions_stress.rs"
+        "/data/projects/koompi_code_cli/docs/contracts/extension-resource-firewall-matrix-contract.json",
+        "/data/projects/koompi_code_cli/tests/extensions_stress.rs"
       ],
       "status": "pass",
       "uses_real_temp_beads": false,
@@ -172,7 +172,7 @@
       "verdict": "pass"
     },
     "healthy_incident_replay": {
-      "artifact_dir": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/healthy_incident_replay",
+      "artifact_dir": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/healthy_incident_replay",
       "command_count": 8,
       "details": {
         "bead_count": 1,
@@ -197,8 +197,8 @@
       "recommended_action": "use_live_sources_and_keep_replay_advisory",
       "scenario_id": "healthy_incident_replay",
       "source_paths": [
-        "/data/projects/pi_agent_rust/docs/evidence/swarm-incident-replay.json",
-        "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/healthy_incident_replay/git-status.json"
+        "/data/projects/koompi_code_cli/docs/evidence/swarm-incident-replay.json",
+        "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/healthy_incident_replay/git-status.json"
       ],
       "status": "pass",
       "uses_real_temp_beads": true,
@@ -206,7 +206,7 @@
       "verdict": "pass"
     },
     "rch_saturated_proof_refresh": {
-      "artifact_dir": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/rch_saturated_proof_refresh",
+      "artifact_dir": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/rch_saturated_proof_refresh",
       "command_count": 5,
       "details": {
         "bead_count": 1,
@@ -232,8 +232,8 @@
       "recommended_action": "wait_for_rch_and_refresh_remote_proof",
       "scenario_id": "rch_saturated_proof_refresh",
       "source_paths": [
-        "/data/projects/pi_agent_rust/docs/evidence/operator-work-recommendation.json",
-        "/data/projects/pi_agent_rust/docs/evidence/swarm-incident-replay.json"
+        "/data/projects/koompi_code_cli/docs/evidence/operator-work-recommendation.json",
+        "/data/projects/koompi_code_cli/docs/evidence/swarm-incident-replay.json"
       ],
       "status": "pass",
       "uses_real_temp_beads": true,
@@ -241,7 +241,7 @@
       "verdict": "pass"
     },
     "smoothness_slo_failure": {
-      "artifact_dir": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/smoothness_slo_failure",
+      "artifact_dir": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/smoothness_slo_failure",
       "command_count": 0,
       "details": {
         "failure_reason": "delayed_semantic_visibility",
@@ -264,7 +264,7 @@
       "recommended_action": "file_follow_up_before_relying_on_smoothness_slo",
       "scenario_id": "smoothness_slo_failure",
       "source_paths": [
-        "/data/projects/pi_agent_rust/docs/evidence/operator-smoothness-slo.json"
+        "/data/projects/koompi_code_cli/docs/evidence/operator-smoothness-slo.json"
       ],
       "status": "pass",
       "uses_real_temp_beads": false,
@@ -272,7 +272,7 @@
       "verdict": "pass"
     },
     "stale_proof_memory_refresh": {
-      "artifact_dir": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/stale_proof_memory_refresh",
+      "artifact_dir": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture/stale_proof_memory_refresh",
       "command_count": 0,
       "details": {
         "operator_work_action": "refresh_stale_evidence",
@@ -296,8 +296,8 @@
       "recommended_action": "refresh_stale_evidence",
       "scenario_id": "stale_proof_memory_refresh",
       "source_paths": [
-        "/data/projects/pi_agent_rust/docs/evidence/validation-proof-memory-index.json",
-        "/data/projects/pi_agent_rust/docs/evidence/operator-work-recommendation.json"
+        "/data/projects/koompi_code_cli/docs/evidence/validation-proof-memory-index.json",
+        "/data/projects/koompi_code_cli/docs/evidence/operator-work-recommendation.json"
       ],
       "status": "pass",
       "uses_real_temp_beads": false,
@@ -310,7 +310,7 @@
     "extension_resource_firewall_contract": {
       "id": "extension_resource_firewall_contract",
       "issue": null,
-      "path": "/data/projects/pi_agent_rust/docs/contracts/extension-resource-firewall-matrix-contract.json",
+      "path": "/data/projects/koompi_code_cli/docs/contracts/extension-resource-firewall-matrix-contract.json",
       "schema": "pi.ext.resource_firewall_matrix_contract.v1",
       "sha256": "dcfec94212fa42329f34c08be2d35df7a3f2deafb11b1d58e6c9bb1327d60f22",
       "size_bytes": 3168,
@@ -319,7 +319,7 @@
     "incident_corpus": {
       "id": "incident_corpus",
       "issue": null,
-      "path": "/data/projects/pi_agent_rust/docs/evidence/swarm-incident-corpus.json",
+      "path": "/data/projects/koompi_code_cli/docs/evidence/swarm-incident-corpus.json",
       "schema": "pi.swarm.incident_corpus.v1",
       "sha256": "32a7203ff32bed58b01a5d4075bacebbb1b39cbc980c7d35ef89796b8395ee09",
       "size_bytes": 26701,
@@ -328,7 +328,7 @@
     "incident_replay": {
       "id": "incident_replay",
       "issue": null,
-      "path": "/data/projects/pi_agent_rust/docs/evidence/swarm-incident-replay.json",
+      "path": "/data/projects/koompi_code_cli/docs/evidence/swarm-incident-replay.json",
       "schema": "pi.swarm.incident_replay.v1",
       "sha256": "7e8396795694c4e9bfd35b6e5373bf9f1037b338fcc51fcd7d6853315d7b9b71",
       "size_bytes": 62431,
@@ -337,7 +337,7 @@
     "operator_smoothness_slo": {
       "id": "operator_smoothness_slo",
       "issue": null,
-      "path": "/data/projects/pi_agent_rust/docs/evidence/operator-smoothness-slo.json",
+      "path": "/data/projects/koompi_code_cli/docs/evidence/operator-smoothness-slo.json",
       "schema": "pi.operator.smoothness_slo.v1",
       "sha256": "b7c2edcbe9d4afcdcc66b18f987009f8c7cb32aa9009d0a60c1620df380d7021",
       "size_bytes": 34991,
@@ -346,7 +346,7 @@
     "operator_work_recommendation": {
       "id": "operator_work_recommendation",
       "issue": null,
-      "path": "/data/projects/pi_agent_rust/docs/evidence/operator-work-recommendation.json",
+      "path": "/data/projects/koompi_code_cli/docs/evidence/operator-work-recommendation.json",
       "schema": "pi.swarm.operator_work_recommendation.v1",
       "sha256": "46ba54a14ac32b662b16b74abf84f4e0ad17ff996f9b452738116bbba46e3efa",
       "size_bytes": 24032,
@@ -355,7 +355,7 @@
     "proof_memory_index": {
       "id": "proof_memory_index",
       "issue": null,
-      "path": "/data/projects/pi_agent_rust/docs/evidence/validation-proof-memory-index.json",
+      "path": "/data/projects/koompi_code_cli/docs/evidence/validation-proof-memory-index.json",
       "schema": "pi.validation.proof_memory_index.v1",
       "sha256": "d37d37d803468d5cedc97a10c41f9669f975808509834e1e336f73fa40dd4d4a",
       "size_bytes": 49102,
@@ -364,5 +364,5 @@
   },
   "source_bead": "bd-9yq7i.7",
   "status": "pass",
-  "workspace": "/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture"
+  "workspace": "/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_7/evidence_capture_1/capture"
 }

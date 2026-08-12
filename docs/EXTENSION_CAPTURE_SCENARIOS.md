@@ -1,7 +1,7 @@
 # Extension Capture Scenario Suite (bd-2qd)
 
 This document defines a **scenario specification** for the frozen extension sample set in `docs/extension-sample.json`.
-It is intended to drive capture + conformance harness work (legacy `pi-mono` → Rust `pi_agent_rust`) with **deterministic**, **auditable** expectations.
+It is intended to drive capture + conformance harness work (legacy `pi-mono` → Rust `koompi_code_cli`) with **deterministic**, **auditable** expectations.
 
 Artifacts for the sample set are vendored under `tests/ext_conformance/artifacts/<id>/` (copied from the pinned legacy snapshot; see `docs/EXTENSION_SAMPLE.md`).
 

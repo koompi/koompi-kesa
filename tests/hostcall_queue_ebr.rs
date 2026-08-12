@@ -1,4 +1,4 @@
-use pi::hostcall_queue::{
+use kode::hostcall_queue::{
     BravoBiasMode, ContentionSample, ContentionSignature, HostcallQueueEnqueueResult,
     HostcallQueueMode, HostcallRequestQueue, QueueTenant, S3FifoFallbackReason, S3FifoMode,
 };
@@ -163,7 +163,7 @@ fn hostcall_swarm_report_path() -> PathBuf {
     }
 
     std::env::temp_dir()
-        .join("pi_agent_rust")
+        .join("koompi_code_cli")
         .join("hostcall_admission_swarm_profile.json")
 }
 

@@ -6,7 +6,7 @@
 //! ## Usage
 //!
 //! ```ignore
-//! use pi::keybindings::{AppAction, KeyBindings};
+//! use kode::keybindings::{AppAction, KeyBindings};
 //!
 //! let bindings = KeyBindings::default();
 //! let action = bindings.lookup(&key_event);

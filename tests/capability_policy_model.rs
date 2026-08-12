@@ -7,7 +7,7 @@
 //   - Full 5-layer precedence chain
 //   - Edge cases (empty, unknown, case sensitivity)
 
-use pi::extensions::{
+use kode::extensions::{
     ALL_CAPABILITIES, Capability, ExtensionOverride, ExtensionPolicy, ExtensionPolicyMode,
     PolicyDecision, PolicyProfile,
 };

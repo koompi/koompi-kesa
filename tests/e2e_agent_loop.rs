@@ -9,20 +9,20 @@ mod common;
 use async_trait::async_trait;
 use common::{TestHarness, run_async};
 use futures::Stream;
-use pi::agent::{Agent, AgentConfig, AgentEvent, AgentSession, SemanticContextBundleInjection};
-use pi::compaction::ResolvedCompactionSettings;
-use pi::error::{Error, Result};
-use pi::model::{
+use kode::agent::{Agent, AgentConfig, AgentEvent, AgentSession, SemanticContextBundleInjection};
+use kode::compaction::ResolvedCompactionSettings;
+use kode::error::{Error, Result};
+use kode::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall,
     ToolResultMessage, Usage,
 };
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::semantic_workspace_graph::{
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::semantic_workspace_graph::{
     ContextArtifactCacheScope, ContextBundleBudget, ContextBundleRequest, SemanticContextBundle,
     SemanticContextBundlePlanner, SemanticWorkspaceGraphBuilder,
 };
-use pi::session::Session;
-use pi::tools::ToolRegistry;
+use kode::session::Session;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::BTreeMap;
 use std::fs;

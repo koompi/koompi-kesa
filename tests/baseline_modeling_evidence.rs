@@ -11,15 +11,15 @@
 mod common;
 
 use common::TestHarness;
-use pi::connectors::http::HttpConnector;
-use pi::extensions::{
+use kode::connectors::http::HttpConnector;
+use kode::extensions::{
     BaselineDriftReport, ExtensionManager, ExtensionPolicy, ExtensionPolicyMode, HostCallContext,
     HostCallPayload, RUNTIME_RISK_BASELINE_SCHEMA_VERSION, RuntimeRiskBaselineModel,
     RuntimeRiskConfig, RuntimeRiskStateLabelValue, build_baseline_from_ledger,
     build_baseline_from_ledger_with_options, detect_baseline_drift, dispatch_host_call_shared,
     verify_runtime_risk_ledger_artifact,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use std::fs;
 

@@ -9,10 +9,10 @@
 //! - **Recording**: [`HostcallLog`] — unified interaction recording for all types
 
 use async_trait::async_trait;
-use pi::error::Result;
-use pi::extension_dispatcher::ExtensionUiHandler;
-use pi::extensions::{ExtensionSession, ExtensionUiRequest, ExtensionUiResponse};
-use pi::session::SessionMessage;
+use kode::error::Result;
+use kode::extension_dispatcher::ExtensionUiHandler;
+use kode::extensions::{ExtensionSession, ExtensionUiRequest, ExtensionUiResponse};
+use kode::session::SessionMessage;
 use serde_json::Value;
 use std::collections::VecDeque;
 use std::fmt;

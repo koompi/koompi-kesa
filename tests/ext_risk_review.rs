@@ -8,7 +8,7 @@
 //! Verifies the committed `tests/ext_conformance/artifacts/RISK_REVIEW.json`
 //! evidence log. Set `PI_GENERATE_RISK_REVIEW=1` to regenerate it explicitly.
 
-use pi::extension_license::{
+use kode::extension_license::{
     License, Redistributable, SecuritySeverity, detect_license_from_content,
     detect_license_from_spdx, redistributable, scan_security,
 };

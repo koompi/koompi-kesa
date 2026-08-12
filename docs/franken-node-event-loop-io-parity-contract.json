@@ -7,7 +7,7 @@
   "effective_date_utc": "2026-02-17T09:00:00Z",
   "scope": {
     "target_project_root": "/dp/franken_node",
-    "source_project_root": "/data/projects/pi_agent_rust",
+    "source_project_root": "/data/projects/koompi_code_cli",
     "objective": "Provide production-grade event-loop and IO semantics with compatibility toggles and deterministic fallback behavior under unsupported edge conditions."
   },
   "event_loop_model": {

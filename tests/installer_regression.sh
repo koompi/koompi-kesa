@@ -907,7 +907,7 @@ test_installer_creates_rpi_alias_when_available() {
   assert_output_contains "$dir" "Alias:     installed (rpi -> ${install_bin})"
   [ -x "$install_bin" ] || { echo "expected installed binary at ${install_bin}" >&2; return 1; }
   [ -x "$compat_alias" ] || { echo "expected compatibility alias at ${compat_alias}" >&2; return 1; }
-  grep -Fq "pi_agent_rust installer managed alias" "$compat_alias" || {
+  grep -Fq "koompi_code_cli installer managed alias" "$compat_alias" || {
     echo "expected managed alias marker in ${compat_alias}" >&2
     return 1
   }
@@ -1142,11 +1142,11 @@ test_agent_skills_install_by_default() {
   [ -f "$codex_commands" ] || { echo "missing Codex commands reference: $codex_commands" >&2; return 1; }
   [ -f "$claude_debugging" ] || { echo "missing Claude debugging reference: $claude_debugging" >&2; return 1; }
   [ -f "$codex_debugging" ] || { echo "missing Codex debugging reference: $codex_debugging" >&2; return 1; }
-  grep -Fq "pi_agent_rust installer managed skill" "$claude_skill" || {
+  grep -Fq "koompi_code_cli installer managed skill" "$claude_skill" || {
     echo "missing managed marker in Claude skill" >&2
     return 1
   }
-  grep -Fq "pi_agent_rust installer managed skill" "$codex_skill" || {
+  grep -Fq "koompi_code_cli installer managed skill" "$codex_skill" || {
     echo "missing managed marker in Codex skill" >&2
     return 1
   }
@@ -1279,11 +1279,11 @@ test_skill_copy_failure_preserves_existing_managed_skills() {
   codex_skill="${dir}/home/.codex/skills/pi-agent-rust/SKILL.md"
   mkdir -p "$(dirname "$claude_skill")" "$(dirname "$codex_skill")"
   cat > "$claude_skill" <<'SKILL'
-<!-- pi_agent_rust installer managed skill -->
+<!-- koompi_code_cli installer managed skill -->
 # OLD CLAUDE SKILL
 SKILL
   cat > "$codex_skill" <<'SKILL'
-<!-- pi_agent_rust installer managed skill -->
+<!-- koompi_code_cli installer managed skill -->
 # OLD CODEX SKILL
 SKILL
 
@@ -1358,7 +1358,7 @@ test_uninstall_removes_only_installer_managed_skills() {
   mkdir -p "$(dirname "$managed_skill")" "$(dirname "$custom_skill")"
 
   cat > "$managed_skill" <<'SKILL'
-<!-- pi_agent_rust installer managed skill -->
+<!-- koompi_code_cli installer managed skill -->
 # Managed skill
 SKILL
   cat > "$custom_skill" <<'SKILL'
@@ -1390,7 +1390,7 @@ test_uninstall_removes_recorded_rpi_alias() {
 
   cat > "$alias_path" <<'ALIAS'
 #!/usr/bin/env bash
-# pi_agent_rust installer managed alias
+# koompi_code_cli installer managed alias
 set -euo pipefail
 exec /tmp/pi "$@"
 ALIAS
@@ -1517,11 +1517,11 @@ test_uninstall_uses_recorded_skill_paths() {
   mkdir -p "$(dirname "$managed_claude")" "$(dirname "$managed_codex")"
 
   cat > "$managed_claude" <<'SKILL'
-<!-- pi_agent_rust installer managed skill -->
+<!-- koompi_code_cli installer managed skill -->
 # Managed Claude skill
 SKILL
   cat > "$managed_codex" <<'SKILL'
-<!-- pi_agent_rust installer managed skill -->
+<!-- koompi_code_cli installer managed skill -->
 # Managed Codex skill (recorded path)
 SKILL
 
@@ -1556,7 +1556,7 @@ test_uninstall_skips_unexpected_skill_paths() {
   mkdir -p "$unexpected_dir"
 
   cat > "$unexpected_skill" <<'SKILL'
-<!-- pi_agent_rust installer managed skill -->
+<!-- koompi_code_cli installer managed skill -->
 # Managed marker on unexpected path
 SKILL
 

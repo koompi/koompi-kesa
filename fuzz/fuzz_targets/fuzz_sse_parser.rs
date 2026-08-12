@@ -7,7 +7,7 @@
 //! "chunking invariant" from the proptest suite, now under libFuzzer guidance).
 
 use libfuzzer_sys::fuzz_target;
-use pi::fuzz_exports::SseParser;
+use kode::fuzz_exports::SseParser;
 
 fuzz_target!(|data: &[u8]| {
     // Convert to UTF-8 lossily — SseParser works on &str, not raw bytes.

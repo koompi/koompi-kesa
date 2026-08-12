@@ -302,12 +302,12 @@
               "status": "pass"
             },
             {
-              "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/tmp cargo test --test runtime_intelligence_closeout_gate_contract -- --nocapture",
+              "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/tmp cargo test --test runtime_intelligence_closeout_gate_contract -- --nocapture",
               "id": "runtime_intelligence_closeout_gate_contract_rch",
               "status": "pass"
             },
             {
-              "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/tmp cargo fmt --check",
+              "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/tmp cargo fmt --check",
               "id": "cargo_fmt",
               "status": "pass"
             },
@@ -317,12 +317,12 @@
               "status": "pass"
             },
             {
-              "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/tmp cargo check --all-targets",
+              "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/tmp cargo check --all-targets",
               "id": "cargo_check_all_targets_rch",
               "status": "pass"
             },
             {
-              "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/tmp cargo clippy --all-targets -- -D warnings",
+              "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/tmp cargo clippy --all-targets -- -D warnings",
               "id": "cargo_clippy_all_targets_rch",
               "status": "pass"
             },
@@ -468,7 +468,7 @@
       ],
       "title": "Add large-session TUI frame-budget telemetry and regression coverage",
       "validation_commands": [
-        "rch exec -- cargo test -p pi_agent_rust --test tui_state frame_budget -- --nocapture",
+        "rch exec -- cargo test -p koompi_code_cli --test tui_state frame_budget -- --nocapture",
         "rch exec -- cargo check --all-targets",
         "rch exec -- cargo clippy --all-targets -- -D warnings"
       ]
@@ -567,12 +567,12 @@
       "status": "pass"
     },
     {
-      "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/tmp cargo test --test runtime_intelligence_closeout_gate_contract -- --nocapture",
+      "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/tmp cargo test --test runtime_intelligence_closeout_gate_contract -- --nocapture",
       "id": "runtime_intelligence_closeout_gate_contract_rch",
       "status": "pass"
     },
     {
-      "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/tmp cargo fmt --check",
+      "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/tmp cargo fmt --check",
       "id": "cargo_fmt",
       "status": "pass"
     },
@@ -582,12 +582,12 @@
       "status": "pass"
     },
     {
-      "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/tmp cargo check --all-targets",
+      "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/tmp cargo check --all-targets",
       "id": "cargo_check_all_targets_rch",
       "status": "pass"
     },
     {
-      "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey_bd_h66tp_8/tmp cargo clippy --all-targets -- -D warnings",
+      "command": "RCH_VISIBILITY=verbose rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey_bd_h66tp_8/tmp cargo clippy --all-targets -- -D warnings",
       "id": "cargo_clippy_all_targets_rch",
       "status": "pass"
     },

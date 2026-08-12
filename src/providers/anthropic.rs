@@ -598,7 +598,7 @@ impl Provider for AnthropicProvider {
                 .header(
                     "user-agent",
                     format!(
-                        "pi_agent_rust/{} (external, cli)",
+                        "koompi_code_cli/{} (external, cli)",
                         env!("CARGO_PKG_VERSION")
                     ),
                 );
@@ -606,7 +606,7 @@ impl Provider for AnthropicProvider {
             request = request.header(
                 "user-agent",
                 format!(
-                    "pi_agent_rust/{} (kimi-oauth, cli)",
+                    "koompi_code_cli/{} (kimi-oauth, cli)",
                     env!("CARGO_PKG_VERSION")
                 ),
             );
@@ -2288,7 +2288,7 @@ mod tests {
             captured
                 .headers
                 .get("user-agent")
-                .is_some_and(|value| value.contains("pi_agent_rust/"))
+                .is_some_and(|value| value.contains("koompi_code_cli/"))
         );
     }
 

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use futures::{StreamExt, stream};
-    use pi::sse::SseStream;
+    use kode::sse::SseStream;
 
     #[test]
     fn fragmented_utf8_bom_is_stripped_once() {

@@ -1,6 +1,6 @@
 # Provider Onboarding Checklist
 
-> Canonical step-by-step guide for adding or maintaining a provider in pi_agent_rust.
+> Canonical step-by-step guide for adding or maintaining a provider in koompi_code_cli.
 
 ---
 

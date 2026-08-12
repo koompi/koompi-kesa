@@ -19,7 +19,7 @@ use futures::stream::{self, BoxStream};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-const DEFAULT_USER_AGENT: &str = concat!("pi_agent_rust/", env!("CARGO_PKG_VERSION"));
+const DEFAULT_USER_AGENT: &str = concat!("koompi_code_cli/", env!("CARGO_PKG_VERSION"));
 const ANTIGRAVITY_VERSION_ENV: &str = "PI_AI_ANTIGRAVITY_VERSION";
 const MAX_HEADER_BYTES: usize = 64 * 1024;
 const READ_CHUNK_BYTES: usize = 16 * 1024;
@@ -2704,11 +2704,11 @@ mod tests {
         // Verify the format string used when PI_AI_ANTIGRAVITY_VERSION is set.
         let version = "1.2.3";
         let ua = format!("{DEFAULT_USER_AGENT} Antigravity/{version}");
-        assert!(ua.starts_with("pi_agent_rust/"));
+        assert!(ua.starts_with("koompi_code_cli/"));
         assert!(ua.contains("Antigravity/1.2.3"));
 
         // Verify default user agent contains crate version.
-        assert!(DEFAULT_USER_AGENT.starts_with("pi_agent_rust/"));
+        assert!(DEFAULT_USER_AGENT.starts_with("koompi_code_cli/"));
     }
 
     #[test]

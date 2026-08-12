@@ -15,18 +15,18 @@
 mod common;
 
 use common::TestHarness;
-use pi::agent::{Agent, AgentConfig, AgentSession};
-use pi::auth::AuthStorage;
-use pi::config::Config;
-use pi::model::{
+use kode::agent::{Agent, AgentConfig, AgentSession};
+use kode::auth::AuthStorage;
+use kode::config::Config;
+use kode::model::{
     AssistantMessage, ContentBlock, StopReason, TextContent, ToolCall, Usage, UserContent,
 };
-use pi::provider::Provider;
-use pi::providers::openai::OpenAIProvider;
-use pi::resources::ResourceLoader;
-use pi::rpc::{RpcOptions, run};
-use pi::session::{AutosaveDurabilityMode, Session, SessionEntry, SessionMessage};
-use pi::tools::ToolRegistry;
+use kode::provider::Provider;
+use kode::providers::openai::OpenAIProvider;
+use kode::resources::ResourceLoader;
+use kode::rpc::{RpcOptions, run};
+use kode::session::{AutosaveDurabilityMode, Session, SessionEntry, SessionMessage};
+use kode::tools::ToolRegistry;
 use serde_json::Value;
 use std::path::Path;
 use std::sync::mpsc::{Receiver, TryRecvError};
@@ -94,14 +94,14 @@ fn setup_rpc(
 ) -> (
     asupersync::channel::mpsc::Sender<String>,
     Arc<Mutex<Receiver<String>>>,
-    asupersync::runtime::JoinHandle<pi::error::Result<()>>,
+    asupersync::runtime::JoinHandle<kode::error::Result<()>>,
 ) {
     let session = Arc::new(asupersync::sync::Mutex::new(session));
     let agent_session = AgentSession::new(
         dummy_agent(),
         session,
         false,
-        pi::compaction::ResolvedCompactionSettings::default(),
+        kode::compaction::ResolvedCompactionSettings::default(),
     );
 
     let auth_dir = tempfile::tempdir().unwrap();

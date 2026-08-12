@@ -13,8 +13,8 @@
 mod common;
 
 use common::TestHarness;
-use pi::connectors::http::HttpConnector;
-use pi::extensions::{
+use kode::connectors::http::HttpConnector;
+use kode::extensions::{
     ExecMediationLedgerEntry, ExtensionManager, ExtensionPolicy, ExtensionPolicyMode,
     HostCallContext, HostCallPayload, INCIDENT_EVIDENCE_BUNDLE_SCHEMA_VERSION,
     IncidentBundleFilter, IncidentBundleRedactionPolicy, IncidentEvidenceBundle, RuntimeRiskConfig,
@@ -22,7 +22,7 @@ use pi::extensions::{
     SecurityAlertSeverity, build_incident_evidence_bundle, dispatch_host_call_shared,
     query_security_alerts, verify_incident_evidence_bundle,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 
 // ============================================================================
@@ -1325,8 +1325,8 @@ fn summary_tracks_peak_risk_and_enforcement() {
         .filter(|e| {
             matches!(
                 e.selected_action,
-                pi::extensions::RuntimeRiskActionValue::Deny
-                    | pi::extensions::RuntimeRiskActionValue::Terminate
+                kode::extensions::RuntimeRiskActionValue::Deny
+                    | kode::extensions::RuntimeRiskActionValue::Terminate
             )
         })
         .count();

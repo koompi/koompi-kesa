@@ -3,8 +3,8 @@
 ## 1) Session Bootstrap
 
 ```bash
-export CARGO_TARGET_DIR="/data/tmp/pi_agent_rust/${USER:-agent}"
-export TMPDIR="/data/tmp/pi_agent_rust/${USER:-agent}/tmp"
+export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli/${USER:-agent}"
+export TMPDIR="/data/tmp/koompi_code_cli/${USER:-agent}/tmp"
 mkdir -p "$TMPDIR"
 ```
 

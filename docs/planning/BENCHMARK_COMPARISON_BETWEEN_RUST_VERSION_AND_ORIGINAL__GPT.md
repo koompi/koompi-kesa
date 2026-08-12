@@ -1,7 +1,7 @@
 # BENCHMARK_COMPARISON_BETWEEN_RUST_VERSION_AND_ORIGINAL__GPT
 
 Generated: 2026-02-19
-Workspace: `/data/projects/pi_agent_rust`
+Workspace: `/data/projects/koompi_code_cli`
 
 ## 0) Historical Post-Hardening Status Update (2026-02-17)
 
@@ -63,9 +63,9 @@ Older `224/224` compatibility checkpoints remain useful historical evidence, but
 ## 0.3) Full Perf Orchestrator Checkpoint (2026-02-19)
 
 - Full-suite orchestration run:
-  - command: `./scripts/perf/orchestrate.sh --profile full --skip-build --no-rch --output-dir /data/tmp/pi_agent_rust/codex/perf/full_local_skipbuild_retry_20260219T0650Z`
+  - command: `./scripts/perf/orchestrate.sh --profile full --skip-build --no-rch --output-dir /data/tmp/koompi_code_cli/codex/perf/full_local_skipbuild_retry_20260219T0650Z`
   - correlation: `fullbench-local-skipbuild-retry-20260219T0650Z`
-  - manifest: `/data/tmp/pi_agent_rust/codex/perf/full_local_skipbuild_retry_20260219T0650Z/manifest.json`
+  - manifest: `/data/tmp/koompi_code_cli/codex/perf/full_local_skipbuild_retry_20260219T0650Z/manifest.json`
 - Run summary:
   - suites: `11` total, `9` pass, `2` fail, `0` skip
   - duration: `1,601,650ms`
@@ -81,7 +81,7 @@ Older `224/224` compatibility checkpoints remain useful historical evidence, but
     - `criterion_extensions`
   - failing suites:
     - `perf_budgets` (`exit=101`): strict fail-closed budget contract due missing/stale evidence artifacts at expected canonical paths (criterion/pijs/release-binary inputs).
-    - `perf_regression` (`exit=101`): `binary_size_check` failed because release binary path was not present for strict mode (`/data/tmp/pi_agent_rust/codex/perf/release/pi`).
+    - `perf_regression` (`exit=101`): `binary_size_check` failed because release binary path was not present for strict mode (`/data/tmp/koompi_code_cli/codex/perf/release/pi`).
 - Interpretation:
   - The two failures are evidence-path/precondition failures, not a demonstrated runtime-latency regression.
   - In the same run, the measured startup guards in `perf_regression` remained green (`--help` P95 `3.8ms`, `--version` P95 `3.6ms`).
@@ -137,7 +137,7 @@ Build/regeneration note:
 ## 2) Scope and Comparison Modes
 
 ### 2.1 Apples-to-Apples Scope
-- Rust target: this repo (`pi_agent_rust`)
+- Rust target: this repo (`koompi_code_cli`)
 - Legacy target: `legacy_pi_mono_code/pi-mono/packages/coding-agent`
 
 ### 2.2 Apples-to-Oranges Scope (Full Legacy Runtime Context)

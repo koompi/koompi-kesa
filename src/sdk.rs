@@ -1,12 +1,12 @@
 //! Stable SDK-facing API surface for embedding Pi as a library.
 //!
 //! This module is the supported entry point for external library consumers.
-//! Prefer importing from `pi::sdk` instead of deep internal modules.
+//! Prefer importing from `kode::sdk` instead of deep internal modules.
 //!
 //! # Examples
 //!
 //! ```rust
-//! use pi::sdk::{AgentEvent, Message, ToolDefinition};
+//! use kode::sdk::{AgentEvent, Message, ToolDefinition};
 //!
 //! let _events: Vec<AgentEvent> = Vec::new();
 //! let _messages: Vec<Message> = Vec::new();
@@ -16,7 +16,7 @@
 //! Internal implementation types are intentionally not part of this surface.
 //!
 //! ```compile_fail
-//! use pi::sdk::RpcSharedState;
+//! use kode::sdk::RpcSharedState;
 //! ```
 
 use crate::app;

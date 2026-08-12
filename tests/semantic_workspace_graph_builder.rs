@@ -6,19 +6,19 @@ use asupersync::sync::Mutex;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::Stream;
-use pi::agent::{Agent, AgentConfig, AgentSession, SemanticContextBundleInjection};
-use pi::compaction::ResolvedCompactionSettings;
-use pi::model::{AssistantMessage, ContentBlock, Message, StopReason, TextContent, Usage};
-use pi::provider::{Context, Provider, StreamEvent, StreamOptions};
-use pi::semantic_workspace_graph::{
+use kode::agent::{Agent, AgentConfig, AgentSession, SemanticContextBundleInjection};
+use kode::compaction::ResolvedCompactionSettings;
+use kode::model::{AssistantMessage, ContentBlock, Message, StopReason, TextContent, Usage};
+use kode::provider::{Context, Provider, StreamEvent, StreamOptions};
+use kode::semantic_workspace_graph::{
     BeadActionabilityStatus, ContextArtifactCacheScope, ContextArtifactCacheStatus,
     ContextBundleBudget, ContextBundleCacheProbe, ContextBundleRequest, EvidenceFreshnessStatus,
     GraphInputStatus, RedactionStatus, SemanticContextBundlePlanner, SemanticEdgeType,
     SemanticNodeType, SemanticWorkspaceGraph, SemanticWorkspaceGraphBuildOptions,
     SemanticWorkspaceGraphBuilder, classify_evidence_freshness, normalize_context_artifact_path,
 };
-use pi::session::Session;
-use pi::tools::ToolRegistry;
+use kode::session::Session;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::error::Error;
@@ -788,7 +788,7 @@ impl Provider for ContextE2eProvider {
         &self,
         context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> pi::error::Result<Pin<Box<dyn Stream<Item = pi::error::Result<StreamEvent>> + Send>>> {
+    ) -> kode::error::Result<Pin<Box<dyn Stream<Item = kode::error::Result<StreamEvent>> + Send>>> {
         match self.calls.lock() {
             Ok(calls) => calls,
             Err(poisoned) => poisoned.into_inner(),
@@ -845,7 +845,7 @@ fn node_with_source<'a>(
     graph: &'a SemanticWorkspaceGraph,
     node_type: SemanticNodeType,
     source_path: &str,
-) -> TestResult<&'a pi::semantic_workspace_graph::SemanticGraphNode> {
+) -> TestResult<&'a kode::semantic_workspace_graph::SemanticGraphNode> {
     graph
         .nodes
         .iter()
@@ -900,7 +900,7 @@ fn bead_status(
 }
 
 fn bundle_golden_summary(
-    bundle: &pi::semantic_workspace_graph::SemanticContextBundle,
+    bundle: &kode::semantic_workspace_graph::SemanticContextBundle,
 ) -> serde_json::Value {
     json!({
         "selected": bundle
@@ -3643,7 +3643,7 @@ fn no_mock_context_intelligence_e2e_logs_and_replays_real_workspace() -> TestRes
         assert!(!context_content.contains("hidden token"));
 
         let session_path = {
-            let cx = pi::agent_cx::AgentCx::for_request();
+            let cx = kode::agent_cx::AgentCx::for_request();
             let session = session
                 .lock(cx.cx())
                 .await

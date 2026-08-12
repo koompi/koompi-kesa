@@ -124,17 +124,17 @@
   ],
   "focused_extension_gates": [
     {
-      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo test --test ext_conformance_generated --features ext-conformance -- conformance_must_pass_gate --nocapture --exact",
+      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo test --test ext_conformance_generated --features ext-conformance -- conformance_must_pass_gate --nocapture --exact",
       "result": "PASS: 123/123 must-pass extensions passed; stretch set 100/101 passed, 1 non-blocking failure for the explicit base_fixtures test-only fixture.",
       "report_path": "tests/ext_conformance/reports/gate/must_pass_gate_verdict.json"
     },
     {
-      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo test --test ext_conformance_generated --features ext-conformance -- conformance_extension_journeys --nocapture --exact",
+      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo test --test ext_conformance_generated --features ext-conformance -- conformance_extension_journeys --nocapture --exact",
       "result": "PASS: 123/123 journeys passed; event_subscriber category 35P/0F/0S.",
       "report_path": "tests/ext_conformance/reports/journeys/journey_report.json"
     },
     {
-      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo test --test ext_conformance_generated --features ext-conformance -- conformance_health_delta --nocapture --exact",
+      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo test --test ext_conformance_generated --features ext-conformance -- conformance_health_delta --nocapture --exact",
       "result": "PASS: 223/223 tested extensions passed, 0 failures, 0 regressions, 13 fixes, 1 explicit excluded fixture.",
       "report_path": "tests/ext_conformance/reports/health_delta/health_delta_report.json"
     }
@@ -145,11 +145,11 @@
       "result": "pass"
     },
     {
-      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo check --all-targets",
+      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo check --all-targets",
       "result": "pass"
     },
     {
-      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
+      "command": "env RCH_VISIBILITY=verbose RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-d7v9g-7/tmp rch exec -- cargo clippy --all-targets -- -D warnings",
       "result": "pass"
     },
     {

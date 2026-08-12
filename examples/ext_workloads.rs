@@ -19,17 +19,17 @@
 use chrono::{DateTime, SecondsFormat, Utc};
 use clap::Parser;
 use futures::executor::block_on;
-use pi::error::{Error, Result};
-use pi::extension_scoring::{
+use kode::error::{Error, Result};
+use kode::extension_scoring::{
     InterferenceMatrixCompletenessReport, evaluate_interference_matrix_completeness,
     format_interference_pair_key, parse_interference_pair_key,
 };
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::perf_build;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::perf_build;
+use kode::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
@@ -788,7 +788,7 @@ fn default_perf_artifact_path(artifact: PerfArtifact) -> PathBuf {
         .map(PathBuf::from)
         .filter(|path| !path.as_os_str().is_empty())
         .unwrap_or_else(std::env::temp_dir)
-        .join("pi_agent_rust")
+        .join("koompi_code_cli")
         .join("ext_workloads")
         .join(artifact.name())
 }
@@ -1580,7 +1580,7 @@ async fn scenario_load_init_cold(
 
     Ok(json!({
         "schema": BENCH_SCHEMA,
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "ext_load_init/load_init_cold",
         "extension": spec.extension_id,
         "runs": runs,
@@ -1647,7 +1647,7 @@ async fn scenario_tool_call(
 
     Ok(json!({
         "schema": BENCH_SCHEMA,
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "ext_tool_call/hello",
         "extension": spec.extension_id,
         "iterations": iterations,
@@ -1716,7 +1716,7 @@ async fn scenario_event_hook(
 
     Ok(json!({
         "schema": BENCH_SCHEMA,
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "ext_event_hook/before_agent_start",
         "extension": spec.extension_id,
         "iterations": iterations,
@@ -1794,7 +1794,7 @@ async fn scenario_long_session_real_corpus(
 
     Ok(json!({
         "schema": BENCH_SCHEMA,
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "ext_hostcall_bridge/long_session_real_corpus",
         "extension": format!("real_corpus_{}ext", loaded_extension_ids.len()),
         "iterations": iterations,

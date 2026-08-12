@@ -22,8 +22,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "reusable_remote_proof",
       "freshness": {
@@ -123,8 +123,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "stale_git_head_proof",
       "freshness": {
@@ -227,8 +227,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "stale_source_time_proof",
       "freshness": {
@@ -330,8 +330,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "failing_freshness_inputs_proof",
       "freshness": {
@@ -434,8 +434,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "dirty_worktree_mismatch_proof",
       "freshness": {
@@ -540,8 +540,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "command_fingerprint_mismatch_proof",
       "freshness": {
@@ -643,8 +643,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "path_coverage_mismatch_proof",
       "freshness": {
@@ -750,8 +750,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "not_authoritative_proof",
       "freshness": {
@@ -853,8 +853,8 @@
         "rendered": "rch exec -- cargo clippy --all-targets -- -D warnings"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "local_fallback_proof",
       "freshness": {
@@ -961,8 +961,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "missing_artifact_proof",
       "freshness": {
@@ -1243,8 +1243,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "reusable_remote_proof",
       "freshness": {
@@ -1344,8 +1344,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "stale_git_head_proof",
       "freshness": {
@@ -1448,8 +1448,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "stale_source_time_proof",
       "freshness": {
@@ -1551,8 +1551,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "failing_freshness_inputs_proof",
       "freshness": {
@@ -1655,8 +1655,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "dirty_worktree_mismatch_proof",
       "freshness": {
@@ -1761,8 +1761,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "command_fingerprint_mismatch_proof",
       "freshness": {
@@ -1864,8 +1864,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "path_coverage_mismatch_proof",
       "freshness": {
@@ -1971,8 +1971,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "not_authoritative_proof",
       "freshness": {
@@ -2074,8 +2074,8 @@
         "rendered": "rch exec -- cargo clippy --all-targets -- -D warnings"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "local_fallback_proof",
       "freshness": {
@@ -2182,8 +2182,8 @@
         "rendered": "rch exec -- cargo check --all-targets"
       },
       "env_fingerprint": {
-        "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-        "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp"
+        "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+        "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp"
       },
       "fixture_id": "missing_artifact_proof",
       "freshness": {

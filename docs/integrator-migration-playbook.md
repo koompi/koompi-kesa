@@ -4,7 +4,7 @@ Generated: 2026-02-15
 
 ## Purpose
 
-This playbook gives downstream teams a practical, low-risk path to migrate from TypeScript Pi (`pi-mono`) to `pi_agent_rust` and verify compatibility without needing internal project context.
+This playbook gives downstream teams a practical, low-risk path to migrate from TypeScript Pi (`pi-mono`) to `koompi_code_cli` and verify compatibility without needing internal project context.
 
 Use this when you need to:
 - replace an existing `pi` integration with Rust Pi,

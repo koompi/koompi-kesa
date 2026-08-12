@@ -1,4 +1,4 @@
-use pi::validation_broker::{
+use kode::validation_broker::{
     ValidationSlotArtifact, ValidationSlotLease, ValidationSlotRequest, ValidationSlotStore,
 };
 use serde_json::Value;
@@ -20,7 +20,7 @@ const SWARM_MAIL_DEGRADED_SCHEMA: &str = "pi.doctor.agent_mail_degraded_mode.v1"
 const SWARM_CONTEXT_INTELLIGENCE_SCHEMA: &str = "pi.doctor.context_intelligence_posture.v1";
 const SWARM_VALIDATION_BROKER_SCHEMA: &str = "pi.doctor.validation_broker_posture.v1";
 const SWARM_INCIDENT_DIAGNOSTICS_SCHEMA: &str = "pi.doctor.swarm_incident_diagnostics.v1";
-const SWARM_TEMP_EXPECTED_ROOT: &str = "/data/tmp/pi_agent_rust_cargo";
+const SWARM_TEMP_EXPECTED_ROOT: &str = "/data/tmp/koompi_code_cli_cargo";
 const SWARM_TEMP_WARN_AVAILABLE_KB: u64 = 10 * 1024 * 1024;
 
 type TestResult<T = ()> = Result<T, Box<dyn Error>>;
@@ -86,7 +86,7 @@ fn field_u64(value: &Value, key: &str) -> TestResult<u64> {
 
 fn run_doctor_json(env_overrides: &[(&str, Option<&str>)]) -> TestResult<Value> {
     let cwd = create_swarm_temp_test_dir(Path::new("/tmp"), "cwd")?;
-    let mut command = Command::new(env!("CARGO_BIN_EXE_pi")); // ubs:ignore false positive: Cargo provides the compiled test binary path.
+    let mut command = Command::new(env!("CARGO_BIN_EXE_kode")); // ubs:ignore false positive: Cargo provides the compiled test binary path.
     command
         .args(["doctor", "--only", "swarm", "--format", "json"])
         .current_dir(cwd)
@@ -132,7 +132,7 @@ fn run_doctor_json(env_overrides: &[(&str, Option<&str>)]) -> TestResult<Value> 
 
 fn run_doctor_text(env_overrides: &[(&str, Option<&str>)]) -> TestResult<String> {
     let cwd = create_swarm_temp_test_dir(Path::new("/tmp"), "text-cwd")?;
-    let mut command = Command::new(env!("CARGO_BIN_EXE_pi")); // ubs:ignore false positive: Cargo provides the compiled test binary path.
+    let mut command = Command::new(env!("CARGO_BIN_EXE_kode")); // ubs:ignore false positive: Cargo provides the compiled test binary path.
     command
         .args(["doctor", "--only", "swarm", "--format", "text"])
         .current_dir(cwd)
@@ -306,11 +306,11 @@ fn validation_broker_request(slot_id: &str) -> ValidationSlotRequest {
     let mut environment = BTreeMap::new();
     environment.insert(
         "CARGO_TARGET_DIR".to_string(),
-        "/data/tmp/pi_agent_rust_cargo/codex/target".to_string(),
+        "/data/tmp/koompi_code_cli_cargo/codex/target".to_string(),
     );
     environment.insert(
         "TMPDIR".to_string(),
-        "/data/tmp/pi_agent_rust_cargo/codex/tmp".to_string(),
+        "/data/tmp/koompi_code_cli_cargo/codex/tmp".to_string(),
     );
 
     ValidationSlotRequest {
@@ -326,11 +326,11 @@ fn validation_broker_request(slot_id: &str) -> ValidationSlotRequest {
             "--all-targets".to_string(),
         ],
         command_class: "cargo_check".to_string(),
-        cwd: "/data/projects/pi_agent_rust".to_string(),
+        cwd: "/data/projects/koompi_code_cli".to_string(),
         git_head: "cf653c29b5836afabf979bb44325d4712de7088d".to_string(),
         feature_flags: vec!["default".to_string()],
-        target_dir: "/data/tmp/pi_agent_rust_cargo/codex/target".to_string(),
-        tmpdir: "/data/tmp/pi_agent_rust_cargo/codex/tmp".to_string(),
+        target_dir: "/data/tmp/koompi_code_cli_cargo/codex/target".to_string(),
+        tmpdir: "/data/tmp/koompi_code_cli_cargo/codex/tmp".to_string(),
         runner: "rch_required".to_string(),
         rust_toolchain: Some("nightly".to_string()),
         rch_job_id: Some("rch-job-doctor".to_string()),

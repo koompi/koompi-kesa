@@ -85,14 +85,14 @@
           "drift_class": "evidence_retrieval_drift",
           "first_example": {
             "after_success": true,
-            "line": "rsync: [receiver] mkstemp \"/data/tmp/pi_agent_rust/pane4/debug/.pi_legacy_capture.r9D83z\" failed: No such file or directory (2)",
+            "line": "rsync: [receiver] mkstemp \"/data/tmp/koompi_code_cli/pane4/debug/.pi_legacy_capture.r9D83z\" failed: No such file or directory (2)",
             "line_number": 165,
             "path": "tests/e2e_results/20260423T034437Z/build.log"
           },
           "id": "rsync_mkstemp_no_such_file",
           "last_example": {
             "after_success": true,
-            "line": "rsync: [receiver] mkstemp \"/data/tmp/pi_agent_rust/pane4/debug/deps/.nom-5676fbe6b109c4f5.d.BzN4DI\" failed: No such file or directory (2)",
+            "line": "rsync: [receiver] mkstemp \"/data/tmp/koompi_code_cli/pane4/debug/deps/.nom-5676fbe6b109c4f5.d.BzN4DI\" failed: No such file or directory (2)",
             "line_number": 12533,
             "path": "tests/e2e_results/20260423T034437Z/build.log"
           },

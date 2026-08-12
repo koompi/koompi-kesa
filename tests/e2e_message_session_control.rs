@@ -17,20 +17,20 @@ mod common;
 
 use async_trait::async_trait;
 use futures::Stream;
-use pi::agent::{Agent, AgentConfig, AgentSession};
-use pi::compaction::ResolvedCompactionSettings;
-use pi::error::Result;
-use pi::extensions::{
+use kode::agent::{Agent, AgentConfig, AgentSession};
+use kode::compaction::ResolvedCompactionSettings;
+use kode::error::Result;
+use kode::extensions::{
     ExtensionHostActions, ExtensionManager, ExtensionSendMessage, ExtensionSendUserMessage,
     ExtensionSession, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::model::{
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::model::{
     AssistantMessage, ContentBlock, StopReason, StreamEvent, TextContent, Usage, UserContent,
 };
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::session::{Session, SessionHandle, SessionMessage};
-use pi::tools::ToolRegistry;
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::session::{Session, SessionHandle, SessionMessage};
+use kode::tools::ToolRegistry;
 use serde_json::Value;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};

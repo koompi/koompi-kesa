@@ -4,7 +4,7 @@
 2026-04-17
 
 ## File Examined
-`/data/projects/pi_agent_rust/src/scheduler.rs` - Deterministic event loop scheduler for PiJS runtime
+`/data/projects/koompi_code_cli/src/scheduler.rs` - Deterministic event loop scheduler for PiJS runtime
 
 ## Imports/Dependencies
 - Used by: `extension_dispatcher.rs`, `extensions_js.rs`, `hostcall_amac.rs`, `extensions.rs`

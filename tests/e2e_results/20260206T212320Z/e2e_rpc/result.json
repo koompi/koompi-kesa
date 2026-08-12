@@ -6,6 +6,6 @@
   "failed": 0,
   "ignored": 0,
   "total": 0,
-  "log_file": "/data/projects/pi_agent_rust/tests/e2e_results/20260206T212320Z/e2e_rpc/output.log",
+  "log_file": "/data/projects/koompi_code_cli/tests/e2e_results/20260206T212320Z/e2e_rpc/output.log",
   "timestamp": "20260206T212320Z"
 }

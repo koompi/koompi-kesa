@@ -14,9 +14,9 @@ use std::time::Duration;
 
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use futures::executor::block_on;
-use pi::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 
 fn criterion_config() -> Criterion {
     bench_env::criterion_config()
@@ -30,17 +30,17 @@ fn artifact_single_file_entry(name: &str) -> PathBuf {
 }
 
 fn bench_extension_policy(c: &mut Criterion) {
-    let prompt = pi::extensions::ExtensionPolicy::default();
-    let strict = pi::extensions::ExtensionPolicy {
-        mode: pi::extensions::ExtensionPolicyMode::Strict,
-        ..pi::extensions::ExtensionPolicy::default()
+    let prompt = kode::extensions::ExtensionPolicy::default();
+    let strict = kode::extensions::ExtensionPolicy {
+        mode: kode::extensions::ExtensionPolicyMode::Strict,
+        ..kode::extensions::ExtensionPolicy::default()
     };
-    let permissive = pi::extensions::ExtensionPolicy {
-        mode: pi::extensions::ExtensionPolicyMode::Permissive,
-        ..pi::extensions::ExtensionPolicy::default()
+    let permissive = kode::extensions::ExtensionPolicy {
+        mode: kode::extensions::ExtensionPolicyMode::Permissive,
+        ..kode::extensions::ExtensionPolicy::default()
     };
 
-    let cases: Vec<(&str, &pi::extensions::ExtensionPolicy, &str)> = vec![
+    let cases: Vec<(&str, &kode::extensions::ExtensionPolicy, &str)> = vec![
         ("prompt_allow", &prompt, "read"),
         ("prompt_prompt", &prompt, "session"),
         ("prompt_deny", &prompt, "exec"),
@@ -61,14 +61,14 @@ fn bench_extension_policy(c: &mut Criterion) {
 fn bench_protocol_parse_and_validate(c: &mut Criterion) {
     let host_call_small = format!(
         r#"{{"id":"msg-1","version":"{}","type":"host_call","payload":{{"call_id":"call-1","capability":"read","method":"tool","params":{{"name":"read"}}}}}}"#,
-        pi::extensions::PROTOCOL_VERSION
+        kode::extensions::PROTOCOL_VERSION
     );
 
     let big_text = "x".repeat(16 * 1024);
     let log_big = format!(
         r#"{{"id":"msg-2","version":"{}","type":"log","payload":{{"schema":"{}","ts":"2026-02-03T00:00:00.000Z","level":"info","event":"bench","message":"{}","correlation":{{"extension_id":"ext","scenario_id":"scn"}},"source":{{"component":"runtime"}}}}}}"#,
-        pi::extensions::PROTOCOL_VERSION,
-        pi::extensions::LOG_SCHEMA_VERSION,
+        kode::extensions::PROTOCOL_VERSION,
+        kode::extensions::LOG_SCHEMA_VERSION,
         big_text
     );
 
@@ -80,7 +80,7 @@ fn bench_protocol_parse_and_validate(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(payload.len() as u64));
         group.bench_function(BenchmarkId::new("parse_and_validate", name), |b| {
             b.iter(|| {
-                black_box(pi::extensions::ExtensionMessage::parse_and_validate(
+                black_box(kode::extensions::ExtensionMessage::parse_and_validate(
                     payload,
                 ))
             });

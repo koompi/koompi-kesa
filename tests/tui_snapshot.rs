@@ -6,16 +6,16 @@ use asupersync::channel::mpsc;
 use bubbletea::{KeyMsg, KeyType, Message, Model as BubbleteaModel};
 use common::TestHarness;
 use futures::stream;
-use pi::agent::{Agent, AgentConfig};
-use pi::config::Config;
-use pi::interactive::{ConversationMessage, MessageRole, PiApp, PiMsg};
-use pi::keybindings::KeyBindings;
-use pi::model::{ContentBlock, Cost, StopReason, StreamEvent, TextContent, Usage};
-use pi::models::ModelEntry;
-use pi::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
-use pi::resources::{ResourceCliOptions, ResourceLoader};
-use pi::session::Session;
-use pi::tools::ToolRegistry;
+use kode::agent::{Agent, AgentConfig};
+use kode::config::Config;
+use kode::interactive::{ConversationMessage, MessageRole, PiApp, PiMsg};
+use kode::keybindings::KeyBindings;
+use kode::model::{ContentBlock, Cost, StopReason, StreamEvent, TextContent, Usage};
+use kode::models::ModelEntry;
+use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
+use kode::resources::{ResourceCliOptions, ResourceLoader};
+use kode::session::Session;
+use kode::tools::ToolRegistry;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
@@ -55,8 +55,8 @@ impl Provider for DummyProvider {
         &self,
         _context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> pi::error::Result<
-        Pin<Box<dyn futures::Stream<Item = pi::error::Result<StreamEvent>> + Send>>,
+    ) -> kode::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kode::error::Result<StreamEvent>> + Send>>,
     > {
         Ok(Box::pin(stream::empty()))
     }

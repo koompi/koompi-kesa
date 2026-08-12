@@ -3,7 +3,7 @@
 //! Tests cover: bundle construction, filtering, redaction, deterministic
 //! generation, verification, forensic replay, and JSON round-trip stability.
 
-use pi::extensions::{
+use kode::extensions::{
     ExecMediationArtifact, ExecMediationLedgerEntry, INCIDENT_EVIDENCE_BUNDLE_SCHEMA_VERSION,
     IncidentBundleFilter, IncidentBundleRedactionPolicy, IncidentEvidenceBundle, QuotaBreachEvent,
     RUNTIME_HOSTCALL_TELEMETRY_SCHEMA_VERSION, RUNTIME_RISK_LEDGER_SCHEMA_VERSION,
@@ -19,7 +19,7 @@ use pi::extensions::{
 // Test helpers
 // ---------------------------------------------------------------------------
 
-use pi::extensions::{
+use kode::extensions::{
     RUNTIME_RISK_EXPLANATION_SCHEMA_VERSION, RuntimeRiskExpectedLossEvidence,
     RuntimeRiskExplanationBudgetState, RuntimeRiskExplanationLevelValue,
     RuntimeRiskPosteriorEvidence,

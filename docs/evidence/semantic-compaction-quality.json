@@ -91,10 +91,10 @@
   },
   "claim_boundary": "This artifact is deterministic compaction/replay quality evidence only. It is not release, performance, capacity, or drop-in certification evidence.",
   "validation_commands": [
-    "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/tmp cargo test semantic_compaction_quality -- --nocapture",
+    "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/tmp cargo test semantic_compaction_quality -- --nocapture",
     "cargo fmt --check",
-    "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/tmp cargo check --all-targets",
-    "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/tmp cargo clippy --all-targets -- -D warnings",
+    "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/tmp cargo check --all-targets",
+    "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/tmp cargo clippy --all-targets -- -D warnings",
     "timeout 60s ubs --staged --only=rust .",
     "./scripts/reconcile_beads_ledger.sh"
   ]

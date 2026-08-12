@@ -74,13 +74,13 @@ run_cargo() {
 }
 
 default_build_root() {
-    local base="/data/tmp/pi_agent_rust"
+    local base="/data/tmp/koompi_code_cli"
     local resolved=""
 
     if [ -e "$base" ] && resolved="$(cd "$base" && pwd -P 2>/dev/null)"; then
         case "$resolved" in
             "$repo_root"|"$repo_root"/*)
-                base="/data/tmp/pi_agent_rust_cargo"
+                base="/data/tmp/koompi_code_cli_cargo"
                 ;;
         esac
     fi

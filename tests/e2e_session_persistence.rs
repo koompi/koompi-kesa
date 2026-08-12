@@ -12,25 +12,25 @@ use common::TestHarness;
 #[cfg(unix)]
 use common::tmux::{TmuxInstance, sh_escape};
 use futures::Stream;
-use pi::agent::{Agent, AgentConfig, AgentSession};
-use pi::cli::Cli;
-use pi::compaction::ResolvedCompactionSettings;
-use pi::config::Config;
-use pi::error::{Error, Result};
-use pi::model::{
+use kode::agent::{Agent, AgentConfig, AgentSession};
+use kode::cli::Cli;
+use kode::compaction::ResolvedCompactionSettings;
+use kode::config::Config;
+use kode::error::{Error, Result};
+use kode::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall, Usage,
     UserContent,
 };
-use pi::provider::{Context, Provider, StreamOptions};
+use kode::provider::{Context, Provider, StreamOptions};
 #[cfg(unix)]
-use pi::session::encode_cwd;
-use pi::session::{
+use kode::session::encode_cwd;
+use kode::session::{
     Session, SessionEntry, SessionMessage, SessionStoreKind, create_v2_sidecar_from_jsonl,
     migration_status,
 };
-use pi::session_index::SessionIndex;
-use pi::session_store_v2::SessionStoreV2;
-use pi::tools::ToolRegistry;
+use kode::session_index::SessionIndex;
+use kode::session_store_v2::SessionStoreV2;
+use kode::tools::ToolRegistry;
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use std::collections::{BTreeMap, HashSet};
@@ -213,7 +213,7 @@ struct SessionChaosChildResult {
 }
 
 fn cli_binary_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_pi"))
+    PathBuf::from(env!("CARGO_BIN_EXE_kode"))
 }
 
 fn isolated_cli_env(harness: &TestHarness) -> BTreeMap<String, String> {
@@ -2165,7 +2165,7 @@ fn explicit_session_flag_preserves_custom_session_root_for_index_updates() {
 
     run_async_test(async {
         let custom_root = harness.temp_path("custom-root");
-        let session_dir = custom_root.join(pi::session::encode_cwd(
+        let session_dir = custom_root.join(kode::session::encode_cwd(
             &std::env::current_dir().expect("current dir"),
         ));
         let session_path = session_dir.join("session.jsonl");

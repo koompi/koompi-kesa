@@ -6,9 +6,9 @@ use crate::conformance::{
     FixtureFile, SetupStep, TestCase, TestResult, validate_expected_with_goldens,
 };
 use clap::error::ErrorKind;
-use pi::cli::{Cli, Commands, ExtensionCliFlag, parse_with_extension_flags};
-use pi::model::ContentBlock;
-use pi::tools::Tool;
+use kode::cli::{Cli, Commands, ExtensionCliFlag, parse_with_extension_flags};
+use kode::model::ContentBlock;
+use kode::tools::Tool;
 use serde_json::{Value, json};
 use std::path::{Component, Path, PathBuf};
 use tempfile::TempDir;
@@ -48,14 +48,14 @@ async fn run_test_case(tool_name: &str, case: &TestCase) -> TestResult {
 
     // Create the tool
     let tool: Box<dyn Tool> = match tool_name {
-        "read" => Box::new(pi::tools::ReadTool::new(temp_dir.path())),
-        "bash" => Box::new(pi::tools::BashTool::new(temp_dir.path())),
-        "edit" => Box::new(pi::tools::EditTool::new(temp_dir.path())),
-        "write" => Box::new(pi::tools::WriteTool::new(temp_dir.path())),
-        "grep" => Box::new(pi::tools::GrepTool::new(temp_dir.path())),
-        "find" => Box::new(pi::tools::FindTool::new(temp_dir.path())),
-        "ls" => Box::new(pi::tools::LsTool::new(temp_dir.path())),
-        "hashline_edit" => Box::new(pi::tools::HashlineEditTool::new(temp_dir.path())),
+        "read" => Box::new(kode::tools::ReadTool::new(temp_dir.path())),
+        "bash" => Box::new(kode::tools::BashTool::new(temp_dir.path())),
+        "edit" => Box::new(kode::tools::EditTool::new(temp_dir.path())),
+        "write" => Box::new(kode::tools::WriteTool::new(temp_dir.path())),
+        "grep" => Box::new(kode::tools::GrepTool::new(temp_dir.path())),
+        "find" => Box::new(kode::tools::FindTool::new(temp_dir.path())),
+        "ls" => Box::new(kode::tools::LsTool::new(temp_dir.path())),
+        "hashline_edit" => Box::new(kode::tools::HashlineEditTool::new(temp_dir.path())),
         _ => {
             return TestResult::fail(&case_name, format!("Unknown tool: {tool_name}"));
         }
@@ -394,9 +394,9 @@ fn command_value(command: Option<&Commands>) -> Value {
     }
 }
 
-fn validation_broker_command_value(command: &pi::cli::ValidationBrokerCommand) -> Value {
+fn validation_broker_command_value(command: &kode::cli::ValidationBrokerCommand) -> Value {
     match command {
-        pi::cli::ValidationBrokerCommand::Status {
+        kode::cli::ValidationBrokerCommand::Status {
             store,
             format,
             out_json,
@@ -411,7 +411,7 @@ fn validation_broker_command_value(command: &pi::cli::ValidationBrokerCommand) -
             "out_text": out_text,
             "generated_at": generated_at,
         }),
-        pi::cli::ValidationBrokerCommand::Plan {
+        kode::cli::ValidationBrokerCommand::Plan {
             request,
             inputs,
             store,
@@ -432,17 +432,17 @@ fn validation_broker_command_value(command: &pi::cli::ValidationBrokerCommand) -
             "out_text": out_text,
             "generated_at": generated_at,
         }),
-        pi::cli::ValidationBrokerCommand::Acquire { .. }
-        | pi::cli::ValidationBrokerCommand::Renew { .. }
-        | pi::cli::ValidationBrokerCommand::Release { .. } => {
+        kode::cli::ValidationBrokerCommand::Acquire { .. }
+        | kode::cli::ValidationBrokerCommand::Renew { .. }
+        | kode::cli::ValidationBrokerCommand::Release { .. } => {
             validation_broker_lease_command_value(command)
         }
     }
 }
 
-fn validation_broker_lease_command_value(command: &pi::cli::ValidationBrokerCommand) -> Value {
+fn validation_broker_lease_command_value(command: &kode::cli::ValidationBrokerCommand) -> Value {
     match command {
-        pi::cli::ValidationBrokerCommand::Acquire {
+        kode::cli::ValidationBrokerCommand::Acquire {
             request,
             store,
             started_at,
@@ -461,7 +461,7 @@ fn validation_broker_lease_command_value(command: &pi::cli::ValidationBrokerComm
             "out_json": out_json,
             "out_text": out_text,
         }),
-        pi::cli::ValidationBrokerCommand::Renew {
+        kode::cli::ValidationBrokerCommand::Renew {
             store,
             slot_id,
             owner,
@@ -482,7 +482,7 @@ fn validation_broker_lease_command_value(command: &pi::cli::ValidationBrokerComm
             "out_json": out_json,
             "out_text": out_text,
         }),
-        pi::cli::ValidationBrokerCommand::Release {
+        kode::cli::ValidationBrokerCommand::Release {
             store,
             slot_id,
             owner,
@@ -503,8 +503,8 @@ fn validation_broker_lease_command_value(command: &pi::cli::ValidationBrokerComm
             "out_json": out_json,
             "out_text": out_text,
         }),
-        pi::cli::ValidationBrokerCommand::Status { .. }
-        | pi::cli::ValidationBrokerCommand::Plan { .. } => {
+        kode::cli::ValidationBrokerCommand::Status { .. }
+        | kode::cli::ValidationBrokerCommand::Plan { .. } => {
             unreachable!("status and plan commands are handled by validation_broker_command_value")
         }
     }
@@ -611,7 +611,7 @@ pub fn run_truncation_tests(fixture: &FixtureFile) -> Vec<TestResult> {
 
 /// Run a single truncation test case.
 fn run_truncation_test_case(case: &TestCase) -> TestResult {
-    use pi::tools::{truncate_head, truncate_tail};
+    use kode::tools::{truncate_head, truncate_tail};
 
     let case_name = case.display_name();
 
@@ -619,15 +619,15 @@ fn run_truncation_test_case(case: &TestCase) -> TestResult {
     let max_lines = usize::try_from(
         case.input["max_lines"]
             .as_u64()
-            .unwrap_or(pi::tools::DEFAULT_MAX_LINES as u64),
+            .unwrap_or(kode::tools::DEFAULT_MAX_LINES as u64),
     )
-    .unwrap_or(pi::tools::DEFAULT_MAX_LINES);
+    .unwrap_or(kode::tools::DEFAULT_MAX_LINES);
     let max_bytes = usize::try_from(
         case.input["max_bytes"]
             .as_u64()
-            .unwrap_or(pi::tools::DEFAULT_MAX_BYTES as u64),
+            .unwrap_or(kode::tools::DEFAULT_MAX_BYTES as u64),
     )
-    .unwrap_or(pi::tools::DEFAULT_MAX_BYTES);
+    .unwrap_or(kode::tools::DEFAULT_MAX_BYTES);
 
     let direction = case
         .input
@@ -656,8 +656,8 @@ fn run_truncation_test_case(case: &TestCase) -> TestResult {
     let details = serde_json::json!({
         "truncated": result.truncated,
         "truncated_by": result.truncated_by.map(|t| match t {
-            pi::tools::TruncatedBy::Lines => "lines",
-            pi::tools::TruncatedBy::Bytes => "bytes",
+            kode::tools::TruncatedBy::Lines => "lines",
+            kode::tools::TruncatedBy::Bytes => "bytes",
         }),
         "total_lines": result.total_lines,
         "output_lines": result.output_lines,

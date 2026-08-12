@@ -5,12 +5,12 @@
 
 mod common;
 
-use pi::extension_preflight::{
+use kode::extension_preflight::{
     INSTALL_TIME_RISK_SCHEMA, InstallRecommendation, InstallTimeRiskReport, PreflightVerdict,
     RiskTier, SECURITY_RULEBOOK_VERSION, SECURITY_SCAN_SCHEMA, SecurityRuleId, SecurityScanReport,
     SecurityScanner, classify_extension_source, security_evidence_ledger_jsonl,
 };
-use pi::extensions::ExtensionPolicy;
+use kode::extensions::ExtensionPolicy;
 
 // ============================================================================
 // Helpers

@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use pi::sse::SseParser;
+use kode::sse::SseParser;
 
 fn list_dir(path: &Path) -> io::Result<Vec<PathBuf>> {
     let mut entries = Vec::new();

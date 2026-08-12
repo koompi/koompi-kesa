@@ -4,11 +4,11 @@
 
 mod common;
 
-use pi::error::Error;
-use pi::model::{
+use kode::error::Error;
+use kode::model::{
     AssistantMessage, ContentBlock, Message, StopReason, TextContent, ToolCall, Usage,
 };
-use pi::session::Session;
+use kode::session::Session;
 use serde_json::json;
 
 // ============================================================================
@@ -104,7 +104,7 @@ mod exit_codes {
 
 mod cli_combinations {
     use clap::Parser;
-    use pi::cli::Cli;
+    use kode::cli::Cli;
 
     #[test]
     fn print_mode_with_provider_and_model() {
@@ -263,7 +263,7 @@ mod cli_combinations {
 
 mod cli_flag_combinations {
     use clap::Parser;
-    use pi::cli::Cli;
+    use kode::cli::Cli;
 
     fn parse_args(args: &[&str]) -> Cli {
         Cli::try_parse_from(args).expect("CLI parse should succeed")
@@ -317,8 +317,8 @@ mod session_invariants {
     use super::*;
 
     fn user_msg(text: &str) -> Message {
-        Message::User(pi::model::UserMessage {
-            content: pi::model::UserContent::Text(text.to_string()),
+        Message::User(kode::model::UserMessage {
+            content: kode::model::UserContent::Text(text.to_string()),
             timestamp: 0,
         })
     }
@@ -527,8 +527,8 @@ mod message_serde_invariants {
 
     #[test]
     fn user_text_message_round_trips() {
-        let msg = Message::User(pi::model::UserMessage {
-            content: pi::model::UserContent::Text("hello".to_string()),
+        let msg = Message::User(kode::model::UserMessage {
+            content: kode::model::UserContent::Text("hello".to_string()),
             timestamp: 12345,
         });
         let json = serde_json::to_value(&msg).expect("serialize");
@@ -610,7 +610,7 @@ mod message_serde_invariants {
 // ============================================================================
 
 mod config_types {
-    use pi::config::Config;
+    use kode::config::Config;
 
     #[test]
     fn config_default_is_valid() {

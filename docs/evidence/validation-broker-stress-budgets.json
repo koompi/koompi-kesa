@@ -78,7 +78,7 @@
           "validation_broker_store",
           "validation_broker_large_host_stress_budget_evidence_is_fail_closed"
         ],
-        "cwd": "/data/projects/pi_agent_rust",
+        "cwd": "/data/projects/koompi_code_cli",
         "captured_at_utc": "2026-05-14T17:05:00Z",
         "artifact_path": "docs/evidence/validation-broker-stress-budgets.json"
       },
@@ -167,7 +167,7 @@
           "validation_broker_store",
           "validation_broker_large_host_stress_budget_evidence_is_fail_closed"
         ],
-        "cwd": "/data/projects/pi_agent_rust",
+        "cwd": "/data/projects/koompi_code_cli",
         "captured_at_utc": "2026-05-14T17:05:00Z",
         "artifact_path": "docs/evidence/validation-broker-stress-budgets.json"
       },
@@ -252,7 +252,7 @@
           "validation_broker_store",
           "validation_broker_large_host_stress_budget_evidence_is_fail_closed"
         ],
-        "cwd": "/data/projects/pi_agent_rust",
+        "cwd": "/data/projects/koompi_code_cli",
         "captured_at_utc": "2026-05-14T17:05:00Z",
         "artifact_path": "docs/evidence/validation-broker-stress-budgets.json"
       },

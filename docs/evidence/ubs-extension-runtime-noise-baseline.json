@@ -10,8 +10,8 @@
       "ubs-rust module 3.0.1"
     ],
     "commands": [
-      "ubs --only=rust --format=json --ci --files src/extensions.rs,src/pi_wasm.rs --report-json=/data/tmp/pi_agent_rust_ubs/ext_runtime_ubs_report.json .",
-      "/home/ubuntu/.local/share/ubs/modules/ubs-rust.sh --ci --no-cargo --format=json --emit-findings-json=/data/tmp/pi_agent_rust_ubs/ext_runtime_findings_full.json /data/tmp/pi_agent_rust_ubs/ext_runtime_scope"
+      "ubs --only=rust --format=json --ci --files src/extensions.rs,src/pi_wasm.rs --report-json=/data/tmp/koompi_code_cli_ubs/ext_runtime_ubs_report.json .",
+      "/home/ubuntu/.local/share/ubs/modules/ubs-rust.sh --ci --no-cargo --format=json --emit-findings-json=/data/tmp/koompi_code_cli_ubs/ext_runtime_findings_full.json /data/tmp/koompi_code_cli_ubs/ext_runtime_scope"
     ],
     "scanned_files": [
       "src/extensions.rs",

@@ -136,7 +136,7 @@
     },
     {
       "id": "agent_mail",
-      "path": "MCP Agent Mail project /data/projects/pi_agent_rust",
+      "path": "MCP Agent Mail project /data/projects/koompi_code_cli",
       "authority": "coordination_and_reservation_source",
       "semantic_route_use": "Optional live source for health, active agents, and reservations; missing or degraded data must fail closed or recommend Beads soft-lock."
     },
@@ -304,7 +304,7 @@
         "id": "focused_tests",
         "requires_rch": true,
         "exact_commands": [
-          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test <focused-target>"
+          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test <focused-target>"
         ],
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build."
       },
@@ -312,8 +312,8 @@
         "id": "e2e_conformance",
         "requires_rch": true,
         "exact_commands": [
-          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
-          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e"
+          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
+          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e"
         ],
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build."
       },
@@ -321,7 +321,7 @@
         "id": "all_targets_check",
         "requires_rch": true,
         "exact_commands": [
-          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets"
+          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets"
         ],
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build."
       },
@@ -329,7 +329,7 @@
         "id": "clippy",
         "requires_rch": true,
         "exact_commands": [
-          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings"
+          "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings"
         ],
         "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build."
       }

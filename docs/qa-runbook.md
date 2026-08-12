@@ -677,7 +677,7 @@ command, and artifact pointers together so triage can be reproduced exactly.
 - Next actions:
   Contact active owners through Agent Mail before resetting stale beads, resolve
   reservation conflicts before editing overlapping files, and move heavyweight
-  Cargo checks to `/data/tmp/pi_agent_rust_cargo/<agent>/` when headroom is low.
+  Cargo checks to `/data/tmp/koompi_code_cli_cargo/<agent>/` when headroom is low.
 
 #### Durability troubleshooting
 

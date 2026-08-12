@@ -8,7 +8,7 @@
 //! UTF-8 sequences, testing the UTF-8 recovery paths.
 
 use libfuzzer_sys::fuzz_target;
-use pi::fuzz_exports::SseParser;
+use kode::fuzz_exports::SseParser;
 
 /// Simulate `SseStream`'s UTF-8 processing logic on raw bytes.
 ///

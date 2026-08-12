@@ -1,4 +1,4 @@
-use pi::config::Config;
+use kode::config::Config;
 use std::path::{Path, PathBuf};
 
 struct CwdGuard {

@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use pi::swarm_replay::{
+use kode::swarm_replay::{
     SWARM_REPLAY_PERFORMANCE_EVIDENCE_SCHEMA, SWARM_REPLAY_POLICY_REPORT_SCHEMA,
     SWARM_REPLAY_REPORT_SCHEMA, SWARM_REPLAY_TRACE_SCHEMA, SwarmReplayBaselinePolicy,
     SwarmReplayEvent, SwarmReplayEventUncertainty, SwarmReplayGuards, SwarmReplayIngestRequest,
@@ -250,8 +250,8 @@ fn write_clean_sources(root: &Path, include_agent_mail: bool) -> std::io::Result
                 "command": "rch exec -- cargo test --test swarm_replay_ingestor",
                 "runner": "rch",
                 "exit_code": 0,
-                "target_dir": "/data/tmp/pi_agent_rust_cargo/amberosprey/target",
-                "tmpdir": "/data/tmp/pi_agent_rust_cargo/amberosprey/tmp",
+                "target_dir": "/data/tmp/koompi_code_cli_cargo/amberosprey/target",
+                "tmpdir": "/data/tmp/koompi_code_cli_cargo/amberosprey/tmp",
                 "created_at": "2026-05-13T18:10:00Z"
             }],
             "artifacts": [{
@@ -365,9 +365,9 @@ fn write_no_mock_e2e_sources(root: &Path) -> std::io::Result<()> {
                 "max_tool_concurrency": 16,
                 "extension_hostcall_lanes": 24,
                 "rch_worker_slots": 8,
-                "target_dir": "/data/tmp/pi_agent_rust_cargo/amberosprey/target",
+                "target_dir": "/data/tmp/koompi_code_cli_cargo/amberosprey/target",
                 "target_free_gib": 512,
-                "tmpdir": "/data/tmp/pi_agent_rust_cargo/amberosprey/tmp",
+                "tmpdir": "/data/tmp/koompi_code_cli_cargo/amberosprey/tmp",
                 "tmpdir_free_gib": 256,
                 "numa_hint": "pin_rch_workers_by_socket",
                 "created_at": "2026-05-13T18:07:00Z"
@@ -443,8 +443,8 @@ fn write_no_mock_e2e_sources(root: &Path) -> std::io::Result<()> {
                 "command": "rch exec -- cargo test --test swarm_replay_ingestor",
                 "runner": "rch",
                 "exit_code": 0,
-                "target_dir": "/data/tmp/pi_agent_rust_cargo/amberosprey/target",
-                "tmpdir": "/data/tmp/pi_agent_rust_cargo/amberosprey/tmp",
+                "target_dir": "/data/tmp/koompi_code_cli_cargo/amberosprey/target",
+                "tmpdir": "/data/tmp/koompi_code_cli_cargo/amberosprey/tmp",
                 "created_at": "2026-05-13T18:13:00Z"
             }],
             "artifacts": [
@@ -501,7 +501,7 @@ fn write_no_mock_e2e_sources(root: &Path) -> std::io::Result<()> {
 fn source_row<'a>(
     trace: &'a SwarmReplayTrace,
     source_id: &str,
-) -> Result<&'a pi::swarm_replay::SwarmReplaySourceInventoryRow, String> {
+) -> Result<&'a kode::swarm_replay::SwarmReplaySourceInventoryRow, String> {
     trace
         .source_inventory
         .iter()
@@ -639,7 +639,7 @@ fn trace_from_events(events: Vec<SwarmReplayEvent>) -> SwarmReplayTrace {
     }
 }
 
-fn diagnostic_codes(report: &pi::swarm_replay::SwarmReplayReport) -> BTreeSet<String> {
+fn diagnostic_codes(report: &kode::swarm_replay::SwarmReplayReport) -> BTreeSet<String> {
     report
         .diagnostics
         .iter()
@@ -672,8 +672,8 @@ fn metamorphic_semantic_events() -> Vec<SwarmReplayEvent> {
                 "command": "rch exec -- cargo test metamorphic_swarm -- --nocapture",
                 "runner": "rch",
                 "exit_code": 0,
-                "target_dir": "/data/tmp/pi_agent_rust_cargo/codex/target",
-                "tmpdir": "/data/tmp/pi_agent_rust_cargo/codex/tmp"
+                "target_dir": "/data/tmp/koompi_code_cli_cargo/codex/target",
+                "tmpdir": "/data/tmp/koompi_code_cli_cargo/codex/tmp"
             }),
         ),
         replay_event(
@@ -741,7 +741,7 @@ fn with_event(mut events: Vec<SwarmReplayEvent>, event: SwarmReplayEvent) -> Vec
     events
 }
 
-fn metamorphic_state_projection(report: &pi::swarm_replay::SwarmReplayReport) -> Value {
+fn metamorphic_state_projection(report: &kode::swarm_replay::SwarmReplayReport) -> Value {
     let beads = report
         .final_state
         .beads
@@ -821,8 +821,8 @@ fn push_metamorphic_comparison(
     records: &mut Vec<Value>,
     transform_id: &str,
     fixture_id: &str,
-    left: &pi::swarm_replay::SwarmReplayReport,
-    right: &pi::swarm_replay::SwarmReplayReport,
+    left: &kode::swarm_replay::SwarmReplayReport,
+    right: &kode::swarm_replay::SwarmReplayReport,
     expected_equivalent: bool,
 ) -> bool {
     let compared_fields = [
@@ -881,8 +881,8 @@ fn decision<'a>(
 fn write_no_mock_e2e_outputs(
     root: &Path,
     trace: &SwarmReplayTrace,
-    replay: &pi::swarm_replay::SwarmReplayReport,
-    policy_report: &pi::swarm_replay::SwarmReplayPolicyReport,
+    replay: &kode::swarm_replay::SwarmReplayReport,
+    policy_report: &kode::swarm_replay::SwarmReplayPolicyReport,
 ) -> Result<Value, Box<dyn Error>> {
     write_json(root, "evidence/trace.json", &serde_json::to_value(trace)?)?;
     write_json(
@@ -1088,9 +1088,9 @@ fn doctor_preflight_budget_profile_feeds_resource_timeline() -> TestResult {
                 "max_tool_concurrency": 16,
                 "extension_hostcall_lanes": 24,
                 "rch_worker_slots": 8,
-                "target_dir": "/data/tmp/pi_agent_rust_cargo/doctor/target",
+                "target_dir": "/data/tmp/koompi_code_cli_cargo/doctor/target",
                 "target_free_gib": 512,
-                "tmpdir": "/data/tmp/pi_agent_rust_cargo/doctor/tmp",
+                "tmpdir": "/data/tmp/koompi_code_cli_cargo/doctor/tmp",
                 "tmpdir_free_gib": 256,
                 "numa_hint": "pin_rch_workers_by_socket",
                 "created_at": "2026-05-13T18:05:00Z"
@@ -2370,12 +2370,12 @@ fn resource_profile_payload(profile: ResourceProfileFixture<'_>) -> Value {
         "extension_hostcall_lanes": profile.extension_hostcall_lanes,
         "rch_worker_slots": profile.rch_worker_slots,
         "target_dir": format!(
-            "/data/tmp/pi_agent_rust_cargo/{profile_id}/target",
+            "/data/tmp/koompi_code_cli_cargo/{profile_id}/target",
             profile_id = profile.profile_id
         ),
         "target_free_gib": profile.target_free_gib,
         "tmpdir": format!(
-            "/data/tmp/pi_agent_rust_cargo/{profile_id}/tmp",
+            "/data/tmp/koompi_code_cli_cargo/{profile_id}/tmp",
             profile_id = profile.profile_id
         ),
         "tmpdir_free_gib": profile.tmpdir_free_gib,

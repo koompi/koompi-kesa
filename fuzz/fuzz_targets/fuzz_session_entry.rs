@@ -6,7 +6,7 @@
 //! for successfully parsed entries.
 
 use libfuzzer_sys::fuzz_target;
-use pi::fuzz_exports::SessionEntry;
+use kode::fuzz_exports::SessionEntry;
 
 fn fuzz_entry(input: &str) {
     let parsed = serde_json::from_str::<SessionEntry>(input);

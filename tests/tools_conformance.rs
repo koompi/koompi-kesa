@@ -6,7 +6,7 @@
 mod common;
 
 use common::TestHarness;
-use pi::tools::Tool;
+use kode::tools::Tool;
 use std::collections::BTreeMap;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -58,7 +58,7 @@ mod read_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "line1\nline2\nline3\nline4\nline5").unwrap();
 
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy()
             });
@@ -85,7 +85,7 @@ mod read_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "line1\nline2\nline3\nline4\nline5").unwrap();
 
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "offset": 2,
@@ -112,7 +112,7 @@ mod read_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "line1\nline2\nline3").unwrap();
 
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let default_result = tool
                 .execute(
                     "test-id",
@@ -148,7 +148,7 @@ mod read_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "line1\nline2\nline3").unwrap();
 
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let default_result = tool
                 .execute(
                     "test-id",
@@ -186,7 +186,7 @@ mod read_tool {
             std::fs::write(&lf_path, "line1\nline2\nline3").unwrap();
             std::fs::write(&crlf_path, "line1\r\nline2\r\nline3").unwrap();
 
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let lf_result = tool
                 .execute(
                     "test-id",
@@ -224,7 +224,7 @@ mod read_tool {
             std::fs::write(&lf_path, "line1\nline2\nline3").unwrap();
             std::fs::write(&cr_path, "line1\rline2\rline3").unwrap();
 
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let lf_result = tool
                 .execute(
                     "test-id",
@@ -260,7 +260,7 @@ mod read_tool {
             let path = temp_dir.path().join("hashline.txt");
             std::fs::write(&path, "alpha\nbeta\n").unwrap();
 
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "hashline": true
@@ -291,7 +291,7 @@ mod read_tool {
             let path = temp_dir.path().join("hashline_subset.txt");
             std::fs::write(&path, "alpha\nbeta\ngamma\ndelta\nepsilon\n").unwrap();
 
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let full = tool
                 .execute(
                     "test-id",
@@ -345,7 +345,7 @@ mod read_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("read_offset_beyond_eof_reports_error");
             let path = harness.create_file("tiny.txt", b"line1\nline2");
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "offset": 10
@@ -369,9 +369,9 @@ mod read_tool {
     fn test_read_first_line_exceeds_limit_sets_truncation_details() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("read_first_line_exceeds_limit_sets_truncation_details");
-            let long_line = "a".repeat(pi::tools::DEFAULT_MAX_BYTES + 128);
+            let long_line = "a".repeat(kode::tools::DEFAULT_MAX_BYTES + 128);
             let path = harness.create_file("huge.txt", long_line.as_bytes());
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -383,7 +383,7 @@ mod read_tool {
             let text = get_text_content(&result.content);
             let expected_limit = format!(
                 "exceeds {} limit",
-                format_size(pi::tools::DEFAULT_MAX_BYTES)
+                format_size(kode::tools::DEFAULT_MAX_BYTES)
             );
             assert!(
                 text.contains(&expected_limit),
@@ -404,11 +404,11 @@ mod read_tool {
     fn test_read_truncation_sets_details_and_hint() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("read_truncation_sets_details_and_hint");
-            let total_lines = pi::tools::DEFAULT_MAX_LINES + 5;
+            let total_lines = kode::tools::DEFAULT_MAX_LINES + 5;
             let lines: Vec<String> = (1..=total_lines).map(|i| format!("line{i}")).collect();
             let content = lines.join("\n");
             let path = harness.create_file("big.txt", content.as_bytes());
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -429,14 +429,14 @@ mod read_tool {
                 .join("\n");
             let expected_hint = format!(
                 "Showing lines 1-{} of {}",
-                pi::tools::DEFAULT_MAX_LINES,
+                kode::tools::DEFAULT_MAX_LINES,
                 total_lines
             );
             assert!(
                 text.contains(&expected_hint),
                 "expected hint not found.\nexpected: {expected_hint}\ntext tail:\n{tail}"
             );
-            let expected_offset = format!("Use offset={}", pi::tools::DEFAULT_MAX_LINES + 1);
+            let expected_offset = format!("Use offset={}", kode::tools::DEFAULT_MAX_LINES + 1);
             assert!(
                 text.contains(&expected_offset),
                 "expected offset not found.\nexpected: {expected_offset}\ntext tail:\n{tail}"
@@ -457,7 +457,7 @@ mod read_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("read_blocked_images_returns_error");
             let path = harness.create_file("image.png", b"\x89PNG\r\n\x1A\n");
-            let tool = pi::tools::ReadTool::with_settings(harness.temp_dir(), true, true);
+            let tool = kode::tools::ReadTool::with_settings(harness.temp_dir(), true, true);
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -484,7 +484,7 @@ mod read_tool {
             let path = harness.create_file("secret.txt", b"top secret");
             let _mode_guard = UnixModeGuard::set(&path, 0o000);
 
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -515,7 +515,7 @@ mod read_tool {
             let path = harness.create_file("owner-denied.txt", b"owner class secret");
             let _mode_guard = UnixModeGuard::set(&path, 0o004);
 
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let err = tool
                 .execute(
                     "test-id",
@@ -540,7 +540,7 @@ mod read_tool {
     fn test_read_nonexistent_file() {
         asupersync::test_utils::run_test(|| async {
             let temp_dir = tempfile::tempdir().unwrap();
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": "/nonexistent/path/file.txt"
             });
@@ -554,7 +554,7 @@ mod read_tool {
     fn test_read_directory() {
         asupersync::test_utils::run_test(|| async {
             let temp_dir = tempfile::tempdir().unwrap();
-            let tool = pi::tools::ReadTool::new(temp_dir.path());
+            let tool = kode::tools::ReadTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": temp_dir.path().to_string_lossy()
             });
@@ -576,7 +576,7 @@ mod file_arguments {
         let _mode_guard = UnixModeGuard::set(&path, 0o004);
         let file_args = vec![path.to_string_lossy().into_owned()];
 
-        let err = pi::tools::process_file_arguments(&file_args, harness.temp_dir(), true)
+        let err = kode::tools::process_file_arguments(&file_args, harness.temp_dir(), true)
             .expect_err("@file must enforce the selected owner permission class");
         let message = err.to_string();
         assert!(
@@ -600,7 +600,7 @@ mod write_tool {
             let test_file = temp_dir.path().join("new_file.txt");
             let content = "Hello, World!\nLine 2";
 
-            let tool = pi::tools::WriteTool::new(temp_dir.path());
+            let tool = kode::tools::WriteTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "content": content
@@ -629,7 +629,7 @@ mod write_tool {
             let content = "A😃";
             let expected = content.encode_utf16().count();
 
-            let tool = pi::tools::WriteTool::new(harness.temp_dir());
+            let tool = kode::tools::WriteTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "content": content
@@ -654,7 +654,7 @@ mod write_tool {
             let dir = harness.create_dir("readonly");
             let _mode_guard = UnixModeGuard::set(&dir, 0o500);
 
-            let tool = pi::tools::WriteTool::new(harness.temp_dir());
+            let tool = kode::tools::WriteTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": dir.join("file.txt").to_string_lossy(),
                 "content": "data"
@@ -687,7 +687,7 @@ mod write_tool {
             let path = harness.create_file("write-search-only/target.txt", b"original");
             let mode_guard = UnixModeGuard::set(&parent, 0o300);
 
-            let tool = pi::tools::WriteTool::new(harness.temp_dir());
+            let tool = kode::tools::WriteTool::new(harness.temp_dir());
             let err = tool
                 .execute(
                     "test-id",
@@ -712,7 +712,7 @@ mod write_tool {
             let temp_dir = tempfile::tempdir().unwrap();
             let test_file = temp_dir.path().join("nested/dir/file.txt");
 
-            let tool = pi::tools::WriteTool::new(temp_dir.path());
+            let tool = kode::tools::WriteTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "content": "content"
@@ -735,7 +735,7 @@ mod edit_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "Hello, World!\nHow are you?").unwrap();
 
-            let tool = pi::tools::EditTool::new(temp_dir.path());
+            let tool = kode::tools::EditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "oldText": "World",
@@ -774,7 +774,7 @@ mod edit_tool {
             std::fs::write(&lf_path, "alpha\nbeta\ngamma").unwrap();
             std::fs::write(&crlf_path, "alpha\r\nbeta\r\ngamma").unwrap();
 
-            let tool = pi::tools::EditTool::new(temp_dir.path());
+            let tool = kode::tools::EditTool::new(temp_dir.path());
 
             let lf_result = tool
                 .execute(
@@ -836,7 +836,7 @@ mod edit_tool {
             std::fs::write(&lf_path, "alpha\nbeta\ngamma").unwrap();
             std::fs::write(&cr_path, "alpha\rbeta\rgamma").unwrap();
 
-            let tool = pi::tools::EditTool::new(temp_dir.path());
+            let tool = kode::tools::EditTool::new(temp_dir.path());
 
             let lf_result = tool
                 .execute(
@@ -893,7 +893,7 @@ mod edit_tool {
     fn test_edit_missing_file_reports_not_found() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("edit_missing_file_reports_not_found");
-            let tool = pi::tools::EditTool::new(harness.temp_dir());
+            let tool = kode::tools::EditTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": "missing.txt",
                 "oldText": "old",
@@ -919,7 +919,7 @@ mod edit_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("edit_directory_reports_error");
             let dir = harness.create_dir("not_a_file");
-            let tool = pi::tools::EditTool::new(harness.temp_dir());
+            let tool = kode::tools::EditTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": dir.to_string_lossy(),
                 "oldText": "old",
@@ -943,7 +943,7 @@ mod edit_tool {
             let path = harness.create_file("locked.txt", b"secret");
             let _mode_guard = UnixModeGuard::set(&path, 0o000);
 
-            let tool = pi::tools::EditTool::new(harness.temp_dir());
+            let tool = kode::tools::EditTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "secret",
@@ -971,7 +971,7 @@ mod edit_tool {
             let path = harness.create_file("locked_parent/target.txt", b"secret");
             let mode_guard = UnixModeGuard::set(&locked_dir, 0o000);
 
-            let tool = pi::tools::EditTool::new(harness.temp_dir());
+            let tool = kode::tools::EditTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "secret",
@@ -1006,7 +1006,7 @@ mod edit_tool {
             let path = harness.create_file("write-search-only/target.txt", b"original");
             let mode_guard = UnixModeGuard::set(&parent, 0o300);
 
-            let tool = pi::tools::EditTool::new(harness.temp_dir());
+            let tool = kode::tools::EditTool::new(harness.temp_dir());
             let err = tool
                 .execute(
                     "test-id",
@@ -1033,7 +1033,7 @@ mod edit_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "Hello, World!").unwrap();
 
-            let tool = pi::tools::EditTool::new(temp_dir.path());
+            let tool = kode::tools::EditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "oldText": "NotFound",
@@ -1052,7 +1052,7 @@ mod edit_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "Hello, Hello, Hello!").unwrap();
 
-            let tool = pi::tools::EditTool::new(temp_dir.path());
+            let tool = kode::tools::EditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "oldText": "Hello",
@@ -1076,7 +1076,7 @@ mod bash_tool {
     fn test_bash_simple_command() {
         asupersync::test_utils::run_test(|| async {
             let temp_dir = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(temp_dir.path());
+            let tool = kode::tools::BashTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "command": "echo 'Hello, World!'"
             });
@@ -1096,7 +1096,7 @@ mod bash_tool {
     fn test_bash_timeout_is_reported() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("bash_timeout_is_reported");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "command": "sleep 2",
                 "timeout": 1
@@ -1120,7 +1120,7 @@ mod bash_tool {
     fn test_bash_truncation_sets_details() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("bash_truncation_sets_details");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "command": "yes a | head -c 1200000"
             });
@@ -1140,7 +1140,7 @@ mod bash_tool {
     fn test_bash_exit_code() {
         asupersync::test_utils::run_test(|| async {
             let temp_dir = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(temp_dir.path());
+            let tool = kode::tools::BashTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "command": "exit 42"
             });
@@ -1160,7 +1160,7 @@ mod bash_tool {
             let temp_dir = tempfile::tempdir().unwrap();
             std::fs::write(temp_dir.path().join("test.txt"), "content").unwrap();
 
-            let tool = pi::tools::BashTool::new(temp_dir.path());
+            let tool = kode::tools::BashTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "command": "ls test.txt"
             });
@@ -1184,7 +1184,7 @@ mod grep_tool {
             )
             .unwrap();
 
-            let tool = pi::tools::GrepTool::new(temp_dir.path());
+            let tool = kode::tools::GrepTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "pattern": "hello"
             });
@@ -1208,7 +1208,7 @@ mod grep_tool {
             let harness = TestHarness::new("grep_escapes_control_path_bytes");
             harness.create_file("line\nbreak\\tab\tname.txt", b"needle\n");
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "needle" }), None)
                 .await
@@ -1231,7 +1231,7 @@ mod grep_tool {
             std::fs::write(harness.temp_dir().join(name), b"needle\n")
                 .expect("create invalid UTF-8 grep fixture");
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "needle" }), None)
                 .await
@@ -1248,7 +1248,7 @@ mod grep_tool {
     fn test_grep_sanitizes_control_bearing_external_diagnostic() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("grep_control_bearing_diagnostic");
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let error = tool
                 .execute(
                     "test-id",
@@ -1273,7 +1273,7 @@ mod grep_tool {
     fn test_grep_invalid_path_reports_error() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("grep_invalid_path_reports_error");
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "needle",
                 "path": "missing_dir"
@@ -1302,7 +1302,7 @@ mod grep_tool {
             harness.create_file("locked/secret.txt", b"needle\n");
             let _mode_guard = UnixModeGuard::set(&dir, 0o000);
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "needle",
                 "path": dir.to_string_lossy()
@@ -1335,7 +1335,7 @@ mod grep_tool {
             harness.create_file("buried-vault/denied-name.txt", b"denied needle payload\n");
             let _mode_guard = UnixModeGuard::set(&locked, 0o000);
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let err = tool
                 .execute(
                     "test-id",
@@ -1363,7 +1363,7 @@ mod grep_tool {
             let denied = harness.create_file("sealed-result.txt", b"sealed needle payload\n");
             let _mode_guard = UnixModeGuard::set(&denied, 0o004);
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let err = tool
                 .execute(
                     "test-id",
@@ -1390,7 +1390,7 @@ mod grep_tool {
             let control = harness.create_file(".gitignore", b"direct.txt\n");
             let _mode_guard = UnixModeGuard::set(&control, 0o000);
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let result = tool
                 .execute(
                     "test-id",
@@ -1420,7 +1420,7 @@ mod grep_tool {
             let _dir_guard = UnixModeGuard::set(&locked_dir, 0o000);
             let _file_guard = UnixModeGuard::set(&locked_file, 0o004);
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "needle" }), None)
                 .await
@@ -1444,7 +1444,7 @@ mod grep_tool {
             harness.create_file("ignored-vault/secret.txt", b"ignored needle\n");
             let _mode_guard = UnixModeGuard::set(&locked, 0o000);
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "needle" }), None)
                 .await
@@ -1468,7 +1468,7 @@ mod grep_tool {
             harness.create_file("nested/ignored-vault/secret.txt", b"ignored needle\n");
             let _mode_guard = UnixModeGuard::set(&locked, 0o000);
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "needle" }), None)
                 .await
@@ -1487,7 +1487,7 @@ mod grep_tool {
             let temp_dir = tempfile::tempdir().unwrap();
             std::fs::write(temp_dir.path().join("test.txt"), "Hello World\nHELLO WORLD").unwrap();
 
-            let tool = pi::tools::GrepTool::new(temp_dir.path());
+            let tool = kode::tools::GrepTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "pattern": "hello",
                 "ignoreCase": true
@@ -1510,7 +1510,7 @@ mod grep_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("grep_limit_reached_sets_details");
             harness.create_file("test.txt", b"match\nmatch\nmatch\n");
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "match",
                 "limit": 1
@@ -1539,7 +1539,7 @@ mod grep_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("grep_zero_limit_rejected");
             harness.create_file("sample.txt", b"alpha\nbeta\n");
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "alpha",
                 "limit": 0
@@ -1563,7 +1563,7 @@ mod grep_tool {
             let harness = TestHarness::new("grep_long_line_truncates_and_marks_details");
             let long_line = format!("match {}", "a".repeat(600));
             harness.create_file("long.txt", long_line.as_bytes());
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "match"
             });
@@ -1591,7 +1591,7 @@ mod grep_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("grep_literal_matches_plain_pattern_equivalence");
             harness.create_file("sample.txt", b"alpha\nbeta\nalpha gamma\n");
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
 
             let base = tool
                 .execute("test-id", serde_json::json!({ "pattern": "alpha" }), None)
@@ -1620,7 +1620,7 @@ mod grep_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("grep_ignore_case_is_noop_for_lowercase_content");
             harness.create_file("sample.txt", b"alpha\nbeta\nalpha gamma\n");
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
 
             let base = tool
                 .execute(
@@ -1655,7 +1655,7 @@ mod grep_tool {
             let path = temp_dir.path().join("hashline_grep.txt");
             std::fs::write(&path, "alpha\nneedle line\nomega").unwrap();
 
-            let read_tool = pi::tools::ReadTool::new(temp_dir.path());
+            let read_tool = kode::tools::ReadTool::new(temp_dir.path());
             let read_out = read_tool
                 .execute(
                     "test-id",
@@ -1672,7 +1672,7 @@ mod grep_tool {
                 .map(|(tag, _)| tag.to_string())
                 .expect("expected hashline tag for line 2");
 
-            let grep_tool = pi::tools::GrepTool::new(temp_dir.path());
+            let grep_tool = kode::tools::GrepTool::new(temp_dir.path());
             let grep_out = grep_tool
                 .execute(
                     "test-id",
@@ -1703,7 +1703,7 @@ mod grep_tool {
             let temp_dir = tempfile::tempdir().unwrap();
             std::fs::write(temp_dir.path().join("test.txt"), "hello world").unwrap();
 
-            let tool = pi::tools::GrepTool::new(temp_dir.path());
+            let tool = kode::tools::GrepTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "pattern": "notfound"
             });
@@ -1730,7 +1730,7 @@ mod find_tool {
             std::fs::write(temp_dir.path().join("file2.txt"), "").unwrap();
             std::fs::write(temp_dir.path().join("file.rs"), "").unwrap();
 
-            let tool = pi::tools::FindTool::new(temp_dir.path());
+            let tool = kode::tools::FindTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "pattern": "*.txt"
             });
@@ -1752,7 +1752,7 @@ mod find_tool {
     fn test_find_invalid_path_reports_error() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("find_invalid_path_reports_error");
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "*.txt",
                 "path": "missing_dir"
@@ -1779,7 +1779,7 @@ mod find_tool {
             let harness = TestHarness::new("find_permission_denied_is_reported");
             let dir = harness.create_dir("locked");
             let _mode_guard = UnixModeGuard::set(&dir, 0o000);
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "*.txt",
                 "path": dir.to_string_lossy()
@@ -1808,7 +1808,7 @@ mod find_tool {
             harness.create_file("buried-vault/denied-name.txt", b"");
             let _mode_guard = UnixModeGuard::set(&locked, 0o000);
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let err = tool
                 .execute(
                     "test-id",
@@ -1833,7 +1833,7 @@ mod find_tool {
             let unreadable = harness.create_file("visible-name.txt", b"unreadable payload");
             let _mode_guard = UnixModeGuard::set(&unreadable, 0o004);
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "*.txt" }), None)
                 .await
@@ -1856,7 +1856,7 @@ mod find_tool {
             symlink(outside.path(), harness.temp_dir().join("outside-link"))
                 .expect("create directory symlink");
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let result = tool
                 .execute(
                     "test-id",
@@ -1881,7 +1881,7 @@ mod find_tool {
             let harness = TestHarness::new("find_preserves_filename_spaces");
             harness.create_file(" leading-and-trailing.txt ", b"");
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "*" }), None)
                 .await
@@ -1911,7 +1911,7 @@ mod find_tool {
             harness.create_dir("prefix\n..");
             harness.create_file(&format!("prefix\n../{outside_name}"), b"inside entry");
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let result = tool
                 .execute(
                     "test-id",
@@ -1942,7 +1942,7 @@ mod find_tool {
             std::fs::write(harness.temp_dir().join(name), b"")
                 .expect("create invalid UTF-8 find fixture");
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "*" }), None)
                 .await
@@ -1959,7 +1959,7 @@ mod find_tool {
     fn test_find_sanitizes_control_bearing_external_diagnostic() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("find_control_bearing_diagnostic");
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let error = tool
                 .execute(
                     "test-id",
@@ -1989,7 +1989,7 @@ mod find_tool {
                 let denied_control = harness.create_file(control, b"ignored-name.txt\n");
                 let _mode_guard = UnixModeGuard::set(&denied_control, 0o004);
 
-                let tool = pi::tools::FindTool::new(harness.temp_dir());
+                let tool = kode::tools::FindTool::new(harness.temp_dir());
                 let error = tool
                     .execute("test-id", serde_json::json!({ "pattern": "*.txt" }), None)
                     .await
@@ -2018,7 +2018,7 @@ mod find_tool {
             harness.create_file("ignored-vault/secret.txt", b"");
             let _mode_guard = UnixModeGuard::set(&locked, 0o000);
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "*.txt" }), None)
                 .await
@@ -2041,7 +2041,7 @@ mod find_tool {
             harness.create_file("ignored-vault/secret.txt", b"");
             let _mode_guard = UnixModeGuard::set(&locked, 0o000);
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "*.txt" }), None)
                 .await
@@ -2064,7 +2064,7 @@ mod find_tool {
             harness.create_file("nested/ignored-vault/secret.txt", b"");
             let _mode_guard = UnixModeGuard::set(&locked, 0o000);
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({ "pattern": "*.txt" }), None)
                 .await
@@ -2081,7 +2081,7 @@ mod find_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("find_rejects_file_search_root");
             let file = harness.create_file("not-a-directory.txt", b"");
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let err = tool
                 .execute(
                     "test-id",
@@ -2103,7 +2103,7 @@ mod find_tool {
             let harness = TestHarness::new("find_limit_reached_sets_details");
             harness.create_file("file1.txt", b"");
             harness.create_file("file2.txt", b"");
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "*.txt",
                 "limit": 1
@@ -2130,7 +2130,7 @@ mod find_tool {
             let temp_dir = tempfile::tempdir().unwrap();
             std::fs::write(temp_dir.path().join("file.txt"), "").unwrap();
 
-            let tool = pi::tools::FindTool::new(temp_dir.path());
+            let tool = kode::tools::FindTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "pattern": "*.rs"
             });
@@ -2152,7 +2152,7 @@ mod find_tool {
             std::fs::write(temp_dir.path().join("alpha.txt"), "").unwrap();
             std::fs::write(temp_dir.path().join("beta.txt"), "").unwrap();
 
-            let tool = pi::tools::FindTool::new(temp_dir.path());
+            let tool = kode::tools::FindTool::new(temp_dir.path());
             let base = tool
                 .execute("test-id", serde_json::json!({ "pattern": "*.txt" }), None)
                 .await
@@ -2193,7 +2193,7 @@ mod find_tool {
             std::fs::create_dir(subdir.join("nested")).unwrap();
             std::fs::write(subdir.join("nested/beta.txt"), "").unwrap();
 
-            let tool = pi::tools::FindTool::new(temp_dir.path());
+            let tool = kode::tools::FindTool::new(temp_dir.path());
             let base = tool
                 .execute(
                     "test-id",
@@ -2233,7 +2233,7 @@ mod find_tool {
         asupersync::test_utils::run_test(|| async {
             let temp_dir = tempfile::tempdir().unwrap();
             std::fs::write(temp_dir.path().join("match.rs"), "").unwrap();
-            let tool = pi::tools::FindTool::new(temp_dir.path());
+            let tool = kode::tools::FindTool::new(temp_dir.path());
 
             let base = tool
                 .execute("test-id", serde_json::json!({ "pattern": "*.rs" }), None)
@@ -2275,7 +2275,7 @@ mod ls_tool {
             std::fs::write(temp_dir.path().join("file.txt"), "content").unwrap();
             std::fs::create_dir(temp_dir.path().join("subdir")).unwrap();
 
-            let tool = pi::tools::LsTool::new(temp_dir.path());
+            let tool = kode::tools::LsTool::new(temp_dir.path());
             let input = serde_json::json!({});
 
             let result = tool
@@ -2297,7 +2297,7 @@ mod ls_tool {
             let harness = TestHarness::new("ls_escapes_control_path_bytes");
             harness.create_file("line\nbreak\\tab\tname.txt", b"");
 
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({}), None)
                 .await
@@ -2322,7 +2322,7 @@ mod ls_tool {
                     .expect("create invalid UTF-8 ls fixture");
             }
 
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let result = tool
                 .execute("test-id", serde_json::json!({}), None)
                 .await
@@ -2338,7 +2338,7 @@ mod ls_tool {
     fn test_ls_escapes_control_bearing_failure_path() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("ls_control_bearing_failure_path");
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let error = tool
                 .execute(
                     "test-id",
@@ -2362,7 +2362,7 @@ mod ls_tool {
             std::fs::write(temp_dir.path().join("alpha.txt"), "content").unwrap();
             std::fs::create_dir(temp_dir.path().join("beta")).unwrap();
 
-            let tool = pi::tools::LsTool::new(temp_dir.path());
+            let tool = kode::tools::LsTool::new(temp_dir.path());
             let base = tool
                 .execute("test-id", serde_json::json!({}), None)
                 .await
@@ -2398,7 +2398,7 @@ mod ls_tool {
             std::fs::write(subdir.join("alpha.txt"), "content").unwrap();
             std::fs::create_dir(subdir.join("nested")).unwrap();
 
-            let tool = pi::tools::LsTool::new(temp_dir.path());
+            let tool = kode::tools::LsTool::new(temp_dir.path());
             let base = tool
                 .execute("test-id", serde_json::json!({ "path": "subdir" }), None)
                 .await
@@ -2429,7 +2429,7 @@ mod ls_tool {
     fn test_ls_nonexistent_directory() {
         asupersync::test_utils::run_test(|| async {
             let temp_dir = tempfile::tempdir().unwrap();
-            let tool = pi::tools::LsTool::new(temp_dir.path());
+            let tool = kode::tools::LsTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": "/nonexistent/directory"
             });
@@ -2444,7 +2444,7 @@ mod ls_tool {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("ls_path_is_file_reports_error");
             let path = harness.create_file("file.txt", b"content");
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -2466,7 +2466,7 @@ mod ls_tool {
             let dir = harness.create_dir("locked");
             let _mode_guard = UnixModeGuard::set(&dir, 0o000);
 
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": dir.to_string_lossy()
             });
@@ -2490,7 +2490,7 @@ mod ls_tool {
             let harness = TestHarness::new("ls_limit_reached_sets_details");
             harness.create_file("file1.txt", b"");
             harness.create_file("file2.txt", b"");
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "limit": 1
             });
@@ -2524,7 +2524,7 @@ mod ls_tool {
                     }
                 }
 
-                let tool = pi::tools::LsTool::new(temp_dir.path());
+                let tool = kode::tools::LsTool::new(temp_dir.path());
                 let result = tool
                     .execute("test-id", serde_json::json!({}), None)
                     .await
@@ -2577,7 +2577,7 @@ mod ls_tool {
     fn test_ls_empty_directory() {
         asupersync::test_utils::run_test(|| async {
             let temp_dir = tempfile::tempdir().unwrap();
-            let tool = pi::tools::LsTool::new(temp_dir.path());
+            let tool = kode::tools::LsTool::new(temp_dir.path());
             let input = serde_json::json!({});
 
             let result = tool
@@ -2592,11 +2592,11 @@ mod ls_tool {
 }
 
 // Helper function to extract text content from tool output
-fn get_text_content(content: &[pi::model::ContentBlock]) -> String {
+fn get_text_content(content: &[kode::model::ContentBlock]) -> String {
     content
         .iter()
         .filter_map(|block| {
-            if let pi::model::ContentBlock::Text(text) = block {
+            if let kode::model::ContentBlock::Text(text) = block {
                 Some(text.text.clone())
             } else {
                 None
@@ -2850,7 +2850,7 @@ fn tool_diagnostic_artifact_root() -> PathBuf {
 
 fn tool_command_transcript(
     input: &serde_json::Value,
-    result: &pi::PiResult<pi::tools::ToolOutput>,
+    result: &kode::PiResult<kode::tools::ToolOutput>,
 ) -> serde_json::Value {
     match result {
         Ok(output) => serde_json::json!({
@@ -3057,7 +3057,7 @@ async fn execute_tool_with_diagnostics<T: Tool + ?Sized>(
     tool_name: &str,
     tool_call_id: &str,
     input: serde_json::Value,
-) -> pi::PiResult<pi::tools::ToolOutput> {
+) -> kode::PiResult<kode::tools::ToolOutput> {
     let execute_started = Instant::now();
     let result = tool.execute(tool_call_id, input.clone(), None).await;
     log_tool_execution(
@@ -3079,7 +3079,7 @@ fn log_tool_execution(
     tool_call_id: &str,
     input: &serde_json::Value,
     execute_elapsed: Duration,
-    result: &pi::PiResult<pi::tools::ToolOutput>,
+    result: &kode::PiResult<kode::tools::ToolOutput>,
 ) {
     let logger = harness.log();
     let workspace_root = harness.temp_dir();
@@ -3205,7 +3205,7 @@ mod e2e_read {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_read_success_with_artifacts");
             let path = harness.create_file("sample.txt", b"alpha\nbeta\ngamma");
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -3227,7 +3227,7 @@ mod e2e_read {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_read_empty_file");
             let path = harness.create_file("empty.txt", b"");
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -3249,7 +3249,7 @@ mod e2e_read {
     fn e2e_read_missing_file_with_artifacts() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_read_missing_file_with_artifacts");
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": "/nonexistent/path/ghost.txt"
             });
@@ -3266,7 +3266,7 @@ mod e2e_read {
     fn e2e_read_truncation_details_captured() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_read_truncation_details_captured");
-            let total_lines = pi::tools::DEFAULT_MAX_LINES + 10;
+            let total_lines = kode::tools::DEFAULT_MAX_LINES + 10;
             let mut content = String::new();
             for i in 1..=total_lines {
                 content.push_str("line");
@@ -3274,7 +3274,7 @@ mod e2e_read {
                 content.push('\n');
             }
             let path = harness.create_file("big.txt", content.as_bytes());
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -3309,7 +3309,7 @@ mod e2e_read {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_read_diagnostic_artifact_matches_golden_contract");
             let path = harness.create_file("sample.txt", b"alpha\nbeta\ngamma");
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -3354,7 +3354,7 @@ mod e2e_write {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_write_new_file_with_artifacts");
             let path = harness.temp_path("output.txt");
-            let tool = pi::tools::WriteTool::new(harness.temp_dir());
+            let tool = kode::tools::WriteTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": "hello world\nline two"
@@ -3377,7 +3377,7 @@ mod e2e_write {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_write_overwrite_existing");
             let path = harness.create_file("existing.txt", b"old content");
-            let tool = pi::tools::WriteTool::new(harness.temp_dir());
+            let tool = kode::tools::WriteTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": "new content"
@@ -3403,7 +3403,7 @@ mod e2e_edit {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_edit_success_with_artifacts");
             let path = harness.create_file("code.rs", b"fn main() {\n    println!(\"old\");\n}\n");
-            let tool = pi::tools::EditTool::new(harness.temp_dir());
+            let tool = kode::tools::EditTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "\"old\"",
@@ -3431,7 +3431,7 @@ mod e2e_edit {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_edit_text_not_found_with_artifacts");
             let path = harness.create_file("stable.txt", b"content stays");
-            let tool = pi::tools::EditTool::new(harness.temp_dir());
+            let tool = kode::tools::EditTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "nonexistent needle",
@@ -3457,7 +3457,7 @@ mod e2e_bash {
     fn e2e_bash_success_with_artifacts() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_bash_success_with_artifacts");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "command": "echo hello && echo world"
             });
@@ -3477,7 +3477,7 @@ mod e2e_bash {
     fn e2e_bash_stderr_captured() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_bash_stderr_captured");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "command": "echo stdout_msg && echo stderr_msg >&2"
             });
@@ -3498,7 +3498,7 @@ mod e2e_bash {
     fn e2e_bash_nonexistent_command() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_bash_nonexistent_command");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "command": "totally_nonexistent_binary_xyz_123"
             });
@@ -3522,7 +3522,7 @@ mod e2e_bash {
     fn e2e_bash_timeout_with_artifacts() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_bash_timeout_with_artifacts");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "command": "sleep 10",
                 "timeout": 1
@@ -3543,7 +3543,7 @@ mod e2e_bash {
     fn e2e_bash_diagnostic_artifact_contains_required_fields() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_bash_diagnostic_artifact_contains_required_fields");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "command": "echo diagnostic_probe"
             });
@@ -3623,7 +3623,7 @@ mod e2e_grep {
                 b"# Project\nNo hello here... actually hello.\n",
             );
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "hello"
             });
@@ -3647,7 +3647,7 @@ mod e2e_grep {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_grep_invalid_regex");
             harness.create_file("data.txt", b"some text");
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "[invalid("
             });
@@ -3670,7 +3670,7 @@ mod e2e_grep {
             let harness = TestHarness::new("e2e_grep_with_context_lines");
             harness.create_file("data.txt", b"line1\nline2\nTARGET\nline4\nline5");
 
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "TARGET",
                 "context": 1
@@ -3708,7 +3708,7 @@ mod e2e_find {
             harness.create_file("tests/test.rs", b"");
             harness.create_file("readme.md", b"");
 
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "*.rs"
             });
@@ -3734,7 +3734,7 @@ mod e2e_find {
         }
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_find_invalid_path_with_artifacts");
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "pattern": "*.txt",
                 "path": "does_not_exist"
@@ -3762,7 +3762,7 @@ mod e2e_ls {
             harness.create_file("beta.txt", b"b");
             harness.create_dir("subdir");
 
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let input = serde_json::json!({});
 
             let result =
@@ -3780,7 +3780,7 @@ mod e2e_ls {
     fn e2e_ls_nonexistent_with_artifacts() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_ls_nonexistent_with_artifacts");
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": "/no/such/directory"
             });
@@ -3797,7 +3797,7 @@ mod e2e_ls {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("e2e_ls_file_not_dir_with_artifacts");
             let path = harness.create_file("just_a_file.txt", b"contents");
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy()
             });
@@ -3820,7 +3820,7 @@ mod e2e_ls {
             harness.create_file("b.txt", b"");
             harness.create_file("c.txt", b"");
 
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let input = serde_json::json!({
                 "limit": 2
             });
@@ -3849,7 +3849,7 @@ fn e2e_all_tools_roundtrip() {
         harness.section("Setup workspace");
 
         // Write a file
-        let write_tool = pi::tools::WriteTool::new(harness.temp_dir());
+        let write_tool = kode::tools::WriteTool::new(harness.temp_dir());
         let write_input = serde_json::json!({
             "path": harness.temp_path("project/hello.rs").to_string_lossy().to_string(),
             "content": "fn main() {\n    println!(\"Hello, world!\");\n}\n"
@@ -3866,7 +3866,7 @@ fn e2e_all_tools_roundtrip() {
 
         // Read the file back
         harness.section("Read");
-        let read_tool = pi::tools::ReadTool::new(harness.temp_dir());
+        let read_tool = kode::tools::ReadTool::new(harness.temp_dir());
         let read_input = serde_json::json!({
             "path": harness.temp_path("project/hello.rs").to_string_lossy().to_string()
         });
@@ -3884,7 +3884,7 @@ fn e2e_all_tools_roundtrip() {
 
         // Edit the file
         harness.section("Edit");
-        let edit_tool = pi::tools::EditTool::new(harness.temp_dir());
+        let edit_tool = kode::tools::EditTool::new(harness.temp_dir());
         let edit_input = serde_json::json!({
             "path": harness.temp_path("project/hello.rs").to_string_lossy().to_string(),
             "oldText": "Hello, world!",
@@ -3911,7 +3911,7 @@ fn e2e_all_tools_roundtrip() {
 
         // Ls the directory
         harness.section("Ls");
-        let ls_tool = pi::tools::LsTool::new(harness.temp_dir());
+        let ls_tool = kode::tools::LsTool::new(harness.temp_dir());
         let ls_input = serde_json::json!({
             "path": harness.temp_path("project").to_string_lossy().to_string()
         });
@@ -3924,7 +3924,7 @@ fn e2e_all_tools_roundtrip() {
 
         // Bash
         harness.section("Bash");
-        let bash_tool = pi::tools::BashTool::new(harness.temp_dir());
+        let bash_tool = kode::tools::BashTool::new(harness.temp_dir());
         let bash_input = serde_json::json!({
             "command": "wc -l project/hello.rs"
         });
@@ -3944,7 +3944,7 @@ fn e2e_all_tools_roundtrip() {
         // Grep (if rg available)
         if binary_available("rg") {
             harness.section("Grep");
-            let grep_tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let grep_tool = kode::tools::GrepTool::new(harness.temp_dir());
             let grep_input = serde_json::json!({
                 "pattern": "Rust"
             });
@@ -3968,7 +3968,7 @@ fn e2e_all_tools_roundtrip() {
         // Find (if fd available)
         if binary_available("fd") {
             harness.section("Find");
-            let find_tool = pi::tools::FindTool::new(harness.temp_dir());
+            let find_tool = kode::tools::FindTool::new(harness.temp_dir());
             let find_input = serde_json::json!({
                 "pattern": "*.rs"
             });
@@ -4017,7 +4017,7 @@ mod security_path_traversal {
             let outside_file = parent.path().join("outside.txt");
             std::fs::write(&outside_file, "OUTSIDE_DATA").unwrap();
 
-            let tool = pi::tools::ReadTool::new(&child_dir);
+            let tool = kode::tools::ReadTool::new(&child_dir);
             let input = serde_json::json!({
                 "path": "../outside.txt"
             });
@@ -4043,7 +4043,7 @@ mod security_path_traversal {
             let outside_file = parent.path().join("outside.txt");
             std::fs::write(&outside_file, "OUTSIDE").unwrap();
 
-            let tool = pi::tools::ReadTool::new(&child_dir);
+            let tool = kode::tools::ReadTool::new(&child_dir);
             let input = serde_json::json!({
                 "path": "subdir/../../outside.txt"
             });
@@ -4067,7 +4067,7 @@ mod security_path_traversal {
             let child_dir = parent.path().join("child");
             std::fs::create_dir_all(&child_dir).unwrap();
 
-            let tool = pi::tools::WriteTool::new(&child_dir);
+            let tool = kode::tools::WriteTool::new(&child_dir);
             let escaped_path = child_dir.join("../escaped.txt");
             let input = serde_json::json!({
                 "path": escaped_path.to_string_lossy(),
@@ -4097,7 +4097,7 @@ mod security_path_traversal {
             let child_dir = parent.path().join("child");
             std::fs::create_dir_all(child_dir.join("subdir")).unwrap();
 
-            let tool = pi::tools::WriteTool::new(&child_dir);
+            let tool = kode::tools::WriteTool::new(&child_dir);
             let escaped_path = child_dir.join("subdir/../../escaped.txt");
             let input = serde_json::json!({
                 "path": escaped_path.to_string_lossy(),
@@ -4129,7 +4129,7 @@ mod security_path_traversal {
             let target = parent.path().join("target.txt");
             std::fs::write(&target, "ORIGINAL_CONTENT").unwrap();
 
-            let tool = pi::tools::EditTool::new(&child_dir);
+            let tool = kode::tools::EditTool::new(&child_dir);
             let escaped_path = child_dir.join("../target.txt");
             let input = serde_json::json!({
                 "path": escaped_path.to_string_lossy(),
@@ -4160,7 +4160,7 @@ mod security_path_traversal {
             let target = parent.path().join("target.txt");
             std::fs::write(&target, "ORIGINAL_CONTENT").unwrap();
 
-            let tool = pi::tools::EditTool::new(&child_dir);
+            let tool = kode::tools::EditTool::new(&child_dir);
             let escaped_path = child_dir.join("subdir/../../target.txt");
             let input = serde_json::json!({
                 "path": escaped_path.to_string_lossy(),
@@ -4190,7 +4190,7 @@ mod security_path_traversal {
             std::fs::write(&outside_file, "OUTSIDE_DATA").unwrap();
 
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::ReadTool::new(cwd.path());
+            let tool = kode::tools::ReadTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": outside_file.to_string_lossy()
             });
@@ -4211,7 +4211,7 @@ mod security_path_traversal {
             let outside_file = outside.path().join("outside.txt");
 
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::WriteTool::new(cwd.path());
+            let tool = kode::tools::WriteTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": outside_file.to_string_lossy(),
                 "content": "NOPE"
@@ -4241,7 +4241,7 @@ mod security_path_traversal {
             std::fs::write(&outside_file, "ORIGINAL").unwrap();
 
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::EditTool::new(cwd.path());
+            let tool = kode::tools::EditTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": outside_file.to_string_lossy(),
                 "oldText": "ORIGINAL",
@@ -4274,7 +4274,7 @@ mod security_path_traversal {
             let link = cwd.path().join("link.txt");
             std::os::unix::fs::symlink(&outside_file, &link).unwrap();
 
-            let tool = pi::tools::ReadTool::new(cwd.path());
+            let tool = kode::tools::ReadTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": link.to_string_lossy()
             });
@@ -4303,7 +4303,7 @@ mod security_path_traversal {
             let link = cwd.path().join("link.txt");
             std::os::unix::fs::symlink(&target, &link).unwrap();
 
-            let tool = pi::tools::WriteTool::new(cwd.path());
+            let tool = kode::tools::WriteTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": link.to_string_lossy(),
                 "content": "NEW_CONTENT"
@@ -4337,7 +4337,7 @@ mod security_path_traversal {
             let link = cwd.path().join("link.txt");
             std::os::unix::fs::symlink(&target, &link).unwrap();
 
-            let tool = pi::tools::WriteTool::new(cwd.path());
+            let tool = kode::tools::WriteTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": link.to_string_lossy(),
                 "content": "NEW_CONTENT"
@@ -4361,7 +4361,7 @@ mod security_path_traversal {
             let link = cwd.path().join("link.txt");
             std::os::unix::fs::symlink(&target, &link).unwrap();
 
-            let tool = pi::tools::ReadTool::new(cwd.path());
+            let tool = kode::tools::ReadTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": link.to_string_lossy()
             });
@@ -4381,7 +4381,7 @@ mod security_command_injection {
     fn bash_stdin_is_null() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(cwd.path());
+            let tool = kode::tools::BashTool::new(cwd.path());
             let input = serde_json::json!({
                 "command": "read -t 1 line; echo \"got: $line\""
             });
@@ -4406,7 +4406,7 @@ mod security_command_injection {
     fn bash_has_exit_trap() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(cwd.path());
+            let tool = kode::tools::BashTool::new(cwd.path());
             let input = serde_json::json!({
                 "command": "trap -p EXIT"
             });
@@ -4426,7 +4426,7 @@ mod security_command_injection {
     fn bash_metacharacter_execution() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(cwd.path());
+            let tool = kode::tools::BashTool::new(cwd.path());
             let input = serde_json::json!({
                 "command": "echo A; echo B && echo C || echo D | cat"
             });
@@ -4444,7 +4444,7 @@ mod security_command_injection {
     fn bash_command_substitution() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(cwd.path());
+            let tool = kode::tools::BashTool::new(cwd.path());
             let input = serde_json::json!({
                 "command": "echo \"user: $(whoami)\""
             });
@@ -4472,7 +4472,7 @@ mod security_environment {
     fn bash_env_inheritance() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(cwd.path());
+            let tool = kode::tools::BashTool::new(cwd.path());
             // PATH must be inherited for any command to work
             let input = serde_json::json!({
                 "command": "echo \"PATH=$PATH\""
@@ -4492,7 +4492,7 @@ mod security_environment {
     fn bash_cwd_matches_configured() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(cwd.path());
+            let tool = kode::tools::BashTool::new(cwd.path());
             let input = serde_json::json!({
                 "command": "pwd"
             });
@@ -4517,7 +4517,7 @@ mod security_environment {
     fn bash_home_accessible() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::BashTool::new(cwd.path());
+            let tool = kode::tools::BashTool::new(cwd.path());
             let input = serde_json::json!({
                 "command": "echo $HOME"
             });
@@ -4550,7 +4550,7 @@ mod security_environment {
                 return;
             };
 
-            let tool = pi::tools::BashTool::new(cwd.path());
+            let tool = kode::tools::BashTool::new(cwd.path());
             let input = serde_json::json!({
                 "command": format!("echo ${key}")
             });
@@ -4573,7 +4573,7 @@ mod security_unsafe_writes {
     fn write_creates_arbitrary_dirs() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::WriteTool::new(cwd.path());
+            let tool = kode::tools::WriteTool::new(cwd.path());
             let deep_path = cwd.path().join("a/b/c/d/e/f/deeply_nested.txt");
             let input = serde_json::json!({
                 "path": deep_path.to_string_lossy(),
@@ -4595,7 +4595,7 @@ mod security_unsafe_writes {
             let file = cwd.path().join("overwrite_me.txt");
             std::fs::write(&file, "ORIGINAL_VALUABLE_DATA").unwrap();
 
-            let tool = pi::tools::WriteTool::new(cwd.path());
+            let tool = kode::tools::WriteTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": file.to_string_lossy(),
                 "content": "REPLACEMENT"
@@ -4619,7 +4619,7 @@ mod security_unsafe_writes {
             let cwd = tempfile::tempdir().unwrap();
             let file = cwd.path().join("direct_write.txt");
 
-            let tool = pi::tools::WriteTool::new(cwd.path());
+            let tool = kode::tools::WriteTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": file.to_string_lossy(),
                 "content": "DIRECT"
@@ -4646,7 +4646,7 @@ mod security_unsafe_writes {
     fn write_dangerous_filenames() {
         asupersync::test_utils::run_test(|| async {
             let cwd = tempfile::tempdir().unwrap();
-            let tool = pi::tools::WriteTool::new(cwd.path());
+            let tool = kode::tools::WriteTool::new(cwd.path());
 
             // File starting with dot (hidden)
             let hidden = cwd.path().join(".hidden_config");
@@ -4678,7 +4678,7 @@ mod security_unsafe_writes {
             let file = cwd.path().join("edit_target.txt");
             std::fs::write(&file, "BEFORE_EDIT").unwrap();
 
-            let tool = pi::tools::EditTool::new(cwd.path());
+            let tool = kode::tools::EditTool::new(cwd.path());
             let input = serde_json::json!({
                 "path": file.to_string_lossy(),
                 "oldText": "BEFORE_EDIT",
@@ -4706,7 +4706,7 @@ mod hashline_edit_tool {
 
     /// Get the hashline tag for a specific line by reading with hashline=true
     async fn get_hashline_tag(
-        tool: &pi::tools::ReadTool,
+        tool: &kode::tools::ReadTool,
         path: &std::path::Path,
         line_num: usize,
     ) -> String {
@@ -4736,10 +4736,10 @@ mod hashline_edit_tool {
             std::fs::write(&test_file, "line1\nOLD_LINE\nline3").unwrap();
 
             // Get the hashline tag for line 2
-            let read_tool = pi::tools::ReadTool::new(temp_dir.path());
+            let read_tool = kode::tools::ReadTool::new(temp_dir.path());
             let line2_tag = get_hashline_tag(&read_tool, &test_file, 2).await;
 
-            let tool = pi::tools::HashlineEditTool::new(temp_dir.path());
+            let tool = kode::tools::HashlineEditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "edits": [{
@@ -4771,11 +4771,11 @@ mod hashline_edit_tool {
             let test_file = temp_dir.path().join("owner-denied.txt");
             std::fs::write(&test_file, "line1\nLOCKED_LINE\nline3").unwrap();
 
-            let read_tool = pi::tools::ReadTool::new(temp_dir.path());
+            let read_tool = kode::tools::ReadTool::new(temp_dir.path());
             let line2_tag = get_hashline_tag(&read_tool, &test_file, 2).await;
             let mode_guard = UnixModeGuard::set(&test_file, 0o006);
 
-            let tool = pi::tools::HashlineEditTool::new(temp_dir.path());
+            let tool = kode::tools::HashlineEditTool::new(temp_dir.path());
             let err = tool
                 .execute(
                     "test-id",
@@ -4814,11 +4814,11 @@ mod hashline_edit_tool {
             let parent = harness.create_dir("write-search-only");
             let path =
                 harness.create_file("write-search-only/target.txt", b"line1\nORIGINAL\nline3");
-            let read_tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let read_tool = kode::tools::ReadTool::new(harness.temp_dir());
             let line2_tag = get_hashline_tag(&read_tool, &path, 2).await;
             let mode_guard = UnixModeGuard::set(&parent, 0o300);
 
-            let tool = pi::tools::HashlineEditTool::new(harness.temp_dir());
+            let tool = kode::tools::HashlineEditTool::new(harness.temp_dir());
             let err = tool
                 .execute(
                     "test-id",
@@ -4851,7 +4851,7 @@ mod hashline_edit_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "line1\nline2\nline3").unwrap();
 
-            let tool = pi::tools::HashlineEditTool::new(temp_dir.path());
+            let tool = kode::tools::HashlineEditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "edits": [{
@@ -4875,7 +4875,7 @@ mod hashline_edit_tool {
             let test_file = temp_dir.path().join("test.txt");
             std::fs::write(&test_file, "line1\nline2\nline3").unwrap();
 
-            let tool = pi::tools::HashlineEditTool::new(temp_dir.path());
+            let tool = kode::tools::HashlineEditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "edits": [{
@@ -4899,7 +4899,7 @@ mod hashline_edit_tool {
             let test_file = temp_dir.path().join("empty.txt");
             std::fs::write(&test_file, "").unwrap();
 
-            let tool = pi::tools::HashlineEditTool::new(temp_dir.path());
+            let tool = kode::tools::HashlineEditTool::new(temp_dir.path());
 
             // Test prepend to empty file (BOF)
             let input = serde_json::json!({
@@ -4945,10 +4945,10 @@ mod hashline_edit_tool {
             std::fs::write(&test_file, "line1\nOLD_LINE\nline3").unwrap();
 
             // Get the hashline tag for line 2
-            let read_tool = pi::tools::ReadTool::new(temp_dir.path());
+            let read_tool = kode::tools::ReadTool::new(temp_dir.path());
             let line2_tag = get_hashline_tag(&read_tool, &test_file, 2).await;
 
-            let tool = pi::tools::HashlineEditTool::new(temp_dir.path());
+            let tool = kode::tools::HashlineEditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "edits": [{
@@ -4975,10 +4975,10 @@ mod hashline_edit_tool {
             std::fs::write(&test_file, "αβγ\n🚀🌟💫\nδεζ").unwrap();
 
             // Get the hashline tag for line 2 (emoji line)
-            let read_tool = pi::tools::ReadTool::new(temp_dir.path());
+            let read_tool = kode::tools::ReadTool::new(temp_dir.path());
             let line2_tag = get_hashline_tag(&read_tool, &test_file, 2).await;
 
-            let tool = pi::tools::HashlineEditTool::new(temp_dir.path());
+            let tool = kode::tools::HashlineEditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "edits": [{
@@ -5005,11 +5005,11 @@ mod hashline_edit_tool {
             std::fs::write(&test_file, "line1\nSTART\nMIDDLE\nEND\nline5").unwrap();
 
             // Get the hashline tags for the range
-            let read_tool = pi::tools::ReadTool::new(temp_dir.path());
+            let read_tool = kode::tools::ReadTool::new(temp_dir.path());
             let start_tag = get_hashline_tag(&read_tool, &test_file, 2).await;
             let end_tag = get_hashline_tag(&read_tool, &test_file, 4).await;
 
-            let tool = pi::tools::HashlineEditTool::new(temp_dir.path());
+            let tool = kode::tools::HashlineEditTool::new(temp_dir.path());
             let input = serde_json::json!({
                 "path": test_file.to_string_lossy(),
                 "edits": [{

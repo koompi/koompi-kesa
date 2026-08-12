@@ -4,15 +4,15 @@
 
 use clap::{Parser, ValueEnum};
 use futures::executor::block_on;
-use pi::error::{Error, Result};
-use pi::extensions::{
+use kode::error::{Error, Result};
+use kode::extensions::{
     ExtensionManager, ExtensionRuntimeHandle, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
     NativeRustExtensionLoadSpec, NativeRustExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::perf_build;
-use pi::scheduler::HostcallOutcome;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::perf_build;
+use kode::scheduler::HostcallOutcome;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::VecDeque;
 use std::fs;
@@ -573,7 +573,7 @@ fn setup_quickjs_runtime() -> Result<QuickJsBenchRuntime> {
 
 fn setup_native_runtime_bench_handle() -> Result<ExtensionRuntimeHandle> {
     let descriptor_path = std::env::temp_dir().join(format!(
-        "pi_agent_rust_native_bench_descriptor_{}.native.json",
+        "koompi_code_cli_native_bench_descriptor_{}.native.json",
         std::process::id()
     ));
     fs::write(&descriptor_path, NATIVE_RUNTIME_DESCRIPTOR).map_err(|err| {
@@ -650,7 +650,7 @@ fn run_tool_roundtrip_native_runtime(runtime: &ExtensionRuntimeHandle) -> Result
 #[cfg(test)]
 mod tests {
     use clap::Parser;
-    use pi::perf_build::profile_from_target_path;
+    use kode::perf_build::profile_from_target_path;
     use std::path::Path;
     use std::time::Duration;
 

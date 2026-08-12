@@ -180,7 +180,7 @@ const FRANKEN_NODE_TIER3_REQUIRED_EVIDENCE_TOKENS: &[&str] = &[
     "runtime-substrate generalization evidence for bd-3ar8v.7.5",
     "multi-tier execution engine evidence for bd-3ar8v.7.6",
     "compatibility remediation backlog generator evidence for bd-3ar8v.7.16",
-    "crate reintegration evidence into pi_agent_rust",
+    "crate reintegration evidence into koompi_code_cli",
 ];
 
 fn collect_non_empty_string_array(
@@ -960,7 +960,7 @@ fn manual_release_token_handoff_is_not_argv_and_propagates_publish_failure() {
 set -euo pipefail
 expected_token='fake release token +=:_[]/7391'
 test "${{PI_CRATES_IO_RELEASE_TOKEN:-}}" = "$expected_token"
-test "${{PI_EXPECTED_CRATE_NAME:-}}" = pi_agent_rust
+test "${{PI_EXPECTED_CRATE_NAME:-}}" = koompi_code_cli
 test "${{PI_EXPECTED_CRATE_VERSION:-}}" = 0.2.0
 test "${{PI_EXPECTED_CRATE_SHA256:-}}" = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 test "$#" -eq 11

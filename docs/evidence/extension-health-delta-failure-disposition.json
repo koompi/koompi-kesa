@@ -75,7 +75,7 @@
     }
   ],
   "validation": {
-    "health_delta_command": "env RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-0bu83/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex-cli-bd-0bu83/tmp rch exec -- cargo test --test ext_conformance_generated --features ext-conformance -- conformance_health_delta --nocapture --exact",
+    "health_delta_command": "env RCH_ENV_ALLOWLIST=CARGO_TARGET_DIR,TMPDIR CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-0bu83/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex-cli-bd-0bu83/tmp rch exec -- cargo test --test ext_conformance_generated --features ext-conformance -- conformance_health_delta --nocapture --exact",
     "health_delta_result": "PASS: 223/223 tested extensions passed, 0 failures, 0 regressions, 13 fixes, 1 excluded fixture",
     "final_report_check": "PASS: tracked health-delta reports on disk have source_report_generated_at=2026-05-13T03:37:59.568Z and current_summary.failed=0"
   },

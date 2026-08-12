@@ -4,7 +4,7 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use pi::compaction::{
+use kode::compaction::{
     CompactionPreparation, CompactionResult, SEMANTIC_COMPACTION_QUALITY_SCHEMA,
     SemanticCompactionLossClass, SemanticCompactionMarker, SemanticCompactionMarkerKind,
     SemanticCompactionMarkerObservation, SemanticCompactionMarkerSeverity,
@@ -12,12 +12,12 @@ use pi::compaction::{
     evaluate_semantic_compaction_quality, prepare_compaction,
     semantic_compaction_quality_report_to_jsonl, semantic_compaction_quality_report_to_value,
 };
-use pi::model::{
+use kode::model::{
     AssistantMessage, ContentBlock, ImageContent, Message, StopReason, TextContent,
     ThinkingContent, ToolCall, Usage, UserContent, UserMessage,
 };
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::session::{
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::session::{
     BranchSummaryEntry, CompactionEntry, EntryBase, MessageEntry, ModelChangeEntry, Session,
     SessionEntry, SessionMessage,
 };
@@ -68,8 +68,8 @@ impl Provider for ScriptedProvider {
         &self,
         context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> pi::error::Result<
-        Pin<Box<dyn futures::Stream<Item = pi::error::Result<pi::model::StreamEvent>> + Send>>,
+    ) -> kode::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kode::error::Result<kode::model::StreamEvent>> + Send>>,
     > {
         let prompt_text = extract_prompt_text(context);
         self.prompts.lock().expect("lock prompts").push(prompt_text);
@@ -94,7 +94,7 @@ impl Provider for ScriptedProvider {
         };
 
         Ok(Box::pin(futures::stream::iter(vec![Ok(
-            pi::model::StreamEvent::Done {
+            kode::model::StreamEvent::Done {
                 reason: StopReason::Stop,
                 message,
             },
@@ -825,8 +825,8 @@ fn semantic_compaction_quality_false_positive_controls_do_not_satisfy_missing_ma
     }));
 }
 
-const fn make_settings(keep_recent_tokens: u32) -> pi::compaction::ResolvedCompactionSettings {
-    pi::compaction::ResolvedCompactionSettings {
+const fn make_settings(keep_recent_tokens: u32) -> kode::compaction::ResolvedCompactionSettings {
+    kode::compaction::ResolvedCompactionSettings {
         enabled: true,
         // Use a tiny window so compaction triggers for the small test entries.
         // Tests focus on cut-point and formatting logic, not the threshold.
@@ -1422,7 +1422,7 @@ fn compaction_pipeline_save_and_open_round_trip_rehydrates_compaction_context() 
     let mut session = Session::in_memory();
     session.header.id = "sess-bd-p2l".to_string();
     session.header.timestamp = TS.to_string();
-    session.header.cwd = "/data/projects/pi_agent_rust".to_string();
+    session.header.cwd = "/data/projects/koompi_code_cli".to_string();
 
     session.entries = vec![
         message_entry("u0", None, user_text("old")),
@@ -1463,7 +1463,7 @@ fn compaction_pipeline_save_and_open_round_trip_rehydrates_compaction_context() 
         ctx.push(("sha256".into(), summary_hash));
     });
 
-    let details = pi::compaction::compaction_details_to_value(&result.details).expect("details");
+    let details = kode::compaction::compaction_details_to_value(&result.details).expect("details");
     session.entries.push(compaction_entry(
         "c1",
         Some("u2"),
@@ -1547,7 +1547,7 @@ fn compaction_pipeline_second_pass_seeds_previous_details_and_updates_summary() 
     let result1 = run_async(async move { compact(prep1, provider1_dyn, "test-key", None).await })
         .expect("compact1");
 
-    let details1 = pi::compaction::compaction_details_to_value(&result1.details).expect("details1");
+    let details1 = kode::compaction::compaction_details_to_value(&result1.details).expect("details1");
 
     let mut entries2 = entries;
     entries2.push(compaction_entry(
@@ -1624,10 +1624,10 @@ fn compaction_pipeline_second_pass_seeds_previous_details_and_updates_summary() 
     let mut session = Session::in_memory();
     session.header.id = "sess-bd-p2l-2".to_string();
     session.header.timestamp = TS.to_string();
-    session.header.cwd = "/data/projects/pi_agent_rust".to_string();
+    session.header.cwd = "/data/projects/koompi_code_cli".to_string();
     session.entries = entries2;
 
-    let details2 = pi::compaction::compaction_details_to_value(&result2.details).expect("details2");
+    let details2 = kode::compaction::compaction_details_to_value(&result2.details).expect("details2");
     session.entries.push(compaction_entry(
         "c2",
         Some("u4"),
@@ -1729,8 +1729,8 @@ fn compact_returns_error_when_provider_stops_with_error() {
             &self,
             _context: &Context<'_>,
             _options: &StreamOptions,
-        ) -> pi::error::Result<
-            Pin<Box<dyn futures::Stream<Item = pi::error::Result<pi::model::StreamEvent>> + Send>>,
+        ) -> kode::error::Result<
+            Pin<Box<dyn futures::Stream<Item = kode::error::Result<kode::model::StreamEvent>> + Send>>,
         > {
             let message = AssistantMessage {
                 content: vec![ContentBlock::Text(TextContent::new("ignored"))],
@@ -1745,7 +1745,7 @@ fn compact_returns_error_when_provider_stops_with_error() {
             };
 
             Ok(Box::pin(futures::stream::iter(vec![Ok(
-                pi::model::StreamEvent::Done {
+                kode::model::StreamEvent::Done {
                     reason: StopReason::Error,
                     message,
                 },

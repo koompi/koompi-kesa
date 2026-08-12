@@ -6,9 +6,9 @@
 //! - Round-trip semantics for all session ops
 //! - Validation edge cases and error classification
 
-use pi::extensions::{ExtensionManager, ExtensionSession};
-use pi::model::UserContent;
-use pi::session::{Session, SessionHandle, SessionMessage};
+use kode::extensions::{ExtensionManager, ExtensionSession};
+use kode::model::UserContent;
+use kode::session::{Session, SessionHandle, SessionMessage};
 use serde_json::{Value, json};
 use std::sync::Arc;
 
@@ -343,7 +343,7 @@ async fn dispatch_via_manager(mgr: &ExtensionManager, op: &str, payload: Value) 
 
     // Test each op directly on the trait to verify error classification.
     let op_norm = op.trim().to_ascii_lowercase();
-    let result: Result<Value, pi::error::Error> = match op_norm.as_str() {
+    let result: Result<Value, kode::error::Error> = match op_norm.as_str() {
         "get_state" | "getstate" => Ok(session.get_state().await),
         "get_name" | "getname" => {
             let state = session.get_state().await;
@@ -428,7 +428,7 @@ async fn dispatch_via_manager(mgr: &ExtensionManager, op: &str, payload: Value) 
                 .await
                 .map(|()| Value::Null)
         }
-        _ => Err(pi::error::Error::validation(format!(
+        _ => Err(kode::error::Error::validation(format!(
             "Unknown session op: {op}"
         ))),
     };
@@ -695,7 +695,7 @@ fn multiple_model_switches_keep_last_value() {
 #[test]
 fn error_hostcall_code_covers_all_variants() {
     // Verify hostcall_error_code returns one of the 5 allowed codes for each Error variant.
-    use pi::error::Error;
+    use kode::error::Error;
 
     let allowed_codes = ["timeout", "denied", "io", "invalid_request", "internal"];
 
@@ -722,30 +722,30 @@ fn error_hostcall_code_covers_all_variants() {
 
 #[test]
 fn validation_error_maps_to_invalid_request() {
-    let err = pi::error::Error::validation("bad input");
+    let err = kode::error::Error::validation("bad input");
     assert_eq!(err.hostcall_error_code(), "invalid_request");
 }
 
 #[test]
 fn auth_error_maps_to_denied() {
-    let err = pi::error::Error::auth("unauthorized");
+    let err = kode::error::Error::auth("unauthorized");
     assert_eq!(err.hostcall_error_code(), "denied");
 }
 
 #[test]
 fn session_error_maps_to_io() {
-    let err = pi::error::Error::session("lock failed");
+    let err = kode::error::Error::session("lock failed");
     assert_eq!(err.hostcall_error_code(), "io");
 }
 
 #[test]
 fn aborted_maps_to_timeout() {
-    let err = pi::error::Error::Aborted;
+    let err = kode::error::Error::Aborted;
     assert_eq!(err.hostcall_error_code(), "timeout");
 }
 
 #[test]
 fn extension_error_maps_to_internal() {
-    let err = pi::error::Error::extension("crash");
+    let err = kode::error::Error::extension("crash");
     assert_eq!(err.hostcall_error_code(), "internal");
 }

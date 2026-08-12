@@ -1395,7 +1395,7 @@ pub mod snapshot {
 /// # Usage
 ///
 /// ```rust,ignore
-/// use pi::conformance::normalization::*;
+/// use kode::conformance::normalization::*;
 ///
 /// let contract = NormalizationContract::default();
 /// let ctx = NormalizationContext::from_cwd(std::path::Path::new("/tmp"));
@@ -1498,7 +1498,7 @@ pub mod normalization {
     /// implementation.
     #[derive(Debug, Clone)]
     pub struct NormalizationContext {
-        /// Absolute path to the pi_agent_rust repository root.
+        /// Absolute path to the koompi_code_cli repository root.
         pub project_root: String,
         /// Absolute path to `legacy_pi_mono_code/pi-mono`.
         pub pi_mono_root: String,

@@ -48,9 +48,9 @@
     clippy::wildcard_imports
 )]
 
-// Allow in-crate tests that include integration test helpers to resolve `pi::...`
+// Allow in-crate tests that include integration test helpers to resolve `kode::...`
 // paths the same way integration tests do.
-extern crate self as pi;
+extern crate self as kode;
 
 /// Serialize unit tests that temporarily change the process-wide current
 /// directory. Rust's test runner executes modules concurrently, so separate

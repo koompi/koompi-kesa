@@ -30,11 +30,11 @@ use std::process::Command;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -636,7 +636,7 @@ fn bench_extension_scenarios() {
 
             records.push(BenchRecord {
                 schema: "pi.ext.rust_bench.v1".to_string(),
-                runtime: "pi_agent_rust".to_string(),
+                runtime: "koompi_code_cli".to_string(),
                 scenario: "cold_start".to_string(),
                 extension: ext_name.clone(),
                 runs: summary.count,
@@ -670,7 +670,7 @@ fn bench_extension_scenarios() {
 
             records.push(BenchRecord {
                 schema: "pi.ext.rust_bench.v1".to_string(),
-                runtime: "pi_agent_rust".to_string(),
+                runtime: "koompi_code_cli".to_string(),
                 scenario: "warm_start".to_string(),
                 extension: ext_name.clone(),
                 runs: summary.count,
@@ -704,7 +704,7 @@ fn bench_extension_scenarios() {
 
             records.push(BenchRecord {
                 schema: "pi.ext.rust_bench.v1".to_string(),
-                runtime: "pi_agent_rust".to_string(),
+                runtime: "koompi_code_cli".to_string(),
                 scenario: "tool_call".to_string(),
                 extension: ext_name.clone(),
                 runs: summary.count,
@@ -738,7 +738,7 @@ fn bench_extension_scenarios() {
 
             records.push(BenchRecord {
                 schema: "pi.ext.rust_bench.v1".to_string(),
-                runtime: "pi_agent_rust".to_string(),
+                runtime: "koompi_code_cli".to_string(),
                 scenario: "event_hook".to_string(),
                 extension: ext_name.clone(),
                 runs: summary.count,
@@ -888,7 +888,7 @@ fn bench_jsonl_schema_valid() -> Result<(), String> {
         );
         assert_eq!(
             record.get("runtime").and_then(Value::as_str),
-            Some("pi_agent_rust"),
+            Some("koompi_code_cli"),
             "line {i}: wrong runtime"
         );
 

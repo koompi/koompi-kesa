@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="pi_agent_rust_illustration.webp" alt="Pi Agent Rust" width="600"/>
+  <img src="koompi_code_cli_illustration.webp" alt="Pi Agent Rust" width="600"/>
 </p>
 
-<h1 align="center">pi_agent_rust</h1>
+<h1 align="center">koompi_code_cli</h1>
 
 <p align="center">
-  <strong>pi_agent_rust - Native AI coding agent CLI written in Rust</strong>
+  <strong>koompi_code_cli - Native AI coding agent CLI written in Rust</strong>
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 
 ```bash
 # Install latest release
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/install.sh?$(date +%s)" | bash
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/main/install.sh?$(date +%s)" | bash
 ```
 
 ---
@@ -42,7 +42,7 @@ You want an AI coding assistant in your terminal, but existing tools are:
 
 ## The Solution
 
-**pi_agent_rust** is a from-scratch Rust port of [Pi Agent](https://github.com/badlogic/pi) by [Mario Zechner](https://github.com/badlogic) (made with his blessing!). Official release archives install the single end-user binary `pi`, with streaming responses and 9 built-in tools.
+**koompi_code_cli** is a from-scratch Rust port of [Pi Agent](https://github.com/badlogic/pi) by [Mario Zechner](https://github.com/badlogic) (made with his blessing!). Official release archives install the single end-user binary `pi`, with streaming responses and 9 built-in tools.
 
 Rather than a direct line-by-line translation, this port builds on two purpose-built Rust libraries:
 - **[asupersync](https://github.com/Dicklesworthstone/asupersync)**: A structured concurrency async runtime with built-in HTTP, TLS, and SQLite
@@ -150,7 +150,7 @@ What we measured:
 How we kept comparisons fair:
 
 - **Two scopes** in the benchmark report:
-  - apples-to-apples (`pi_agent_rust` vs legacy `coding-agent`)
+  - apples-to-apples (`koompi_code_cli` vs legacy `coding-agent`)
   - apples-to-oranges (legacy stack components included where legacy behavior is outsourced)
 - **Release-mode binaries** and repeated runs per matrix cell.
 - **No paid-provider noise** in core latency/footprint tables (provider-call costs are excluded from these core comparisons).
@@ -208,13 +208,13 @@ pi --list-providers
 
 ### asupersync
 
-[asupersync](https://github.com/Dicklesworthstone/asupersync) is a structured concurrency async runtime designed for applications that need predictable resource cleanup. Key features used by pi_agent_rust:
+[asupersync](https://github.com/Dicklesworthstone/asupersync) is a structured concurrency async runtime designed for applications that need predictable resource cleanup. Key features used by koompi_code_cli:
 
 - **Capability-based context (`Cx`)**: Async functions receive an explicit context that controls what they can do (HTTP, filesystem, time). This makes testing deterministic.
 - **HTTP client with TLS**: Built-in HTTP API with rustls, avoiding OpenSSL dependency hell
 - **Structured cancellation**: When a parent task cancels, all child tasks cancel cleanly. No orphaned futures.
 
-`pi_agent_rust` runs on `asupersync` end-to-end today (runtime + HTTP/TLS + cancellation). Provider streaming uses a minimal HTTP client (`src/http/client.rs`) feeding a custom SSE parser (`src/sse.rs`).
+`koompi_code_cli` runs on `asupersync` end-to-end today (runtime + HTTP/TLS + cancellation). Provider streaming uses a minimal HTTP client (`src/http/client.rs`) feeding a custom SSE parser (`src/sse.rs`).
 
 ### rich_rust
 
@@ -237,7 +237,7 @@ The terminal UI uses rich_rust for all output formatting, providing the same vis
 
 ```bash
 # Install latest release binary
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/install.sh?$(date +%s)" | bash
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/main/install.sh?$(date +%s)" | bash
 ```
 
 If you already have the original TypeScript `pi` installed, the installer asks
@@ -602,8 +602,8 @@ This project validates extension compatibility with a three-track pipeline:
 These runs compile many crates and can be disk-heavy. Point Cargo artifacts and temp files to a large volume:
 
 ```bash
-export CARGO_TARGET_DIR="/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target"
-export TMPDIR="/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp"
+export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target"
+export TMPDIR="/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp"
 mkdir -p "$CARGO_TARGET_DIR" "$TMPDIR"
 ```
 
@@ -650,22 +650,22 @@ From:
 
 ```bash
 # Latest release
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/install.sh?$(date +%s)" | bash
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/main/install.sh?$(date +%s)" | bash
 
 # Non-interactive + auto PATH update
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/install.sh?$(date +%s)" | bash -s -- --yes --easy-mode
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/main/install.sh?$(date +%s)" | bash -s -- --yes --easy-mode
 
 # Pin a release tag
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/v0.2.0/install.sh" | bash -s -- --version v0.2.0
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/v0.2.0/install.sh" | bash -s -- --version v0.2.0
 
 # Install from explicit artifact URL + checksum URL
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/v0.2.0/install.sh" | \
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/v0.2.0/install.sh" | \
   bash -s -- \
-    --artifact-url "https://github.com/Dicklesworthstone/pi_agent_rust/releases/download/v0.2.0/pi-linux-amd64.tar.xz" \
-    --checksum-url "https://github.com/Dicklesworthstone/pi_agent_rust/releases/download/v0.2.0/SHA256SUMS"
+    --artifact-url "https://github.com/Dicklesworthstone/koompi_code_cli/releases/download/v0.2.0/pi-linux-amd64.tar.xz" \
+    --checksum-url "https://github.com/Dicklesworthstone/koompi_code_cli/releases/download/v0.2.0/SHA256SUMS"
 
 # Skip completion setup (CI/non-interactive minimal install)
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/install.sh?$(date +%s)" | \
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/main/install.sh?$(date +%s)" | \
   bash -s -- --yes --no-completions
 ```
 
@@ -735,8 +735,8 @@ requires Rust 1.95 or newer; use the pin for release-reproducible builds:
 rustup toolchain install nightly-2026-07-05 --component rustfmt --component clippy
 
 # Clone and build
-git clone https://github.com/Dicklesworthstone/pi_agent_rust.git
-cd pi_agent_rust
+git clone https://github.com/Dicklesworthstone/koompi_code_cli.git
+cd koompi_code_cli
 cargo build --release
 
 # Binary is at target/release/pi
@@ -755,7 +755,7 @@ Pi has minimal runtime dependencies:
 ### Uninstall
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/uninstall.sh" | bash
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/koompi_code_cli/main/uninstall.sh" | bash
 ```
 
 By default, uninstall removes installer-managed Rust binaries/aliases and skill directories,
@@ -992,9 +992,9 @@ Provider-count rule: Pi has 11 native provider implementation modules. Those mod
 
 ### asupersync Context vs TypeScript Pi (pi-mono)
 
-This Rust port preserves Pi's user experience, but intentionally changes the runtime substrate. The original TypeScript Pi (`pi-mono`, `packages/coding-agent`) is built on Node.js + package-level abstractions. `pi_agent_rust` moves those same behaviors onto `asupersync` primitives so lifecycle guarantees are explicit in the runtime model.
+This Rust port preserves Pi's user experience, but intentionally changes the runtime substrate. The original TypeScript Pi (`pi-mono`, `packages/coding-agent`) is built on Node.js + package-level abstractions. `koompi_code_cli` moves those same behaviors onto `asupersync` primitives so lifecycle guarantees are explicit in the runtime model.
 
-| Concern | TypeScript Pi (pi-mono baseline) | pi_agent_rust + asupersync |
+| Concern | TypeScript Pi (pi-mono baseline) | koompi_code_cli + asupersync |
 |---------|----------------------------------|----------------------------|
 | **Runtime model** | Node event loop + Promise/AbortSignal conventions | `RuntimeBuilder` + explicit reactor and runtime handle |
 | **Async ownership** | Task lifetimes coordinated by framework/library code | Structured task ownership and explicit cross-thread channels (TUI/RPC bridging) |
@@ -1042,7 +1042,7 @@ These are the concrete invariants we rely on in this implementation:
 
 ### Design Principles Carried From asupersync Into Pi
 
-The following `asupersync` principles are reflected directly in `pi_agent_rust` architecture:
+The following `asupersync` principles are reflected directly in `koompi_code_cli` architecture:
 
 - **Single async substrate**: runtime, timers, fs, and HTTP/TLS all run on one coherent foundation.
 - **Explicit context threading**: `AgentCx` wraps `asupersync::Cx` at subsystem boundaries (agent/tools/session/rpc).
@@ -1055,7 +1055,7 @@ Compared to the original TypeScript implementation, this shifts more correctness
 
 This is a second comparison pass focused on high-impact architectural deltas and rationale.
 
-| Area | Original pi-mono (`packages/coding-agent`) | `pi_agent_rust` | Why this divergence exists |
+| Area | Original pi-mono (`packages/coding-agent`) | `koompi_code_cli` | Why this divergence exists |
 |------|---------------------------------------------|------------------|----------------------------|
 | **Distribution model** | npm package (`npm install -g @mariozechner/pi-coding-agent`) | Single Rust binary (`pi`) | Remove Node runtime dependency and improve startup/deployment portability |
 | **Execution surfaces** | Interactive + print + JSON mode + RPC + SDK | Interactive + print + JSON mode + RPC + Rust SDK | Rust SDK provides idiomatic companion API for embedding Pi programmatically (documented in `docs/sdk.md`) |
@@ -2749,7 +2749,7 @@ A: Yes. Point any provider at a custom base URL via `models.json`. Pi normalizes
 ```
 
 When those variables are unset, `cargo_headroom.sh` defaults `CARGO_TARGET_DIR`
-and `TMPDIR` to a per-agent directory under `/data/tmp/pi_agent_rust_cargo/...`,
+and `TMPDIR` to a per-agent directory under `/data/tmp/koompi_code_cli_cargo/...`,
 writes a `CACHEDIR.TAG`, rejects accidental repo-root target directories, and
 fails before compilation if the target or temp mount has insufficient free
 space. Set `PI_CARGO_RUNNER=local` for a local-only run,
@@ -2770,7 +2770,7 @@ advisory budget controls, not release-facing performance claims. The same
 finding also includes `lane_placement` (`pi.doctor.swarm_lane_placement.v1`),
 which groups the current cpuset/NUMA topology into read-only operator lanes with
 CPU affinity hints, per-lane `CARGO_TARGET_DIR`/`TMPDIR` roots under
-`/data/tmp/pi_agent_rust_cargo/<agent>/`, and max agent/tool/hostcall/RCH fanout
+`/data/tmp/koompi_code_cli_cargo/<agent>/`, and max agent/tool/hostcall/RCH fanout
 recommendations. Doctor reports caveats such as unknown NUMA data, partial
 cpusets, tight memory limits, or RCH queue pressure, but it never pins processes
 or mutates OS/RCH state.
@@ -2860,7 +2860,7 @@ Releases are tag-driven and must align with `Cargo.toml` versions.
 
 - Tag format: `vX.Y.Z` (pre-releases like `vX.Y.Z-rc.N` are allowed but skip crates.io publish).
 - The tag version **must** match `package.version` in `Cargo.toml`.
-- Publish order for dependencies: `asupersync` → `rich_rust` → `charmed-*` (lipgloss, bubbletea, bubbles, glamour) → `pi_agent_rust`.
+- Publish order for dependencies: `asupersync` → `rich_rust` → `charmed-*` (lipgloss, bubbletea, bubbles, glamour) → `koompi_code_cli`.
 - `.github/workflows/release.yml` owns the ordered release boundary: verified
   GitHub draft, exact stable crate publication/reconciliation on a fresh
   review-gated runner, then public GitHub release last. Pre-releases skip

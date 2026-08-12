@@ -53,8 +53,8 @@
           "bd-2zcs5.71-darkgoose-20260510T0058Z"
         ],
         "source_artifacts": [
-          "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/criterion/ext_load_init/load_init_cold/hello/new/estimates.json",
-          "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/perf/legacy_extension_workloads.jsonl"
+          "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/criterion/ext_load_init/load_init_cold/hello/new/estimates.json",
+          "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/perf/legacy_extension_workloads.jsonl"
         ]
       }
     },
@@ -95,8 +95,8 @@
           "bd-2zcs5.71-darkgoose-20260510T0058Z"
         ],
         "source_artifacts": [
-          "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/perf/perf/pijs_workload_perf.jsonl",
-          "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/perf/legacy_extension_workloads.jsonl"
+          "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/perf/perf/pijs_workload_perf.jsonl",
+          "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/perf/legacy_extension_workloads.jsonl"
         ]
       }
     },
@@ -137,8 +137,8 @@
           "bd-2zcs5.71-darkgoose-20260510T0058Z"
         ],
         "source_artifacts": [
-          "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/perf/perf/pijs_workload_perf.jsonl",
-          "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/perf/legacy_extension_workloads.jsonl"
+          "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/perf/perf/pijs_workload_perf.jsonl",
+          "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/perf/legacy_extension_workloads.jsonl"
         ]
       }
     }
@@ -171,8 +171,8 @@
     "run_id_lineage": [
       "bd-2zcs5.71-darkgoose-20260510T0058Z"
     ],
-    "source_pijs_workload_path": "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/perf/perf/pijs_workload_perf.jsonl",
-    "source_cold_load_path": "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/criterion/ext_load_init/load_init_cold/hello/new/estimates.json",
-    "source_legacy_extension_workloads_path": "/data/tmp/pi_agent_rust_cargo/darkgoose-bd-2zcs5-51/target/perf/legacy_extension_workloads.jsonl"
+    "source_pijs_workload_path": "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/perf/perf/pijs_workload_perf.jsonl",
+    "source_cold_load_path": "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/criterion/ext_load_init/load_init_cold/hello/new/estimates.json",
+    "source_legacy_extension_workloads_path": "/data/tmp/koompi_code_cli_cargo/darkgoose-bd-2zcs5-51/target/perf/legacy_extension_workloads.jsonl"
   }
 }

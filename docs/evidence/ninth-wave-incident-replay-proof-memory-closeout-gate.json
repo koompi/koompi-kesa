@@ -250,7 +250,7 @@
               ],
               "title": "Add extension resource firewall matrix and fail-closed fixtures",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_6/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_6/tmp cargo test --test extensions_stress resource_firewall_matrix -- --nocapture",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_6/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_6/tmp cargo test --test extensions_stress resource_firewall_matrix -- --nocapture",
                 "cargo fmt --check",
                 "git diff --check",
                 "timeout 60s ubs --staged --only=rust .",
@@ -847,7 +847,7 @@
       ],
       "title": "Add extension resource firewall matrix and fail-closed fixtures",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_6/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_9yq7i_6/tmp cargo test --test extensions_stress resource_firewall_matrix -- --nocapture",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_6/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_9yq7i_6/tmp cargo test --test extensions_stress resource_firewall_matrix -- --nocapture",
         "cargo fmt --check",
         "git diff --check",
         "timeout 60s ubs --staged --only=rust .",

@@ -11,25 +11,25 @@ mod common;
 
 use common::TestHarness;
 use futures::StreamExt;
-use pi::agent::{Agent, AgentConfig, AgentSession};
-use pi::auth::AuthStorage;
-use pi::config::Config;
-use pi::extensions::{ExtensionManager, ExtensionRegion, ExtensionUiRequest};
-use pi::http::client::Client;
+use kode::agent::{Agent, AgentConfig, AgentSession};
+use kode::auth::AuthStorage;
+use kode::config::Config;
+use kode::extensions::{ExtensionManager, ExtensionRegion, ExtensionUiRequest};
+use kode::http::client::Client;
 #[cfg(unix)]
-use pi::model::Message;
-use pi::model::{AssistantMessage, ContentBlock, StopReason, TextContent, Usage, UserContent};
-use pi::models::ModelEntry;
-use pi::provider::{Context, InputType, Model, ModelCost, Provider, StreamEvent, StreamOptions};
-use pi::providers::openai::OpenAIProvider;
-use pi::resources::ResourceLoader;
-use pi::rpc::{RpcOptions, RpcScopedModel, run};
+use kode::model::Message;
+use kode::model::{AssistantMessage, ContentBlock, StopReason, TextContent, Usage, UserContent};
+use kode::models::ModelEntry;
+use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamEvent, StreamOptions};
+use kode::providers::openai::OpenAIProvider;
+use kode::resources::ResourceLoader;
+use kode::rpc::{RpcOptions, RpcScopedModel, run};
 #[cfg(unix)]
-use pi::session::SessionEntry;
-use pi::session::{Session, SessionMessage};
-use pi::session_index::SessionIndex;
-use pi::tools::ToolRegistry;
-use pi::vcr::{VcrMode, VcrRecorder};
+use kode::session::SessionEntry;
+use kode::session::{Session, SessionMessage};
+use kode::session_index::SessionIndex;
+use kode::tools::ToolRegistry;
+use kode::vcr::{VcrMode, VcrRecorder};
 use serde_json::{Value, json};
 use std::collections::HashMap;
 #[cfg(unix)]
@@ -102,7 +102,7 @@ fn build_agent_session(session: Session, cassette_dir: &Path) -> AgentSession {
         agent,
         session,
         false,
-        pi::compaction::ResolvedCompactionSettings::default(),
+        kode::compaction::ResolvedCompactionSettings::default(),
     )
 }
 
@@ -158,8 +158,8 @@ impl Provider for KeylessReplayProvider {
         &self,
         _context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> pi::error::Result<
-        std::pin::Pin<Box<dyn futures::Stream<Item = pi::error::Result<StreamEvent>> + Send>>,
+    ) -> kode::error::Result<
+        std::pin::Pin<Box<dyn futures::Stream<Item = kode::error::Result<StreamEvent>> + Send>>,
     > {
         let partial = self.message("", StopReason::Stop);
         let done = self.message("keyless replay response", StopReason::Stop);
@@ -189,7 +189,7 @@ fn build_persistent_keyless_agent_session(session: Session, cwd: &Path) -> Agent
         agent,
         session,
         true,
-        pi::compaction::ResolvedCompactionSettings::default(),
+        kode::compaction::ResolvedCompactionSettings::default(),
     )
 }
 
@@ -1963,7 +1963,7 @@ fn rpc_binary_sigint_exits_orderly_and_preserves_session() -> std::io::Result<()
     std::fs::create_dir_all(&agent_dir)?;
     std::fs::create_dir_all(&package_dir)?;
 
-    let mut command = Command::new(env!("CARGO_BIN_EXE_pi")); // ubs:ignore Cargo-provided test binary path, not user input.
+    let mut command = Command::new(env!("CARGO_BIN_EXE_kode")); // ubs:ignore Cargo-provided test binary path, not user input.
     command
         .args([
             "--rpc",

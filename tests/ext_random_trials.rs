@@ -11,7 +11,7 @@
 //! - `PI_EXT_RANDOM_N` - sample size (default: 1; use 20 for the legacy batch)
 //! - `PI_EXT_RANDOM_FILTER` - optional `tier:1-3` or `source:community` filter
 //! - `PI_EXT_RANDOM_IDS` - optional comma-separated explicit ID list (bypasses selector)
-//! - `PI_EXT_RANDOM_OUTPUT_DIR` - optional output directory (default: `$TMPDIR/pi_agent_rust/...`)
+//! - `PI_EXT_RANDOM_OUTPUT_DIR` - optional output directory (default: `$TMPDIR/koompi_code_cli/...`)
 //!
 //! # Smoke Run
 //! ```sh
@@ -28,9 +28,9 @@
 
 mod common;
 
-use pi::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use serde_json::Value;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -153,7 +153,7 @@ fn output_dir_from_override(override_dir: Option<&str>) -> PathBuf {
     }
 
     std::env::temp_dir()
-        .join("pi_agent_rust")
+        .join("koompi_code_cli")
         .join("ext_conformance")
         .join("random_trials")
 }
@@ -939,7 +939,7 @@ fn output_dir_defaults_to_tmpdir_backed_path() {
     assert!(dir.starts_with(std::env::temp_dir()));
     assert!(
         dir.ends_with(
-            Path::new("pi_agent_rust")
+            Path::new("koompi_code_cli")
                 .join("ext_conformance")
                 .join("random_trials")
         )

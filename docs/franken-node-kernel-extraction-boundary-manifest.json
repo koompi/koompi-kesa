@@ -9,7 +9,7 @@
   ],
   "status": "active_blocking_policy",
   "effective_date_utc": "2026-02-17T00:00:00Z",
-  "source_project_root": "/data/projects/pi_agent_rust",
+  "source_project_root": "/data/projects/koompi_code_cli",
   "target_project_root": "/dp/franken_node",
   "boundary_domains": [
     {
@@ -165,7 +165,7 @@
   "deferred_modules": [
     {
       "module_path": "src/provider.rs",
-      "reason": "Provider abstraction remains in pi_agent_rust until semantic/runtime parity gates are complete.",
+      "reason": "Provider abstraction remains in koompi_code_cli until semantic/runtime parity gates are complete.",
       "follow_up_bead": "bd-3ar8v.7.3"
     },
     {

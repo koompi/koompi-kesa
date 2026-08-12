@@ -22,7 +22,7 @@
           "dirty_paths": []
         },
         "worktree": {
-          "cwd": "/data/projects/pi_agent_rust",
+          "cwd": "/data/projects/koompi_code_cli",
           "dirty_policy": "none"
         },
         "entries": [
@@ -38,7 +38,7 @@
                 "--all-targets"
               ],
               "rendered": "rch exec -- cargo check --all-targets",
-              "cwd": "/data/projects/pi_agent_rust",
+              "cwd": "/data/projects/koompi_code_cli",
               "command_fingerprint": "sha256:remote-clean",
               "feature_flags": [],
               "env_allowlist": [
@@ -79,10 +79,10 @@
               "stdout_excerpt": "Finished dev profile"
             },
             "paths": {
-              "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-              "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp",
-              "remote_target_dir": "/data/projects/pi_agent_rust/.rch-target-worker-job",
-              "remote_tmpdir": "/data/projects/pi_agent_rust/.rch-tmp",
+              "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+              "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp",
+              "remote_target_dir": "/data/projects/koompi_code_cli/.rch-target-worker-job",
+              "remote_tmpdir": "/data/projects/koompi_code_cli/.rch-tmp",
               "artifact_paths": [
                 "target/debug/.fingerprint"
               ]
@@ -157,7 +157,7 @@
           "dirty_paths": []
         },
         "worktree": {
-          "cwd": "/data/projects/pi_agent_rust",
+          "cwd": "/data/projects/koompi_code_cli",
           "dirty_policy": "none"
         },
         "entries": [
@@ -176,7 +176,7 @@
                 "warnings"
               ],
               "rendered": "rch exec -- cargo clippy --all-targets -- -D warnings",
-              "cwd": "/data/projects/pi_agent_rust",
+              "cwd": "/data/projects/koompi_code_cli",
               "command_fingerprint": "sha256:local-fallback-refusal",
               "feature_flags": [],
               "env_allowlist": [
@@ -217,8 +217,8 @@
               "stdout_excerpt": ""
             },
             "paths": {
-              "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-              "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp",
+              "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+              "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp",
               "remote_target_dir": "",
               "remote_tmpdir": "",
               "artifact_paths": []
@@ -303,7 +303,7 @@
           "dirty_paths": []
         },
         "worktree": {
-          "cwd": "/data/projects/pi_agent_rust",
+          "cwd": "/data/projects/koompi_code_cli",
           "dirty_policy": "none"
         },
         "entries": [
@@ -320,7 +320,7 @@
                 "remote_validation_proof_ledger_contract"
               ],
               "rendered": "rch exec -- cargo test --test remote_validation_proof_ledger_contract",
-              "cwd": "/data/projects/pi_agent_rust",
+              "cwd": "/data/projects/koompi_code_cli",
               "command_fingerprint": "sha256:queue-backoff",
               "feature_flags": [],
               "env_allowlist": [
@@ -361,8 +361,8 @@
               "stdout_excerpt": ""
             },
             "paths": {
-              "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-              "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp",
+              "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+              "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp",
               "remote_target_dir": "",
               "remote_tmpdir": "",
               "artifact_paths": []
@@ -447,7 +447,7 @@
           "dirty_paths": []
         },
         "worktree": {
-          "cwd": "/data/projects/pi_agent_rust",
+          "cwd": "/data/projects/koompi_code_cli",
           "dirty_policy": "none"
         },
         "entries": [
@@ -463,7 +463,7 @@
                 "--all-targets"
               ],
               "rendered": "rch exec -- cargo check --all-targets",
-              "cwd": "/data/projects/pi_agent_rust",
+              "cwd": "/data/projects/koompi_code_cli",
               "command_fingerprint": "sha256:retrieval-warning",
               "feature_flags": [],
               "env_allowlist": [
@@ -504,10 +504,10 @@
               "stdout_excerpt": "Finished dev profile"
             },
             "paths": {
-              "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/fixture/target",
-              "tmpdir": "/data/tmp/pi_agent_rust_cargo/fixture/tmp",
-              "remote_target_dir": "/data/projects/pi_agent_rust/.rch-target-worker-job",
-              "remote_tmpdir": "/data/projects/pi_agent_rust/.rch-tmp",
+              "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/fixture/target",
+              "tmpdir": "/data/tmp/koompi_code_cli_cargo/fixture/tmp",
+              "remote_target_dir": "/data/projects/koompi_code_cli/.rch-target-worker-job",
+              "remote_tmpdir": "/data/projects/koompi_code_cli/.rch-tmp",
               "artifact_paths": [
                 "target/debug/.fingerprint"
               ]

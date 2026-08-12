@@ -1,17 +1,17 @@
 ---
 name: pi-agent-rust
 description: >-
-  Speeds up pi_agent_rust development and verification workflows. Use when editing providers,
+  Speeds up koompi_code_cli development and verification workflows. Use when editing providers,
   tools, sessions, extensions, installer/uninstaller logic, or triaging regressions in this repo.
 ---
 
-<!-- pi_agent_rust installer managed skill -->
+<!-- koompi_code_cli installer managed skill -->
 
 # Pi Agent Rust
 
 ## Use This Skill When
 
-- You are working inside `pi_agent_rust` and need the fastest path to safe, verified edits.
+- You are working inside `koompi_code_cli` and need the fastest path to safe, verified edits.
 - You are touching provider/tool/session/extension behavior and need targeted triage.
 - You are changing installer/uninstaller/skill install behavior and need deterministic safety checks.
 - You need symptom-first debugging playbooks instead of ad-hoc command hunting.
@@ -19,8 +19,8 @@ description: >-
 ## 60-Second Bootstrap
 
 ```bash
-export CARGO_TARGET_DIR="/data/tmp/pi_agent_rust/${USER:-agent}"
-export TMPDIR="/data/tmp/pi_agent_rust/${USER:-agent}/tmp"
+export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli/${USER:-agent}"
+export TMPDIR="/data/tmp/koompi_code_cli/${USER:-agent}/tmp"
 mkdir -p "$TMPDIR"
 
 rch exec -- cargo check --all-targets

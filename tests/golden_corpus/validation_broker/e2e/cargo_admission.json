@@ -7,8 +7,8 @@
   "resolved_runner": "none",
   "command_class": "heavy",
   "allow_local_fallback": false,
-  "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/validation-broker-e2e/target",
-  "tmpdir": "/data/tmp/pi_agent_rust_cargo/validation-broker-e2e/tmp",
+  "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/validation-broker-e2e/target",
+  "tmpdir": "/data/tmp/koompi_code_cli_cargo/validation-broker-e2e/tmp",
   "rch_queue_forecast": {
     "schema": "pi.cargo_headroom.rch_queue_forecast.v1",
     "status": "ok",

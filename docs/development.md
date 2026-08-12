@@ -16,13 +16,13 @@ rch exec -- cargo build --release
 
 ## Sibling Crates (Published vs Local Dev)
 
-By default, `pi_agent_rust` depends on **published crates.io versions** of the sibling libraries:
+By default, `koompi_code_cli` depends on **published crates.io versions** of the sibling libraries:
 - `asupersync`
 - `rich_rust`
 - `charmed-*` (bubbletea/lipgloss/bubbles/glamour)
 - `sqlmodel-*` (core/sqlite)
 
-If you want to hack on those repos locally (in lockstep), use a local-only Cargo patch. Assuming the sibling repos are checked out next to `pi_agent_rust` (e.g. `../asupersync`, `../rich_rust`, etc), add this to **your local checkout** (do not commit):
+If you want to hack on those repos locally (in lockstep), use a local-only Cargo patch. Assuming the sibling repos are checked out next to `koompi_code_cli` (e.g. `../asupersync`, `../rich_rust`, etc), add this to **your local checkout** (do not commit):
 
 ```toml
 [patch.crates-io]
@@ -82,7 +82,7 @@ The `pi.doctor.swarm_resource_preflight.v1` finding reports cgroup CPU quota,
 cpuset size, NUMA nodes, cgroup memory limits, and scratch headroom for
 `CARGO_TARGET_DIR` and `TMPDIR`. Treat any `status = fail` or non-empty
 `critical_failures` list as a hard stop until both directories point under
-`/data/tmp/pi_agent_rust_cargo/<agent>/` with enough free space. When the check
+`/data/tmp/koompi_code_cli_cargo/<agent>/` with enough free space. When the check
 passes, use `recommended_budgets` as the operator ceiling for agent fanout, tool
 concurrency, extension hostcall lanes, RCH verification fanout, queue depth, and
 RSS budget.
@@ -105,7 +105,7 @@ For RCH gates that generate checked-in evidence, also bracket the remote command
 with a generated-artifact postcondition:
 
 ```bash
-before_manifest="/data/tmp/pi_agent_rust_cargo/${USER:-agent}/must-pass-before.json"
+before_manifest="/data/tmp/koompi_code_cli_cargo/${USER:-agent}/must-pass-before.json"
 python3 scripts/check_rch_artifact_sync.py --mode postcondition \
   --generated-artifact tests/ext_conformance/reports/gate/must_pass_gate_verdict.json \
   --write-before-manifest "$before_manifest" --json

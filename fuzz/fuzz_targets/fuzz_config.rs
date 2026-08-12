@@ -6,7 +6,7 @@
 //! UTF-8-ish payloads, including line-oriented and BOM-prefixed variants.
 
 use libfuzzer_sys::fuzz_target;
-use pi::config::{
+use kode::config::{
     CompactionSettings, Config, ExtensionPolicyConfig, ExtensionRiskConfig, RepairPolicyConfig,
     ThinkingBudgets,
 };

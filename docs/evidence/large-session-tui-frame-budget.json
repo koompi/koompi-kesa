@@ -161,7 +161,7 @@
         "status": "passed"
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey-h66tp5/target TMPDIR=/tmp cargo test -p pi_agent_rust --test tui_state frame_budget -- --nocapture",
+        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey-h66tp5/target TMPDIR=/tmp cargo test -p koompi_code_cli --test tui_state frame_budget -- --nocapture",
         "status": "passed",
         "tests": 2
       },
@@ -178,11 +178,11 @@
         "status": "passed"
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey-h66tp5/target TMPDIR=/tmp cargo check --all-targets",
+        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey-h66tp5/target TMPDIR=/tmp cargo check --all-targets",
         "status": "passed"
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey-h66tp5/target TMPDIR=/tmp cargo clippy --all-targets -- -D warnings",
+        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey-h66tp5/target TMPDIR=/tmp cargo clippy --all-targets -- -D warnings",
         "status": "passed"
       }
     ],

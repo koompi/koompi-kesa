@@ -10,9 +10,9 @@
 //! - Denylist takes precedence over allowlist
 //! - GET requests cannot include a body
 
-use pi::connectors::http::{HttpConnector, HttpConnectorConfig};
-use pi::connectors::{Connector, HostCallPayload};
-use pi::extensions::HostCallErrorCode;
+use kode::connectors::http::{HttpConnector, HttpConnectorConfig};
+use kode::connectors::{Connector, HostCallPayload};
+use kode::extensions::HostCallErrorCode;
 #[cfg(unix)]
 use serde_json::Value;
 use serde_json::json;

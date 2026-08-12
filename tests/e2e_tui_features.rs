@@ -51,7 +51,7 @@ struct TmuxE2eLock(std::fs::File);
 
 impl TmuxE2eLock {
     fn acquire() -> Self {
-        let path = std::env::temp_dir().join("pi_agent_rust.tmux-e2e-features.lock");
+        let path = std::env::temp_dir().join("koompi_code_cli.tmux-e2e-features.lock");
         let file = OpenOptions::new()
             .create(true)
             .read(true)

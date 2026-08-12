@@ -12,13 +12,13 @@
 mod common;
 
 use common::TestHarness;
-use pi::agent::{AgentEvent, TURN_LATENCY_BREAKDOWN_SCHEMA_V1, TurnLatencyBreakdown};
-use pi::extensions::{ExtensionEventName, ExtensionUiRequest, extension_event_from_agent};
-use pi::model::{
+use kode::agent::{AgentEvent, TURN_LATENCY_BREAKDOWN_SCHEMA_V1, TurnLatencyBreakdown};
+use kode::extensions::{ExtensionEventName, ExtensionUiRequest, extension_event_from_agent};
+use kode::model::{
     AssistantMessage, AssistantMessageEvent, ContentBlock, ImageContent, Message, StopReason,
     TextContent, ThinkingContent, ToolCall, Usage,
 };
-use pi::tools::ToolOutput;
+use kode::tools::ToolOutput;
 use serde_json::{Value, json};
 use std::sync::Arc;
 
@@ -84,8 +84,8 @@ fn test_assistant_message() -> AssistantMessage {
 }
 
 fn test_user_message() -> Message {
-    Message::User(pi::model::UserMessage {
-        content: pi::model::UserContent::Text("test prompt".to_string()),
+    Message::User(kode::model::UserMessage {
+        content: kode::model::UserContent::Text("test prompt".to_string()),
         timestamp: 1_700_000_000,
     })
 }
@@ -1037,7 +1037,7 @@ fn json_parity_no_snake_case_leak() {
 fn json_parity_session_header_schema() {
     let harness = TestHarness::new("json_parity_session_header_schema");
 
-    let header = pi::session::SessionHeader::new();
+    let header = kode::session::SessionHeader::new();
     let json = serde_json::to_value(&header).expect("serialize header");
 
     assert_eq!(json["type"], "session");
@@ -2247,7 +2247,7 @@ fn json_parity_extension_event_round_trip() {
 #[test]
 fn json_parity_ui_response_value_variant() {
     let harness = TestHarness::new("json_parity_ui_response_value_variant");
-    let resp = pi::extensions::ExtensionUiResponse {
+    let resp = kode::extensions::ExtensionUiResponse {
         id: "sel-1".to_string(),
         value: Some(json!("option_b")),
         cancelled: false,
@@ -2269,7 +2269,7 @@ fn json_parity_ui_response_value_variant() {
 fn json_parity_ui_response_confirmed_variant() {
     let harness = TestHarness::new("json_parity_ui_response_confirmed_variant");
 
-    let confirmed = pi::extensions::ExtensionUiResponse {
+    let confirmed = kode::extensions::ExtensionUiResponse {
         id: "cfm-1".to_string(),
         value: Some(json!(true)),
         cancelled: false,
@@ -2277,7 +2277,7 @@ fn json_parity_ui_response_confirmed_variant() {
     assert_eq!(confirmed.value, Some(json!(true)));
     assert!(!confirmed.cancelled);
 
-    let denied = pi::extensions::ExtensionUiResponse {
+    let denied = kode::extensions::ExtensionUiResponse {
         id: "cfm-2".to_string(),
         value: Some(json!(false)),
         cancelled: false,
@@ -2296,7 +2296,7 @@ fn json_parity_ui_response_confirmed_variant() {
 #[test]
 fn json_parity_ui_response_cancelled_variant() {
     let harness = TestHarness::new("json_parity_ui_response_cancelled_variant");
-    let resp = pi::extensions::ExtensionUiResponse {
+    let resp = kode::extensions::ExtensionUiResponse {
         id: "inp-1".to_string(),
         value: None,
         cancelled: true,
@@ -2316,14 +2316,14 @@ fn json_parity_ui_response_cancelled_variant() {
 #[test]
 fn json_parity_ui_response_text_value() {
     let harness = TestHarness::new("json_parity_ui_response_text_value");
-    let input_resp = pi::extensions::ExtensionUiResponse {
+    let input_resp = kode::extensions::ExtensionUiResponse {
         id: "inp-1".to_string(),
         value: Some(json!("user-typed-text")),
         cancelled: false,
     };
     assert_eq!(input_resp.value, Some(json!("user-typed-text")));
 
-    let editor_resp = pi::extensions::ExtensionUiResponse {
+    let editor_resp = kode::extensions::ExtensionUiResponse {
         id: "edt-1".to_string(),
         value: Some(json!("edited prompt content")),
         cancelled: false,
@@ -3863,8 +3863,8 @@ fn json_parity_agent_end_message_ordering() {
 
     let msgs: Vec<Message> = (0..5)
         .map(|i| {
-            Message::User(pi::model::UserMessage {
-                content: pi::model::UserContent::Text(format!("message {i}")),
+            Message::User(kode::model::UserMessage {
+                content: kode::model::UserContent::Text(format!("message {i}")),
                 timestamp: 1_700_000_000 + i64::from(i),
             })
         })
@@ -4023,7 +4023,7 @@ fn json_parity_extension_event_payload_all_forwarded() {
 fn json_parity_session_header_defaults() {
     let harness = TestHarness::new("json_parity_session_header_defaults");
 
-    let header = pi::session::SessionHeader::new();
+    let header = kode::session::SessionHeader::new();
     let json = serde_json::to_value(&header).expect("serialize");
 
     // Required fields must be present.

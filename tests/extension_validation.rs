@@ -13,8 +13,8 @@
 //! - E2E pipeline (mixed sources → validated output)
 //! - Serde round-trips
 
-use pi::extension_popularity::CandidatePool;
-use pi::extension_validation::*;
+use kode::extension_popularity::CandidatePool;
+use kode::extension_validation::*;
 use proptest::prelude::*;
 use std::fs;
 

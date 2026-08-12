@@ -10,7 +10,7 @@ fn repo_root() -> PathBuf {
 
 fn case_dir(case_name: &str) -> PathBuf {
     PathBuf::from("/tmp")
-        .join("pi_agent_rust_cargo_headroom_admission")
+        .join("koompi_code_cli_cargo_headroom_admission")
         .join(format!("{}-{}", case_name, std::process::id()))
 }
 

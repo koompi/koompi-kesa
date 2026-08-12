@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# pi_agent_rust installer
+# koompi-code-cli installer
 #
 # One-liner install:
-#   curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/install.sh?$(date +%s)" | bash
+#   curl -fsSL "https://raw.githubusercontent.com/koompi/koompi-code-cli/main/install.sh?$(date +%s)" | bash
 #
 # Highlights:
 # - Installs latest (or requested) GitHub release binary for your platform
@@ -16,8 +16,8 @@ set -euo pipefail
 umask 022
 shopt -s lastpipe 2>/dev/null || true
 
-OWNER="${OWNER:-Dicklesworthstone}"
-REPO="${REPO:-pi_agent_rust}"
+OWNER="${OWNER:-koompi}"
+REPO="${REPO:-koompi-code-cli}"
 VERSION="${VERSION:-}"
 
 DEST_DEFAULT="$HOME/.local/bin"
@@ -70,7 +70,7 @@ TS_PI_DETECTED=0
 ADOPT_TS=0
 ADOPT_CANONICAL=0
 
-FINAL_BIN_NAME="pi"
+FINAL_BIN_NAME="kode"
 INSTALL_BIN_PATH=""
 
 LEGACY_ALIAS_PATH=""
@@ -80,21 +80,21 @@ LEGACY_MOVED_TO=""
 COMPAT_ALIAS_PATH=""
 COMPAT_ALIAS_STATUS="pending"
 
-PATH_MARKER="# pi-agent-rust installer PATH"
+PATH_MARKER="# koompi-code-cli installer PATH"
 PATH_UPDATED_FILES=""
 
-AGENT_SKILL_NAME="pi-agent-rust"
+AGENT_SKILL_NAME="koompi-code"
 AGENT_SKILL_STATUS="pending"
 AGENT_SKILL_CLAUDE_PATH=""
 AGENT_SKILL_CODEX_PATH=""
-AGENT_SKILL_MARKER="pi_agent_rust installer managed skill"
+AGENT_SKILL_MARKER="koompi-code-cli installer managed skill"
 
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/pi-agent-rust"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/koompi-code-cli"
 STATE_FILE="$STATE_DIR/install-state.env"
 STATE_VERSION="1"
 
 TMP=""
-LOCK_DIR="${PI_INSTALLER_LOCK_DIR:-/tmp/pi-agent-rust-install.lock.d}"
+LOCK_DIR="${PI_INSTALLER_LOCK_DIR:-/tmp/koompi-code-cli-install.lock.d}"
 LOCKED=0
 MIGRATION_MOVED=0
 INSTALL_COMMITTED=0
@@ -257,7 +257,7 @@ capture_version_line() {
 is_managed_alias() {
   local path="$1"
   [ -f "$path" ] || return 1
-  grep -q "pi_agent_rust installer managed alias" "$path" 2>/dev/null
+  grep -q "koompi-code-cli installer managed alias" "$path" 2>/dev/null
 }
 
 setup_proxy() {
@@ -651,7 +651,7 @@ Options:
   --sigstore-bundle-url URL
                           URL to Sigstore bundle (.sigstore.json)
   --from-source          Build from source instead of downloading release binary
-  --source-dir DIR       Build from a local pi_agent_rust checkout (implies
+  --source-dir DIR       Build from a local koompi_code_cli checkout (implies
                           --from-source). Useful when iterating on a feature
                           branch, the desired commit is not tagged yet, or
                           a platform has no prebuilt binary (e.g. FreeBSD).
@@ -1423,49 +1423,12 @@ detect_existing_pi() {
   fi
 }
 
+# `kode` has no predecessor to adopt; upstream's TypeScript-`pi` migration path
+# does not apply to this fork.
 choose_adoption_mode() {
   ADOPT_TS=0
   ADOPT_CANONICAL=0
-  FINAL_BIN_NAME="pi"
-
-  if [ "$TS_PI_DETECTED" -eq 0 ]; then
-    return 0
-  fi
-
-  info "Detected existing non-Rust pi command at: $CURRENT_PI_PATH"
-  if [ -n "$CURRENT_PI_VERSION" ]; then
-    info "Existing pi reports: $CURRENT_PI_VERSION"
-  fi
-
-  local decision=""
-  case "$ADOPT_MODE" in
-    yes)
-      decision="yes"
-      ;;
-    no)
-      decision="no"
-      ;;
-    ask)
-      if prompt_confirm "Install Rust Pi as canonical 'pi' and preserve existing one as '${LEGACY_ALIAS_NAME}'?" 0; then
-        decision="yes"
-      else
-        decision="no"
-      fi
-      ;;
-    *)
-      decision="no"
-      ;;
-  esac
-
-  if [ "$decision" = "yes" ]; then
-    ADOPT_TS=1
-    ADOPT_CANONICAL=1
-  else
-    ADOPT_TS=0
-    ADOPT_CANONICAL=0
-    FINAL_BIN_NAME="pi-rust"
-    warn "Keeping existing pi untouched; Rust binary will be installed as ${FINAL_BIN_NAME}"
-  fi
+  FINAL_BIN_NAME="kode"
 }
 
 choose_dest_for_adoption() {
@@ -1830,7 +1793,7 @@ build_from_source() {
     # (no prebuilt binaries), feature-branch iteration where the desired
     # commit is not tagged, and air-gapped/offline workflows that already
     # have the source on disk. Validate the directory looks like a real
-    # pi_agent_rust checkout before invoking cargo.
+    # koompi_code_cli checkout before invoking cargo.
     if [ ! -d "$SOURCE_DIR" ]; then
       err "--source-dir path does not exist or is not a directory: $SOURCE_DIR"
       return 1
@@ -1843,8 +1806,8 @@ build_from_source() {
       err "--source-dir does not contain Cargo.toml: $src_dir"
       return 1
     fi
-    if ! grep -q '^name *= *"pi_agent_rust"' "$src_dir/Cargo.toml"; then
-      err "--source-dir Cargo.toml package name is not pi_agent_rust: $src_dir"
+    if ! grep -q '^name *= *"koompi_code_cli"' "$src_dir/Cargo.toml"; then
+      err "--source-dir Cargo.toml package name is not koompi_code_cli: $src_dir"
       return 1
     fi
   else
@@ -1884,7 +1847,7 @@ create_managed_alias_wrapper() {
 
   {
     printf '#!/usr/bin/env bash\n'
-    printf '# pi_agent_rust installer managed alias\n'
+    printf '# koompi-code-cli installer managed alias\n'
     printf 'set -euo pipefail\n'
     printf 'exec %q "$@"\n' "$target_path"
   } > "$alias_path"
@@ -1899,7 +1862,7 @@ choose_legacy_alias_path() {
     return 0
   fi
 
-  if grep -q "pi_agent_rust installer managed alias" "$candidate" 2>/dev/null; then
+  if grep -q "koompi-code-cli installer managed alias" "$candidate" 2>/dev/null; then
     LEGACY_ALIAS_PATH="$candidate"
     return 0
   fi
@@ -2402,7 +2365,7 @@ PYEOF
 
 cleanup_legacy_agent_settings() {
   local bin_candidates=()
-  local recorded_bin="${PIAR_INSTALL_BIN:-}"
+  local recorded_bin="${KODE_INSTALL_BIN:-}"
   local current_bin="${INSTALL_BIN_PATH:-}"
 
   if [ -n "$recorded_bin" ]; then
@@ -2414,8 +2377,8 @@ cleanup_legacy_agent_settings() {
   [ "${#bin_candidates[@]}" -gt 0 ] || return 0
 
   local claude_candidates=()
-  if [ -n "${PIAR_CLAUDE_HOOK_SETTINGS:-}" ]; then
-    claude_candidates+=("${PIAR_CLAUDE_HOOK_SETTINGS}")
+  if [ -n "${KODE_CLAUDE_HOOK_SETTINGS:-}" ]; then
+    claude_candidates+=("${KODE_CLAUDE_HOOK_SETTINGS}")
   fi
   claude_candidates+=(
     "$HOME/.claude/settings.json"
@@ -2424,8 +2387,8 @@ cleanup_legacy_agent_settings() {
   )
 
   local gemini_candidates=()
-  if [ -n "${PIAR_GEMINI_HOOK_SETTINGS:-}" ]; then
-    gemini_candidates+=("${PIAR_GEMINI_HOOK_SETTINGS}")
+  if [ -n "${KODE_GEMINI_HOOK_SETTINGS:-}" ]; then
+    gemini_candidates+=("${KODE_GEMINI_HOOK_SETTINGS}")
   fi
   gemini_candidates+=(
     "$HOME/.gemini/settings.json"
@@ -2440,7 +2403,7 @@ cleanup_legacy_agent_settings() {
   done
   for settings_path in "${gemini_candidates[@]}"; do
     if is_expected_legacy_agent_settings_path "$settings_path" "gemini"; then
-      cleanup_legacy_settings_entries "$settings_path" "BeforeTool" "run_shell_command" "pi-agent-rust" "${bin_candidates[@]}"
+      cleanup_legacy_settings_entries "$settings_path" "BeforeTool" "run_shell_command" "koompi-code-cli" "${bin_candidates[@]}"
     fi
   done
 }
@@ -2463,19 +2426,19 @@ is_expected_skill_destination() {
 pi_agent_skill_inline_content() {
   cat <<'SKILL'
 ---
-name: pi-agent-rust
+name: koompi-code-cli
 description: >-
-  Speeds up pi_agent_rust development and verification workflows. Use when editing providers,
+  Speeds up koompi_code_cli development and verification workflows. Use when editing providers,
   tools, sessions, extensions, installer/uninstaller logic, or triaging regressions in this repo.
 ---
 
-<!-- pi_agent_rust installer managed skill -->
+<!-- koompi-code-cli installer managed skill -->
 
 # Pi Agent Rust
 
 ## Use This Skill When
 
-- You are working inside `pi_agent_rust` and need the fastest path to safe, verified edits.
+- You are working inside `koompi_code_cli` and need the fastest path to safe, verified edits.
 - You are touching provider/tool/session/extension behavior and need targeted triage.
 - You are changing installer/uninstaller/skill install behavior and need deterministic safety checks.
 - You need symptom-first debugging playbooks instead of ad-hoc command hunting.
@@ -2483,8 +2446,8 @@ description: >-
 ## 60-Second Bootstrap
 
 ```bash
-export CARGO_TARGET_DIR="/data/tmp/pi_agent_rust/${USER:-agent}"
-export TMPDIR="/data/tmp/pi_agent_rust/${USER:-agent}/tmp"
+export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli/${USER:-agent}"
+export TMPDIR="/data/tmp/koompi_code_cli/${USER:-agent}/tmp"
 mkdir -p "$TMPDIR"
 
 rch exec -- cargo check --all-targets
@@ -2500,7 +2463,7 @@ bash tests/installer_regression.sh
 | Provider stream/tool-call regression | `cargo test provider_streaming -- --nocapture` ; `rg -n "stream|tool|delta|event|SSE" src/providers src/sse.rs` ; `cargo test conformance` |
 | Session replay/index drift | `cargo test session -- --nocapture` ; `rg -n "Session|save|open|index|jsonl|sqlite" src/session.rs src/session_index.rs` ; `cargo test conformance` |
 | Extension policy/runtime failure | `cargo test extension -- --nocapture` ; `rg -n "policy|hostcall|capability|quickjs|deny|allow" src/extensions.rs src/extensions_js.rs` ; `cargo test conformance` |
-| Installer/uninstaller/skill issue | `bash tests/installer_regression.sh` ; `rg -n "AGENT_SKILL_STATUS|CHECKSUM_STATUS|SIGSTORE_STATUS|COMPLETIONS_STATUS" install.sh` ; `rg -n "managed skill|expected skill directory|PIAR_AGENT_SKILL" uninstall.sh` |
+| Installer/uninstaller/skill issue | `bash tests/installer_regression.sh` ; `rg -n "AGENT_SKILL_STATUS|CHECKSUM_STATUS|SIGSTORE_STATUS|COMPLETIONS_STATUS" install.sh` ; `rg -n "managed skill|expected skill directory|KODE_AGENT_SKILL" uninstall.sh` |
 | Interactive vs RPC divergence | `cargo test e2e_rpc -- --nocapture` ; `rg -n "interactive|rpc|stdin|event|session" src/main.rs src/interactive.rs src/rpc.rs` ; `cargo test conformance` |
 
 For deeper diagnosis, use `references/DEBUGGING-PLAYBOOKS.md`.
@@ -2527,7 +2490,7 @@ For deeper diagnosis, use `references/DEBUGGING-PLAYBOOKS.md`.
 
 | Changed Files (examples) | Minimum Required Tests |
 |---|---|
-| `install.sh`, `uninstall.sh`, `.claude/skills/pi-agent-rust/**` | `bash -n install.sh uninstall.sh tests/installer_regression.sh` ; `shellcheck -x install.sh uninstall.sh tests/installer_regression.sh` ; `bash tests/installer_regression.sh` ; `bash scripts/skill-smoke.sh` |
+| `install.sh`, `uninstall.sh`, `.claude/skills/koompi-code-cli/**` | `bash -n install.sh uninstall.sh tests/installer_regression.sh` ; `shellcheck -x install.sh uninstall.sh tests/installer_regression.sh` ; `bash tests/installer_regression.sh` ; `bash scripts/skill-smoke.sh` |
 | `src/providers/**`, `src/provider.rs`, `src/sse.rs` | `cargo test provider_streaming` ; `cargo test conformance` |
 | `src/session.rs`, `src/session_index.rs`, `src/session_test.rs` | `cargo test session` ; `cargo test conformance` |
 | `src/extensions.rs`, `src/extensions_js.rs` | `cargo test extension` ; `cargo test conformance` |
@@ -2647,8 +2610,8 @@ pi_agent_skill_commands_reference_content() {
 ## 1) Session Bootstrap
 
 ```bash
-export CARGO_TARGET_DIR="/data/tmp/pi_agent_rust/${USER:-agent}"
-export TMPDIR="/data/tmp/pi_agent_rust/${USER:-agent}/tmp"
+export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli/${USER:-agent}"
+export TMPDIR="/data/tmp/koompi_code_cli/${USER:-agent}/tmp"
 mkdir -p "$TMPDIR"
 ```
 
@@ -2733,7 +2696,7 @@ rg -n "AGENT_SKILL_STATUS|CHECKSUM_STATUS|SIGSTORE_STATUS|COMPLETIONS_STATUS" in
 rg -n "install_skill_to_destination|is_installer_managed_skill_file|is_expected_skill_destination" install.sh
 
 # Uninstall safety guards
-rg -n "remove_installed_skills|is_managed_skill_file|is_expected_skill_directory|PIAR_AGENT_SKILL" uninstall.sh
+rg -n "remove_installed_skills|is_managed_skill_file|is_expected_skill_directory|KODE_AGENT_SKILL" uninstall.sh
 ```
 
 ## 9) Docs Drift Checks
@@ -2885,7 +2848,7 @@ rg -n "allow|deny|policy|capability|hostcall" src/extensions.rs src/extensions_j
 ```bash
 bash tests/installer_regression.sh
 rg -n "AGENT_SKILL_STATUS|CHECKSUM_STATUS|SIGSTORE_STATUS|COMPLETIONS_STATUS|install_skill_to_destination" install.sh
-rg -n "remove_installed_skills|is_expected_skill_directory|is_managed_skill_file|PIAR_AGENT_SKILL" uninstall.sh
+rg -n "remove_installed_skills|is_expected_skill_directory|is_managed_skill_file|KODE_AGENT_SKILL" uninstall.sh
 ```
 
 ### Minimal Repro Template
@@ -3320,29 +3283,29 @@ load_existing_state() {
 write_state() {
   mkdir -p "$STATE_DIR"
   {
-    printf '# pi_agent_rust installer state\n'
-    printf 'PIAR_STATE_VERSION=%q\n' "$STATE_VERSION"
-    printf 'PIAR_INSTALL_VERSION=%q\n' "$VERSION"
-    printf 'PIAR_INSTALL_SOURCE=%q\n' "$INSTALL_SOURCE"
-    printf 'PIAR_INSTALL_DEST=%q\n' "$DEST"
-    printf 'PIAR_INSTALL_BIN=%q\n' "$INSTALL_BIN_PATH"
-    printf 'PIAR_INSTALL_BIN_NAME=%q\n' "$FINAL_BIN_NAME"
-    printf 'PIAR_CHECKSUM_STATUS=%q\n' "$CHECKSUM_STATUS"
-    printf 'PIAR_SIGSTORE_STATUS=%q\n' "$SIGSTORE_STATUS"
-    printf 'PIAR_COMPLETIONS_STATUS=%q\n' "$COMPLETIONS_STATUS"
-    printf 'PIAR_AGENT_SKILL_STATUS=%q\n' "$AGENT_SKILL_STATUS"
-    printf 'PIAR_AGENT_SKILL_CLAUDE_PATH=%q\n' "$AGENT_SKILL_CLAUDE_PATH"
-    printf 'PIAR_AGENT_SKILL_CODEX_PATH=%q\n' "$AGENT_SKILL_CODEX_PATH"
-    printf 'PIAR_ADOPTED_TYPESCRIPT=%q\n' "$ADOPT_TS"
-    printf 'PIAR_LEGACY_ALIAS_PATH=%q\n' "$LEGACY_ALIAS_PATH"
-    printf 'PIAR_LEGACY_TARGET_PATH=%q\n' "$LEGACY_TARGET_PATH"
-    printf 'PIAR_LEGACY_MOVED_FROM=%q\n' "$LEGACY_MOVED_FROM"
-    printf 'PIAR_LEGACY_MOVED_TO=%q\n' "$LEGACY_MOVED_TO"
-    printf 'PIAR_COMPAT_ALIAS_PATH=%q\n' "$COMPAT_ALIAS_PATH"
-    printf 'PIAR_COMPAT_ALIAS_STATUS=%q\n' "$COMPAT_ALIAS_STATUS"
-    printf 'PIAR_PATH_MARKER=%q\n' "$PATH_MARKER"
-    printf 'PIAR_PATH_UPDATED_FILES=%q\n' "$PATH_UPDATED_FILES"
-    printf 'PIAR_INSTALLED_AT_UTC=%q\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf '# koompi-code-cli installer state\n'
+    printf 'KODE_STATE_VERSION=%q\n' "$STATE_VERSION"
+    printf 'KODE_INSTALL_VERSION=%q\n' "$VERSION"
+    printf 'KODE_INSTALL_SOURCE=%q\n' "$INSTALL_SOURCE"
+    printf 'KODE_INSTALL_DEST=%q\n' "$DEST"
+    printf 'KODE_INSTALL_BIN=%q\n' "$INSTALL_BIN_PATH"
+    printf 'KODE_INSTALL_BIN_NAME=%q\n' "$FINAL_BIN_NAME"
+    printf 'KODE_CHECKSUM_STATUS=%q\n' "$CHECKSUM_STATUS"
+    printf 'KODE_SIGSTORE_STATUS=%q\n' "$SIGSTORE_STATUS"
+    printf 'KODE_COMPLETIONS_STATUS=%q\n' "$COMPLETIONS_STATUS"
+    printf 'KODE_AGENT_SKILL_STATUS=%q\n' "$AGENT_SKILL_STATUS"
+    printf 'KODE_AGENT_SKILL_CLAUDE_PATH=%q\n' "$AGENT_SKILL_CLAUDE_PATH"
+    printf 'KODE_AGENT_SKILL_CODEX_PATH=%q\n' "$AGENT_SKILL_CODEX_PATH"
+    printf 'KODE_ADOPTED_TYPESCRIPT=%q\n' "$ADOPT_TS"
+    printf 'KODE_LEGACY_ALIAS_PATH=%q\n' "$LEGACY_ALIAS_PATH"
+    printf 'KODE_LEGACY_TARGET_PATH=%q\n' "$LEGACY_TARGET_PATH"
+    printf 'KODE_LEGACY_MOVED_FROM=%q\n' "$LEGACY_MOVED_FROM"
+    printf 'KODE_LEGACY_MOVED_TO=%q\n' "$LEGACY_MOVED_TO"
+    printf 'KODE_COMPAT_ALIAS_PATH=%q\n' "$COMPAT_ALIAS_PATH"
+    printf 'KODE_COMPAT_ALIAS_STATUS=%q\n' "$COMPAT_ALIAS_STATUS"
+    printf 'KODE_PATH_MARKER=%q\n' "$PATH_MARKER"
+    printf 'KODE_PATH_UPDATED_FILES=%q\n' "$PATH_UPDATED_FILES"
+    printf 'KODE_INSTALLED_AT_UTC=%q\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   } > "$STATE_FILE"
 }
 
@@ -3361,7 +3324,7 @@ should_skip_reinstall() {
     return 1
   fi
 
-  if [ -n "${PIAR_INSTALL_VERSION:-}" ] && [ "$PIAR_INSTALL_VERSION" = "$VERSION" ]; then
+  if [ -n "${KODE_INSTALL_VERSION:-}" ] && [ "$KODE_INSTALL_VERSION" = "$VERSION" ]; then
     return 0
   fi
 
@@ -3457,11 +3420,11 @@ main() {
     ok "pi ${VERSION} already installed at $INSTALL_BIN_PATH"
     if [ "$ADOPT_TS" -eq 1 ]; then
       local refresh_legacy=0
-      if [ -z "${PIAR_LEGACY_ALIAS_PATH:-}" ]; then
+      if [ -z "${KODE_LEGACY_ALIAS_PATH:-}" ]; then
         refresh_legacy=1
-      elif [ ! -f "${PIAR_LEGACY_ALIAS_PATH}" ]; then
+      elif [ ! -f "${KODE_LEGACY_ALIAS_PATH}" ]; then
         refresh_legacy=1
-      elif ! grep -q "pi_agent_rust installer managed alias" "${PIAR_LEGACY_ALIAS_PATH}" 2>/dev/null; then
+      elif ! grep -q "koompi-code-cli installer managed alias" "${KODE_LEGACY_ALIAS_PATH}" 2>/dev/null; then
         refresh_legacy=1
       fi
 

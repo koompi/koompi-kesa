@@ -10,7 +10,7 @@
     "os": "linux"
   },
   "merge_policy": {
-    "description": "Cross-platform merge policy for pi_agent_rust CI",
+    "description": "Cross-platform merge policy for koompi_code_cli CI",
     "required_platforms": [
       "linux"
     ],

@@ -12,7 +12,7 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use pi::fuzz_exports::{
+use kode::fuzz_exports::{
     AnthropicProcessor, AzureProcessor, CohereProcessor, GeminiProcessor, OpenAIProcessor,
     OpenAIResponsesProcessor, VertexProcessor,
 };

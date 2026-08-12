@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: pi_agent_rust
+        working-directory: koompi_code_cli
         shell: bash
     steps:
       - name: Free disk space
@@ -36,10 +36,10 @@ jobs:
           sudo apt-get clean || true
           df -h /
 
-      - name: Checkout pi_agent_rust
+      - name: Checkout koompi_code_cli
         uses: actions/checkout@v4
         with:
-          path: pi_agent_rust
+          path: koompi_code_cli
 
       - name: Install system deps (bc, fd, rg, xcb) [linux]
         run: |
@@ -60,7 +60,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            pi_agent_rust/target
+            koompi_code_cli/target
           key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-bench-
@@ -180,8 +180,8 @@ jobs:
         with:
           name: benchmark-results-${{ github.sha }}
           path: |
-            pi_agent_rust/target/criterion/
-            pi_agent_rust/target/perf/
+            koompi_code_cli/target/criterion/
+            koompi_code_cli/target/perf/
           retention-days: 30
 
   # Compare with main branch baseline (only on PRs)

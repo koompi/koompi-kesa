@@ -6,7 +6,7 @@
 //! asserting stable normalization invariants.
 
 use libfuzzer_sys::fuzz_target;
-use pi::fuzz_exports::{fuzz_normalize_dot_segments, fuzz_resolve_path};
+use kode::fuzz_exports::{fuzz_normalize_dot_segments, fuzz_resolve_path};
 use std::path::{Component, Path, PathBuf};
 
 const MAX_INPUT_BYTES: usize = 4096;

@@ -8,18 +8,18 @@
 
 use std::collections::HashMap;
 
-use pi::extension_scoring::{
+use kode::extension_scoring::{
     OpeEvaluatorConfig, OpeGateReason, OpeTraceSample, evaluate_off_policy,
 };
-use pi::extensions::{
+use kode::extensions::{
     ALL_CAPABILITIES, Capability, ExecMediationPolicy, ExtensionOverride, ExtensionPolicy,
     ExtensionPolicyMode, PolicyDecision, PolicyProfile, PolicySnapshot, SecretBrokerPolicy,
 };
-use pi::hostcall_io_uring_lane::{
+use kode::hostcall_io_uring_lane::{
     HostcallCapabilityClass, HostcallDispatchLane, HostcallIoHint, IoUringFallbackReason,
     IoUringLaneDecisionInput, IoUringLanePolicyConfig, decide_io_uring_lane,
 };
-use pi::hostcall_s3_fifo::{S3FifoConfig, S3FifoDecisionKind, S3FifoPolicy};
+use kode::hostcall_s3_fifo::{S3FifoConfig, S3FifoDecisionKind, S3FifoPolicy};
 
 // ============================================================================
 // Invariant 1: PolicySnapshot O(1) lookup matches evaluate_for() exactly

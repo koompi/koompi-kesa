@@ -4,17 +4,17 @@
 //! `extension_scoring` (mean-field controller + OPE evaluator),
 //! and `hostcall_queue` compose correctly through their public APIs.
 
-use pi::extension_scoring::{
+use kode::extension_scoring::{
     MeanFieldControllerConfig, MeanFieldControllerReport, MeanFieldShardObservation,
     MeanFieldShardState, OpeEvaluationReport, OpeEvaluatorConfig, OpeGateReason, OpeTraceSample,
     compute_mean_field_controls, evaluate_off_policy,
 };
-use pi::hostcall_io_uring_lane::{
+use kode::hostcall_io_uring_lane::{
     HostcallCapabilityClass, HostcallDispatchLane, HostcallIoHint, IoUringFallbackReason,
     IoUringLaneDecisionInput, IoUringLanePolicyConfig, IoUringLaneTelemetry,
     build_io_uring_lane_telemetry, decide_io_uring_lane, decide_io_uring_lane_with_telemetry,
 };
-use pi::hostcall_s3_fifo::{
+use kode::hostcall_s3_fifo::{
     S3FifoConfig, S3FifoDecisionKind, S3FifoFallbackReason, S3FifoPolicy, S3FifoTier,
 };
 
@@ -326,7 +326,7 @@ fn assert_close(a: f64, b: f64, tolerance: f64) {
 fn find_control<'a>(
     report: &'a MeanFieldControllerReport,
     shard_id: &str,
-) -> &'a pi::extension_scoring::MeanFieldShardControl {
+) -> &'a kode::extension_scoring::MeanFieldShardControl {
     report
         .controls
         .iter()

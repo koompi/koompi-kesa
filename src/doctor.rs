@@ -60,7 +60,7 @@ const SWARM_DOCTOR_RESERVATION_HEATMAP_SCHEMA: &str =
 const SWARM_DOCTOR_CONFLICT_PREDICTOR_SCHEMA: &str = "pi.doctor.cross_agent_conflict_predictor.v1";
 const SWARM_DOCTOR_RESERVATION_RECOMMENDATIONS_SCHEMA: &str =
     "pi.doctor.swarm_reservation_recommendations.v1";
-const SWARM_CARGO_SCRATCH_ROOT: &str = "/data/tmp/pi_agent_rust_cargo";
+const SWARM_CARGO_SCRATCH_ROOT: &str = "/data/tmp/koompi_code_cli_cargo";
 const SWARM_RCH_AFFINITY_JOBS_ENV: &str = "PI_DOCTOR_RCH_AFFINITY_JOBS_JSON";
 const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV: &str = "PI_DOCTOR_RCH_QUEUE_JSON";
 const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV: &str = "PI_DOCTOR_RCH_QUEUE_JSON_PATH";
@@ -9982,7 +9982,7 @@ fn rch_affinity_blocker_action(family: &str) -> &'static str {
             "assign distinct target dirs or align commit/profile/features before reuse"
         }
         "target_dir_outside_swarm_scratch_root" => {
-            "move CARGO_TARGET_DIR under /data/tmp/pi_agent_rust_cargo/<agent>/target"
+            "move CARGO_TARGET_DIR under /data/tmp/koompi_code_cli_cargo/<agent>/target"
         }
         "stale_git_commit" => "rebase or regenerate the job spec for the current checkout",
         "worker_unavailable" => "assign an available RCH worker or keep the job queued",
@@ -10170,10 +10170,10 @@ impl RchFailureKind {
     const fn remediation(self) -> &'static str {
         match self {
             Self::ArtifactRetrievalDiskPressure => {
-                "Remote execution appears to have completed; rerun with CARGO_TARGET_DIR and TMPDIR under /data/tmp/pi_agent_rust_cargo/<agent>/ so artifact retrieval has local headroom"
+                "Remote execution appears to have completed; rerun with CARGO_TARGET_DIR and TMPDIR under /data/tmp/koompi_code_cli_cargo/<agent>/ so artifact retrieval has local headroom"
             }
             Self::LocalTargetDiskPressure => {
-                "Export CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target and TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp, create both dirs, then rerun the RCH command"
+                "Export CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target and TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp, create both dirs, then rerun the RCH command"
             }
             Self::RemoteBuildOrTestFailure => {
                 "Treat this as a real compile/test failure; inspect the cargo error and fix the code or test before rerunning"
@@ -11874,7 +11874,7 @@ not-json
         let health = agent_mail_schema_corrupt_fixture()?;
 
         let finding = classify_agent_mail_degraded_mode(
-            "/data/projects/pi_agent_rust",
+            "/data/projects/koompi_code_cli",
             Some("AmberOsprey"),
             Some(&health),
             None,
@@ -12762,7 +12762,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
                 .remediation
                 .as_deref()
                 .unwrap_or_default()
-                .contains("/data/tmp/pi_agent_rust_cargo/<agent>/")
+                .contains("/data/tmp/koompi_code_cli_cargo/<agent>/")
         );
     }
 
@@ -12790,7 +12790,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
                 .remediation
                 .as_deref()
                 .unwrap_or_default()
-                .contains("CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target")
+                .contains("CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target")
         );
     }
 
@@ -12852,7 +12852,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
 
     #[test]
     fn swarm_rch_affinity_groups_compatible_jobs_on_warm_target() {
-        let target = "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string();
+        let target = "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string();
         let specs = vec![
             RchAffinityJobSpec {
                 id: "tools-a".to_string(),
@@ -12879,7 +12879,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
         let plan = build_rch_affinity_plan_from_specs(
             specs,
             Some("abc123".to_string()),
-            "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string(),
+            "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string(),
         );
         let finding = classify_rch_affinity_plan(&plan);
         let data = finding_data(&finding);
@@ -12914,7 +12914,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
 
     #[test]
     fn swarm_rch_affinity_blocks_incompatible_features_on_same_target() {
-        let target = "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string();
+        let target = "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string();
         let specs = vec![
             RchAffinityJobSpec {
                 id: "default-features".to_string(),
@@ -12941,7 +12941,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
         let plan = build_rch_affinity_plan_from_specs(
             specs,
             Some("abc123".to_string()),
-            "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string(),
+            "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string(),
         );
         let finding = classify_rch_affinity_plan(&plan);
         let data = finding_data(&finding);
@@ -12974,7 +12974,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
 
     #[test]
     fn swarm_rch_affinity_blocks_stale_commit_specs() {
-        let target = "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string();
+        let target = "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string();
         let specs = vec![RchAffinityJobSpec {
             id: "stale-check".to_string(),
             command: "cargo check --all-targets".to_string(),
@@ -12989,7 +12989,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
         let plan = build_rch_affinity_plan_from_specs(
             specs,
             Some("abc123".to_string()),
-            "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string(),
+            "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string(),
         );
         let finding = classify_rch_affinity_plan(&plan);
         let data = finding_data(&finding);
@@ -13012,7 +13012,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
 
     #[test]
     fn swarm_rch_affinity_blocks_unavailable_workers() {
-        let target = "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string();
+        let target = "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string();
         let specs = vec![RchAffinityJobSpec {
             id: "worker-down".to_string(),
             command: "cargo test provider_streaming".to_string(),
@@ -13027,7 +13027,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
         let plan = build_rch_affinity_plan_from_specs(
             specs,
             Some("abc123".to_string()),
-            "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string(),
+            "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string(),
         );
         let finding = classify_rch_affinity_plan(&plan);
         let data = finding_data(&finding);
@@ -13050,7 +13050,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
 
     #[test]
     fn swarm_rch_affinity_blocks_low_retrieval_headroom() {
-        let target = "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string();
+        let target = "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string();
         let specs = vec![RchAffinityJobSpec {
             id: "low-headroom".to_string(),
             command: "cargo clippy --all-targets -- -D warnings".to_string(),
@@ -13065,7 +13065,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
         let plan = build_rch_affinity_plan_from_specs(
             specs,
             Some("abc123".to_string()),
-            "/data/tmp/pi_agent_rust_cargo/goldenglacier/target".to_string(),
+            "/data/tmp/koompi_code_cli_cargo/goldenglacier/target".to_string(),
         );
         let finding = classify_rch_affinity_plan(&plan);
         let data = finding_data(&finding);
@@ -13099,7 +13099,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
     fn swarm_temp_dir_posture_passes_for_expected_scratch_root() {
         let finding = swarm_temp_dir_finding(
             "CARGO_TARGET_DIR",
-            Path::new("/data/tmp/pi_agent_rust_cargo/sunnybeacon/target"),
+            Path::new("/data/tmp/koompi_code_cli_cargo/sunnybeacon/target"),
             Some(12 * 1024 * 1024),
             None,
         );
@@ -13116,7 +13116,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
     fn swarm_temp_dir_posture_warns_outside_scratch_root_even_with_headroom() {
         let finding = swarm_temp_dir_finding(
             "TMPDIR",
-            Path::new("/tmp/pi_agent_rust_cargo/sunnybeacon/tmp"),
+            Path::new("/tmp/koompi_code_cli_cargo/sunnybeacon/tmp"),
             Some(64 * 1024 * 1024),
             None,
         );
@@ -13422,7 +13422,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
         assert!(
             plan.lane_groups[0]
                 .target_dir
-                .contains("/data/tmp/pi_agent_rust_cargo/<agent>/numa-node-0/target")
+                .contains("/data/tmp/koompi_code_cli_cargo/<agent>/numa-node-0/target")
         );
     }
 

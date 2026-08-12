@@ -403,7 +403,7 @@ fn run_platform_checks() -> Vec<PlatformCheck> {
 /// Define the merge policy.
 fn merge_policy() -> MergePolicy {
     MergePolicy {
-        description: "Cross-platform merge policy for pi_agent_rust CI".to_string(),
+        description: "Cross-platform merge policy for koompi_code_cli CI".to_string(),
         required_platforms: vec!["linux".to_string()],
         informational_platforms: vec!["macos".to_string(), "windows".to_string()],
         rules: vec![

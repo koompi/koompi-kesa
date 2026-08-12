@@ -515,7 +515,7 @@
           "present": true
         }
       },
-      "fault_injection_script": "/data/projects/pi_agent_rust/scripts/e2e/run_persistence_fault_injection.sh",
+      "fault_injection_script": "/data/projects/koompi_code_cli/scripts/e2e/run_persistence_fault_injection.sh",
       "fault_injection_summary_path": null
     },
     "required_artifacts": {
@@ -552,6 +552,6 @@
     "source_scenario_runner_path": null,
     "source_stratification_path": "tests/e2e_results/bd-3ar8v.3.8-20260216T041030Z/results/extension_benchmark_stratification.json",
     "source_baseline_confidence_path": "tests/e2e_results/bd-3ar8v.3.8-20260216T041030Z/results/baseline_variance_confidence.json",
-    "source_perf_sli_contract_path": "/data/projects/pi_agent_rust/docs/perf_sli_matrix.json"
+    "source_perf_sli_contract_path": "/data/projects/koompi_code_cli/docs/perf_sli_matrix.json"
   }
 }

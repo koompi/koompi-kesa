@@ -40,7 +40,7 @@
           "child_artifact_map": [
             {
               "bead_id": "bd-63x3v.9.1",
-              "claim_boundary_text": "RCH workspace-shadow detection does not mutate workers, cancel jobs, or claim pi_agent_rust failed to compile when worker checkout scope is wrong.",
+              "claim_boundary_text": "RCH workspace-shadow detection does not mutate workers, cancel jobs, or claim koompi_code_cli failed to compile when worker checkout scope is wrong.",
               "close_reason": "Completed: added RCH worker workspace-shadow classifier and runpack failure-action coverage for stale parent-workspace cargo failures.",
               "code_paths": [
                 "scripts/build_swarm_operator_runpack.py",
@@ -192,9 +192,9 @@
               ],
               "title": "Model cgroup and NUMA-aware swarm validation budgets",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test swarm_resource_preflight -- --nocapture",
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo check --all-targets",
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo clippy --all-targets -- -D warnings"
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test swarm_resource_preflight -- --nocapture",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo check --all-targets",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo clippy --all-targets -- -D warnings"
               ]
             },
             {
@@ -537,7 +537,7 @@
   "child_artifact_map": [
     {
       "bead_id": "bd-63x3v.9.1",
-      "claim_boundary_text": "RCH workspace-shadow detection does not mutate workers, cancel jobs, or claim pi_agent_rust failed to compile when worker checkout scope is wrong.",
+      "claim_boundary_text": "RCH workspace-shadow detection does not mutate workers, cancel jobs, or claim koompi_code_cli failed to compile when worker checkout scope is wrong.",
       "close_reason": "Completed: added RCH worker workspace-shadow classifier and runpack failure-action coverage for stale parent-workspace cargo failures.",
       "code_paths": [
         "scripts/build_swarm_operator_runpack.py",
@@ -689,9 +689,9 @@
       ],
       "title": "Model cgroup and NUMA-aware swarm validation budgets",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo test swarm_resource_preflight -- --nocapture",
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo check --all-targets",
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/<agent>/target TMPDIR=/data/tmp/pi_agent_rust_cargo/<agent>/tmp cargo clippy --all-targets -- -D warnings"
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo test swarm_resource_preflight -- --nocapture",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo check --all-targets",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/<agent>/target TMPDIR=/data/tmp/koompi_code_cli_cargo/<agent>/tmp cargo clippy --all-targets -- -D warnings"
       ]
     },
     {

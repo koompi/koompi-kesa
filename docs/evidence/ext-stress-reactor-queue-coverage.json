@@ -26,7 +26,7 @@
     ]
   },
   "usage": {
-    "command": "rch exec -- cargo run --example ext_stress -- --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /data/tmp/pi_agent_rust_cargo/rusticgorge-bd-2zcs5-24/direct-rch/synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 2 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /data/tmp/pi_agent_rust_cargo/rusticgorge-bd-2zcs5-24/direct-rch/ext-stress-reactor-queue-coverage.json --events-path /data/tmp/pi_agent_rust_cargo/rusticgorge-bd-2zcs5-24/direct-rch/ext-stress-events.jsonl --run-id bd-2zcs5-24-reactor-proof --correlation-id bd-2zcs5-24-reactor-proof",
+    "command": "rch exec -- cargo run --example ext_stress -- --synthetic-hostcall-extensions 4 --synthetic-hostcall-root /data/tmp/koompi_code_cli_cargo/rusticgorge-bd-2zcs5-24/direct-rch/synthetic --event agent_start --reactor-enabled=true --reactor-shards 4 --reactor-lane-capacity 128 --reactor-drain-budget 128 --duration-secs 2 --warmup-secs 0 --rss-interval-secs 1 --events-per-sec 2 --dispatch-timeout-ms 2000 --require-reactor-activity=true --report-path /data/tmp/koompi_code_cli_cargo/rusticgorge-bd-2zcs5-24/direct-rch/ext-stress-reactor-queue-coverage.json --events-path /data/tmp/koompi_code_cli_cargo/rusticgorge-bd-2zcs5-24/direct-rch/ext-stress-events.jsonl --run-id bd-2zcs5-24-reactor-proof --correlation-id bd-2zcs5-24-reactor-proof",
     "notes": [
       "Use a synthetic_hostcall_root outside docs/evidence so generated JS extension sources do not become repository artifacts.",
       "The run should exit nonzero when --require-reactor-activity=true and either enqueue or dispatch counters remain zero.",
@@ -37,7 +37,7 @@
     "completed_at": "2026-05-08T22:27:08Z",
     "exit_code": 0,
     "stdout": [
-      "Report written to /data/tmp/pi_agent_rust_cargo/rusticgorge-bd-2zcs5-24/direct-rch/ext-stress-reactor-queue-coverage.json (events=4, rss_ok=true, latency_ok=false)",
+      "Report written to /data/tmp/koompi_code_cli_cargo/rusticgorge-bd-2zcs5-24/direct-rch/ext-stress-reactor-queue-coverage.json (events=4, rss_ok=true, latency_ok=false)",
       "Reactor activity: enabled=true, enqueued_total=16, dispatched_total=16, active_shards=4, ok=true"
     ],
     "reactor_activity": {
@@ -50,12 +50,12 @@
     "artifact_note": "The direct RCH command wrote the JSON report on the remote worker under /data/tmp; the stdout gate result is the direct remote proof retained here."
   },
   "captured_report_metrics": {
-    "source_report_path": "/data/tmp/pi_agent_rust_cargo/rusticgorge-bd-2zcs5-24/stdout-proof/ext-stress-reactor-queue-coverage.json",
+    "source_report_path": "/data/tmp/koompi_code_cli_cargo/rusticgorge-bd-2zcs5-24/stdout-proof/ext-stress-reactor-queue-coverage.json",
     "generated_at": "2026-05-08T22:21:24Z",
     "correlation_id": "bd-2zcs5-24-reactor-proof",
     "config": {
       "synthetic_hostcall_extensions": 4,
-      "synthetic_hostcall_root": "/data/tmp/pi_agent_rust_cargo/rusticgorge-bd-2zcs5-24/stdout-proof/synthetic",
+      "synthetic_hostcall_root": "/data/tmp/koompi_code_cli_cargo/rusticgorge-bd-2zcs5-24/stdout-proof/synthetic",
       "event": "agent_start",
       "reactor_enabled": true,
       "reactor_shards": 4,

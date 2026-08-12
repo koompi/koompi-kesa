@@ -29,15 +29,15 @@ mod common;
 use async_trait::async_trait;
 use common::{TestHarness, run_async};
 use futures::Stream;
-use pi::agent::{Agent, AgentConfig, AgentEvent, AgentSession};
-use pi::compaction::ResolvedCompactionSettings;
-use pi::error::{Error, Result};
-use pi::model::{
+use kode::agent::{Agent, AgentConfig, AgentEvent, AgentSession};
+use kode::compaction::ResolvedCompactionSettings;
+use kode::error::{Error, Result};
+use kode::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall, Usage,
 };
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::session::Session;
-use pi::tools::ToolRegistry;
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::session::Session;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use std::path::Path;
 use std::pin::Pin;

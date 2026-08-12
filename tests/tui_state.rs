@@ -9,23 +9,23 @@ use asupersync::sync::Mutex;
 use bubbletea::{Cmd, KeyMsg, KeyType, Message, Model as BubbleteaModel, QuitMsg};
 use common::TestHarness;
 use futures::stream;
-use pi::agent::{Agent, AgentConfig};
-use pi::config::{Config, TerminalSettings};
-use pi::extensions::{
+use kode::agent::{Agent, AgentConfig};
+use kode::config::{Config, TerminalSettings};
+use kode::extensions::{
     ExtensionManager, ExtensionUiRequest, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::interactive::{ConversationMessage, MessageRole, PendingInput, PiApp, PiMsg};
-use pi::keybindings::KeyBindings;
-use pi::model::{
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::interactive::{ConversationMessage, MessageRole, PendingInput, PiApp, PiMsg};
+use kode::keybindings::KeyBindings;
+use kode::model::{
     AssistantMessage, ContentBlock, Cost, ImageContent, StopReason, StreamEvent, TextContent,
     Usage, UserContent,
 };
-use pi::models::ModelEntry;
-use pi::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
-use pi::resources::{ResourceCliOptions, ResourceLoader};
-use pi::session::{Session, SessionEntry, SessionMessage, encode_cwd};
-use pi::tools::ToolRegistry;
+use kode::models::ModelEntry;
+use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
+use kode::resources::{ResourceCliOptions, ResourceLoader};
+use kode::session::{Session, SessionEntry, SessionMessage, encode_cwd};
+use kode::tools::ToolRegistry;
 use regex::Regex;
 use serde_json::json;
 use std::collections::HashMap;
@@ -87,8 +87,8 @@ impl Provider for DummyProvider {
         &self,
         _context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> pi::error::Result<
-        Pin<Box<dyn futures::Stream<Item = pi::error::Result<StreamEvent>> + Send>>,
+    ) -> kode::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kode::error::Result<StreamEvent>> + Send>>,
     > {
         Ok(Box::pin(stream::empty()))
     }

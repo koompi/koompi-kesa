@@ -6,8 +6,8 @@
       "input": {
         "schema": "pi.operator.handoff_summary_input.v1",
         "project": {
-          "name": "pi_agent_rust",
-          "root": "/data/projects/pi_agent_rust"
+          "name": "koompi_code_cli",
+          "root": "/data/projects/koompi_code_cli"
         },
         "git": {
           "branch": "main",

@@ -11,8 +11,8 @@
 
 mod common;
 
-use pi::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use pi::extensions_js::{
+use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kode::extensions_js::{
     AmbiguitySignal, ApprovalRequirement, AuditEntryKind, AuditLedger, CanaryConfig, CanaryRoute,
     CapabilityDelta, CapabilityMonotonicityVerdict, ConfidenceReport, ConflictKind,
     ConformanceFixture, ConformanceReplayVerdict, DeveloperGuide, ExtensionRepairEvent,
@@ -32,7 +32,7 @@ use pi::extensions_js::{
     select_best_candidate, should_auto_rollback, tolerant_parse, transition_overlay,
     validate_proposal, validate_repaired_artifact,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -177,14 +177,14 @@ fn repair_event_clone() {
 #[test]
 fn config_repair_mode_defaults_to_auto_safe() {
     let config = PiJsRuntimeConfig::default();
-    assert_eq!(config.repair_mode, pi::extensions_js::RepairMode::AutoSafe);
+    assert_eq!(config.repair_mode, kode::extensions_js::RepairMode::AutoSafe);
     assert!(config.auto_repair_enabled());
 }
 
 #[test]
 fn config_repair_mode_off_disables_repair() {
     let config = PiJsRuntimeConfig {
-        repair_mode: pi::extensions_js::RepairMode::Off,
+        repair_mode: kode::extensions_js::RepairMode::Off,
         ..Default::default()
     };
     assert!(!config.auto_repair_enabled());
@@ -193,7 +193,7 @@ fn config_repair_mode_off_disables_repair() {
 #[test]
 fn config_repair_mode_suggest_does_not_apply() {
     let config = PiJsRuntimeConfig {
-        repair_mode: pi::extensions_js::RepairMode::Suggest,
+        repair_mode: kode::extensions_js::RepairMode::Suggest,
         ..Default::default()
     };
     assert!(!config.auto_repair_enabled());
@@ -203,7 +203,7 @@ fn config_repair_mode_suggest_does_not_apply() {
 #[test]
 fn config_repair_mode_auto_strict_enables_aggressive() {
     let config = PiJsRuntimeConfig {
-        repair_mode: pi::extensions_js::RepairMode::AutoStrict,
+        repair_mode: kode::extensions_js::RepairMode::AutoStrict,
         ..Default::default()
     };
     assert!(config.auto_repair_enabled());
@@ -607,7 +607,7 @@ fn repair_auto_strict_applies_dist_to_src_fallback() {
 
 // ─── Privilege monotonicity checker (bd-k5q5.9.1.3) ─────────────────────────
 
-use pi::extensions_js::verify_repair_monotonicity;
+use kode::extensions_js::verify_repair_monotonicity;
 use std::path::PathBuf;
 
 #[test]
@@ -741,7 +741,7 @@ fn no_patterns_allowed_by_suggest() {
 
 // ─── Deterministic rule registry (bd-k5q5.9.3.1) ────────────────────────────
 
-use pi::extensions_js::{applicable_rules, rule_by_id};
+use kode::extensions_js::{applicable_rules, rule_by_id};
 
 #[test]
 fn registry_has_seven_rules() {
@@ -3710,7 +3710,7 @@ fn start_runtime_with_repair_mode(
 
 #[test]
 fn monorepo_escape_stub_loads_with_autostrict() {
-    use pi::extensions::{ExtensionEventName, JsExtensionLoadSpec};
+    use kode::extensions::{ExtensionEventName, JsExtensionLoadSpec};
 
     let harness = common::TestHarness::new("monorepo_escape");
     let cwd = harness.temp_dir().to_path_buf();
@@ -3776,7 +3776,7 @@ export default function activate(pi) {
 
 #[test]
 fn monorepo_escape_not_applied_in_autosafe_mode() {
-    use pi::extensions::JsExtensionLoadSpec;
+    use kode::extensions::JsExtensionLoadSpec;
 
     let harness = common::TestHarness::new("monorepo_safe");
     let cwd = harness.temp_dir().to_path_buf();
@@ -3809,7 +3809,7 @@ export default function activate(pi) {}
 // ═══════════════════════════════════════════════════════════════════════════════
 
 fn load_ext_with_source(harness: &common::TestHarness, source: &str) -> ExtensionManager {
-    use pi::extensions::JsExtensionLoadSpec;
+    use kode::extensions::JsExtensionLoadSpec;
 
     let cwd = harness.temp_dir().to_path_buf();
     let ext_dir = cwd.join("extensions").join("shape-test");
@@ -3835,7 +3835,7 @@ fn load_ext_with_source(harness: &common::TestHarness, source: &str) -> Extensio
 
 #[test]
 fn export_shape_named_activate_fallback() {
-    use pi::extensions::ExtensionEventName;
+    use kode::extensions::ExtensionEventName;
 
     let harness = common::TestHarness::new("shape_named");
     let source = r#"
@@ -3863,7 +3863,7 @@ export function activate(pi) {
 
 #[test]
 fn export_shape_double_wrapped_default() {
-    use pi::extensions::ExtensionEventName;
+    use kode::extensions::ExtensionEventName;
 
     let harness = common::TestHarness::new("shape_double");
     let source = r#"
@@ -3892,7 +3892,7 @@ export default { default: activator };
 
 #[test]
 fn export_shape_default_with_activate_method() {
-    use pi::extensions::ExtensionEventName;
+    use kode::extensions::ExtensionEventName;
 
     let harness = common::TestHarness::new("shape_method");
     let source = r#"
@@ -3922,7 +3922,7 @@ export default {
 
 #[test]
 fn export_shape_normal_default_still_works() {
-    use pi::extensions::ExtensionEventName;
+    use kode::extensions::ExtensionEventName;
 
     let harness = common::TestHarness::new("shape_normal");
     let source = r#"

@@ -39,7 +39,7 @@ use std::pin::Pin;
 const OPENAI_API_URL: &str = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_MAX_TOKENS: u32 = 4096;
 const MAX_API_ERROR_BODY_BYTES: usize = 64 * 1024;
-const OPENROUTER_DEFAULT_HTTP_REFERER: &str = "https://github.com/Dicklesworthstone/pi_agent_rust";
+const OPENROUTER_DEFAULT_HTTP_REFERER: &str = "https://github.com/Dicklesworthstone/koompi_code_cli";
 const OPENROUTER_DEFAULT_X_TITLE: &str = "Pi Agent Rust";
 
 /// Map a role string (which may come from compat config at runtime) to a `Cow<'_, str>`.

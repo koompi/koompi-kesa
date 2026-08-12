@@ -11,10 +11,10 @@ mod common;
 
 use common::{MockHttpResponse, TestHarness};
 use futures::StreamExt;
-use pi::model::{Message, UserContent, UserMessage};
-use pi::models::ModelEntry;
-use pi::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions, ToolDef};
-use pi::providers::create_provider;
+use kode::model::{Message, UserContent, UserMessage};
+use kode::models::ModelEntry;
+use kode::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions, ToolDef};
+use kode::providers::create_provider;
 use serde::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
@@ -622,7 +622,7 @@ fn validate_event_sequence(events: &[StreamEvent]) -> Result<(), String> {
 
 /// Collect stream events from a provider, returning collected events or an error string.
 fn collect_events(
-    provider: Arc<dyn pi::provider::Provider>,
+    provider: Arc<dyn kode::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) -> Result<Vec<StreamEvent>, String> {

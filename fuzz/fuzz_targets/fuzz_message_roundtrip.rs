@@ -6,7 +6,7 @@
 //! valid JSON -> `Message` -> JSON -> `Message` preserves semantic shape.
 
 use libfuzzer_sys::fuzz_target;
-use pi::fuzz_exports::Message;
+use kode::fuzz_exports::Message;
 
 fn roundtrip_message(input: &str) {
     let Ok(message) = serde_json::from_str::<Message>(input) else {

@@ -131,7 +131,7 @@
               ],
               "title": "Add semantic compaction quality differential harness",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/tmp cargo test semantic_compaction_quality -- --nocapture",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/tmp cargo test semantic_compaction_quality -- --nocapture",
                 "cargo fmt --check",
                 "rch exec -- env ... cargo check --all-targets",
                 "rch exec -- env ... cargo clippy --all-targets -- -D warnings",
@@ -164,7 +164,7 @@
               ],
               "title": "Add extension hostcall cost-attribution ledger",
               "validation_commands": [
-                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_63x3v_11_4/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_63x3v_11_4/tmp cargo test --test extensions_stress hostcall_cost_attribution -- --nocapture",
+                "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_63x3v_11_4/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_63x3v_11_4/tmp cargo test --test extensions_stress hostcall_cost_attribution -- --nocapture",
                 "cargo fmt --check",
                 "rch exec -- env ... cargo check --all-targets",
                 "rch exec -- env ... cargo clippy --all-targets -- -D warnings",
@@ -630,7 +630,7 @@
       ],
       "title": "Add semantic compaction quality differential harness",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_semantic/tmp cargo test semantic_compaction_quality -- --nocapture",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_semantic/tmp cargo test semantic_compaction_quality -- --nocapture",
         "cargo fmt --check",
         "rch exec -- env ... cargo check --all-targets",
         "rch exec -- env ... cargo clippy --all-targets -- -D warnings",
@@ -663,7 +663,7 @@
       ],
       "title": "Add extension hostcall cost-attribution ledger",
       "validation_commands": [
-        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/codex_bd_63x3v_11_4/target TMPDIR=/data/tmp/pi_agent_rust_cargo/codex_bd_63x3v_11_4/tmp cargo test --test extensions_stress hostcall_cost_attribution -- --nocapture",
+        "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/codex_bd_63x3v_11_4/target TMPDIR=/data/tmp/koompi_code_cli_cargo/codex_bd_63x3v_11_4/tmp cargo test --test extensions_stress hostcall_cost_attribution -- --nocapture",
         "cargo fmt --check",
         "rch exec -- env ... cargo check --all-targets",
         "rch exec -- env ... cargo clippy --all-targets -- -D warnings",

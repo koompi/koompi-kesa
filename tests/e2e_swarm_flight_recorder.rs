@@ -19,25 +19,25 @@ use std::time::Instant;
 
 use async_trait::async_trait;
 use futures::{Stream, StreamExt};
-use pi::agent::{AbortHandle, Agent, AgentConfig, AgentEvent, AgentSession, InputSource};
-use pi::compaction::ResolvedCompactionSettings;
-use pi::error::{Error, Result};
-use pi::model::{
+use kode::agent::{AbortHandle, Agent, AgentConfig, AgentEvent, AgentSession, InputSource};
+use kode::compaction::ResolvedCompactionSettings;
+use kode::error::{Error, Result};
+use kode::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent,
     ToolResultMessage, Usage,
 };
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::resource_governor::{
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::resource_governor::{
     AdmissionAction, HostResourceBudgets, HostResourceSample, ResourceDimension, ResourceGovernor,
     ResourceOperationKind, ResourceRequest,
 };
-use pi::session::Session;
-use pi::session_index::SessionIndex;
-use pi::swarm_flight_recorder::{
+use kode::session::Session;
+use kode::session_index::SessionIndex;
+use kode::swarm_flight_recorder::{
     SWARM_FLIGHT_RECORDER_EVENT_SCHEMA, SWARM_FLIGHT_RECORDER_REPORT_SCHEMA, SwarmFlightRecorder,
     SwarmFlightRecorderEvent, validate_swarm_flight_recorder_jsonl,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use serde_json::{Value, json};
 use url::Url;
 
@@ -181,7 +181,7 @@ impl Provider for FlightProvider {
         if call_index == 0 {
             return Ok(self.stream_done(self.assistant_message(
                 StopReason::ToolUse,
-                vec![ContentBlock::ToolCall(pi::model::ToolCall {
+                vec![ContentBlock::ToolCall(kode::model::ToolCall {
                     id: "flight-read-1".to_string(),
                     name: "read".to_string(),
                     arguments: json!({ "path": self.read_path }),
@@ -582,7 +582,7 @@ async fn run_flight_session(
 
     let sessions_dir = workspace.join("sessions");
     let (session_entries, session_path, indexed_sessions) = {
-        let cx = pi::agent_cx::AgentCx::for_current_or_request();
+        let cx = kode::agent_cx::AgentCx::for_current_or_request();
         let guard = session.lock(cx.cx()).await?;
         let session_path = guard
             .path
@@ -709,7 +709,7 @@ async fn run_cancelled_pressure_session(
     assert_eq!(message.error_message.as_deref(), Some("Aborted"));
 
     let session_entries = {
-        let cx = pi::agent_cx::AgentCx::for_current_or_request();
+        let cx = kode::agent_cx::AgentCx::for_current_or_request();
         let guard = session.lock(cx.cx()).await?;
         guard.entries_for_current_path().len()
     };
@@ -756,7 +756,7 @@ fn pressure_lab_memory(sample: HostResourceSample) -> Value {
 }
 
 fn pressure_lab_governor_decisions()
--> Vec<(ResourceRequest, pi::resource_governor::AdmissionDecision)> {
+-> Vec<(ResourceRequest, kode::resource_governor::AdmissionDecision)> {
     let sample = pressure_lab_sample();
     let governor = ResourceGovernor::with_budgets(HostResourceBudgets::fixed_with_queue_depth(
         4.0,

@@ -29,8 +29,8 @@ Run these before claiming work in a multi-agent session:
 ```bash
 export AGENT_NAME="${AGENT_NAME:-$(whoami)}"
 export PI_CARGO_AGENT_SUFFIX="$AGENT_NAME"
-export CARGO_TARGET_DIR="/data/tmp/pi_agent_rust_cargo/${AGENT_NAME}/target"
-export TMPDIR="/data/tmp/pi_agent_rust_cargo/${AGENT_NAME}/tmp"
+export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME}/target"
+export TMPDIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME}/tmp"
 capture_dir="${PI_SWARM_CAPTURE_DIR:-/data/tmp/pi_swarm_runpack/${AGENT_NAME}}"
 mkdir -p "$CARGO_TARGET_DIR" "$TMPDIR" "$capture_dir"
 
@@ -99,7 +99,7 @@ Before editing, reserve the narrowest practical file set in Agent Mail:
 
 ```text
 file_reservation_paths(
-  project_key="/data/projects/pi_agent_rust",
+  project_key="/data/projects/koompi_code_cli",
   agent_name="$AGENT_NAME",
   paths=["src/module.rs", "tests/module_tests.rs"],
   ttl_seconds=3600,
@@ -324,8 +324,8 @@ churn, slow hostcalls, repeated failure, and steady-peer progress.
 Use the focused stress-test slice to produce the target/perf evidence:
 
 ```bash
-export CARGO_TARGET_DIR="/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target"
-export TMPDIR="/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp"
+export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target"
+export TMPDIR="/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp"
 mkdir -p "$CARGO_TARGET_DIR" "$TMPDIR"
 rch exec -- env CARGO_TARGET_DIR="$CARGO_TARGET_DIR" TMPDIR="$TMPDIR" cargo test --test extensions_stress resource_firewall_matrix -- --nocapture
 ```
@@ -478,7 +478,7 @@ PI_SWARM_PROGRESS_SLO_JSON="$capture_dir/progress-slo.json" \
 python3 scripts/build_swarm_operator_runpack.py \
   --capture-current \
   --capture-dir "$capture_dir/runpack" \
-  --project-root /data/projects/pi_agent_rust \
+  --project-root /data/projects/koompi_code_cli \
   --agent-name "${AGENT_NAME:-agent}" \
   --progress-slo-json "$capture_dir/progress-slo.json" \
   --out-json "$capture_dir/operator-runpack.json" \
@@ -538,7 +538,7 @@ rch status > "$capture_dir/rch-status.txt"
 rch queue > "$capture_dir/rch-queue.txt"
 
 python3 scripts/build_stale_evidence_renewal_queue.py \
-  --source-root /data/projects/pi_agent_rust \
+  --source-root /data/projects/koompi_code_cli \
   --freshness-hours 336 \
   --max-items 25 \
   --out-json "$capture_dir/stale-evidence-renewal.json"
@@ -546,7 +546,7 @@ python3 scripts/build_stale_evidence_renewal_queue.py \
 python3 scripts/build_swarm_operator_runpack.py \
   --capture-current \
   --capture-dir "$capture_dir/runpack-sources" \
-  --project-root /data/projects/pi_agent_rust \
+  --project-root /data/projects/koompi_code_cli \
   --agent-name "$AGENT_NAME" \
   --stale-evidence-renewal-json "$capture_dir/stale-evidence-renewal.json" \
   --out-json "$capture_dir/operator-runpack.json" \
@@ -692,7 +692,7 @@ for this bead.`
 
 1. Run `rch status` and `rch queue`.
 2. Run `scripts/cargo_headroom.sh --runner rch --admit-only check --all-targets`.
-3. If the classifier points at local target/TMPDIR headroom, move `CARGO_TARGET_DIR` and `TMPDIR` under `/data/tmp/pi_agent_rust_cargo/$AGENT_NAME`.
+3. If the classifier points at local target/TMPDIR headroom, move `CARGO_TARGET_DIR` and `TMPDIR` under `/data/tmp/koompi_code_cli_cargo/$AGENT_NAME`.
 4. If the remote command failed, treat it as a code or remote-build failure only after the raw RCH output identifies that class.
 
 ### Dirty Worktree
@@ -725,7 +725,7 @@ python3 scripts/plan_semantic_validation_route.py \
 python3 scripts/build_swarm_operator_runpack.py \
   --capture-current \
   --capture-dir "$capture_dir" \
-  --project-root /data/projects/pi_agent_rust \
+  --project-root /data/projects/koompi_code_cli \
   --agent-name "$AGENT_NAME" \
   --semantic-route-plan-json "$capture_dir/semantic-route-plan.json" \
   --progress-slo-json "$capture_dir/progress-slo.json" \
@@ -744,7 +744,7 @@ The validation scheduler plan schema is governed by `docs/contracts/validation-s
 The autopilot input pack schema is governed by `docs/contracts/swarm-autopilot-input-pack-contract.json`. It normalizes source statuses for the dry-run planner, but it is still advisory and never replaces Doctor, Beads, Agent Mail, RCH, git, or the source artifacts themselves.
 The autopilot plan schema is governed by `docs/contracts/swarm-autopilot-plan-contract.json`. It maps the input pack to ordered dry-run actions such as `claim_ready_bead`, `wait_for_rch`, `adjust_swarm_budget`, `use_beads_soft_lock`, `reopen_stale_bead_candidate`, `run_docs_only_work`, `capture_handoff`, or `stop_and_surface_blocker`.
 When the command emits the companion input pack and plan, the runpack also includes `autopilot_handoff` with schema `pi.swarm.autopilot_handoff.v1`. That section names the input-pack and plan schemas, artifact paths, selected advisory action, and source provenance so a new agent can inspect one handoff bundle without treating the runpack as a new source of truth.
-Before relying on a handoff bundle, run `python3 scripts/check_swarm_runpack_freshness.py "$capture_dir/operator-runpack.json" --source-root /data/projects/pi_agent_rust`. The freshness guard is read-only and fails closed when the runpack or closeout-style evidence cites missing, placeholder, hash-mismatched, newer, or stale source artifacts.
+Before relying on a handoff bundle, run `python3 scripts/check_swarm_runpack_freshness.py "$capture_dir/operator-runpack.json" --source-root /data/projects/koompi_code_cli`. The freshness guard is read-only and fails closed when the runpack or closeout-style evidence cites missing, placeholder, hash-mismatched, newer, or stale source artifacts.
 For closeout evidence triage, run `python3 scripts/check_closeout_gate_freshness.py --operator-summary markdown` after the freshness audit exists. The summary groups current-artifact, missing-contract, stale-source, missing-commit, hash-drift, README-drift, and malformed-source failures, then ranks read-only inspection commands and Beads-only refresh ownership guidance. It is advisory operator context only; it does not replace the freshness JSON, Beads, Agent Mail, RCH, git, source artifacts, UBS, or claim-integrity gates.
 The plan also includes `work_partitions` for ready Beads. Those entries recommend reservation globs, likely collision surfaces to avoid, alternate file families, confidence, and degraded caveats. They are diagnostic only; operators still claim through Beads and reserve through Agent Mail when it is healthy.
 The input pack and plan also carry `budget_drift` evidence with schema `pi.swarm.budget_drift.v1`. It compares the last accepted swarm resource preflight profile with live cgroup, memory, scratch-path, RCH queue, and active-owner observations. Status `stable` keeps the current ceiling, `degraded` recommends reduced fanout with hysteresis, and `deny_new_work` recommends admitting no new agents or heavyweight RCH verification until the live signals recover.

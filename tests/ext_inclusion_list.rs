@@ -10,8 +10,8 @@
 //! - Tier-1-review: vendored artifacts with unknown licenses (need manual review)
 //! - Tier-2 (STRETCH): scored candidates not yet vendored
 
-use pi::conformance::snapshot::SourceTier;
-use pi::extension_inclusion::{normalize_manifest_value, normalized_manifest_hash_from_value};
+use kode::conformance::snapshot::SourceTier;
+use kode::extension_inclusion::{normalize_manifest_value, normalized_manifest_hash_from_value};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use similar::TextDiff;

@@ -334,7 +334,7 @@ fn output_dir() -> PathBuf {
                         .map(PathBuf::from)
                         .filter(|path| !path.as_os_str().is_empty())
                         .unwrap_or_else(std::env::temp_dir)
-                        .join("pi_agent_rust")
+                        .join("koompi_code_cli")
                         .join("baseline_variance")
                 },
                 |dir| {

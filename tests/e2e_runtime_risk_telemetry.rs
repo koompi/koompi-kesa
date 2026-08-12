@@ -8,12 +8,12 @@
 mod common;
 
 use common::TestHarness;
-use pi::connectors::http::HttpConnector;
-use pi::extensions::{
+use kode::connectors::http::HttpConnector;
+use kode::extensions::{
     ExtensionManager, ExtensionPolicy, ExtensionPolicyMode, HostCallContext, HostCallPayload,
     RuntimeRiskConfig, dispatch_host_call_shared,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use serde_json::json;
 use std::fs;
 

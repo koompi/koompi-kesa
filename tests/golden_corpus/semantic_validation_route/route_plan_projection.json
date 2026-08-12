@@ -68,7 +68,7 @@
       "deferred_or_blocked": [
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test provider_streaming",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test provider_streaming",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -79,7 +79,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -90,7 +90,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -101,7 +101,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,
@@ -112,7 +112,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -337,7 +337,7 @@
       "would_run_order": [
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test provider_streaming",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test provider_streaming",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -346,7 +346,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -355,7 +355,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -364,7 +364,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,
@@ -373,7 +373,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -450,7 +450,7 @@
       "deferred_or_blocked": [
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test provider_streaming",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test provider_streaming",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -461,7 +461,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -472,7 +472,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -483,7 +483,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,
@@ -494,7 +494,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -1018,7 +1018,7 @@
       "would_run_order": [
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test extension",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test extension",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -1027,7 +1027,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -1036,7 +1036,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -1045,7 +1045,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,
@@ -1054,7 +1054,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -1400,7 +1400,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test --lib",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test --lib",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -1409,7 +1409,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 6,
@@ -1418,7 +1418,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 7,
@@ -1566,7 +1566,7 @@
       "would_run_order": [
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test provider_streaming",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test provider_streaming",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -1575,7 +1575,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -1584,7 +1584,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -1593,7 +1593,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,
@@ -1602,7 +1602,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -1677,7 +1677,7 @@
       "deferred_or_blocked": [
         {
           "action": "defer",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test provider_streaming",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test provider_streaming",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -1688,7 +1688,7 @@
         },
         {
           "action": "defer",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -1699,7 +1699,7 @@
         },
         {
           "action": "defer",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -1710,7 +1710,7 @@
         },
         {
           "action": "defer",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,
@@ -1721,7 +1721,7 @@
         },
         {
           "action": "defer",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -2075,7 +2075,7 @@
       "would_run_order": [
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test session",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test session",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -2084,7 +2084,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -2093,7 +2093,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -2244,7 +2244,7 @@
       "would_run_order": [
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test provider_streaming",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test provider_streaming",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -2253,7 +2253,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -2262,7 +2262,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -2271,7 +2271,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,
@@ -2280,7 +2280,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -2430,7 +2430,7 @@
       "would_run_order": [
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test provider_streaming",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test provider_streaming",
           "group_id": "focused_tests",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -2439,7 +2439,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test conformance",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test conformance",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 2,
@@ -2448,7 +2448,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo test e2e",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo test e2e",
           "group_id": "e2e_conformance",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 3,
@@ -2457,7 +2457,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,
@@ -2466,7 +2466,7 @@
         },
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo clippy --all-targets -- -D warnings",
           "group_id": "clippy",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 5,
@@ -2565,7 +2565,7 @@
         },
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/target TMPDIR=/data/tmp/pi_agent_rust_cargo/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/target TMPDIR=/data/tmp/koompi_code_cli_cargo/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 4,

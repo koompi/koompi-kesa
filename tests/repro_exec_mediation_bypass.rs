@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use pi::extensions::{DangerousCommandClass, classify_dangerous_command};
+    use kode::extensions::{DangerousCommandClass, classify_dangerous_command};
 
     #[test]
     fn repro_rm_rf_dot_slash_bypass() {

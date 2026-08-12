@@ -47,11 +47,11 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
@@ -466,7 +466,7 @@ fn bench_cold_load(entry: &ManifestEntry, n: usize, env: &EnvFingerprint) -> Sce
     if !entry_file.exists() {
         return ScenarioResult {
             schema: "pi.ext.rust_bench.v1".to_string(),
-            runtime: "pi_agent_rust".to_string(),
+            runtime: "koompi_code_cli".to_string(),
             scenario: "cold_load".to_string(),
             extension: entry.id.clone(),
             group: group.to_string(),
@@ -483,7 +483,7 @@ fn bench_cold_load(entry: &ManifestEntry, n: usize, env: &EnvFingerprint) -> Sce
         Err(e) => {
             return ScenarioResult {
                 schema: "pi.ext.rust_bench.v1".to_string(),
-                runtime: "pi_agent_rust".to_string(),
+                runtime: "koompi_code_cli".to_string(),
                 scenario: "cold_load".to_string(),
                 extension: entry.id.clone(),
                 group: group.to_string(),
@@ -563,7 +563,7 @@ fn bench_cold_load(entry: &ManifestEntry, n: usize, env: &EnvFingerprint) -> Sce
     let success = samples_us.len() == n;
     ScenarioResult {
         schema: "pi.ext.rust_bench.v1".to_string(),
-        runtime: "pi_agent_rust".to_string(),
+        runtime: "koompi_code_cli".to_string(),
         scenario: "cold_load".to_string(),
         extension: entry.id.clone(),
         group: group.to_string(),
@@ -586,7 +586,7 @@ fn bench_warm_load(entry: &ManifestEntry, n: usize, env: &EnvFingerprint) -> Sce
         Err(e) => {
             return ScenarioResult {
                 schema: "pi.ext.rust_bench.v1".to_string(),
-                runtime: "pi_agent_rust".to_string(),
+                runtime: "koompi_code_cli".to_string(),
                 scenario: "warm_load".to_string(),
                 extension: entry.id.clone(),
                 group: group.to_string(),
@@ -618,7 +618,7 @@ fn bench_warm_load(entry: &ManifestEntry, n: usize, env: &EnvFingerprint) -> Sce
         Err(e) => {
             return ScenarioResult {
                 schema: "pi.ext.rust_bench.v1".to_string(),
-                runtime: "pi_agent_rust".to_string(),
+                runtime: "koompi_code_cli".to_string(),
                 scenario: "warm_load".to_string(),
                 extension: entry.id.clone(),
                 group: group.to_string(),
@@ -646,7 +646,7 @@ fn bench_warm_load(entry: &ManifestEntry, n: usize, env: &EnvFingerprint) -> Sce
         });
         return ScenarioResult {
             schema: "pi.ext.rust_bench.v1".to_string(),
-            runtime: "pi_agent_rust".to_string(),
+            runtime: "koompi_code_cli".to_string(),
             scenario: "warm_load".to_string(),
             extension: entry.id.clone(),
             group: group.to_string(),
@@ -687,7 +687,7 @@ fn bench_warm_load(entry: &ManifestEntry, n: usize, env: &EnvFingerprint) -> Sce
     let success = samples_us.len() == n;
     ScenarioResult {
         schema: "pi.ext.rust_bench.v1".to_string(),
-        runtime: "pi_agent_rust".to_string(),
+        runtime: "koompi_code_cli".to_string(),
         scenario: "warm_load".to_string(),
         extension: entry.id.clone(),
         group: group.to_string(),
@@ -725,7 +725,7 @@ fn bench_event_dispatch(
         Err(e) => {
             return ScenarioResult {
                 schema: "pi.ext.rust_bench.v1".to_string(),
-                runtime: "pi_agent_rust".to_string(),
+                runtime: "koompi_code_cli".to_string(),
                 scenario: "event_dispatch".to_string(),
                 extension: format!("{}_extensions", entries.len()),
                 group: "aggregate".to_string(),
@@ -761,7 +761,7 @@ fn bench_event_dispatch(
         });
         return ScenarioResult {
             schema: "pi.ext.rust_bench.v1".to_string(),
-            runtime: "pi_agent_rust".to_string(),
+            runtime: "koompi_code_cli".to_string(),
             scenario: "event_dispatch".to_string(),
             extension: format!("{loaded_count}_extensions"),
             group: "aggregate".to_string(),
@@ -803,7 +803,7 @@ fn bench_event_dispatch(
 
     ScenarioResult {
         schema: "pi.ext.rust_bench.v1".to_string(),
-        runtime: "pi_agent_rust".to_string(),
+        runtime: "koompi_code_cli".to_string(),
         scenario: "event_dispatch".to_string(),
         extension: format!("{loaded_count}_extensions"),
         group: "aggregate".to_string(),

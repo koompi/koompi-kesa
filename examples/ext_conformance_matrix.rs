@@ -14,8 +14,8 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use pi::extension_conformance_matrix::{ApiMatrix, build_test_plan};
-use pi::extension_inclusion::InclusionList;
+use kode::extension_conformance_matrix::{ApiMatrix, build_test_plan};
+use kode::extension_inclusion::InclusionList;
 
 #[derive(Debug, Parser)]
 #[command(name = "ext_conformance_matrix")]

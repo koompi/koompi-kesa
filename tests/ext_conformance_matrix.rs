@@ -5,10 +5,10 @@
 //! Ordinary runs verify `docs/extension-conformance-test-plan.json`; set
 //! `PI_GENERATE_CONFORMANCE_TEST_PLAN=1` to regenerate it explicitly.
 
-use pi::extension_conformance_matrix::{
+use kode::extension_conformance_matrix::{
     ApiMatrix, ConformanceTestPlan, HostCapability, build_test_plan,
 };
-use pi::extension_inclusion::InclusionList;
+use kode::extension_inclusion::InclusionList;
 use serde_json::{Value, json};
 use std::collections::BTreeSet;
 use std::fs;

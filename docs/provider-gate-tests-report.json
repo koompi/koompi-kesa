@@ -5,7 +5,7 @@
   "generated_by": "TopazFalcon (Claude Opus 4.6)",
   "description": "Provider unit/contract/conformance/verify gate suite execution with categorized pass/fail results",
   "environment": {
-    "cargo_target_dir": "/data/projects/pi_agent_rust/_target_topaz",
+    "cargo_target_dir": "/data/projects/koompi_code_cli/_target_topaz",
     "vcr_mode": "playback",
     "vcr_cassette_dir": "tests/fixtures/vcr",
     "ci_mode": true

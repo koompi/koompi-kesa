@@ -17,18 +17,18 @@
 
 mod common;
 
-use pi::model::{Message, UserContent, UserMessage};
-use pi::provider::{Context, Provider, StreamOptions, ToolDef};
-use pi::providers::anthropic::AnthropicProvider;
-use pi::providers::azure::AzureOpenAIProvider;
-use pi::providers::bedrock::BedrockProvider;
-use pi::providers::cohere::CohereProvider;
-use pi::providers::copilot::CopilotProvider;
-use pi::providers::gemini::GeminiProvider;
-use pi::providers::gitlab::GitLabProvider;
-use pi::providers::openai::OpenAIProvider;
-use pi::providers::openai_responses::OpenAIResponsesProvider;
-use pi::providers::vertex::VertexProvider;
+use kode::model::{Message, UserContent, UserMessage};
+use kode::provider::{Context, Provider, StreamOptions, ToolDef};
+use kode::providers::anthropic::AnthropicProvider;
+use kode::providers::azure::AzureOpenAIProvider;
+use kode::providers::bedrock::BedrockProvider;
+use kode::providers::cohere::CohereProvider;
+use kode::providers::copilot::CopilotProvider;
+use kode::providers::gemini::GeminiProvider;
+use kode::providers::gitlab::GitLabProvider;
+use kode::providers::openai::OpenAIProvider;
+use kode::providers::openai_responses::OpenAIResponsesProvider;
+use kode::providers::vertex::VertexProvider;
 use serde_json::{Value, json};
 use std::path::PathBuf;
 

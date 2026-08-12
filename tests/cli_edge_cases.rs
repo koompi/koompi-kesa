@@ -6,7 +6,7 @@
 use std::fs;
 use tempfile::TempDir;
 
-use pi::cli::{Commands, parse_with_extension_flags};
+use kode::cli::{Commands, parse_with_extension_flags};
 
 /// Test that arguments with spaces are handled correctly when quoted.
 #[test]

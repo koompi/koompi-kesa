@@ -15,14 +15,14 @@
 
 mod common;
 
-use pi::model::{Message, ThinkingLevel, UserContent};
-use pi::models::CompatConfig;
-use pi::provider::{Context, Provider, StreamOptions, ThinkingBudgets, ToolDef};
-use pi::providers::anthropic::AnthropicProvider;
-use pi::providers::cohere::CohereProvider;
-use pi::providers::gemini::GeminiProvider;
-use pi::providers::openai::OpenAIProvider;
-use pi::providers::openai_responses::OpenAIResponsesProvider;
+use kode::model::{Message, ThinkingLevel, UserContent};
+use kode::models::CompatConfig;
+use kode::provider::{Context, Provider, StreamOptions, ThinkingBudgets, ToolDef};
+use kode::providers::anthropic::AnthropicProvider;
+use kode::providers::cohere::CohereProvider;
+use kode::providers::gemini::GeminiProvider;
+use kode::providers::openai::OpenAIProvider;
+use kode::providers::openai_responses::OpenAIResponsesProvider;
 use serde_json::json;
 use std::collections::HashMap;
 
@@ -33,7 +33,7 @@ use std::collections::HashMap;
 fn minimal_context() -> Context<'static> {
     Context {
         system_prompt: Some("You are helpful.".to_string().into()),
-        messages: vec![Message::User(pi::model::UserMessage {
+        messages: vec![Message::User(kode::model::UserMessage {
             content: UserContent::Text("Hello".to_string()),
             timestamp: 0,
         })]
@@ -45,7 +45,7 @@ fn minimal_context() -> Context<'static> {
 fn context_with_tools() -> Context<'static> {
     Context {
         system_prompt: Some("Be concise.".to_string().into()),
-        messages: vec![Message::User(pi::model::UserMessage {
+        messages: vec![Message::User(kode::model::UserMessage {
             content: UserContent::Text("Search for rust".to_string()),
             timestamp: 0,
         })]
@@ -623,9 +623,9 @@ fn openai_completions_url_normalization() {
 
 #[test]
 fn factory_routes_anthropic_correctly() {
-    use pi::models::ModelEntry;
-    use pi::provider::{InputType, Model, ModelCost};
-    use pi::providers::create_provider;
+    use kode::models::ModelEntry;
+    use kode::provider::{InputType, Model, ModelCost};
+    use kode::providers::create_provider;
 
     let entry = ModelEntry {
         model: Model {
@@ -660,9 +660,9 @@ fn factory_routes_anthropic_correctly() {
 
 #[test]
 fn factory_routes_openai_completions_correctly() {
-    use pi::models::ModelEntry;
-    use pi::provider::{InputType, Model, ModelCost};
-    use pi::providers::create_provider;
+    use kode::models::ModelEntry;
+    use kode::provider::{InputType, Model, ModelCost};
+    use kode::providers::create_provider;
 
     let entry = ModelEntry {
         model: Model {
@@ -697,9 +697,9 @@ fn factory_routes_openai_completions_correctly() {
 
 #[test]
 fn factory_routes_openai_responses_correctly() {
-    use pi::models::ModelEntry;
-    use pi::provider::{InputType, Model, ModelCost};
-    use pi::providers::create_provider;
+    use kode::models::ModelEntry;
+    use kode::provider::{InputType, Model, ModelCost};
+    use kode::providers::create_provider;
 
     let entry = ModelEntry {
         model: Model {
@@ -734,9 +734,9 @@ fn factory_routes_openai_responses_correctly() {
 
 #[test]
 fn factory_routes_cohere_correctly() {
-    use pi::models::ModelEntry;
-    use pi::provider::{InputType, Model, ModelCost};
-    use pi::providers::create_provider;
+    use kode::models::ModelEntry;
+    use kode::provider::{InputType, Model, ModelCost};
+    use kode::providers::create_provider;
 
     let entry = ModelEntry {
         model: Model {
@@ -771,9 +771,9 @@ fn factory_routes_cohere_correctly() {
 
 #[test]
 fn factory_routes_google_correctly() {
-    use pi::models::ModelEntry;
-    use pi::provider::{InputType, Model, ModelCost};
-    use pi::providers::create_provider;
+    use kode::models::ModelEntry;
+    use kode::provider::{InputType, Model, ModelCost};
+    use kode::providers::create_provider;
 
     let entry = ModelEntry {
         model: Model {
@@ -811,9 +811,9 @@ fn factory_routes_google_correctly() {
 // ═══════════════════════════════════════════════════════════════════════
 
 /// Helper: build a minimal `ModelEntry` for an OAI-compatible provider.
-fn oai_compat_entry(provider: &str, base_url: &str) -> pi::models::ModelEntry {
-    use pi::provider::{InputType, Model, ModelCost};
-    pi::models::ModelEntry {
+fn oai_compat_entry(provider: &str, base_url: &str) -> kode::models::ModelEntry {
+    use kode::provider::{InputType, Model, ModelCost};
+    kode::models::ModelEntry {
         model: Model {
             id: "test-model".to_string(),
             name: "Test Model".to_string(),
@@ -842,7 +842,7 @@ fn oai_compat_entry(provider: &str, base_url: &str) -> pi::models::ModelEntry {
 
 #[test]
 fn factory_routes_batch_a1_providers_correctly() {
-    use pi::providers::create_provider;
+    use kode::providers::create_provider;
 
     let cases = [
         ("302ai", "https://api.302.ai/v1"),
@@ -864,7 +864,7 @@ fn factory_routes_batch_a1_providers_correctly() {
 
 #[test]
 fn factory_routes_batch_a2_providers_correctly() {
-    use pi::providers::create_provider;
+    use kode::providers::create_provider;
 
     let cases = [
         ("firmware", "https://app.firmware.ai/api/v1"),
@@ -885,7 +885,7 @@ fn factory_routes_batch_a2_providers_correctly() {
 
 #[test]
 fn factory_routes_batch_a3_providers_correctly() {
-    use pi::providers::create_provider;
+    use kode::providers::create_provider;
 
     let cases = [
         ("io-net", "https://api.intelligence.io.solutions/api/v1"),
@@ -908,7 +908,7 @@ fn factory_routes_batch_a3_providers_correctly() {
 
 #[test]
 fn factory_routes_batch_a4_providers_correctly() {
-    use pi::providers::create_provider;
+    use kode::providers::create_provider;
 
     let cases = [
         ("poe", "https://api.poe.com/v1"),
@@ -935,10 +935,10 @@ fn factory_routes_batch_a4_providers_correctly() {
 
 #[test]
 fn factory_routes_gitlab_native_provider() {
-    use pi::provider::{InputType, Model, ModelCost};
-    use pi::providers::create_provider;
+    use kode::provider::{InputType, Model, ModelCost};
+    use kode::providers::create_provider;
 
-    let entry = pi::models::ModelEntry {
+    let entry = kode::models::ModelEntry {
         model: Model {
             id: "gitlab-duo-chat".to_string(),
             name: "GitLab Duo Chat".to_string(),

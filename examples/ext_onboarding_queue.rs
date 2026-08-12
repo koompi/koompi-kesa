@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use pi::extension_popularity::{CandidateItem, CandidatePool, CandidateSource};
+use kode::extension_popularity::{CandidateItem, CandidatePool, CandidateSource};
 use serde::Serialize;
 use url::Url;
 

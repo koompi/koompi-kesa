@@ -7,10 +7,10 @@
 mod common;
 
 use common::TestHarness;
-use pi::extension_preflight::{
+use kode::extension_preflight::{
     FindingCategory, FindingSeverity, PREFLIGHT_SCHEMA, PreflightAnalyzer, PreflightVerdict,
 };
-use pi::extensions::{
+use kode::extensions::{
     CompatibilityScanner, ExtensionPolicy, ExtensionPolicyMode, PolicyDecision, PolicyProfile,
 };
 use std::fs;
@@ -425,7 +425,7 @@ fn workflow_escalation_per_extension_override() {
     let mut per_ext = std::collections::HashMap::new();
     per_ext.insert(
         "trusted-ext".to_string(),
-        pi::extensions::ExtensionOverride {
+        kode::extensions::ExtensionOverride {
             mode: None,
             allow: vec!["exec".to_string(), "env".to_string()],
             deny: vec![],

@@ -12,7 +12,7 @@
     clippy::unreadable_literal
 )]
 
-use pi::perf_build::{
+use kode::perf_build::{
     BINARY_SIZE_RELEASE_BUDGET_MB, BUILD_FINGERPRINT_CONTRACT, BenchmarkBuildVerification,
     BenchmarkProvenance, CANONICAL_PIJS_PERF_FEATURES, benchmark_provenance_config_hash,
     matches_canonical_perf_build_fingerprint, matches_canonical_pijs_perf_features,
@@ -987,7 +987,7 @@ fn build_binary_size_candidate_paths(
 }
 
 fn binary_size_candidate_paths(root: &Path) -> Vec<PathBuf> {
-    let detected_profile = pi::perf_build::detect_build_profile();
+    let detected_profile = kode::perf_build::detect_build_profile();
     let release_binary_override = binary_size_release_override();
     let mut paths = Vec::new();
     for dir in perf_evidence_dirs(root) {
@@ -2876,7 +2876,7 @@ fn read_criterion_protocol_parse(root: &Path) -> (Option<f64>, String) {
 
 #[test]
 fn target_dir_resolution_honors_cargo_target_dir_shape() {
-    let root = Path::new("/workspace/pi_agent_rust");
+    let root = Path::new("/workspace/koompi_code_cli");
 
     assert_eq!(resolve_target_dir(root, None), root.join("target"));
     assert_eq!(
@@ -2887,16 +2887,16 @@ fn target_dir_resolution_honors_cargo_target_dir_shape() {
         resolve_target_dir(
             root,
             Some(std::ffi::OsStr::new(
-                "/data/tmp/pi_agent_rust_cargo/sunnybeacon/target"
+                "/data/tmp/koompi_code_cli_cargo/sunnybeacon/target"
             ))
         ),
-        PathBuf::from("/data/tmp/pi_agent_rust_cargo/sunnybeacon/target")
+        PathBuf::from("/data/tmp/koompi_code_cli_cargo/sunnybeacon/target")
     );
 }
 
 #[test]
 fn explicit_target_dir_is_authoritative_and_fixture_roots_are_hermetic() {
-    let project = Path::new("/workspace/pi_agent_rust");
+    let project = Path::new("/workspace/koompi_code_cli");
     let explicit = std::ffi::OsStr::new("/data/tmp/pi-release-target");
     assert_eq!(
         target_dir_candidates_for(project, project, Some(explicit)),
@@ -2914,7 +2914,7 @@ fn explicit_target_dir_is_authoritative_and_fixture_roots_are_hermetic() {
 
 #[test]
 fn pijs_workload_candidates_follow_resolved_target_dir() {
-    let root = Path::new("/workspace/pi_agent_rust");
+    let root = Path::new("/workspace/koompi_code_cli");
     let candidates = pijs_workload_candidate_paths_in_target_dir(&resolve_target_dir(root, None));
 
     assert_eq!(
@@ -2930,7 +2930,7 @@ fn pijs_workload_candidates_follow_resolved_target_dir() {
 
 #[test]
 fn pijs_workload_candidates_accept_staged_evidence_dir_layout() {
-    let evidence_dir = Path::new("/workspace/pi_agent_rust/tests/perf/reports/staged");
+    let evidence_dir = Path::new("/workspace/koompi_code_cli/tests/perf/reports/staged");
     let candidates = pijs_workload_candidate_paths_in_evidence_dir(evidence_dir);
 
     assert_eq!(candidates[0], evidence_dir.join("pijs_workload_perf.jsonl"));
@@ -2943,7 +2943,7 @@ fn pijs_workload_candidates_accept_staged_evidence_dir_layout() {
 
 #[test]
 fn context_intelligence_budget_artifacts_follow_resolved_target_dir() {
-    let root = Path::new("/workspace/pi_agent_rust");
+    let root = Path::new("/workspace/koompi_code_cli");
     let candidates = budget_artifact_candidates(root, "context_graph_build_cold_p95");
     let machine_candidates = context_intelligence_budget_candidate_paths(root);
 
@@ -2960,10 +2960,10 @@ fn context_intelligence_budget_artifacts_follow_resolved_target_dir() {
     );
     assert!(
         context_intelligence_budget_candidate_paths_in_evidence_dir(Path::new(
-            "/workspace/pi_agent_rust/docs/evidence/perf"
+            "/workspace/koompi_code_cli/docs/evidence/perf"
         ))
         .contains(&PathBuf::from(
-            "/workspace/pi_agent_rust/docs/evidence/perf/perf/results/context_intelligence_planner_budget.json"
+            "/workspace/koompi_code_cli/docs/evidence/perf/perf/results/context_intelligence_planner_budget.json"
         )),
         "staged perf evidence dirs must support nested perf/results artifacts"
     );
@@ -3713,15 +3713,15 @@ fn pijs_gate_reader_requires_nonempty_binary_path() {
 fn pijs_gate_reader_derives_perf_profile_from_binary_path() {
     let cases = [
         (
-            "/tmp/pi_agent_rust/target/release/examples/pijs_workload",
+            "/tmp/koompi_code_cli/target/release/examples/pijs_workload",
             "derived_profile=Some(\"release\")",
         ),
         (
-            "/tmp/pi_agent_rust/bin/pijs_workload",
+            "/tmp/koompi_code_cli/bin/pijs_workload",
             "derived_profile=Some(\"bin\")",
         ),
         (
-            "/tmp/pi_agent_rust/target/perf/examples",
+            "/tmp/koompi_code_cli/target/perf/examples",
             "must identify the pijs_workload executable",
         ),
     ];
@@ -4633,8 +4633,8 @@ fn valid_context_intelligence_budget_artifact_fixture() -> Value {
         "run_id": "context-budget-test",
         "correlation_id": "context-budget-test",
         "environment": {
-            "cargo_target_dir": "/data/tmp/pi_agent_rust_cargo/test/target",
-            "tmpdir": "/data/tmp/pi_agent_rust_cargo/test/tmp"
+            "cargo_target_dir": "/data/tmp/koompi_code_cli_cargo/test/target",
+            "tmpdir": "/data/tmp/koompi_code_cli_cargo/test/tmp"
         },
         "host": {
             "os": "linux",

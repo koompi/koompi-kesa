@@ -8,11 +8,11 @@ mod common;
 
 use common::{TestHarness, validate_jsonl};
 use futures::StreamExt;
-use pi::error::Error;
-use pi::http::client::Client;
-use pi::model::{Message, UserContent, UserMessage};
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
+use kode::error::Error;
+use kode::http::client::Client;
+use kode::model::{Message, UserContent, UserMessage};
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
 use serde_json::json;
 
 // ============================================================================
@@ -38,11 +38,11 @@ fn options_with_key(key: &str) -> StreamOptions {
     }
 }
 
-fn get_text_content(content: &[pi::model::ContentBlock]) -> String {
+fn get_text_content(content: &[kode::model::ContentBlock]) -> String {
     content
         .iter()
         .filter_map(|block| match block {
-            pi::model::ContentBlock::Text(t) => Some(t.text.as_str()),
+            kode::model::ContentBlock::Text(t) => Some(t.text.as_str()),
             _ => None,
         })
         .collect::<Vec<_>>()
@@ -235,7 +235,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_401");
             let provider =
-                pi::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("bad-key"))
                 .await
@@ -264,7 +264,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_403");
             let provider =
-                pi::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -293,7 +293,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_429");
             let provider =
-                pi::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -322,7 +322,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_529");
             let provider =
-                pi::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -352,7 +352,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("openai_http_401");
             let provider =
-                pi::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+                kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("bad-key"))
                 .await
@@ -380,7 +380,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("openai_http_429");
             let provider =
-                pi::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+                kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -408,7 +408,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("gemini_http_401");
             let provider =
-                pi::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
+                kode::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("bad-key"))
                 .await
@@ -434,7 +434,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("gemini_http_429");
             let provider =
-                pi::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
+                kode::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -461,7 +461,7 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("azure_http_401");
-            let provider = pi::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
+            let provider = kode::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
                 .with_client(client)
                 .with_endpoint_url(endpoint);
             let err = provider
@@ -488,7 +488,7 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("azure_http_429");
-            let provider = pi::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
+            let provider = kode::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
                 .with_client(client)
                 .with_endpoint_url(endpoint);
             let err = provider
@@ -521,7 +521,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_400");
             let provider =
-                pi::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -549,7 +549,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("openai_http_400");
             let provider =
-                pi::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+                kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -578,7 +578,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("gemini_http_400");
             let provider =
-                pi::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
+                kode::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -606,7 +606,7 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("azure_http_400");
-            let provider = pi::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
+            let provider = kode::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
                 .with_client(client)
                 .with_endpoint_url(endpoint);
             let err = provider
@@ -638,7 +638,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("openai_http_403");
             let provider =
-                pi::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+                kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -667,7 +667,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("gemini_http_403");
             let provider =
-                pi::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
+                kode::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -692,7 +692,7 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("azure_http_403");
-            let provider = pi::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
+            let provider = kode::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
                 .with_client(client)
                 .with_endpoint_url(endpoint);
             let err = provider
@@ -723,7 +723,7 @@ mod provider_http_errors {
         common::run_async(async move {
             let harness = TestHarness::new("gemini_http_500");
             let provider =
-                pi::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
+                kode::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -748,7 +748,7 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("azure_http_500");
-            let provider = pi::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
+            let provider = kode::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
                 .with_client(client)
                 .with_endpoint_url(endpoint);
             let err = provider
@@ -783,7 +783,7 @@ mod malformed_responses {
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_invalid_json_sse");
             let provider =
-                pi::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
             let mut stream = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -814,7 +814,7 @@ mod malformed_responses {
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_empty_body_200");
             let provider =
-                pi::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
             let result = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await;
@@ -856,7 +856,7 @@ mod malformed_responses {
         common::run_async(async move {
             let harness = TestHarness::new("gemini_invalid_json_sse");
             let provider =
-                pi::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
+                kode::providers::gemini::GeminiProvider::new("gemini-test").with_client(client);
             let mut stream = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -887,7 +887,7 @@ mod malformed_responses {
         common::run_async(async move {
             let harness = TestHarness::new("openai_non_json_200");
             let provider =
-                pi::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+                kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
             let result = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await;
@@ -924,7 +924,7 @@ mod malformed_responses {
 
     #[test]
     fn anthropic_sse_error_event_in_stream() {
-        use pi::model::{StopReason, StreamEvent};
+        use kode::model::{StopReason, StreamEvent};
 
         // Anthropic can return HTTP 200 with an error event mid-stream.
         // The provider maps it to StreamEvent::Error (not Err), with
@@ -948,7 +948,7 @@ mod malformed_responses {
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_sse_error_event");
             let provider =
-                pi::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
             let mut stream = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -999,7 +999,7 @@ mod malformed_responses {
         common::run_async(async move {
             let harness = TestHarness::new("openai_empty_body_200");
             let provider =
-                pi::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+                kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
             let result = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await;
@@ -1040,7 +1040,7 @@ mod malformed_responses {
         );
         common::run_async(async move {
             let harness = TestHarness::new("azure_empty_body_200");
-            let provider = pi::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
+            let provider = kode::providers::azure::AzureOpenAIProvider::new("unused", "gpt-test")
                 .with_client(client)
                 .with_endpoint_url(endpoint);
             let result = provider
@@ -1077,13 +1077,13 @@ mod malformed_responses {
 
 mod tool_errors {
     use super::*;
-    use pi::tools::Tool;
+    use kode::tools::Tool;
 
     #[test]
     fn bash_command_not_found_reports_exit_code() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("bash_cmd_not_found");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = json!({
                 "command": "nonexistent_command_xyz_12345"
             });
@@ -1119,7 +1119,7 @@ mod tool_errors {
     fn bash_empty_command_reports_error() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("bash_empty_command");
-            let tool = pi::tools::BashTool::new(harness.temp_dir());
+            let tool = kode::tools::BashTool::new(harness.temp_dir());
             let input = json!({ "command": "" });
 
             let result = tool.execute("test-id", input, None).await;
@@ -1135,7 +1135,7 @@ mod tool_errors {
     fn read_nonexistent_file_reports_error() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("read_nonexistent");
-            let tool = pi::tools::ReadTool::new(harness.temp_dir());
+            let tool = kode::tools::ReadTool::new(harness.temp_dir());
             let path = harness.temp_dir().join("does_not_exist.txt");
             let input = json!({ "path": path.to_string_lossy() });
 
@@ -1161,7 +1161,7 @@ mod tool_errors {
     fn write_to_nonexistent_parent_dir_reports_error() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("write_no_parent");
-            let tool = pi::tools::WriteTool::new(harness.temp_dir());
+            let tool = kode::tools::WriteTool::new(harness.temp_dir());
             let path = harness
                 .temp_dir()
                 .join("nonexistent_dir")
@@ -1189,7 +1189,7 @@ mod tool_errors {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("grep_bad_regex");
             harness.create_file("sample.txt", b"some content");
-            let tool = pi::tools::GrepTool::new(harness.temp_dir());
+            let tool = kode::tools::GrepTool::new(harness.temp_dir());
             let input = json!({
                 "pattern": "[invalid(regex",
                 "path": harness.temp_dir().to_string_lossy()
@@ -1219,7 +1219,7 @@ mod tool_errors {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("edit_empty_old");
             harness.create_file("test.txt", b"Hello World");
-            let tool = pi::tools::EditTool::new(harness.temp_dir());
+            let tool = kode::tools::EditTool::new(harness.temp_dir());
             let path = harness.temp_dir().join("test.txt");
             let input = json!({
                 "path": path.to_string_lossy(),
@@ -1240,7 +1240,7 @@ mod tool_errors {
     fn find_in_nonexistent_directory_reports_error() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("find_bad_path");
-            let tool = pi::tools::FindTool::new(harness.temp_dir());
+            let tool = kode::tools::FindTool::new(harness.temp_dir());
             let bad_path = harness.temp_dir().join("no_such_dir");
             let input = json!({
                 "pattern": "*.rs",
@@ -1270,7 +1270,7 @@ mod tool_errors {
     fn ls_nonexistent_directory_reports_error() {
         asupersync::test_utils::run_test(|| async {
             let harness = TestHarness::new("ls_bad_path");
-            let tool = pi::tools::LsTool::new(harness.temp_dir());
+            let tool = kode::tools::LsTool::new(harness.temp_dir());
             let bad_path = harness.temp_dir().join("no_such_dir");
             let input = json!({ "path": bad_path.to_string_lossy() });
 

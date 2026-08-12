@@ -11,7 +11,7 @@ Last updated: 2026-02-14
 ## 1. Purpose
 
 This document defines measurable security objectives that govern release
-decisions for the `pi_agent_rust` extension runtime. It replaces subjective
+decisions for the `koompi_code_cli` extension runtime. It replaces subjective
 confidence with numeric targets, each traceable to a threat (T1-T8),
 invariant (INV-001-012), or baseline audit gap (G-1-G-7).
 

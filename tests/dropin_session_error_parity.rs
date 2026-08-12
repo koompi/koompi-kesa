@@ -1,5 +1,5 @@
-use pi::error::Error;
-use pi::session::{SessionEntry, SessionHeader};
+use kode::error::Error;
+use kode::session::{SessionEntry, SessionHeader};
 use serde_json::json;
 
 #[test]

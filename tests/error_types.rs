@@ -7,7 +7,7 @@
 
 mod common;
 
-use pi::error::{Error, Result};
+use kode::error::{Error, Result};
 use std::fs;
 use std::io::{self, ErrorKind};
 
@@ -504,7 +504,7 @@ fn test_error_with_special_characters() {
 // Hints tests — config_hints
 // =============================================================================
 
-use pi::error::ErrorHints;
+use kode::error::ErrorHints;
 
 /// Helper: assert hints summary contains expected substring.
 fn assert_summary_contains(hints: &ErrorHints, expected: &str) {

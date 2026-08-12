@@ -2,7 +2,7 @@
 
 use loom::sync::{Arc, Condvar, Mutex};
 use loom::thread;
-use pi::hostcall_queue::{
+use kode::hostcall_queue::{
     BravoBiasMode, ContentionSample, ContentionSignature, HostcallQueueMode, HostcallRequestQueue,
 };
 

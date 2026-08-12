@@ -73,7 +73,7 @@ check_marker_and_links() {
   require_file "$COMMANDS_FILE" || true
   require_file "$DEBUG_FILE" || true
 
-  if ! grep -Fq "pi_agent_rust installer managed skill" "$SKILL_FILE"; then
+  if ! grep -Fq "koompi_code_cli installer managed skill" "$SKILL_FILE"; then
     fail "SKILL.md missing installer-managed marker comment"
   fi
 

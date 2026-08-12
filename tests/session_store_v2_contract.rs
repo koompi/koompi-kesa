@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
 use jsonschema::Validator;
-use pi::session_store_v2::{MigrationEvent, MigrationVerification, SessionStoreV2};
+use kode::session_store_v2::{MigrationEvent, MigrationVerification, SessionStoreV2};
 use serde_json::{Value, json};
 use std::fs;
 use std::path::PathBuf;

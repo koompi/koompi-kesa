@@ -118,20 +118,20 @@
   ],
   "validation": [
     {
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey-compaction-admission/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey-compaction-admission/tmp cargo test --lib compaction_admission -- --nocapture",
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey-compaction-admission/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey-compaction-admission/tmp cargo test --lib compaction_admission -- --nocapture",
       "status": "passed",
       "observed": "9 passed; 0 failed; 6524 filtered out"
     },
     {
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey-compaction-admission/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey-compaction-admission/tmp cargo check --all-targets",
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey-compaction-admission/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey-compaction-admission/tmp cargo check --all-targets",
       "status": "passed"
     },
     {
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey-compaction-admission/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey-compaction-admission/tmp cargo clippy --all-targets -- -D warnings",
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey-compaction-admission/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey-compaction-admission/tmp cargo clippy --all-targets -- -D warnings",
       "status": "passed"
     },
     {
-      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey-compaction-admission/target TMPDIR=/data/tmp/pi_agent_rust_cargo/amberosprey-compaction-admission/tmp cargo fmt --check",
+      "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey-compaction-admission/target TMPDIR=/data/tmp/koompi_code_cli_cargo/amberosprey-compaction-admission/tmp cargo fmt --check",
       "status": "passed"
     }
   ]

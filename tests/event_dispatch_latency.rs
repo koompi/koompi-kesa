@@ -18,11 +18,11 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use pi::extensions::{
+use kode::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::tools::ToolRegistry;
 use serde_json::{Value, json};
 use std::fmt::Write as _;
 use std::path::PathBuf;
@@ -86,7 +86,7 @@ fn report_dir() -> PathBuf {
         .map(PathBuf::from)
         .filter(|path| !path.as_os_str().is_empty())
         .unwrap_or_else(std::env::temp_dir);
-    base.join("pi_agent_rust").join("event_dispatch_latency")
+    base.join("koompi_code_cli").join("event_dispatch_latency")
 }
 
 fn percentile_index(len: usize, numerator: usize, denominator: usize) -> usize {

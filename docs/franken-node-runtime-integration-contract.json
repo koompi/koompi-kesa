@@ -7,8 +7,8 @@
   "effective_date_utc": "2026-02-17T10:00:00Z",
   "scope": {
     "target_project_root": "/dp/franken_node",
-    "source_project_root": "/data/projects/pi_agent_rust",
-    "objective": "Integrate franken_node runtime crates into pi_agent_rust through clean runtime boundaries, retire duplicate paths, and validate the integrated stack."
+    "source_project_root": "/data/projects/koompi_code_cli",
+    "objective": "Integrate franken_node runtime crates into koompi_code_cli through clean runtime boundaries, retire duplicate paths, and validate the integrated stack."
   },
   "integration_boundary": {
     "required_crate_dependencies": [

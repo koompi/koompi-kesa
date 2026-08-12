@@ -16,7 +16,7 @@ pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 const CACHE_TTL_SECS: u64 = 24 * 60 * 60;
 const RELEASE_CHECK_TIMEOUT: Duration = Duration::from_secs(10);
 const RELEASES_URL: &str =
-    "https://api.github.com/repos/Dicklesworthstone/pi_agent_rust/releases/latest";
+    "https://api.github.com/repos/Dicklesworthstone/koompi_code_cli/releases/latest";
 
 /// Result of a version check.
 #[derive(Debug, Clone)]

@@ -1,7 +1,7 @@
 //! Differential evidence for G07 config/environment parity against pi-mono
 //! settings semantics.
 
-use pi::config::Config;
+use kode::config::Config;
 use serde_json::json;
 use std::path::Path;
 use tempfile::TempDir;

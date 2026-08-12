@@ -4,20 +4,20 @@
 mod common;
 
 use common::TestHarness;
-use pi::agent::{Agent, AgentConfig, AgentSession};
-use pi::auth::AuthStorage;
-use pi::config::Config;
-use pi::http::client::Client;
-use pi::model::{
+use kode::agent::{Agent, AgentConfig, AgentSession};
+use kode::auth::AuthStorage;
+use kode::config::Config;
+use kode::http::client::Client;
+use kode::model::{
     AssistantMessage, ContentBlock, StopReason, TextContent, ToolCall, Usage, UserContent,
 };
-use pi::provider::Provider;
-use pi::providers::openai::OpenAIProvider;
-use pi::resources::ResourceLoader;
-use pi::rpc::{RpcOptions, run};
-use pi::session::{Session, SessionMessage};
-use pi::tools::ToolRegistry;
-use pi::vcr::{VcrMode, VcrRecorder};
+use kode::provider::Provider;
+use kode::providers::openai::OpenAIProvider;
+use kode::resources::ResourceLoader;
+use kode::rpc::{RpcOptions, run};
+use kode::session::{Session, SessionMessage};
+use kode::tools::ToolRegistry;
+use kode::vcr::{VcrMode, VcrRecorder};
 use serde_json::Value;
 use std::env;
 use std::path::{Path, PathBuf};
@@ -45,7 +45,7 @@ fn build_agent_session(session: Session, cassette_dir: &Path) -> AgentSession {
         agent,
         session,
         false,
-        pi::compaction::ResolvedCompactionSettings::default(),
+        kode::compaction::ResolvedCompactionSettings::default(),
     )
 }
 

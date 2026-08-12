@@ -1,6 +1,6 @@
 # Provider Test Obligations
 
-> Mandatory test categories, coverage floors, and artifact requirements for every provider in pi_agent_rust.
+> Mandatory test categories, coverage floors, and artifact requirements for every provider in koompi_code_cli.
 
 ---
 

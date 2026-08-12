@@ -31,10 +31,10 @@ mod common;
 
 use common::TestHarness;
 use futures::{Stream, StreamExt};
-use pi::http::client::Client;
-use pi::model::{Message, StopReason, StreamEvent, UserContent, UserMessage};
-use pi::provider::{Context, Provider, StreamOptions, ToolDef};
-use pi::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
+use kode::http::client::Client;
+use kode::model::{Message, StopReason, StreamEvent, UserContent, UserMessage};
+use kode::provider::{Context, Provider, StreamOptions, ToolDef};
+use kode::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::env;
@@ -113,7 +113,7 @@ struct StreamOutcome {
 
 async fn collect_events<S>(mut stream: S) -> StreamOutcome
 where
-    S: Stream<Item = pi::PiResult<StreamEvent>> + Unpin,
+    S: Stream<Item = kode::PiResult<StreamEvent>> + Unpin,
 {
     let mut events = Vec::new();
     let mut stream_error = None;
@@ -141,7 +141,7 @@ struct StreamSummary {
     has_error_event: bool,
     text: String,
     thinking: String,
-    tool_calls: Vec<pi::model::ToolCall>,
+    tool_calls: Vec<kode::model::ToolCall>,
     text_deltas: usize,
     thinking_deltas: usize,
     tool_call_deltas: usize,
@@ -551,7 +551,7 @@ fn assert_error_ok(tag: &str, message: &str, expectation: &ErrorExpectation) {
 fn assert_tool_schema_fidelity(
     tag: &str,
     tool_defs: &[ToolDef],
-    tool_calls: &[pi::model::ToolCall],
+    tool_calls: &[kode::model::ToolCall],
 ) {
     for tool_call in tool_calls {
         let tool_def = tool_defs
@@ -1263,7 +1263,7 @@ async fn run_canonical_scenario(
 
 mod vertex_smoke {
     use super::*;
-    use pi::providers::vertex::VertexProvider;
+    use kode::providers::vertex::VertexProvider;
 
     const TEST_PROJECT: &str = "verify-project";
     const TEST_LOCATION: &str = "us-central1";
@@ -1444,7 +1444,7 @@ mod vertex_smoke {
 
 mod bedrock_smoke {
     use super::*;
-    use pi::providers::bedrock::BedrockProvider;
+    use kode::providers::bedrock::BedrockProvider;
 
     const TEST_MODEL: &str = "anthropic.claude-3-haiku-20240307-v1:0";
     const TEST_REGION: &str = "us-east-1";
@@ -1600,7 +1600,7 @@ mod bedrock_smoke {
 
 mod copilot_smoke {
     use super::*;
-    use pi::providers::copilot::CopilotProvider;
+    use kode::providers::copilot::CopilotProvider;
 
     const TEST_MODEL: &str = "gpt-4o-mini";
     const TEST_GITHUB_TOKEN: &str = "ghp_vcr_playback_token";
@@ -1848,7 +1848,7 @@ mod copilot_smoke {
 
 mod gitlab_smoke {
     use super::*;
-    use pi::providers::gitlab::GitLabProvider;
+    use kode::providers::gitlab::GitLabProvider;
 
     const TEST_MODEL: &str = "gitlab-duo-chat";
     const BASE_URL: &str = "https://gitlab.com";
@@ -2109,7 +2109,7 @@ fn verification_report_schema_is_consistent() {
 
 mod openai_smoke {
     use super::*;
-    use pi::providers::openai::OpenAIProvider;
+    use kode::providers::openai::OpenAIProvider;
 
     const TEST_MODEL: &str = "gpt-4o-mini";
     const API_URL: &str = "https://api.openai.com/v1/chat/completions";
@@ -2311,7 +2311,7 @@ mod openai_smoke {
 
 mod sap_ai_core_smoke {
     use super::*;
-    use pi::providers::openai::OpenAIProvider;
+    use kode::providers::openai::OpenAIProvider;
 
     const TEST_DEPLOYMENT: &str = "verify-deployment";
     const SERVICE_URL: &str = "https://api.ai.sap.example.com";
@@ -2523,8 +2523,8 @@ mod sap_ai_core_smoke {
 
 mod wave_b1_smoke {
     use super::*;
-    use pi::providers::anthropic::AnthropicProvider;
-    use pi::providers::openai::OpenAIProvider;
+    use kode::providers::anthropic::AnthropicProvider;
+    use kode::providers::openai::OpenAIProvider;
 
     const ALIBABA_CN_PROVIDER: &str = "alibaba-cn";
     const ALIBABA_CN_MODEL: &str = "qwen-plus";
@@ -3783,7 +3783,7 @@ mod wave_b3_smoke {
 
 mod azure_smoke {
     use super::*;
-    use pi::providers::azure::AzureOpenAIProvider;
+    use kode::providers::azure::AzureOpenAIProvider;
 
     const TEST_RESOURCE: &str = "test-resource";
     const TEST_DEPLOYMENT: &str = "gpt-4o-mini";
@@ -3995,7 +3995,7 @@ mod azure_smoke {
 
 mod cohere_smoke {
     use super::*;
-    use pi::providers::cohere::CohereProvider;
+    use kode::providers::cohere::CohereProvider;
 
     const TEST_MODEL: &str = "command-r-plus";
     const CHAT_URL: &str = "https://api.cohere.com/v2/chat";
@@ -4264,7 +4264,7 @@ mod cohere_smoke {
 
 mod anthropic_smoke {
     use super::*;
-    use pi::providers::anthropic::AnthropicProvider;
+    use kode::providers::anthropic::AnthropicProvider;
 
     const TEST_MODEL: &str = "claude-sonnet-4-20250514";
     const API_URL: &str = "https://api.anthropic.com/v1/messages";
@@ -4610,7 +4610,7 @@ mod anthropic_smoke {
 
 mod gemini_smoke {
     use super::*;
-    use pi::providers::gemini::GeminiProvider;
+    use kode::providers::gemini::GeminiProvider;
 
     const TEST_MODEL: &str = "gemini-1.5-flash";
 

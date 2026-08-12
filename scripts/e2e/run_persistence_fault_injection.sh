@@ -14,13 +14,13 @@ export CI_CORRELATION_ID="$CORRELATION_ID"
 export RUST_LOG="${RUST_LOG:-info}"
 
 default_build_root() {
-    local base="/data/tmp/pi_agent_rust"
+    local base="/data/tmp/koompi_code_cli"
     local resolved=""
 
     if [[ -e "$base" ]] && resolved="$(cd "$base" && pwd -P 2>/dev/null)"; then
         case "$resolved" in
             "$PROJECT_ROOT"|"$PROJECT_ROOT"/*)
-                base="/data/tmp/pi_agent_rust_cargo"
+                base="/data/tmp/koompi_code_cli_cargo"
                 ;;
         esac
     fi

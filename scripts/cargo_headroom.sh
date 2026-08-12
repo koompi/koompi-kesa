@@ -31,8 +31,8 @@ Options:
 
 Environment:
   PI_CARGO_BUILD_ROOT         Build root used when CARGO_TARGET_DIR is unset
-                              (default: /data/tmp/pi_agent_rust, or
-                              /data/tmp/pi_agent_rust_cargo if the former
+                              (default: /data/tmp/koompi_code_cli, or
+                              /data/tmp/koompi_code_cli_cargo if the former
                               resolves inside this repository)
   PI_CARGO_AGENT_SUFFIX       Per-agent subdirectory suffix (default: $USER)
   PI_CARGO_ALLOW_REPO_TARGET  Set to 1 to allow target dirs under the repo root
@@ -60,12 +60,12 @@ MIN_FREE_MB="${PI_CARGO_HEADROOM_MIN_FREE_MB:-24576}"
 MIN_INODE_FREE_PCT="${PI_CARGO_HEADROOM_MIN_FREE_INODE_PCT:-5}"
 MAX_LOCAL_CARGO_PROCESSES="${PI_CARGO_MAX_LOCAL_PROCESSES:-2}"
 RCH_QUEUE_FORECAST_MAX_AGE_SECS="${PI_RCH_QUEUE_FORECAST_MAX_AGE_SECS:-120}"
-DEFAULT_BUILD_ROOT="/data/tmp/pi_agent_rust"
+DEFAULT_BUILD_ROOT="/data/tmp/koompi_code_cli"
 if [[ -e "$DEFAULT_BUILD_ROOT" ]]; then
     if DEFAULT_BUILD_ROOT_REAL="$(cd "$DEFAULT_BUILD_ROOT" && pwd -P 2>/dev/null)"; then
         case "$DEFAULT_BUILD_ROOT_REAL" in
             "$PROJECT_ROOT"|"$PROJECT_ROOT"/*)
-                DEFAULT_BUILD_ROOT="/data/tmp/pi_agent_rust_cargo"
+                DEFAULT_BUILD_ROOT="/data/tmp/koompi_code_cli_cargo"
                 ;;
         esac
     fi

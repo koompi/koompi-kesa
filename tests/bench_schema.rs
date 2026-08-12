@@ -14,7 +14,7 @@
     dead_code
 )]
 
-use pi::perf_build::{
+use kode::perf_build::{
     BUILD_FINGERPRINT_CONTRACT, BenchmarkBuildVerification, BenchmarkProvenance,
     CANONICAL_PIJS_PERF_FEATURES, benchmark_provenance_config_hash,
     matches_canonical_perf_build_fingerprint, profile_from_target_path, sha256_file,
@@ -549,7 +549,7 @@ fn pijs_schema_candidates_prioritize_canonical_perf_artifact() {
 
 #[test]
 fn pijs_schema_target_selection_is_explicit_and_hermetic() {
-    let project = Path::new("/workspace/pi_agent_rust");
+    let project = Path::new("/workspace/koompi_code_cli");
     let explicit = std::ffi::OsStr::new("/data/tmp/pi-schema-target");
     assert_eq!(
         bench_target_dirs_for(project, project, Some(explicit)),
@@ -603,18 +603,18 @@ mkdir -p "$target_dir/perf"
 case "$test_name" in
   bench_scenario_runner)
     cat >"$target_dir/perf/scenario_runner.jsonl" <<'JSON'
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"cold_start","extension":"hello","stats":{"p95_ms":18.0},"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","partition":"matched-state","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/cold_start","replay_input":{"runs":5}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"tool_call","extension":"hello","per_call_us":33.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","partition":"matched-state","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/tool_call","replay_input":{"iterations":500}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":48.0,"append_ms":36.0,"save_ms":22.0,"index_ms":11.0,"total_ms":117.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_100000","replay_input":{"session_messages":100000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":62.0,"append_ms":45.0,"save_ms":29.0,"index_ms":13.0,"total_ms":149.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_200000","replay_input":{"session_messages":200000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":91.0,"append_ms":68.0,"save_ms":43.0,"index_ms":18.0,"total_ms":220.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_500000","replay_input":{"session_messages":500000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":136.0,"append_ms":101.0,"save_ms":64.0,"index_ms":24.0,"total_ms":325.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_1000000","replay_input":{"session_messages":1000000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":212.0,"append_ms":158.0,"save_ms":97.0,"index_ms":35.0,"total_ms":502.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_5000000","replay_input":{"session_messages":5000000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":44.0,"append_ms":32.0,"save_ms":19.0,"index_ms":10.0,"total_ms":105.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_100000","replay_input":{"session_messages":100000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":57.0,"append_ms":41.0,"save_ms":25.0,"index_ms":12.0,"total_ms":135.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_200000","replay_input":{"session_messages":200000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":84.0,"append_ms":61.0,"save_ms":37.0,"index_ms":16.0,"total_ms":198.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_500000","replay_input":{"session_messages":500000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":124.0,"append_ms":90.0,"save_ms":54.0,"index_ms":21.0,"total_ms":289.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_1000000","replay_input":{"session_messages":1000000}}}
-{"schema":"pi.ext.rust_bench.v1","runtime":"pi_agent_rust","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":198.0,"append_ms":146.0,"save_ms":88.0,"index_ms":33.0,"total_ms":465.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"pi_agent_rust","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_5000000","replay_input":{"session_messages":5000000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"cold_start","extension":"hello","stats":{"p95_ms":18.0},"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","partition":"matched-state","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/cold_start","replay_input":{"runs":5}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"tool_call","extension":"hello","per_call_us":33.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","partition":"matched-state","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/tool_call","replay_input":{"iterations":500}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":48.0,"append_ms":36.0,"save_ms":22.0,"index_ms":11.0,"total_ms":117.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_100000","replay_input":{"session_messages":100000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":62.0,"append_ms":45.0,"save_ms":29.0,"index_ms":13.0,"total_ms":149.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_200000","replay_input":{"session_messages":200000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":91.0,"append_ms":68.0,"save_ms":43.0,"index_ms":18.0,"total_ms":220.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_500000","replay_input":{"session_messages":500000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":136.0,"append_ms":101.0,"save_ms":64.0,"index_ms":24.0,"total_ms":325.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_1000000","replay_input":{"session_messages":1000000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"matched-state","open_ms":212.0,"append_ms":158.0,"save_ms":97.0,"index_ms":35.0,"total_ms":502.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"matched-state/session_5000000","replay_input":{"session_messages":5000000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":44.0,"append_ms":32.0,"save_ms":19.0,"index_ms":10.0,"total_ms":105.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_100000","replay_input":{"session_messages":100000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":57.0,"append_ms":41.0,"save_ms":25.0,"index_ms":12.0,"total_ms":135.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_200000","replay_input":{"session_messages":200000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":84.0,"append_ms":61.0,"save_ms":37.0,"index_ms":16.0,"total_ms":198.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_500000","replay_input":{"session_messages":500000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":124.0,"append_ms":90.0,"save_ms":54.0,"index_ms":21.0,"total_ms":289.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_1000000","replay_input":{"session_messages":1000000}}}
+{"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":198.0,"append_ms":146.0,"save_ms":88.0,"index_ms":33.0,"total_ms":465.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_5000000","replay_input":{"session_messages":5000000}}}
 JSON
     if [[ "${PI_FAKE_DROP_INDEX_STAGE_SAMPLE:-0}" == "1" ]]; then
       python3 - "$target_dir/perf/scenario_runner.jsonl" <<'PY'
@@ -3984,7 +3984,7 @@ fn regression_gate_protocol_fixture(root: &Path) -> Value {
     });
     json!({
         "schema": "pi.ext.rust_bench.v1",
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "tool_call",
         "extension": "hello",
         "iterations": 500,
@@ -4017,7 +4017,7 @@ fn regression_gate_protocol_fixture(root: &Path) -> Value {
         "config_hash": config_hash,
         "correlation_id": "0123456789abcdef0123456789abcdef",
         "scenario_metadata": {
-            "runtime": "pi_agent_rust",
+            "runtime": "koompi_code_cli",
             "build_profile": "release",
             "host": {
                 "os": "linux",
@@ -4364,15 +4364,15 @@ fn schema_registry_is_complete() {
 
 #[test]
 fn resource_governor_admission_schema_accepts_live_decision_payload() {
-    let budgets = pi::resource_governor::HostResourceBudgets::fixed(10.0, 1_000, 100, 100, 1_000);
-    let governor = pi::resource_governor::ResourceGovernor::with_budgets(budgets);
-    let request = pi::resource_governor::ResourceRequest::new(
-        pi::resource_governor::ResourceOperationKind::Tool,
+    let budgets = kode::resource_governor::HostResourceBudgets::fixed(10.0, 1_000, 100, 100, 1_000);
+    let governor = kode::resource_governor::ResourceGovernor::with_budgets(budgets);
+    let request = kode::resource_governor::ResourceRequest::new(
+        kode::resource_governor::ResourceOperationKind::Tool,
         "read",
     )
     .with_queue_depth(4)
     .with_estimated_tool_output_bytes(900);
-    let sample = pi::resource_governor::HostResourceSample {
+    let sample = kode::resource_governor::HostResourceSample {
         load_avg_1m: Some(2.0),
         rss_bytes: Some(200),
         process_count: Some(20),
@@ -4910,7 +4910,7 @@ fn protocol_contract_exposes_user_perceived_sli_matrix() {
 fn protocol_record_validator_accepts_golden_fixture() {
     let golden = json!({
         "schema": "pi.ext.rust_bench.v1",
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "tool_call",
         "extension": "hello",
         "protocol_schema": BENCH_PROTOCOL_SCHEMA,
@@ -4921,7 +4921,7 @@ fn protocol_record_validator_accepts_golden_fixture() {
         "correlation_id": "0123456789abcdef0123456789abcdef",
         "swarm_metrics": swarm_metrics_fixture(117.0, 48.0, 36.0, 22.0, 11.0),
         "scenario_metadata": {
-            "runtime": "pi_agent_rust",
+            "runtime": "koompi_code_cli",
             "build_profile": "release",
             "host": {
                 "os": "linux",
@@ -5283,7 +5283,7 @@ fn pijs_workload_admission_allows_explicitly_ineligible_native_diagnostics() {
 fn protocol_record_validator_accepts_matched_state_session_matrix_fixture() {
     let fixture = json!({
         "schema": "pi.ext.rust_bench.v1",
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "session_workload_matrix",
         "extension": "core",
         "protocol_schema": BENCH_PROTOCOL_SCHEMA,
@@ -5294,7 +5294,7 @@ fn protocol_record_validator_accepts_matched_state_session_matrix_fixture() {
         "correlation_id": "0123456789abcdef0123456789abcdef",
         "swarm_metrics": swarm_metrics_fixture(117.0, 48.0, 36.0, 22.0, 11.0),
         "scenario_metadata": {
-            "runtime": "pi_agent_rust",
+            "runtime": "koompi_code_cli",
             "build_profile": "release",
             "host": {
                 "os": "linux",
@@ -5317,7 +5317,7 @@ fn protocol_record_validator_accepts_matched_state_session_matrix_fixture() {
 fn protocol_record_validator_rejects_missing_correlation_id() {
     let malformed = json!({
         "schema": "pi.ext.rust_bench.v1",
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "cold_start",
         "extension": "hello",
         "protocol_schema": BENCH_PROTOCOL_SCHEMA,
@@ -5326,7 +5326,7 @@ fn protocol_record_validator_rejects_missing_correlation_id() {
         "evidence_class": EVIDENCE_CLASS_MEASURED,
         "confidence": CONFIDENCE_HIGH,
         "scenario_metadata": {
-            "runtime": "pi_agent_rust",
+            "runtime": "koompi_code_cli",
             "build_profile": "release",
             "host": {
                 "os": "linux",
@@ -5350,7 +5350,7 @@ fn protocol_record_validator_rejects_missing_correlation_id() {
 fn protocol_record_validator_rejects_invalid_partition_or_size() {
     let bad_partition = json!({
         "schema": "pi.ext.rust_bench.v1",
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "tool_call",
         "extension": "hello",
         "protocol_schema": BENCH_PROTOCOL_SCHEMA,
@@ -5360,7 +5360,7 @@ fn protocol_record_validator_rejects_invalid_partition_or_size() {
         "confidence": CONFIDENCE_HIGH,
         "correlation_id": "abc",
         "scenario_metadata": {
-            "runtime": "pi_agent_rust",
+            "runtime": "koompi_code_cli",
             "build_profile": "release",
             "host": {
                 "os": "linux",
@@ -5379,7 +5379,7 @@ fn protocol_record_validator_rejects_invalid_partition_or_size() {
 
     let bad_size = json!({
         "schema": "pi.ext.rust_bench.v1",
-        "runtime": "pi_agent_rust",
+        "runtime": "koompi_code_cli",
         "scenario": "tool_call",
         "extension": "hello",
         "protocol_schema": BENCH_PROTOCOL_SCHEMA,
@@ -5389,7 +5389,7 @@ fn protocol_record_validator_rejects_invalid_partition_or_size() {
         "confidence": CONFIDENCE_HIGH,
         "correlation_id": "abc",
         "scenario_metadata": {
-            "runtime": "pi_agent_rust",
+            "runtime": "koompi_code_cli",
             "build_profile": "release",
             "host": {
                 "os": "linux",
@@ -7694,7 +7694,7 @@ fn generate_schema_doc() {
     md.push_str("| Field | Type | Description |\n");
     md.push_str("|---|---|---|\n");
     md.push_str("| `schema` | string | Always `\"pi.ext.rust_bench.v1\"` |\n");
-    md.push_str("| `runtime` | string | Always `\"pi_agent_rust\"` |\n");
+    md.push_str("| `runtime` | string | Always `\"koompi_code_cli\"` |\n");
     md.push_str(
         "| `scenario` | string | Benchmark scenario (e.g., `ext_load_init/load_init_cold`) |\n",
     );

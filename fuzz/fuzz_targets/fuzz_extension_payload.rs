@@ -6,12 +6,12 @@
 //! structs used by JS<->host protocol boundaries.
 
 use libfuzzer_sys::fuzz_target;
-use pi::extensions::{
+use kode::extensions::{
     ErrorPayload, EventHookPayload, ExtensionMessage, HostCallPayload, HostResultPayload,
     LogPayload, RegisterPayload, SlashCommandPayload, SlashResultPayload, ToolCallPayload,
     ToolResultPayload,
 };
-use pi::extensions_js::ExtensionToolDef;
+use kode::extensions_js::ExtensionToolDef;
 
 const MAX_INPUT_BYTES: usize = 128 * 1024;
 

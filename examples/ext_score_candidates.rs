@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use anyhow::{Context, Result, bail};
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use pi::extension_popularity::{CandidateItem as PopularityCandidateItem, CandidatePool};
-use pi::extension_scoring::{
+use kode::extension_popularity::{CandidateItem as PopularityCandidateItem, CandidatePool};
+use kode::extension_scoring::{
     CandidateInput, CompatStatus, Compatibility, Gates, LicenseInfo, MarketplaceSignals, Recency,
     Redistribution, RiskInfo, Signals, Tags, score_candidates,
 };

@@ -16,7 +16,7 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 fn resolve_pi_binary_path() -> PathBuf {
-    if let Some(path) = std::env::var_os("CARGO_BIN_EXE_pi") {
+    if let Some(path) = std::env::var_os("CARGO_BIN_EXE_kode") {
         return PathBuf::from(path);
     }
 

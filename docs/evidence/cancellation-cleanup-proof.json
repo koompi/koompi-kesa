@@ -65,17 +65,17 @@
     "completedAt": "2026-05-16T00:35:20Z",
     "commands": [
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/tmp cargo test --lib bash -- --nocapture",
+        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/tmp cargo test --lib bash -- --nocapture",
         "status": "passed",
         "tests": 37
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/tmp cargo test --lib hostcall -- --nocapture",
+        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/tmp cargo test --lib hostcall -- --nocapture",
         "status": "passed",
         "tests": 406
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/tmp cargo test --lib abort_during_tool_execution_records_aborted_tool_result -- --nocapture",
+        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/tmp cargo test --lib abort_during_tool_execution_records_aborted_tool_result -- --nocapture",
         "status": "passed",
         "tests": 1
       },
@@ -96,11 +96,11 @@
         "status": "passed"
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/tmp cargo check --all-targets",
+        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/tmp cargo check --all-targets",
         "status": "passed"
       },
       {
-        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/pi_agent_rust_cargo/amberosprey/target TMPDIR=/tmp cargo clippy --all-targets -- -D warnings",
+        "command": "rch exec -- env CARGO_TARGET_DIR=/data/tmp/koompi_code_cli_cargo/amberosprey/target TMPDIR=/tmp cargo clippy --all-targets -- -D warnings",
         "status": "passed"
       }
     ],

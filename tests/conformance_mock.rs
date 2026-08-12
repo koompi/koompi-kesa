@@ -9,13 +9,13 @@
 mod common;
 
 use async_trait::async_trait;
-use pi::PiResult;
-use pi::extensions::{
+use kode::PiResult;
+use kode::extensions::{
     ExtensionManager, ExtensionSession, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use pi::extensions_js::PiJsRuntimeConfig;
-use pi::session::SessionMessage;
-use pi::tools::ToolRegistry;
+use kode::extensions_js::PiJsRuntimeConfig;
+use kode::session::SessionMessage;
+use kode::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
@@ -962,7 +962,7 @@ fn event_hook_extension_registers_hooks() {
 
 #[test]
 fn event_dispatch_through_manager() {
-    use pi::extensions::ExtensionEventName;
+    use kode::extensions::ExtensionEventName;
 
     let harness = common::TestHarness::new("event_dispatch_through_manager");
     let spec = ConformanceMockSpec {

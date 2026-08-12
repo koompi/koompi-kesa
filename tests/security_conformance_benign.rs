@@ -24,13 +24,13 @@
 mod common;
 
 use common::TestHarness;
-use pi::connectors::http::HttpConnector;
-use pi::extensions::{
+use kode::connectors::http::HttpConnector;
+use kode::extensions::{
     Capability, ExtensionManager, ExtensionOverride, ExtensionPolicy, ExtensionPolicyMode,
     HostCallContext, HostCallPayload, PolicyDecision, PolicyProfile, RuntimeRiskConfig,
     SecurityAlertFilter,
 };
-use pi::tools::ToolRegistry;
+use kode::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::path::{Path, PathBuf};
@@ -1281,7 +1281,7 @@ fn benign_workflow_produces_no_security_alerts() {
     }
 
     let filter = SecurityAlertFilter::default();
-    let alerts = pi::extensions::query_security_alerts(&manager, &filter);
+    let alerts = kode::extensions::query_security_alerts(&manager, &filter);
     assert!(
         alerts.is_empty(),
         "Benign log-only workflow should produce 0 alerts, got {}",

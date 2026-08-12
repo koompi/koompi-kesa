@@ -273,7 +273,7 @@ fn perf_comparison_report_dir(root: &Path) -> (PathBuf, ReportOutputMode) {
 
     let base = env_path("TMPDIR").unwrap_or_else(std::env::temp_dir);
     (
-        base.join("pi_agent_rust").join("perf_comparison_smoke"),
+        base.join("koompi_code_cli").join("perf_comparison_smoke"),
         ReportOutputMode::TempSmoke,
     )
 }

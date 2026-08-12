@@ -30,19 +30,19 @@
 
 use super::logging::{LogLevel, TestLogger};
 use futures::{FutureExt, StreamExt, pin_mut};
-use pi::auth::AuthStorage;
-use pi::config::Config;
-use pi::http::client::Client;
-use pi::model::{Message, StreamEvent, ThinkingLevel, Usage, UserContent, UserMessage};
-use pi::models::{ModelEntry, ModelRegistry, default_models_path};
-use pi::provider::{Context, Provider, StreamOptions};
-use pi::provider_metadata::provider_auth_env_keys;
-use pi::providers::anthropic::AnthropicProvider;
-use pi::providers::gemini::GeminiProvider;
-use pi::providers::openai::OpenAIProvider;
-use pi::providers::openai_responses::OpenAIResponsesProvider;
-use pi::providers::{normalize_openai_base, normalize_openai_responses_base};
-use pi::vcr::{Cassette, VcrMode, VcrRecorder};
+use kode::auth::AuthStorage;
+use kode::config::Config;
+use kode::http::client::Client;
+use kode::model::{Message, StreamEvent, ThinkingLevel, Usage, UserContent, UserMessage};
+use kode::models::{ModelEntry, ModelRegistry, default_models_path};
+use kode::provider::{Context, Provider, StreamOptions};
+use kode::provider_metadata::provider_auth_env_keys;
+use kode::providers::anthropic::AnthropicProvider;
+use kode::providers::gemini::GeminiProvider;
+use kode::providers::openai::OpenAIProvider;
+use kode::providers::openai_responses::OpenAIResponsesProvider;
+use kode::providers::{normalize_openai_base, normalize_openai_responses_base};
+use kode::vcr::{Cassette, VcrMode, VcrRecorder};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
@@ -80,7 +80,7 @@ impl TestHarness {
     pub fn new(name: impl Into<String>) -> Self {
         let name = name.into();
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
-        let canonical_dir = pi::extensions::strip_unc_prefix(
+        let canonical_dir = kode::extensions::strip_unc_prefix(
             std::fs::canonicalize(temp_dir.path())
                 .unwrap_or_else(|_| temp_dir.path().to_path_buf()),
         );
@@ -453,7 +453,7 @@ impl TestHarnessBuilder {
     /// Build the test harness.
     pub fn build(self) -> TestHarness {
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
-        let canonical_dir = pi::extensions::strip_unc_prefix(
+        let canonical_dir = kode::extensions::strip_unc_prefix(
             std::fs::canonicalize(temp_dir.path())
                 .unwrap_or_else(|_| temp_dir.path().to_path_buf()),
         );
@@ -1242,11 +1242,11 @@ fn create_openai_responses_provider(entry: &ModelEntry, client: Client) -> Arc<d
 pub fn create_openai_provider(
     entry: &ModelEntry,
     client: Client,
-) -> pi::PiResult<Arc<dyn Provider>> {
+) -> kode::PiResult<Arc<dyn Provider>> {
     match entry.model.api.as_str() {
         "openai-completions" => Ok(create_openai_completions_provider(entry, client)),
         "openai-responses" => Ok(create_openai_responses_provider(entry, client)),
-        other => Err(pi::Error::provider(
+        other => Err(kode::Error::provider(
             &entry.model.provider,
             format!("Unsupported OpenAI-compatible API for live harness: {other}"),
         )),
@@ -1264,22 +1264,22 @@ pub fn create_gemini_provider(entry: &ModelEntry, client: Client) -> Arc<dyn Pro
 pub fn create_openrouter_provider(
     entry: &ModelEntry,
     client: Client,
-) -> pi::PiResult<Arc<dyn Provider>> {
+) -> kode::PiResult<Arc<dyn Provider>> {
     create_openai_provider(entry, client)
 }
 
-pub fn create_xai_provider(entry: &ModelEntry, client: Client) -> pi::PiResult<Arc<dyn Provider>> {
+pub fn create_xai_provider(entry: &ModelEntry, client: Client) -> kode::PiResult<Arc<dyn Provider>> {
     create_openai_provider(entry, client)
 }
 
 pub fn create_deepseek_provider(
     entry: &ModelEntry,
     client: Client,
-) -> pi::PiResult<Arc<dyn Provider>> {
+) -> kode::PiResult<Arc<dyn Provider>> {
     create_openai_provider(entry, client)
 }
 
-pub fn create_live_provider(entry: &ModelEntry, client: Client) -> pi::PiResult<Arc<dyn Provider>> {
+pub fn create_live_provider(entry: &ModelEntry, client: Client) -> kode::PiResult<Arc<dyn Provider>> {
     match entry.model.provider.as_str() {
         "anthropic" => Ok(create_anthropic_provider(entry, client)),
         "openai" => create_openai_provider(entry, client),
@@ -1291,7 +1291,7 @@ pub fn create_live_provider(entry: &ModelEntry, client: Client) -> pi::PiResult<
             "anthropic-messages" => Ok(create_anthropic_provider(entry, client)),
             "openai-completions" | "openai-responses" => create_openai_provider(entry, client),
             "google-generative-ai" => Ok(create_gemini_provider(entry, client)),
-            other => Err(pi::Error::provider(
+            other => Err(kode::Error::provider(
                 &entry.model.provider,
                 format!("Provider not implemented for live harness (api: {other})"),
             )),
@@ -1511,7 +1511,7 @@ pub async fn run_live_provider_target(
     let mut final_summary = LiveStreamSummary::default();
     let mut final_error: Option<String> = None;
     let mut final_response_status: Option<u16> = None;
-    let mut final_auth_diagnostic: Option<pi::error::AuthDiagnostic> = None;
+    let mut final_auth_diagnostic: Option<kode::error::AuthDiagnostic> = None;
     let mut final_status = "failed".to_string();
 
     for attempt in 1..=LIVE_E2E_MAX_ATTEMPTS {
@@ -1571,7 +1571,7 @@ pub async fn run_live_provider_target(
             .err()
             .or_else(|| summary.stream_error.clone());
         let attempt_auth_diagnostic = summary_error.as_ref().and_then(|error_message| {
-            pi::Error::provider(entry.model.provider.as_str(), error_message.as_str())
+            kode::Error::provider(entry.model.provider.as_str(), error_message.as_str())
                 .auth_diagnostic()
         });
         let http_failure = response_status.is_some_and(|status| !(200..300).contains(&status));

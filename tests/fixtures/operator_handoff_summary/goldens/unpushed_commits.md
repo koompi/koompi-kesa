@@ -1,7 +1,7 @@
 # Operator Handoff Summary
 
 - Status: watch
-- Project: pi_agent_rust
+- Project: koompi_code_cli
 - Branch: main
 - Head: def5678
 - Generated: [GENERATED_AT]
