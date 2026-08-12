@@ -13,6 +13,9 @@
 # graph and lint policy.
 # (Sibling projects may use different pins because they do not consume this
 # repository's locked asupersync/sysinfo graph.)
+#
+# clippy is not published for this nightly, so it is not requested here: rustup
+# fails the whole toolchain install on a component it cannot download.
 [toolchain]
 channel = "nightly-2026-07-05"
-components = ["rustfmt", "clippy"]
+components = ["rustfmt"]
