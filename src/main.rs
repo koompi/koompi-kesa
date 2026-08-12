@@ -14,9 +14,11 @@ use std::io::{self, IsTerminal, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
+use std::sync::RwLock;
 use std::time::{Duration, UNIX_EPOCH};
 
 use anyhow::{Result, bail};
+use asupersync::channel::mpsc;
 use asupersync::runtime::reactor::create_reactor;
 use asupersync::runtime::{RuntimeBuilder, RuntimeHandle};
 use asupersync::sync::{Mutex, OwnedMutexGuard};
@@ -24,6 +26,7 @@ use bubbletea::{Cmd, KeyMsg, KeyType, Message as BubbleMessage, Program, quit};
 use clap::error::ErrorKind;
 use kode::agent::{
     AbortHandle, Agent, AgentConfig, AgentEvent, AgentSession, PreWarmedExtensionRuntime,
+    SharedToolPolicy,
 };
 use kode::app::StartupError;
 use kode::auth::{AuthCredential, AuthStorage};
@@ -61,6 +64,7 @@ use kode::swarm_replay::{
     SwarmReplayTrace, default_swarm_replay_baseline_policies,
     evaluate_swarm_replay_baseline_policies, replay_swarm_trace,
 };
+use kode::tool_policy::{PermissionMode, ToolPolicy};
 use kode::tools::ToolRegistry;
 use kode::tui::PiConsole;
 use kode::validation_broker::{
@@ -428,6 +432,27 @@ fn main_impl() -> Result<()> {
         return Ok(());
     }
 
+    // Before anything else touches the filesystem: this process is the sandbox
+    // trampoline and is about to become the command it was asked to run.
+    if let Some(cli::Commands::SandboxExec {
+        workspace,
+        write,
+        argv,
+    }) = &cli.command
+    {
+        let Err(message) = kode::sandbox::restrict_self_and_exec(workspace, write, argv);
+        bail!(message);
+    }
+
+    kode::sandbox::configure(kode::sandbox::SandboxSettings {
+        mode: if cli.no_sandbox {
+            kode::sandbox::SandboxMode::Off
+        } else {
+            kode::sandbox::SandboxMode::Enforce
+        },
+        extra_writable: cli.sandbox_write.clone(),
+    });
+
     // Validate theme file paths.
     // Named themes (without .json, /, ~) are validated later after resource loading.
     let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -771,6 +796,41 @@ fn is_usage_error(err: &anyhow::Error) -> bool {
     USAGE_ERROR_PATTERNS
         .iter()
         .any(|pattern| message.contains(pattern))
+}
+
+/// Resolve the permission policy for this run.
+///
+/// CLI beats env beats project beats global. Clap's `env` attribute covers the
+/// first two; `Config::merge` has already settled the last two by the time the
+/// config arrives here. CLI rules are appended rather than replacing the
+/// configured ones, so `--deny-tool` can only ever narrow what is permitted.
+fn build_tool_policy(cli: &cli::Cli, config: &Config) -> Result<SharedToolPolicy> {
+    let mut permissions = config.permissions.clone().unwrap_or_default();
+
+    if let Some(mode) = cli.permission_mode.as_deref() {
+        permissions.mode = Some(match mode {
+            "default" => PermissionMode::Default,
+            "accept-edits" => PermissionMode::AcceptEdits,
+            "plan" => PermissionMode::Plan,
+            "read-only" => PermissionMode::ReadOnly,
+            other => bail!("unknown permission mode: {other}"),
+        });
+    }
+    if !cli.deny_tool.is_empty() {
+        permissions
+            .deny
+            .get_or_insert_with(Vec::new)
+            .extend(cli.deny_tool.iter().cloned());
+    }
+    if !cli.allow_tool.is_empty() {
+        permissions
+            .allow
+            .get_or_insert_with(Vec::new)
+            .extend(cli.allow_tool.iter().cloned());
+    }
+
+    let policy = ToolPolicy::from_config(Some(&permissions))?;
+    Ok(Arc::new(RwLock::new(policy)))
 }
 
 fn validate_theme_path_spec(theme_spec: Option<&str>, cwd: &Path) -> Result<()> {
@@ -1580,13 +1640,23 @@ async fn run(
     } else {
         kode::agent::resolved_max_tool_iterations_default()
     };
+    let tool_policy = build_tool_policy(&cli, &config)?;
+    // Only the TUI can ask. A headless run leaves the handler unset, and the
+    // agent turns `Ask` into a denial rather than a silent allow.
+    let (tool_approval, tool_approvals) = if is_interactive {
+        let (handler, receiver) = kode::interactive::tool_approval_bridge();
+        (Some(handler), Some(receiver))
+    } else {
+        (None, None)
+    };
     let agent_config = AgentConfig {
         system_prompt: Some(system_prompt),
         max_tool_iterations,
         stream_options,
         block_images: config.image_block_images(),
         fail_closed_hooks: config.fail_closed_hooks(),
-        tool_approval: None,
+        tool_approval,
+        tool_policy: Some(Arc::clone(&tool_policy)),
     };
 
     let tools = ToolRegistry::new(&enabled_tools, &cwd, Some(&config));
@@ -1686,16 +1756,18 @@ async fn run(
             extension_model_entries = region.manager().extension_model_entries();
             if !extension_model_entries.is_empty() {
                 // Build OAuth configs map from model entries before merging.
-                let ext_oauth_configs: std::collections::HashMap<String, kode::models::OAuthConfig> =
-                    extension_model_entries
-                        .iter()
-                        .filter_map(|entry| {
-                            entry
-                                .oauth_config
-                                .as_ref()
-                                .map(|cfg| (entry.model.provider.clone(), cfg.clone()))
-                        })
-                        .collect();
+                let ext_oauth_configs: std::collections::HashMap<
+                    String,
+                    kode::models::OAuthConfig,
+                > = extension_model_entries
+                    .iter()
+                    .filter_map(|entry| {
+                        entry
+                            .oauth_config
+                            .as_ref()
+                            .map(|cfg| (entry.model.provider.clone(), cfg.clone()))
+                    })
+                    .collect();
 
                 model_registry.merge_entries(extension_model_entries.clone());
 
@@ -1889,6 +1961,8 @@ async fn run(
             resource_cli,
             cwd.clone(),
             runtime_handle.clone(),
+            tool_policy,
+            tool_approvals.expect("the interactive path always builds an approval bridge"),
         )
         .await
     } else {
@@ -1931,6 +2005,9 @@ async fn run(
 async fn handle_subcommand(command: cli::Commands, cwd: &Path) -> Result<()> {
     let manager = PackageManager::new(cwd.to_path_buf());
     match command {
+        // Intercepted at the top of `main_impl`, before anything else touches
+        // the filesystem, so it can never reach this dispatch.
+        cli::Commands::SandboxExec { .. } => unreachable!("handled in the pre-startup fast path"),
         cli::Commands::Install { source, local } => {
             handle_package_install(&manager, &source, local).await?;
         }
@@ -4193,7 +4270,10 @@ fn truncate_chars(value: &str, max_chars: usize) -> String {
 }
 
 #[allow(clippy::uninlined_format_args)]
-fn print_search_results(hits: &[kode::extension_index::ExtensionSearchHit], index: &ExtensionIndex) {
+fn print_search_results(
+    hits: &[kode::extension_index::ExtensionSearchHit],
+    index: &ExtensionIndex,
+) {
     // Column widths
     let name_w = hits
         .iter()
@@ -6515,10 +6595,12 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
                     kode::auth::complete_anthropic_oauth(code_input, &start.verifier).await?
                 }
                 "google-gemini-cli" => {
-                    kode::auth::complete_google_gemini_cli_oauth(code_input, &start.verifier).await?
+                    kode::auth::complete_google_gemini_cli_oauth(code_input, &start.verifier)
+                        .await?
                 }
                 "google-antigravity" => {
-                    kode::auth::complete_google_antigravity_oauth(code_input, &start.verifier).await?
+                    kode::auth::complete_google_antigravity_oauth(code_input, &start.verifier)
+                        .await?
                 }
                 other => {
                     console.render_warning(&format!(
@@ -7390,6 +7472,8 @@ async fn run_interactive_mode(
     resource_cli: ResourceCliOptions,
     cwd: PathBuf,
     runtime_handle: RuntimeHandle,
+    tool_policy: SharedToolPolicy,
+    tool_approvals: mpsc::Receiver<kode::interactive::ToolApprovalPrompt>,
 ) -> Result<()> {
     let mut pending = Vec::new();
     if let Some(initial) = initial {
@@ -7424,6 +7508,8 @@ async fn run_interactive_mode(
         extensions,
         cwd,
         runtime_handle,
+        tool_policy,
+        tool_approvals,
     )
     .await;
     // Explicitly shut down extension runtimes so the QuickJS GC can
@@ -8561,7 +8647,8 @@ mod tests {
         );
 
         let project_value: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(cwd.join(".kode").join("settings.json")).expect("read project"),
+            &std::fs::read_to_string(cwd.join(".kode").join("settings.json"))
+                .expect("read project"),
         )
         .expect("parse project json");
         let project_pkg = project_value["packages"]

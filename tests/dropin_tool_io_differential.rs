@@ -157,8 +157,11 @@ async fn run_scenario(scenario: &Scenario) -> kode::PiResult<()> {
                 None,
                 Some("export KODE_G09_PREFIXED=from-prefix".to_string()),
             );
-            let output =
-                execute_text(&tool, json!({"command": "printf \"$KODE_G09_PREFIXED\\n\""})).await?;
+            let output = execute_text(
+                &tool,
+                json!({"command": "printf \"$KODE_G09_PREFIXED\\n\""}),
+            )
+            .await?;
             assert_contains(&output, "from-prefix", &scenario.id);
         }
         "bash_line_truncation_details" => {

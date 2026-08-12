@@ -788,7 +788,8 @@ impl Provider for ContextE2eProvider {
         &self,
         context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> kode::error::Result<Pin<Box<dyn Stream<Item = kode::error::Result<StreamEvent>> + Send>>> {
+    ) -> kode::error::Result<Pin<Box<dyn Stream<Item = kode::error::Result<StreamEvent>> + Send>>>
+    {
         match self.calls.lock() {
             Ok(calls) => calls,
             Err(poisoned) => poisoned.into_inner(),

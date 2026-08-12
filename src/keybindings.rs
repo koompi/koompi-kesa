@@ -261,6 +261,9 @@ pub enum AppAction {
     CycleModelBackward,
     CycleThinkingLevel,
 
+    // Permissions
+    CyclePermissionMode,
+
     // Display
     ExpandTools,
     ToggleThinking,
@@ -350,6 +353,9 @@ impl AppAction {
             Self::CycleModelBackward => "Cycle to previous model",
             Self::CycleThinkingLevel => "Cycle thinking level",
 
+            // Permissions
+            Self::CyclePermissionMode => "Cycle permission mode",
+
             // Display
             Self::ExpandTools => "Collapse/expand tool output",
             Self::ToggleThinking => "Collapse/expand thinking blocks",
@@ -425,6 +431,8 @@ impl AppAction {
             | Self::CycleModelForward
             | Self::CycleModelBackward
             | Self::CycleThinkingLevel => ActionCategory::ModelsThinking,
+
+            Self::CyclePermissionMode => ActionCategory::Application,
 
             Self::ExpandTools | Self::ToggleThinking => ActionCategory::Display,
 
@@ -511,6 +519,8 @@ impl AppAction {
             Self::CycleModelForward,
             Self::CycleModelBackward,
             Self::CycleThinkingLevel,
+            // Permissions
+            Self::CyclePermissionMode,
             // Display
             Self::ExpandTools,
             Self::ToggleThinking,
@@ -793,6 +803,14 @@ impl KeyBinding {
 
             // Character input
             KeyType::Runes => {
+                // crossterm reports `\e[Z` as KeyCode::BackTab, which bubbletea's
+                // converter drops into empty Runes instead of KeyType::ShiftTab.
+                if key.runes.is_empty() && !key.alt {
+                    return Some(Self {
+                        key: "tab".to_string(),
+                        modifiers: KeyModifiers::SHIFT,
+                    });
+                }
                 // Only handle single-character input
                 if key.runes.len() != 1 {
                     return None;
@@ -1467,8 +1485,11 @@ impl KeyBindings {
             AppAction::CycleModelBackward,
             vec![KeyBinding::ctrl_shift("p")],
         );
+        // shift+tab cycles the permission mode, matching Claude Code; thinking
+        // moved to alt+t because ctrl+t is ToggleThinking.
+        m.insert(AppAction::CycleThinkingLevel, vec![KeyBinding::alt("t")]);
         m.insert(
-            AppAction::CycleThinkingLevel,
+            AppAction::CyclePermissionMode,
             vec![KeyBinding::shift("tab")],
         );
 

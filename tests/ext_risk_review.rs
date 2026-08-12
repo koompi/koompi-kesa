@@ -420,7 +420,10 @@ fn risk_review_evidence_log() {
     // compared with the committed evidence (the timestamp is informational).
     let json = serde_json::to_string_pretty(&review).expect("serialize risk review");
     let output_path = repo_root.join("tests/ext_conformance/artifacts/RISK_REVIEW.json");
-    let generate = matches!(std::env::var("KODE_GENERATE_RISK_REVIEW").as_deref(), Ok("1"));
+    let generate = matches!(
+        std::env::var("KODE_GENERATE_RISK_REVIEW").as_deref(),
+        Ok("1")
+    );
     if generate {
         fs::write(&output_path, format!("{json}\n")).expect("write risk review");
     } else {

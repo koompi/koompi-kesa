@@ -1547,7 +1547,8 @@ fn compaction_pipeline_second_pass_seeds_previous_details_and_updates_summary() 
     let result1 = run_async(async move { compact(prep1, provider1_dyn, "test-key", None).await })
         .expect("compact1");
 
-    let details1 = kode::compaction::compaction_details_to_value(&result1.details).expect("details1");
+    let details1 =
+        kode::compaction::compaction_details_to_value(&result1.details).expect("details1");
 
     let mut entries2 = entries;
     entries2.push(compaction_entry(
@@ -1627,7 +1628,8 @@ fn compaction_pipeline_second_pass_seeds_previous_details_and_updates_summary() 
     session.header.cwd = "/data/projects/koompi_code_cli".to_string();
     session.entries = entries2;
 
-    let details2 = kode::compaction::compaction_details_to_value(&result2.details).expect("details2");
+    let details2 =
+        kode::compaction::compaction_details_to_value(&result2.details).expect("details2");
     session.entries.push(compaction_entry(
         "c2",
         Some("u4"),
@@ -1730,7 +1732,12 @@ fn compact_returns_error_when_provider_stops_with_error() {
             _context: &Context<'_>,
             _options: &StreamOptions,
         ) -> kode::error::Result<
-            Pin<Box<dyn futures::Stream<Item = kode::error::Result<kode::model::StreamEvent>> + Send>>,
+            Pin<
+                Box<
+                    dyn futures::Stream<Item = kode::error::Result<kode::model::StreamEvent>>
+                        + Send,
+                >,
+            >,
         > {
             let message = AssistantMessage {
                 content: vec![ContentBlock::Text(TextContent::new("ignored"))],

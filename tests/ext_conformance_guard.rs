@@ -82,7 +82,10 @@ fn load_guard_extension(ext_id: &str, entry_file: &str) -> Result<LoadedExtensio
 
     let mut env = HashMap::new();
     env.insert("KODE_DETERMINISTIC_TIME_MS".to_string(), settings.time_ms);
-    env.insert("KODE_DETERMINISTIC_TIME_STEP_MS".to_string(), "1".to_string());
+    env.insert(
+        "KODE_DETERMINISTIC_TIME_STEP_MS".to_string(),
+        "1".to_string(),
+    );
     env.insert("KODE_DETERMINISTIC_CWD".to_string(), settings.cwd.clone());
     env.insert("KODE_DETERMINISTIC_HOME".to_string(), settings.home.clone());
     env.insert("HOME".to_string(), settings.home);

@@ -781,7 +781,8 @@ fn release_publication_never_builds_with_the_registry_token() {
             && manual_lane.contains("\"$release_bash_path\" --noprofile --norc -c")
             && manual_lane.contains("[[ -z \"${KODE_CRATES_IO_RELEASE_TOKEN:-}\" ]]")
             && manual_lane.contains("IFS= read -r scoped_release_token")
-            && manual_lane.contains("export KODE_CRATES_IO_RELEASE_TOKEN=\"$scoped_release_token\"",)
+            && manual_lane
+                .contains("export KODE_CRATES_IO_RELEASE_TOKEN=\"$scoped_release_token\"",)
             && manual_lane.contains("unset scoped_release_token")
             && manual_lane.contains("exec 0</dev/null"),
         "manual release must pass the token through an anonymous pipe into exactly one clean child, never argv"

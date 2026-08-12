@@ -279,8 +279,165 @@ fn render_header_uses_cycle_thinking_binding_hint() {
 
     let header = app.render_header();
 
-    assert!(header.contains("shift+tab: thinking"), "header: {header}");
-    assert!(!header.contains("ctrl+t: thinking"), "header: {header}");
+    assert!(header.contains("alt+t: thinking"), "header: {header}");
+    assert!(header.contains("shift+tab: mode"), "header: {header}");
+    assert!(!header.contains("shift+tab: thinking"), "header: {header}");
+}
+
+#[test]
+fn bordered_box_frames_content_at_a_fixed_width() {
+    let plain = lipgloss::Style::new();
+    let lines = super::view::bordered_box(["hi", "a longer row"], 20, &plain);
+
+    assert_eq!(
+        lines,
+        vec![
+            "╭──────────────────╮".to_string(),
+            "│ hi               │".to_string(),
+            "│ a longer row     │".to_string(),
+            "╰──────────────────╯".to_string(),
+        ]
+    );
+}
+
+#[test]
+fn bordered_box_truncates_rows_wider_than_the_frame() {
+    let plain = lipgloss::Style::new();
+    let lines = super::view::bordered_box(["overflowing content here"], 12, &plain);
+
+    assert_eq!(
+        lines,
+        vec![
+            "╭──────────╮".to_string(),
+            "│ overflow │".to_string(),
+            "╰──────────╯".to_string(),
+        ]
+    );
+}
+
+#[test]
+fn shift_tab_cycles_the_permission_mode_and_renders_its_indicator() {
+    use bubbletea::KeyType;
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+
+    assert_eq!(app.permission_mode, PermissionMode::Default);
+    assert!(
+        !app.render_input().contains("accept edits on"),
+        "default mode must not draw an indicator"
+    );
+
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::ShiftTab)));
+
+    assert_eq!(app.permission_mode, PermissionMode::AcceptEdits);
+    assert!(
+        app.render_input().contains("accept edits on"),
+        "input: {}",
+        app.render_input()
+    );
+}
+
+/// Queue one approval question and open it, returning the answer channel.
+fn open_tool_approval(
+    app: &mut PiApp,
+    tool_name: &str,
+    arguments: serde_json::Value,
+) -> asupersync::channel::oneshot::Receiver<crate::agent::ToolApprovalDecision> {
+    use crate::agent::ToolApprovalRequest;
+
+    let (reply, answer) = asupersync::channel::oneshot::channel();
+    app.tool_approval_queue
+        .lock()
+        .expect("approval queue")
+        .push_back(super::ToolApprovalPrompt {
+            request: ToolApprovalRequest {
+                tool_call_id: "call-1".to_string(),
+                tool_name: tool_name.to_string(),
+                arguments,
+            },
+            reply,
+        });
+    let _ = app.update(Message::new(super::PiMsg::ToolApprovalPending));
+    answer
+}
+
+#[test]
+fn approval_modal_allows_and_answers_the_waiting_agent() {
+    use crate::agent::ToolApprovalDecision;
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+
+    let mut answer = open_tool_approval(&mut app, "bash", serde_json::json!({"command": "ls -la"}));
+    assert!(app.tool_approval.is_some(), "the modal should be open");
+    assert!(
+        app.view().contains("ls -la"),
+        "the command belongs in the box: {}",
+        app.view()
+    );
+
+    let _ = app.update(Message::new(KeyMsg::from_runes(vec!['1'])));
+
+    assert!(app.tool_approval.is_none(), "answering closes the modal");
+    assert_eq!(
+        answer.try_recv().expect("the agent was answered"),
+        ToolApprovalDecision::Allow
+    );
+}
+
+#[test]
+fn approval_modal_rejects_on_escape_and_never_strands_the_turn() {
+    use crate::agent::ToolApprovalDecision;
+    use bubbletea::KeyType;
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+
+    let mut answer =
+        open_tool_approval(&mut app, "bash", serde_json::json!({"command": "rm -rf /"}));
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Esc)));
+
+    assert!(app.tool_approval.is_none());
+    assert!(matches!(
+        answer.try_recv().expect("the agent was answered"),
+        ToolApprovalDecision::Deny { .. }
+    ));
+}
+
+#[test]
+fn approving_for_the_session_writes_a_rule_the_policy_then_allows() {
+    use crate::tool_policy::Decision;
+    use crate::tools::ToolEffects;
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+
+    let args = serde_json::json!({"command": "git status"});
+    let _answer = open_tool_approval(&mut app, "bash", args.clone());
+    let _ = app.update(Message::new(KeyMsg::from_runes(vec!['2'])));
+
+    let policy = app.tool_policy.read().expect("policy");
+    assert_eq!(
+        policy.decide("bash", ToolEffects::process(), &args),
+        Decision::Allow,
+        "the session rule should now cover `git`"
+    );
+    assert!(
+        matches!(
+            policy.decide(
+                "bash",
+                ToolEffects::process(),
+                &serde_json::json!({"command": "rm -rf /"})
+            ),
+            Decision::Ask
+        ),
+        "and only `git`"
+    );
 }
 
 #[test]

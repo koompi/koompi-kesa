@@ -365,6 +365,14 @@ impl ToolPolicy {
         self.mode = mode;
     }
 
+    /// Add an allow rule for the rest of this process. Backs the approval
+    /// modal's "don't ask again" option; nothing here touches settings.json,
+    /// so a session grant dies with the session.
+    pub fn allow_for_session(&mut self, rule: &str) -> Result<(), RuleError> {
+        self.allow.push(Rule::parse(rule)?);
+        Ok(())
+    }
+
     /// Deny beats allow beats ask beats the mode default. A user who wrote a
     /// deny rule and got prompted anyway would read the prompt as the bug.
     pub fn decide(&self, tool_name: &str, effects: ToolEffects, input: &Value) -> Decision {

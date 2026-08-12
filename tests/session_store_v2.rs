@@ -2226,7 +2226,11 @@ fn build_test_jsonl(dir: &Path, entries: &[kode::session::SessionEntry]) -> std:
     path
 }
 
-fn make_message_entry(id: &str, parent_id: Option<&str>, text: &str) -> kode::session::SessionEntry {
+fn make_message_entry(
+    id: &str,
+    parent_id: Option<&str>,
+    text: &str,
+) -> kode::session::SessionEntry {
     kode::session::SessionEntry::Message(kode::session::MessageEntry {
         base: kode::session::EntryBase::new(parent_id.map(String::from), id.to_string()),
         message: kode::session::SessionMessage::User {

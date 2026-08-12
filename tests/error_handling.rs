@@ -234,8 +234,8 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_401");
-            let provider =
-                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            let provider = kode::providers::anthropic::AnthropicProvider::new("claude-test")
+                .with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("bad-key"))
                 .await
@@ -263,8 +263,8 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_403");
-            let provider =
-                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            let provider = kode::providers::anthropic::AnthropicProvider::new("claude-test")
+                .with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -292,8 +292,8 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_429");
-            let provider =
-                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            let provider = kode::providers::anthropic::AnthropicProvider::new("claude-test")
+                .with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -321,8 +321,8 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_529");
-            let provider =
-                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            let provider = kode::providers::anthropic::AnthropicProvider::new("claude-test")
+                .with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -520,8 +520,8 @@ mod provider_http_errors {
         );
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_http_400");
-            let provider =
-                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            let provider = kode::providers::anthropic::AnthropicProvider::new("claude-test")
+                .with_client(client);
             let err = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -782,8 +782,8 @@ mod malformed_responses {
         );
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_invalid_json_sse");
-            let provider =
-                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            let provider = kode::providers::anthropic::AnthropicProvider::new("claude-test")
+                .with_client(client);
             let mut stream = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await
@@ -813,8 +813,8 @@ mod malformed_responses {
         );
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_empty_body_200");
-            let provider =
-                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            let provider = kode::providers::anthropic::AnthropicProvider::new("claude-test")
+                .with_client(client);
             let result = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await;
@@ -947,8 +947,8 @@ mod malformed_responses {
         );
         common::run_async(async move {
             let harness = TestHarness::new("anthropic_sse_error_event");
-            let provider =
-                kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            let provider = kode::providers::anthropic::AnthropicProvider::new("claude-test")
+                .with_client(client);
             let mut stream = provider
                 .stream(&context_for("test"), &options_with_key("test-key"))
                 .await

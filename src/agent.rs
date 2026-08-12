@@ -45,6 +45,7 @@ use crate::models::{
 use crate::provider::{Context, Provider, StreamOptions, ToolDef};
 use crate::semantic_workspace_graph::{ContextBundleItem, SemanticContextBundle};
 use crate::session::{AutosaveFlushTrigger, Session, SessionHandle};
+use crate::tool_policy::{Decision, ToolPolicy};
 use crate::tools::{Tool, ToolEffects, ToolOutput, ToolRegistry, ToolUpdate};
 use asupersync::runtime::{Runtime, RuntimeBuilder, RuntimeHandle};
 use asupersync::sync::{Mutex, Notify, OwnedMutexGuard};
@@ -651,7 +652,20 @@ pub struct AgentConfig {
 
     /// Optional approval gate invoked before a tool executes.
     pub tool_approval: Option<ToolApprovalHandler>,
+
+    /// Optional permission policy consulted before the approval gate.
+    ///
+    /// Shared and lock-guarded because the TUI cycles the permission mode with
+    /// shift+tab while turns are in flight.
+    pub tool_policy: Option<SharedToolPolicy>,
 }
+
+/// Handle the UI mutates and the agent reads.
+///
+/// A channel was the alternative. A lock wins here because the mode is state,
+/// not an event: the agent needs the current value at an arbitrary moment
+/// mid-turn, and every critical section is a field read with no await inside.
+pub type SharedToolPolicy = Arc<std::sync::RwLock<ToolPolicy>>;
 
 impl fmt::Debug for AgentConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -662,6 +676,7 @@ impl fmt::Debug for AgentConfig {
             .field("block_images", &self.block_images)
             .field("fail_closed_hooks", &self.fail_closed_hooks)
             .field("tool_approval", &self.tool_approval.is_some())
+            .field("tool_policy", &self.tool_policy.is_some())
             .finish()
     }
 }
@@ -702,6 +717,7 @@ impl Default for AgentConfig {
             block_images: false,
             fail_closed_hooks: false,
             tool_approval: None,
+            tool_policy: None,
         }
     }
 }
@@ -3061,11 +3077,50 @@ impl Agent {
         (output, is_error)
     }
 
+    /// Effects the policy should judge `tool_name` by.
+    ///
+    /// An unregistered name gets `write()`, the same fail-closed default the
+    /// `Tool` trait uses. `execute_tool_without_hooks` reports the missing tool
+    /// separately; the policy just must not treat unknown as harmless.
+    fn policy_effects(&self, tool_name: &str) -> ToolEffects {
+        self.tools
+            .get(tool_name)
+            .map_or_else(ToolEffects::write, Tool::effects)
+    }
+
     async fn request_tool_approval(
         &self,
         tool_call: &ToolCall,
         on_event: AgentEventHandler,
     ) -> Option<ToolOutput> {
+        if let Some(policy) = &self.config.tool_policy {
+            let effects = self.policy_effects(&tool_call.name);
+            let decision = policy
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .decide(&tool_call.name, effects, &tool_call.arguments);
+
+            match decision {
+                Decision::Allow => {
+                    Self::emit_tool_approved(&on_event, tool_call);
+                    return None;
+                }
+                Decision::Deny { reason } => {
+                    return Some(Self::tool_approval_denied_output(&reason));
+                }
+                // Fall through to the approval handler. With no handler
+                // installed there is nothing to ask, and a headless run is
+                // exactly where a silent allow does the most damage.
+                Decision::Ask => {
+                    if self.config.tool_approval.is_none() {
+                        return Some(Self::tool_approval_denied_output(
+                            "this tool call needs approval and no approval handler is installed",
+                        ));
+                    }
+                }
+            }
+        }
+
         let Some(approval) = &self.config.tool_approval else {
             return None;
         };
@@ -3078,25 +3133,29 @@ impl Agent {
 
         match approval(request).await {
             ToolApprovalDecision::Allow => {
-                on_event(AgentEvent::ToolExecutionUpdate {
-                    tool_call_id: tool_call.id.clone(),
-                    tool_name: tool_call.name.clone(),
-                    args: tool_call.arguments.clone(),
-                    partial_result: ToolOutput {
-                        content: Vec::new(),
-                        details: Some(json!({
-                            "schema": TOOL_APPROVAL_STATUS_SCHEMA_V1,
-                            "status": "approved",
-                        })),
-                        is_error: false,
-                    },
-                });
+                Self::emit_tool_approved(&on_event, tool_call);
                 None
             }
             ToolApprovalDecision::Deny { reason } => {
                 Some(Self::tool_approval_denied_output(&reason))
             }
         }
+    }
+
+    fn emit_tool_approved(on_event: &AgentEventHandler, tool_call: &ToolCall) {
+        on_event(AgentEvent::ToolExecutionUpdate {
+            tool_call_id: tool_call.id.clone(),
+            tool_name: tool_call.name.clone(),
+            args: tool_call.arguments.clone(),
+            partial_result: ToolOutput {
+                content: Vec::new(),
+                details: Some(json!({
+                    "schema": TOOL_APPROVAL_STATUS_SCHEMA_V1,
+                    "status": "approved",
+                })),
+                is_error: false,
+            },
+        });
     }
 
     async fn execute_tool_owned(
@@ -11873,6 +11932,7 @@ mod tests {
                 block_images: true,
                 fail_closed_hooks: false,
                 tool_approval: None,
+                tool_policy: None,
             },
         );
         agent.add_message(Message::User(UserMessage {
@@ -11906,6 +11966,7 @@ mod tests {
                 block_images: false,
                 fail_closed_hooks: false,
                 tool_approval: None,
+                tool_policy: None,
             },
         );
         agent.add_message(Message::User(UserMessage {
@@ -12100,6 +12161,7 @@ mod tests {
                 block_images: false,
                 fail_closed_hooks: false,
                 tool_approval: None,
+                tool_policy: None,
             },
         );
 

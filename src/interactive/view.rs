@@ -7,6 +7,34 @@ const USER_PROMPT_GLYPH: &str = "\u{203a}";
 const ASSISTANT_GLYPH: &str = "\u{25cf}";
 const TOOL_RESULT_GLYPH: &str = "\u{23bf}";
 
+/// Prompt shown on the first row inside the input box.
+const INPUT_PROMPT_GLYPH: &str = ">";
+
+/// Smallest box we will draw before giving up on fitting the terminal.
+const MIN_BOX_WIDTH: usize = 16;
+
+/// The autocomplete list stays readable rather than stretching to the terminal.
+const DROPDOWN_MAX_WIDTH: usize = 64;
+
+/// Outer width of every framed box, leaving the two-column left gutter the rest
+/// of the view uses plus a matching margin on the right.
+pub(super) const fn box_width(term_width: usize) -> usize {
+    let width = term_width.saturating_sub(4);
+    if width < MIN_BOX_WIDTH {
+        MIN_BOX_WIDTH
+    } else {
+        width
+    }
+}
+
+/// Editor columns that fit inside the input box, after its frame, its own
+/// padding and the `>` prompt column.
+pub(super) const fn editor_width(term_width: usize, editor_padding_x: usize) -> usize {
+    let inner = box_width(term_width) - 4;
+    let width = inner.saturating_sub(2 + editor_padding_x);
+    if width < 4 { 4 } else { width }
+}
+
 /// Ensure the view output fits within `term_height` terminal rows.
 ///
 /// The output must contain at most `term_height - 1` newline characters so
@@ -59,6 +87,76 @@ pub(super) fn normalize_raw_terminal_newlines(input: String) -> String {
     }
 
     out.push_str(&input[cursor..]);
+    out
+}
+
+/// Draw a rounded border around `content`, one output line per row.
+///
+/// `width` is the full outer width in cells, borders included; content is
+/// padded or truncated to `width - 4` so the frame stays rectangular even when
+/// a row already carries styling escapes. Only the border glyphs take `style`,
+/// so pre-styled content passes through untouched.
+pub(super) fn bordered_box<'a>(
+    content: impl IntoIterator<Item = &'a str>,
+    width: usize,
+    style: &lipgloss::Style,
+) -> Vec<String> {
+    let width = width.max(4);
+    let inner = width - 4;
+    let rule = "\u{2500}".repeat(width - 2);
+
+    let mut lines = vec![style.render(&format!("\u{256d}{rule}\u{256e}"))];
+    let left = style.render("\u{2502}");
+    let right = style.render("\u{2502}");
+    for row in content {
+        let row = fit_to_width(row, inner);
+        lines.push(format!("{left} {row} {right}"));
+    }
+    lines.push(style.render(&format!("\u{2570}{rule}\u{256f}")));
+    lines
+}
+
+/// Pad with spaces or truncate `line` so it occupies exactly `width` cells,
+/// counting display width and ignoring ANSI escapes.
+fn fit_to_width(line: &str, width: usize) -> String {
+    let visible = lipgloss::width(line);
+    if visible == width {
+        return line.to_string();
+    }
+    if visible < width {
+        let mut out = line.to_string();
+        out.push_str(&" ".repeat(width - visible));
+        return out;
+    }
+
+    let mut out = String::with_capacity(line.len());
+    let mut taken = 0usize;
+    let mut chars = line.chars();
+    while let Some(ch) = chars.next() {
+        if ch == '\u{1b}' {
+            out.push(ch);
+            for esc in chars.by_ref() {
+                out.push(esc);
+                if esc.is_ascii_alphabetic() || esc == '\u{7}' {
+                    break;
+                }
+            }
+            continue;
+        }
+        let cell = UnicodeWidthChar::width(ch).unwrap_or(0);
+        if taken + cell > width {
+            break;
+        }
+        out.push(ch);
+        taken += cell;
+    }
+    if out.contains('\u{1b}') {
+        // truncated mid-sequence would bleed colour into the border
+        out.push_str("\u{1b}[0m");
+    }
+    if taken < width {
+        out.push_str(&" ".repeat(width - taken));
+    }
     out
 }
 
@@ -353,14 +451,20 @@ impl PiApp {
         let plain_width = self.term_width.saturating_sub(4).max(1);
 
         if !self.startup_welcome.trim().is_empty() {
+            let width = box_width(self.term_width);
+            let mut rows = Vec::new();
             for line in self.startup_welcome.lines() {
-                if line.trim().is_empty() {
-                    output.push('\n');
+                let line = line.trim_start();
+                if line.is_empty() {
+                    rows.push(String::new());
                     continue;
                 }
-                for segment in wrapped_line_segments(line, plain_width) {
-                    let _ = writeln!(output, "{}", self.styles.muted_italic.render(segment));
+                for segment in wrapped_line_segments(line, width.saturating_sub(4)) {
+                    rows.push(self.styles.muted_italic.render(segment));
                 }
+            }
+            for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
+                let _ = writeln!(output, "  {line}");
             }
         }
 
@@ -552,6 +656,11 @@ impl PiApp {
             output.push_str(&self.render_capability_prompt(prompt));
         }
 
+        // Tool approval overlay (if open)
+        if let Some(ref prompt) = self.tool_approval {
+            output.push_str(&self.render_tool_approval(prompt));
+        }
+
         // Extension custom overlay (if open)
         if let Some(ref overlay) = self.extension_custom_overlay {
             output.push_str(&self.render_extension_custom_overlay(overlay));
@@ -644,13 +753,14 @@ impl PiApp {
         let prev_model_key =
             self.header_binding_hint(AppAction::CycleModelBackward, "ctrl+shift+p");
         let tools_key = self.header_binding_hint(AppAction::ExpandTools, "ctrl+o");
-        let thinking_key = self.header_binding_hint(AppAction::CycleThinkingLevel, "shift+tab");
+        let thinking_key = self.header_binding_hint(AppAction::CycleThinkingLevel, "alt+t");
+        let mode_key = self.header_binding_hint(AppAction::CyclePermissionMode, "shift+tab");
         let max_width = self.term_width.saturating_sub(2);
 
         let hints_line = truncate(
             &format!(
                 "{model_key}: model  {next_model_key}: next  {prev_model_key}: prev  \
-                 {tools_key}: tools  {thinking_key}: thinking"
+                 {tools_key}: tools  {thinking_key}: thinking  {mode_key}: mode"
             ),
             max_width,
         );
@@ -780,20 +890,37 @@ impl PiApp {
         }
         let _ = writeln!(output, "\n  {header_line}");
 
-        let padding = " ".repeat(self.editor_padding_x);
-        let line_prefix = format!("  {padding}");
         let border_style = if is_bash_mode {
             self.styles.warning_bold.clone()
         } else {
             thinking_border_style
         };
-        let border = border_style.render("│");
-        for line in self.input.view().lines() {
-            output.push_str(&line_prefix);
-            output.push_str(&border);
-            output.push(' ');
-            output.push_str(line);
-            output.push('\n');
+
+        let padding = " ".repeat(self.editor_padding_x);
+        let prompt = self.styles.accent_bold.render(INPUT_PROMPT_GLYPH);
+        let editor = self.input.view();
+        let rows: Vec<String> = editor
+            .lines()
+            .enumerate()
+            .map(|(idx, line)| {
+                if idx == 0 {
+                    format!("{padding}{prompt} {line}")
+                } else {
+                    format!("{padding}  {line}")
+                }
+            })
+            .collect();
+
+        for line in bordered_box(
+            rows.iter().map(String::as_str),
+            box_width(self.term_width),
+            &border_style,
+        ) {
+            let _ = writeln!(output, "  {line}");
+        }
+
+        if let Some(indicator) = self.permission_mode.indicator() {
+            let _ = writeln!(output, "  {}", self.styles.warning.render(indicator));
         }
 
         output
@@ -1103,7 +1230,6 @@ impl PiApp {
         Some(out)
     }
 
-    #[allow(clippy::too_many_lines)]
     pub(super) fn render_autocomplete_dropdown(&self) -> String {
         let mut output = String::new();
 
@@ -1112,8 +1238,8 @@ impl PiApp {
         // Dropdown chrome uses ~5 rows (borders, help, pagination, description).
         let max_dropdown_rows = self.term_height.saturating_sub(
             // header(4) + min conversation(1) + scroll indicator(1)
-            // + input(2 + height) + footer(2) + dropdown chrome(5)
-            4 + 1 + 1 + 2 + self.input.height() + 2 + 5,
+            // + input(4 + height) + footer(2) + dropdown chrome(5)
+            4 + 1 + 1 + 4 + self.input.height() + 2 + 5,
         );
         let visible_count = self
             .autocomplete
@@ -1122,22 +1248,16 @@ impl PiApp {
             .min(max_dropdown_rows.max(1));
         let end = (offset + visible_count).min(self.autocomplete.items.len());
 
-        // Styles
-        let border_style = &self.styles.border;
         let selected_style = &self.styles.selection;
         let kind_style = &self.styles.warning;
         let desc_style = &self.styles.muted_italic;
 
-        // Top border
-        let width = 60;
-        let _ = write!(
-            output,
-            "\n  {}",
-            border_style.render(&format!("┌{:─<width$}┐", ""))
-        );
+        // Aligns under the input box, never wider than it.
+        let width = box_width(self.term_width).min(DROPDOWN_MAX_WIDTH);
+        let inner = width.saturating_sub(4);
 
+        let mut rows = Vec::with_capacity(visible_count + 2);
         for (idx, item) in self.autocomplete.items[offset..end].iter().enumerate() {
-            use unicode_width::UnicodeWidthStr;
             let global_idx = offset + idx;
             let is_selected = self.autocomplete.selected == Some(global_idx);
 
@@ -1151,90 +1271,16 @@ impl PiApp {
                 AutocompleteItemKind::Path => "📂",
             };
 
-            let max_label_len = width.saturating_sub(6);
-            let label_width = item.label.width();
-            let label = if label_width > max_label_len {
-                let mut out = String::with_capacity(max_label_len);
-                let mut current_width = 0;
-                for c in item.label.chars() {
-                    let w = c.width().unwrap_or(0);
-                    if current_width + w > max_label_len {
-                        while current_width > max_label_len.saturating_sub(1) {
-                            if let Some(last) = out.pop() {
-                                current_width -= last.width().unwrap_or(0);
-                            } else {
-                                break;
-                            }
-                        }
-                        out.push('…');
-                        break;
-                    }
-                    out.push(c);
-                    current_width += w;
-                }
-                out
-            } else {
-                item.label.clone()
-            };
-
-            let actual_label_width = label.width();
-            let padding = " ".repeat(max_label_len.saturating_sub(actual_label_width));
-            let line_content = format!("{kind_icon} {label}{padding}");
-            let styled_line = if is_selected {
-                selected_style.render(&line_content)
-            } else {
-                format!("{} {label}{padding}", kind_style.render(kind_icon))
-            };
-
-            let _ = write!(
-                output,
-                "\n  {}{}{}",
-                border_style.render("│"),
-                styled_line,
-                border_style.render("│")
-            );
+            let plain = fit_to_width(&format!("{kind_icon} {}", item.label), inner);
+            rows.push(match plain.strip_prefix(kind_icon) {
+                Some(rest) if !is_selected => format!("{}{rest}", kind_style.render(kind_icon)),
+                _ if is_selected => selected_style.render(&plain),
+                _ => plain,
+            });
 
             if is_selected && let Some(desc) = &item.description {
-                let max_desc_len = width.saturating_sub(4);
-                let desc_width = desc.width();
-                let truncated_desc = if desc_width > max_desc_len {
-                    let mut out = String::with_capacity(max_desc_len);
-                    let mut current_width = 0;
-                    for c in desc.chars() {
-                        let c = if c == '\n' { ' ' } else { c };
-                        let w = c.width().unwrap_or(0);
-                        if current_width + w > max_desc_len {
-                            while current_width > max_desc_len.saturating_sub(1) {
-                                if let Some(last) = out.pop() {
-                                    current_width -= last.width().unwrap_or(0);
-                                } else {
-                                    break;
-                                }
-                            }
-                            out.push('…');
-                            break;
-                        }
-                        out.push(c);
-                        current_width += w;
-                    }
-                    out
-                } else {
-                    desc.replace('\n', " ")
-                };
-
-                let _ = write!(
-                    output,
-                    "\n  {}  {}{}",
-                    border_style.render("│"),
-                    desc_style.render(&truncated_desc),
-                    border_style.render(&format!(
-                        "{:>pad$}│",
-                        "",
-                        pad = width
-                            .saturating_sub(2)
-                            .saturating_sub(truncated_desc.width())
-                    ))
-                );
+                let desc = fit_to_width(&format!("  {}", desc.replace('\n', " ")), inner);
+                rows.push(desc_style.render(&desc));
             }
         }
 
@@ -1245,22 +1291,17 @@ impl PiApp {
                 end,
                 self.autocomplete.items.len()
             );
-            let _ = write!(
-                output,
-                "\n  {}",
-                border_style.render(&format!("│{shown:^width$}│"))
-            );
+            rows.push(format!("{shown:^inner$}"));
+        }
+
+        output.push('\n');
+        for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
+            let _ = writeln!(output, "  {line}");
         }
 
         let _ = write!(
             output,
-            "\n  {}",
-            border_style.render(&format!("└{:─<width$}┘", ""))
-        );
-
-        let _ = write!(
-            output,
-            "\n  {}",
+            "  {}",
             self.styles
                 .muted_italic
                 .render("↑/↓ navigate  Enter/Tab accept  Esc cancel")
@@ -1622,6 +1663,36 @@ impl PiApp {
         output
     }
 
+    pub(super) fn render_tool_approval(&self, prompt: &ToolApprovalOverlay) -> String {
+        let width = box_width(self.term_width);
+        let title = format!("{} wants to run", self.styles.accent_bold.render("kode"));
+        let summary = self.styles.warning_bold.render(&prompt.summary);
+        let tool = self.styles.muted.render(&format!("{}:", prompt.tool_name));
+
+        let mut rows = vec![title, String::new(), tool, summary, String::new()];
+        for (idx, action) in ApprovalAction::ALL.iter().enumerate() {
+            let label = format!("{}. {}", idx + 1, prompt.label(*action));
+            rows.push(if idx == prompt.focused {
+                self.styles.selection.render(&format!("\u{276f} {label}"))
+            } else {
+                self.styles.muted.render(&format!("  {label}"))
+            });
+        }
+
+        let mut output = String::from("\n");
+        for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
+            let _ = writeln!(output, "  {line}");
+        }
+        let _ = writeln!(
+            output,
+            "  {}",
+            self.styles
+                .muted_italic
+                .render("1-3 choose  \u{2191}/\u{2193} navigate  Enter confirm  Esc reject")
+        );
+        output
+    }
+
     pub(super) fn render_extension_custom_overlay(
         &self,
         overlay: &ExtensionCustomOverlay,
@@ -1740,7 +1811,10 @@ mod tests {
     #[test]
     fn progress_suffix_shows_elapsed_tokens_and_interrupt_hint() {
         let suffix = progress_suffix(Some(std::time::Duration::from_secs(12)), 3_400);
-        assert_eq!(suffix, "(12s \u{00b7} 3.4K tokens \u{00b7} esc to interrupt)");
+        assert_eq!(
+            suffix,
+            "(12s \u{00b7} 3.4K tokens \u{00b7} esc to interrupt)"
+        );
     }
 
     #[test]

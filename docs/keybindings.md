@@ -94,6 +94,7 @@ Keys are specified as `modifier+key`.
 | `exit` | `ctrl+d` | Exit (when editor empty) |
 | `suspend` | `ctrl+z` | Suspend to background |
 | `externalEditor` | `ctrl+g` | Open in external editor |
+| `cyclePermissionMode` | `shift+tab` | Cycle permission mode |
 
 ### Clipboard & Kill Ring
 
@@ -112,7 +113,7 @@ Keys are specified as `modifier+key`.
 | `selectModel` | `ctrl+l` | Open model selector |
 | `cycleModelForward` | `ctrl+p` | Cycle to next model |
 | `cycleModelBackward` | `ctrl+shift+p` | Cycle to previous model |
-| `cycleThinkingLevel` | `shift+tab` | Cycle thinking level |
+| `cycleThinkingLevel` | `alt+t` | Cycle thinking level |
 
 ### Display & Tools
 

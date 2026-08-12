@@ -325,9 +325,9 @@ fn parse_scenario_shard(
 ) -> Result<Option<ScenarioShard>, String> {
     match (index_raw, total_raw) {
         (None, None) => Ok(None),
-        (Some(_), None) | (None, Some(_)) => {
-            Err("both KODE_SCENARIO_SHARD_INDEX and KODE_SCENARIO_SHARD_TOTAL are required".to_string())
-        }
+        (Some(_), None) | (None, Some(_)) => Err(
+            "both KODE_SCENARIO_SHARD_INDEX and KODE_SCENARIO_SHARD_TOTAL are required".to_string(),
+        ),
         (Some(index_raw), Some(total_raw)) => {
             let index = index_raw
                 .parse::<usize>()
@@ -3770,11 +3770,17 @@ impl ExtensionHostActions for PiAiProviderBridgeHostActions {
         Ok(())
     }
 
-    async fn send_user_message(&self, _message: ExtensionSendUserMessage) -> kode::error::Result<()> {
+    async fn send_user_message(
+        &self,
+        _message: ExtensionSendUserMessage,
+    ) -> kode::error::Result<()> {
         Ok(())
     }
 
-    async fn complete_ai(&self, request: ExtensionAiCompletionRequest) -> kode::error::Result<Value> {
+    async fn complete_ai(
+        &self,
+        request: ExtensionAiCompletionRequest,
+    ) -> kode::error::Result<Value> {
         let simple = request.simple;
         self.completions
             .lock()

@@ -132,6 +132,89 @@ impl PiApp {
         None
     }
 
+    pub(super) fn handle_tool_approval_key(&mut self, key: &KeyMsg) -> Option<Cmd> {
+        let prompt = self.tool_approval.as_mut()?;
+
+        match key.key_type {
+            KeyType::Down | KeyType::Tab => prompt.focus_next(),
+            KeyType::Up => prompt.focus_prev(),
+            KeyType::Runes if key.runes == ['j'] => prompt.focus_next(),
+            KeyType::Runes if key.runes == ['k'] => prompt.focus_prev(),
+            KeyType::Runes if key.runes == ['1'] => self.answer_tool_approval(ApprovalAction::Once),
+            KeyType::Runes if key.runes == ['2'] => {
+                self.answer_tool_approval(ApprovalAction::Session);
+            }
+            KeyType::Runes if key.runes == ['3'] => {
+                self.answer_tool_approval(ApprovalAction::Reject);
+            }
+            KeyType::Enter => {
+                let action = prompt.selected_action();
+                self.answer_tool_approval(action);
+            }
+            KeyType::Esc => self.answer_tool_approval(ApprovalAction::Reject),
+            _ => {}
+        }
+
+        None
+    }
+
+    /// Answer the open approval and surface the next queued one.
+    fn answer_tool_approval(&mut self, action: ApprovalAction) {
+        let Some(mut prompt) = self.tool_approval.take() else {
+            return;
+        };
+
+        if action == ApprovalAction::Session
+            && let Err(err) = self
+                .tool_policy
+                .write()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .allow_for_session(&prompt.session_rule)
+        {
+            self.status_message = Some(format!("Could not remember that choice: {err}"));
+        }
+
+        let decision = if action == ApprovalAction::Reject {
+            ToolApprovalDecision::deny("the user rejected this tool call")
+        } else {
+            ToolApprovalDecision::Allow
+        };
+        if let Some(reply) = prompt.reply.take() {
+            let cx = Cx::current().unwrap_or_else(Cx::for_request);
+            let _ = reply.send(&cx, decision);
+        }
+
+        self.messages.push(ConversationMessage {
+            role: MessageRole::System,
+            content: match action {
+                ApprovalAction::Once => format!("Approved `{}`.", prompt.tool_name),
+                ApprovalAction::Session => format!(
+                    "Approved `{}`, and will not ask again for `{}` this session.",
+                    prompt.tool_name, prompt.session_rule
+                ),
+                ApprovalAction::Reject => format!("Rejected `{}`.", prompt.tool_name),
+            },
+            thinking: None,
+            collapsed: false,
+        });
+        self.scroll_to_bottom();
+
+        self.show_next_tool_approval();
+    }
+
+    /// Open the next queued approval, if the modal is free and one is waiting.
+    pub(super) fn show_next_tool_approval(&mut self) {
+        if self.tool_approval.is_some() {
+            return;
+        }
+        let next = self
+            .tool_approval_queue
+            .lock()
+            .ok()
+            .and_then(|mut queue| queue.pop_front());
+        self.tool_approval = next.map(ToolApprovalOverlay::new);
+    }
+
     pub(super) fn handle_paste_event(&mut self, key: &KeyMsg) -> bool {
         if key.key_type != KeyType::Runes || key.runes.is_empty() {
             return false;
@@ -688,6 +771,16 @@ impl PiApp {
                 self.cycle_thinking_level();
                 None
             }
+            AppAction::CyclePermissionMode => {
+                self.permission_mode = self.permission_mode.next();
+                self.tool_policy
+                    .write()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .set_mode(self.permission_mode);
+                self.status_message = Some(format!("Permission mode: {}", self.permission_mode));
+                self.resize_conversation_viewport();
+                None
+            }
             AppAction::SelectModel => {
                 self.open_model_selector_configured_only();
                 None
@@ -941,6 +1034,7 @@ impl PiApp {
             | AppAction::CycleModelForward
             | AppAction::CycleModelBackward
             | AppAction::CycleThinkingLevel
+            | AppAction::CyclePermissionMode
             | AppAction::ToggleThinking
             | AppAction::ExpandTools
             | AppAction::FollowUp

@@ -1,10 +1,10 @@
 #![cfg(feature = "loom-tests")]
 
-use loom::sync::{Arc, Condvar, Mutex};
-use loom::thread;
 use kode::hostcall_queue::{
     BravoBiasMode, ContentionSample, ContentionSignature, HostcallQueueMode, HostcallRequestQueue,
 };
+use loom::sync::{Arc, Condvar, Mutex};
+use loom::thread;
 
 // `generator`, which backs Loom's simulated threads, defaults to a 4 KiB
 // coroutine stack. The queue's contention classifier legitimately exceeds

@@ -1183,7 +1183,10 @@ fn doctor_swarm_resource_preflight_json_reports_unknown_topology_lane_plan() -> 
         ("CARGO_TARGET_DIR", Some(target_dir.as_str())),
         ("TMPDIR", Some(tmp_dir.as_str())),
         ("KODE_DOCTOR_CGROUP_CPU_MAX_PATH", Some(cpu_max.as_str())),
-        ("KODE_DOCTOR_CPUSET_CPUS_PATH", Some(missing_cpuset.as_str())),
+        (
+            "KODE_DOCTOR_CPUSET_CPUS_PATH",
+            Some(missing_cpuset.as_str()),
+        ),
         ("KODE_DOCTOR_NUMA_ONLINE_PATH", Some(missing_numa.as_str())),
         ("KODE_DOCTOR_CGROUP_MEMORY_MAX_PATH", Some(memory.as_str())),
         ("KODE_DOCTOR_MEMINFO_PATH", Some(meminfo.as_str())),

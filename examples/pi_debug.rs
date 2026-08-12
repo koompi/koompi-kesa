@@ -214,7 +214,8 @@ async fn run_debug(mut cli: cli::Cli, runtime_handle: RuntimeHandle) -> Result<(
     )?;
     let provider =
         providers::create_provider(&selection.model_entry, None).map_err(anyhow::Error::new)?;
-    let stream_options = kode::app::build_stream_options(&config, resolved_key, &selection, &session);
+    let stream_options =
+        kode::app::build_stream_options(&config, resolved_key, &selection, &session);
     let agent_config = AgentConfig {
         system_prompt: Some(system_prompt),
         max_tool_iterations: 50,
@@ -222,6 +223,7 @@ async fn run_debug(mut cli: cli::Cli, runtime_handle: RuntimeHandle) -> Result<(
         block_images: config.image_block_images(),
         fail_closed_hooks: config.fail_closed_hooks(),
         tool_approval: None,
+        tool_policy: None,
     };
     let tools = ToolRegistry::new(&enabled_tools, &cwd, Some(&config));
     let session_arc = Arc::new(Mutex::new(session));

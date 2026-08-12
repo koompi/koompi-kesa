@@ -286,6 +286,9 @@ fn list_models_value(list_models: Option<&Option<String>>) -> Value {
 #[allow(clippy::too_many_lines)]
 fn command_value(command: Option<&Commands>) -> Value {
     match command {
+        // Hidden re-exec trampoline. Not part of the user-facing CLI surface
+        // these fixtures pin.
+        Some(Commands::SandboxExec { .. }) => json!({ "name": "__sandbox-exec" }),
         Some(Commands::Install { source, local }) => json!({
             "name": "install",
             "source": source,

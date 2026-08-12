@@ -1268,7 +1268,10 @@ pub fn create_openrouter_provider(
     create_openai_provider(entry, client)
 }
 
-pub fn create_xai_provider(entry: &ModelEntry, client: Client) -> kode::PiResult<Arc<dyn Provider>> {
+pub fn create_xai_provider(
+    entry: &ModelEntry,
+    client: Client,
+) -> kode::PiResult<Arc<dyn Provider>> {
     create_openai_provider(entry, client)
 }
 
@@ -1279,7 +1282,10 @@ pub fn create_deepseek_provider(
     create_openai_provider(entry, client)
 }
 
-pub fn create_live_provider(entry: &ModelEntry, client: Client) -> kode::PiResult<Arc<dyn Provider>> {
+pub fn create_live_provider(
+    entry: &ModelEntry,
+    client: Client,
+) -> kode::PiResult<Arc<dyn Provider>> {
     match entry.model.provider.as_str() {
         "anthropic" => Ok(create_anthropic_provider(entry, client)),
         "openai" => create_openai_provider(entry, client),

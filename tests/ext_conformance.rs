@@ -213,7 +213,9 @@ fn normalizes_dynamic_fields_paths_and_ansi() {
 
     let msg = normalized["message"].as_str().unwrap_or_default();
     // Windows PathBuf::join uses backslash, so accept both separators
-    assert!(msg.contains("<KODE_MONO_ROOT>/file.txt") || msg.contains("<KODE_MONO_ROOT>\\file.txt"),);
+    assert!(
+        msg.contains("<KODE_MONO_ROOT>/file.txt") || msg.contains("<KODE_MONO_ROOT>\\file.txt"),
+    );
     assert!(!msg.contains(&cwd.display().to_string()));
     assert!(!msg.contains("\u{1b}["));
     assert!(msg.contains("ERR"));

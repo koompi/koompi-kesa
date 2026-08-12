@@ -39,7 +39,9 @@ fn run_admission_with_env(
     command_args.extend_from_slice(args);
 
     let mut command = Command::new(root.join("scripts/cargo_headroom.sh"));
-    command.env("PATH", path).env("KODE_CARGO_PROCESS_COUNT", "0");
+    command
+        .env("PATH", path)
+        .env("KODE_CARGO_PROCESS_COUNT", "0");
     for (key, value) in envs {
         command.env(key, value);
     }

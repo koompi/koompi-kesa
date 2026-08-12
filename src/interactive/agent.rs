@@ -725,6 +725,7 @@ After approving access in the browser, press Enter in Pi to complete login."
             PiMsg::ExtensionUiRequest(request) => {
                 return self.handle_extension_ui_request(request);
             }
+            PiMsg::ToolApprovalPending => self.show_next_tool_approval(),
             PiMsg::ExtensionCommandDone {
                 command: _,
                 display,

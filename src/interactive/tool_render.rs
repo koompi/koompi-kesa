@@ -356,11 +356,23 @@ mod tests {
     #[test]
     fn tool_call_header_uses_primary_arg_per_tool() {
         let cases = [
-            ("read", serde_json::json!({"path": "src/main.rs"}), "Read(src/main.rs)"),
-            ("bash", serde_json::json!({"command": "cargo test"}), "Bash(cargo test)"),
+            (
+                "read",
+                serde_json::json!({"path": "src/main.rs"}),
+                "Read(src/main.rs)",
+            ),
+            (
+                "bash",
+                serde_json::json!({"command": "cargo test"}),
+                "Bash(cargo test)",
+            ),
             ("grep", serde_json::json!({"pattern": "TODO"}), "Grep(TODO)"),
             ("ls", serde_json::json!({"path": "src"}), "List(src)"),
-            ("hashline_edit", serde_json::json!({"path": "a.rs"}), "Edit(a.rs)"),
+            (
+                "hashline_edit",
+                serde_json::json!({"path": "a.rs"}),
+                "Edit(a.rs)",
+            ),
         ];
         for (name, args, expected) in cases {
             assert_eq!(format_tool_call_header(name, &args), expected);

@@ -775,7 +775,10 @@ fn run_rust_event_dispatch_bench_result(
         env.insert("KODE_DETERMINISTIC_HOME".to_string(), settings.home.clone());
         env.insert("HOME".to_string(), settings.home.clone());
         if let Some(random_value) = settings.random_value.as_ref() {
-            env.insert("KODE_DETERMINISTIC_RANDOM".to_string(), random_value.clone());
+            env.insert(
+                "KODE_DETERMINISTIC_RANDOM".to_string(),
+                random_value.clone(),
+            );
         } else {
             env.insert(
                 "KODE_DETERMINISTIC_RANDOM_SEED".to_string(),

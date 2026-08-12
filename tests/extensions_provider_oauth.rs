@@ -798,7 +798,9 @@ fn resolve_api_key_override_takes_precedence_over_oauth() {
 // ---------------------------------------------------------------------------
 
 /// Mirrors the config-extraction logic in main.rs.
-fn oauth_configs_from_entries(entries: &[kode::models::ModelEntry]) -> HashMap<String, OAuthConfig> {
+fn oauth_configs_from_entries(
+    entries: &[kode::models::ModelEntry],
+) -> HashMap<String, OAuthConfig> {
     entries
         .iter()
         .filter_map(|entry| {

@@ -952,7 +952,8 @@ fn encode_cwd_root() {
 /// encode_cwd handles paths with special characters.
 #[test]
 fn encode_cwd_special_chars() {
-    let encoded = kode::session::encode_cwd(std::path::Path::new("/home/user/my project (v2.0)/src"));
+    let encoded =
+        kode::session::encode_cwd(std::path::Path::new("/home/user/my project (v2.0)/src"));
     assert!(!encoded.is_empty());
     assert!(!encoded.contains('/'));
 }

@@ -1978,7 +1978,11 @@ fn e2e_cli_config_show_lists_discovered_package_resources() {
         .harness
         .record_artifact("config-ui-pkg.dir", &package_root);
 
-    let project_settings = harness.harness.temp_dir().join(".kode").join("settings.json");
+    let project_settings = harness
+        .harness
+        .temp_dir()
+        .join(".kode")
+        .join("settings.json");
     fs::create_dir_all(
         project_settings
             .parent()
@@ -2015,7 +2019,11 @@ fn e2e_cli_config_show_lists_discovered_package_resources() {
 fn e2e_cli_config_show_surfaces_invalid_package_settings() {
     let mut harness = CliTestHarness::new("e2e_cli_config_show_surfaces_invalid_package_settings");
     harness.env.remove("KODE_CONFIG_PATH");
-    let project_settings = harness.harness.temp_dir().join(".kode").join("settings.json");
+    let project_settings = harness
+        .harness
+        .temp_dir()
+        .join(".kode")
+        .join("settings.json");
     fs::create_dir_all(
         project_settings
             .parent()
@@ -2051,7 +2059,11 @@ fn e2e_cli_config_without_tty_surfaces_invalid_package_settings() {
     let mut harness =
         CliTestHarness::new("e2e_cli_config_without_tty_surfaces_invalid_package_settings");
     harness.env.remove("KODE_CONFIG_PATH");
-    let project_settings = harness.harness.temp_dir().join(".kode").join("settings.json");
+    let project_settings = harness
+        .harness
+        .temp_dir()
+        .join(".kode")
+        .join("settings.json");
     fs::create_dir_all(
         project_settings
             .parent()
@@ -3496,7 +3508,12 @@ fn e2e_cli_print_mode_vcr_roundtrip() {
     assert_contains(&harness.harness, &result.stdout, "pong");
 
     // Verify no session files created in print mode (even on success).
-    let sessions_dir = PathBuf::from(harness.env.get("KODE_SESSIONS_DIR").expect("KODE_SESSIONS_DIR"));
+    let sessions_dir = PathBuf::from(
+        harness
+            .env
+            .get("KODE_SESSIONS_DIR")
+            .expect("KODE_SESSIONS_DIR"),
+    );
     let jsonl_count = count_jsonl_files(&sessions_dir);
     harness
         .harness
@@ -3547,7 +3564,12 @@ fn e2e_cli_print_mode_stdin_sends_to_provider() {
     assert_contains(&harness.harness, &result.stdout, "Received your stdin.");
 
     // Verify no session files created.
-    let sessions_dir = PathBuf::from(harness.env.get("KODE_SESSIONS_DIR").expect("KODE_SESSIONS_DIR"));
+    let sessions_dir = PathBuf::from(
+        harness
+            .env
+            .get("KODE_SESSIONS_DIR")
+            .expect("KODE_SESSIONS_DIR"),
+    );
     let jsonl_count = count_jsonl_files(&sessions_dir);
     harness
         .harness

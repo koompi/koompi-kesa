@@ -319,6 +319,12 @@ harness = false
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
 tikv-jemallocator = { version = "0.6", optional = true }
 
+# Landlock sandbox for spawned commands. Safe wrapper over the landlock
+# syscalls, which matters because `unsafe_code = "forbid"` rules out calling
+# them through libc here.
+[target.'cfg(target_os = "linux")'.dependencies]
+landlock = "0.4.7"
+
 # FreeBSD: third-party libs live under /usr/local and rquickjs-sys doesn't
 # ship pre-generated bindings for this target, so regenerate at build time
 # via the `bindgen` feature (uses /usr/bin/clang from the base system).

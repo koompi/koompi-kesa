@@ -21,7 +21,10 @@ fn deterministic_env() -> HashMap<String, String> {
         "KODE_DETERMINISTIC_TIME_MS".to_string(),
         "1700000000000".to_string(),
     );
-    env.insert("KODE_DETERMINISTIC_TIME_STEP_MS".to_string(), "1".to_string());
+    env.insert(
+        "KODE_DETERMINISTIC_TIME_STEP_MS".to_string(),
+        "1".to_string(),
+    );
     env.insert(
         "KODE_DETERMINISTIC_CWD".to_string(),
         "/tmp/ext-neg-test".to_string(),

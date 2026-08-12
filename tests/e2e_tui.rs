@@ -149,7 +149,11 @@ fn setup_config_ui_fixture(session: &TuiSession, package_name: &str) -> PathBuf 
     }))
     .expect("serialize config UI settings");
 
-    let project_settings = session.harness.temp_dir().join(".kode").join("settings.json");
+    let project_settings = session
+        .harness
+        .temp_dir()
+        .join(".kode")
+        .join("settings.json");
     fs::create_dir_all(
         project_settings
             .parent()

@@ -198,6 +198,7 @@ pub mod resource_governor;
 pub mod resources;
 #[doc(hidden)]
 pub mod rpc;
+pub mod sandbox;
 #[doc(hidden)]
 pub mod scheduler;
 pub mod sdk;

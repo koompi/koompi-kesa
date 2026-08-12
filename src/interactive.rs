@@ -12,7 +12,7 @@
 //! - **Markdown rendering**: Assistant responses rendered with syntax highlighting
 
 use asupersync::Cx;
-use asupersync::channel::mpsc;
+use asupersync::channel::{mpsc, oneshot};
 use asupersync::runtime::RuntimeHandle;
 use asupersync::sync::{Mutex, OwnedMutexGuard};
 use async_trait::async_trait;
@@ -38,7 +38,10 @@ use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use crate::agent::{AbortHandle, Agent, AgentEvent, QueueMode};
+use crate::agent::{
+    AbortHandle, Agent, AgentEvent, QueueMode, SharedToolPolicy, ToolApprovalDecision,
+    ToolApprovalHandler, ToolApprovalRequest,
+};
 use crate::autocomplete::{AutocompleteCatalog, AutocompleteItem, AutocompleteItemKind};
 use crate::config::{Config, ExtensionPolicyConfig, SettingsScope, parse_queue_mode_or_default};
 use crate::extension_events::{InputEventOutcome, apply_input_event_response};
@@ -59,6 +62,7 @@ use crate::providers;
 use crate::resources::{DiagnosticKind, ResourceCliOptions, ResourceDiagnostic, ResourceLoader};
 use crate::session::{Session, SessionEntry, SessionMessage, bash_execution_to_text};
 use crate::theme::{Theme, TuiStyles};
+use crate::tool_policy::PermissionMode;
 use crate::tools::{process_file_arguments, resolve_read_path};
 
 #[cfg(all(feature = "clipboard", feature = "image-resize"))]
@@ -103,11 +107,11 @@ use self::perf::{
 };
 pub use self::state::{AgentState, InputMode, PendingInput};
 use self::state::{
-    AutocompleteState, BranchPickerOverlay, CapabilityAction, CapabilityPromptOverlay,
-    ExtensionCustomOverlay, HistoryList, InjectedMessageQueue, InteractiveMessageQueue,
-    PendingLoginKind, PendingOAuth, QueuedMessageKind, SessionPickerOverlay, SettingsUiEntry,
-    SettingsUiState, TOOL_COLLAPSE_PREVIEW_LINES, ThemePickerItem, ThemePickerOverlay,
-    ToolProgress, format_count,
+    ApprovalAction, AutocompleteState, BranchPickerOverlay, CapabilityAction,
+    CapabilityPromptOverlay, ExtensionCustomOverlay, HistoryList, InjectedMessageQueue,
+    InteractiveMessageQueue, PendingLoginKind, PendingOAuth, QueuedMessageKind,
+    SessionPickerOverlay, SettingsUiEntry, SettingsUiState, TOOL_COLLAPSE_PREVIEW_LINES,
+    ThemePickerItem, ThemePickerOverlay, ToolApprovalOverlay, ToolProgress, format_count,
 };
 pub use self::state::{ConversationMessage, MessageRole};
 use self::text_utils::{queued_message_preview, truncate};
@@ -808,7 +812,7 @@ impl PiApp {
                     self.config.editor_padding_x = u32::try_from(next).ok();
                     self.editor_padding_x = next;
                     self.input
-                        .set_width(self.term_width.saturating_sub(5 + self.editor_padding_x));
+                        .set_width(view::editor_width(self.term_width, self.editor_padding_x));
                     self.scroll_to_bottom();
                     self.status_message = Some(format!("Updated editorPaddingX: {next}"));
                 }
@@ -1269,8 +1273,12 @@ impl PiApp {
 
         // Input area vs processing spinner.
         if self.editor_input_is_available() {
-            // render_input: "\n  header\n" (2 rows) + input.height() rows.
-            chrome += 2 + self.input.height();
+            // render_input: "\n  header\n" (2 rows) + box border (2 rows)
+            // + input.height() rows + the mode indicator when it is shown.
+            chrome += 4 + self.input.height();
+            if self.permission_mode.indicator().is_some() {
+                chrome += 1;
+            }
 
             // Autocomplete dropdown chrome when open: top border(1) +
             // items(visible_count) + description(1) + pagination(1) +
@@ -1317,7 +1325,7 @@ impl PiApp {
         self.term_width = width.max(1);
         self.term_height = height.max(1);
         self.input
-            .set_width(self.term_width.saturating_sub(5 + self.editor_padding_x));
+            .set_width(view::editor_width(self.term_width, self.editor_padding_x));
 
         if !test_mode
             && self.term_height < previous_height
@@ -1658,6 +1666,8 @@ pub async fn run_interactive(
     extensions: Option<ExtensionManager>,
     cwd: PathBuf,
     runtime_handle: RuntimeHandle,
+    tool_policy: SharedToolPolicy,
+    tool_approvals: mpsc::Receiver<ToolApprovalPrompt>,
 ) -> anyhow::Result<()> {
     let should_check_for_updates = config.should_check_for_updates();
     let show_hardware_cursor = config
@@ -1699,6 +1709,23 @@ pub async fn run_interactive(
             let _ = crate::version_check::refresh_cache_if_stale(&client).await;
         });
     }
+
+    let pending_approvals: PendingToolApprovals = Arc::default();
+    let approval_queue = Arc::clone(&pending_approvals);
+    let approval_event_tx = event_tx.clone();
+    let approval_cx = Cx::current().unwrap_or_else(Cx::for_request);
+    let mut tool_approvals = tool_approvals;
+    runtime_handle.spawn(async move {
+        while let Ok(prompt) = tool_approvals.recv(&approval_cx).await {
+            if let Ok(mut queue) = approval_queue.lock() {
+                queue.push_back(prompt);
+            }
+            if !enqueue_pi_event(&approval_event_tx, &approval_cx, PiMsg::ToolApprovalPending).await
+            {
+                break;
+            }
+        }
+    });
 
     let extensions = extensions;
 
@@ -1759,6 +1786,8 @@ pub async fn run_interactive(
             messages,
             usage,
         ));
+        let mut app = app;
+        app.attach_tool_policy(tool_policy, pending_approvals);
         let mut program = Program::new(app)
             .with_alt_screen()
             .with_input_receiver(ui_rx);
@@ -1879,6 +1908,52 @@ pub enum PiMsg {
     /// OAuth callback server received the browser redirect.
     /// The string is the full callback URL (e.g. `http://localhost:1455/auth/callback?code=abc&state=xyz`).
     OAuthCallbackReceived(String),
+    /// At least one tool call is waiting in [`PendingToolApprovals`].
+    ToolApprovalPending,
+}
+
+/// One pending tool-approval question and the channel its answer goes back on.
+///
+/// The agent task blocks on `reply` while the TUI owns the question, which is
+/// what makes the modal a gate rather than a notification.
+#[derive(Debug)]
+pub struct ToolApprovalPrompt {
+    pub request: ToolApprovalRequest,
+    pub reply: oneshot::Sender<ToolApprovalDecision>,
+}
+
+/// Prompts waiting for the modal. A queue rather than a message payload
+/// because `PiMsg` is `Clone` and a reply channel is not.
+pub type PendingToolApprovals = Arc<StdMutex<VecDeque<ToolApprovalPrompt>>>;
+
+/// Build the approval handler the agent calls and the receiver the TUI drains.
+///
+/// `main` owns both ends: the handler goes into `AgentConfig`, the receiver
+/// into [`run_interactive`]. It mirrors the extension UI bridge at
+/// `manager.set_ui_sender`, which is the only other async-to-TUI question in
+/// this binary.
+#[must_use]
+pub fn tool_approval_bridge() -> (ToolApprovalHandler, mpsc::Receiver<ToolApprovalPrompt>) {
+    let (tx, rx) = mpsc::channel::<ToolApprovalPrompt>(16);
+    let handler: ToolApprovalHandler = Arc::new(move |request: ToolApprovalRequest| {
+        let tx = tx.clone();
+        Box::pin(async move {
+            let cx = Cx::current().unwrap_or_else(Cx::for_request);
+            let (reply, mut answer) = oneshot::channel();
+            if tx
+                .send(&cx, ToolApprovalPrompt { request, reply })
+                .await
+                .is_err()
+            {
+                return ToolApprovalDecision::deny("the approval prompt is unavailable");
+            }
+            match answer.recv(&cx).await {
+                Ok(decision) => decision,
+                Err(_) => ToolApprovalDecision::deny("the approval prompt was dismissed"),
+            }
+        })
+    });
+    (handler, rx)
 }
 
 /// Read the current git branch from `.git/HEAD` in the given directory.
@@ -2279,6 +2354,7 @@ pub struct PiApp {
     input: TextArea,
     history: HistoryList,
     input_mode: InputMode,
+    permission_mode: PermissionMode,
     pending_inputs: VecDeque<PendingInput>,
     message_queue: Arc<StdMutex<InteractiveMessageQueue>>,
     injected_queue: Arc<StdMutex<InjectedMessageQueue>>,
@@ -2378,6 +2454,13 @@ pub struct PiApp {
     // Capability prompt overlay (extension permission request)
     capability_prompt: Option<CapabilityPromptOverlay>,
 
+    // Tool approval overlay, and the queue behind it when a turn asks about
+    // several tool calls at once.
+    tool_approval: Option<ToolApprovalOverlay>,
+    tool_approval_queue: PendingToolApprovals,
+    /// Shared with the agent. Shift+tab writes the mode through it.
+    tool_policy: SharedToolPolicy,
+
     // Branch picker overlay (Ctrl+B quick branch switching)
     branch_picker: Option<BranchPickerOverlay>,
 
@@ -2426,6 +2509,17 @@ impl BubbleteaModel for Box<PiApp> {
 }
 
 impl PiApp {
+    /// Adopt the policy the agent is already reading, so shift+tab and the
+    /// approval modal change what actually gates tool calls.
+    pub fn attach_tool_policy(&mut self, policy: SharedToolPolicy, queue: PendingToolApprovals) {
+        self.permission_mode = policy
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .mode();
+        self.tool_policy = policy;
+        self.tool_approval_queue = queue;
+    }
+
     fn initial_window_size_cmd() -> Cmd {
         Cmd::new(|| {
             let (width, height) = terminal::size().unwrap_or((80, 24));
@@ -2488,13 +2582,16 @@ impl PiApp {
             config.autocomplete_max_visible.unwrap_or(5).clamp(3, 20) as usize;
         let thinking_visible = !config.hide_thinking_block.unwrap_or(false);
 
-        // Configure text area for input
+        // Configure text area for input. The `>` prompt and the frame are drawn
+        // by render_input, so the editor itself contributes only its own rows.
         let mut input = TextArea::new();
         input.placeholder = "Type a message... (/help, /exit)".to_string();
         input.show_line_numbers = false;
-        input.prompt = "> ".to_string();
+        input.prompt = String::new();
+        input.focused_style.placeholder = styles.muted.clone();
+        input.blurred_style.placeholder = styles.muted.clone();
         input.set_height(3); // Start with 3 lines
-        input.set_width(term_width.saturating_sub(5 + editor_padding_x));
+        input.set_width(view::editor_width(term_width, editor_padding_x));
         input.max_height = 10; // Allow expansion up to 10 lines
         input.focus();
 
@@ -2502,8 +2599,8 @@ impl PiApp {
 
         // Configure viewport for conversation history.
         // Height budget at startup (idle):
-        // header(4) + scroll-indicator reserve(1) + input_decoration(2) + input_lines + footer(2).
-        let chrome = 4 + 1 + 2 + 2;
+        // header(4) + scroll-indicator reserve(1) + input_decoration(4) + input_lines + footer(2).
+        let chrome = 4 + 1 + 4 + 2;
         let viewport_height = term_height.saturating_sub(chrome + input.height());
         let mut conversation_viewport =
             Viewport::new(term_width.saturating_sub(2), viewport_height);
@@ -2612,6 +2709,10 @@ impl PiApp {
             input,
             history: HistoryList::new(),
             input_mode: InputMode::SingleLine,
+            permission_mode: PermissionMode::default(),
+            tool_approval: None,
+            tool_approval_queue: PendingToolApprovals::default(),
+            tool_policy: SharedToolPolicy::default(),
             pending_inputs: VecDeque::from(pending_inputs),
             message_queue,
             injected_queue: Arc::clone(&injected_queue),
@@ -2946,6 +3047,12 @@ impl PiApp {
             // Capability prompt modal captures all input while active.
             if self.capability_prompt.is_some() {
                 return self.handle_capability_prompt_key(key);
+            }
+
+            // Tool approval modal captures all input while active. It sits
+            // above the others because a turn is parked on its answer.
+            if self.tool_approval.is_some() {
+                return self.handle_tool_approval_key(key);
             }
 
             // Branch picker modal captures all input while active.

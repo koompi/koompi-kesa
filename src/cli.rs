@@ -3,6 +3,8 @@
 use clap::error::ErrorKind;
 use clap::{Parser, Subcommand};
 use std::collections::HashSet;
+use std::ffi::OsString;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtensionCliFlag {
@@ -43,6 +45,7 @@ const ROOT_SUBCOMMANDS: &[&str] = &[
     "config",
     "doctor",
     "migrate",
+    "__sandbox-exec",
 ];
 
 fn known_long_option(name: &str) -> Option<LongOptionSpec> {
@@ -408,6 +411,32 @@ pub struct Cli {
     /// Force verbose startup
     #[arg(long)]
     pub verbose: bool,
+
+    // === Permissions & Sandbox ===
+    /// Permission mode for this run (overrides settings.json)
+    #[arg(
+        long,
+        value_name = "MODE",
+        env = "KODE_PERMISSION_MODE",
+        value_parser = ["default", "accept-edits", "plan", "read-only"]
+    )]
+    pub permission_mode: Option<String>,
+
+    /// Add a deny rule for this run, e.g. --deny-tool 'Bash(rm:*)'. Repeatable.
+    #[arg(long = "deny-tool", value_name = "RULE")]
+    pub deny_tool: Vec<String>,
+
+    /// Add an allow rule for this run, e.g. --allow-tool 'Bash(git commit:*)'. Repeatable.
+    #[arg(long = "allow-tool", value_name = "RULE")]
+    pub allow_tool: Vec<String>,
+
+    /// Run commands unsandboxed. Required on platforms without landlock.
+    #[arg(long)]
+    pub no_sandbox: bool,
+
+    /// Extra directory a sandboxed command may write. Repeatable.
+    #[arg(long = "sandbox-write", value_name = "PATH")]
+    pub sandbox_write: Vec<PathBuf>,
 
     // === Tools ===
     /// Disable all built-in tools
@@ -2036,6 +2065,20 @@ pub enum Commands {
         /// Dry-run: validate migration without persisting changes
         #[arg(long)]
         dry_run: bool,
+    },
+
+    /// Internal re-exec trampoline: sandbox this process, then exec the rest.
+    #[command(name = "__sandbox-exec", hide = true)]
+    SandboxExec {
+        /// Directory the sandboxed command may read and write
+        #[arg(long)]
+        workspace: PathBuf,
+        /// Extra writable directory. Repeatable.
+        #[arg(long = "write")]
+        write: Vec<PathBuf>,
+        /// Command to exec, after `--`
+        #[arg(last = true, required = true, allow_hyphen_values = true)]
+        argv: Vec<OsString>,
     },
 }
 

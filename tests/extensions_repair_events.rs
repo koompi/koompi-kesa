@@ -177,7 +177,10 @@ fn repair_event_clone() {
 #[test]
 fn config_repair_mode_defaults_to_auto_safe() {
     let config = PiJsRuntimeConfig::default();
-    assert_eq!(config.repair_mode, kode::extensions_js::RepairMode::AutoSafe);
+    assert_eq!(
+        config.repair_mode,
+        kode::extensions_js::RepairMode::AutoSafe
+    );
     assert!(config.auto_repair_enabled());
 }
 

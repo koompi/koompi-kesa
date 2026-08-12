@@ -3,7 +3,10 @@ use std::path::{Path, PathBuf};
 
 use bubbles::list::{DefaultDelegate, Item as ListItem, List};
 
-use crate::agent::QueueMode;
+use asupersync::channel::oneshot;
+
+use super::ToolApprovalPrompt;
+use crate::agent::{QueueMode, ToolApprovalDecision};
 use crate::autocomplete::{
     AutocompleteCatalog, AutocompleteItem, AutocompleteProvider, AutocompleteResponse,
 };
@@ -580,6 +583,111 @@ impl CapabilityAction {
     pub(super) const fn is_persistent(self) -> bool {
         matches!(self, Self::AllowAlways | Self::DenyAlways)
     }
+}
+
+/// What the user picked in the tool-approval modal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum ApprovalAction {
+    Once,
+    Session,
+    Reject,
+}
+
+impl ApprovalAction {
+    pub(super) const ALL: [Self; 3] = [Self::Once, Self::Session, Self::Reject];
+}
+
+/// Modal overlay asking whether one tool call may run.
+///
+/// Holds the reply channel the agent task is parked on, so dropping the
+/// overlay without answering strands the turn. Every exit path sends.
+#[derive(Debug)]
+pub(super) struct ToolApprovalOverlay {
+    pub(super) tool_name: String,
+    /// One-line rendering of the arguments, e.g. the command for `bash`.
+    pub(super) summary: String,
+    /// Rule installed when the user picks [`ApprovalAction::Session`].
+    pub(super) session_rule: String,
+    pub(super) reply: Option<oneshot::Sender<ToolApprovalDecision>>,
+    pub(super) focused: usize,
+}
+
+impl ToolApprovalOverlay {
+    pub(super) fn new(prompt: ToolApprovalPrompt) -> Self {
+        let tool_name = prompt.request.tool_name.clone();
+        Self {
+            summary: summarize_tool_arguments(&tool_name, &prompt.request.arguments),
+            session_rule: session_rule_for(&tool_name, &prompt.request.arguments),
+            tool_name,
+            reply: Some(prompt.reply),
+            focused: 0,
+        }
+    }
+
+    pub(super) const fn focus_next(&mut self) {
+        self.focused = (self.focused + 1) % ApprovalAction::ALL.len();
+    }
+
+    pub(super) fn focus_prev(&mut self) {
+        self.focused = self
+            .focused
+            .checked_sub(1)
+            .unwrap_or(ApprovalAction::ALL.len() - 1);
+    }
+
+    pub(super) const fn selected_action(&self) -> ApprovalAction {
+        ApprovalAction::ALL[self.focused]
+    }
+
+    pub(super) fn label(&self, action: ApprovalAction) -> String {
+        match action {
+            ApprovalAction::Once => "Yes".to_string(),
+            ApprovalAction::Session => {
+                format!("Yes, and don't ask again for `{}`", self.session_rule)
+            }
+            ApprovalAction::Reject => "No, and tell the agent what to do instead".to_string(),
+        }
+    }
+}
+
+/// The argument worth showing: the command for a shell, the path for a file
+/// tool, and the whole object only when neither is present.
+fn summarize_tool_arguments(tool_name: &str, arguments: &Value) -> String {
+    let field = match tool_name.to_ascii_lowercase().as_str() {
+        "bash" | "shell" => "command",
+        _ => "path",
+    };
+    arguments
+        .get(field)
+        .or_else(|| arguments.get("file_path"))
+        .and_then(Value::as_str)
+        .map_or_else(|| arguments.to_string(), ToString::to_string)
+}
+
+/// The rule "don't ask again" installs.
+///
+/// For a shell it is scoped to the first word, so approving `git status` does
+/// not also approve `rm`. Everything else grants the whole tool, which is what
+/// a file-edit approval already means in practice.
+fn session_rule_for(tool_name: &str, arguments: &Value) -> String {
+    if !matches!(tool_name.to_ascii_lowercase().as_str(), "bash" | "shell") {
+        return tool_name.to_string();
+    }
+    let command = arguments
+        .get("command")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    command
+        .split_whitespace()
+        .next()
+        .filter(|word| {
+            word.chars()
+                .all(|c| c.is_alphanumeric() || "-_./".contains(c))
+        })
+        .map_or_else(
+            || tool_name.to_string(),
+            |program| format!("{tool_name}({program}:*)"),
+        )
 }
 
 /// Modal overlay for extension capability prompts.

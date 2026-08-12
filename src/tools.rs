@@ -5780,8 +5780,14 @@ pub(crate) async fn run_bash_command(
         "sh"
     });
 
-    let mut cmd = command_with_default_sigpipe_in_dir(shell, cwd)
+    let cmd = command_with_default_sigpipe_in_dir(shell, cwd)
         .map_err(|e| Error::tool("bash", format!("Failed to prepare shell: {e}")))?;
+    // Wrapping here, before the shell's own `-c <command>` is appended, keeps
+    // the SIGPIPE trampoline innermost: the sandbox trampoline execs away
+    // before `trap - PIPE` runs, so the command still starts with SIGPIPE at
+    // the platform default.
+    let mut cmd =
+        crate::sandbox::wrap_command(cmd, cwd).map_err(|e| Error::tool("bash", e.to_string()))?;
     cmd.arg("-c")
         .arg(&command)
         .current_dir(cwd)
