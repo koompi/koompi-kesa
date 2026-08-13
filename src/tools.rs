@@ -1007,7 +1007,7 @@ struct RedactedToolOutputArtifact {
 }
 
 fn tool_output_artifact_root() -> PathBuf {
-    std::env::var_os("KODE_TOOL_OUTPUT_ARTIFACT_DIR").map_or_else(
+    crate::env::var_os("TOOL_OUTPUT_ARTIFACT_DIR").map_or_else(
         || Config::global_dir().join("tool-output-artifacts"),
         PathBuf::from,
     )
@@ -3924,7 +3924,7 @@ async fn ensure_parent_allows_creation(path: &Path) -> std::io::Result<()> {
 
 /// Same scoping contract as `enforce_cwd_scope`, but also accepts paths under
 /// the configured pi-agent directory (`Config::global_dir()`, default
-/// `~/.kode/agent/`, override via `KODE_CODING_AGENT_DIR`).
+/// `~/.kode/agent/`, override via `KESA_CODING_AGENT_DIR`).
 ///
 /// Read access is broadened so the model can fetch the bodies of skill files,
 /// prompt templates, and other resources that ship under the agent dir

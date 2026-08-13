@@ -649,7 +649,7 @@ fn release_publication_never_builds_with_the_registry_token() {
     let workflow = require_text(".github/workflows/release.yml");
     assert_eq!(
         workflow
-            .matches("KODE_CRATES_IO_RELEASE_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}")
+            .matches("KESA_CRATES_IO_RELEASE_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}")
             .count(),
         1,
         "the registry secret must be injected into exactly one workflow step"
@@ -675,23 +675,23 @@ fn release_publication_never_builds_with_the_registry_token() {
         .and_then(|suffix| suffix.split_once("\n      - name:").map(|(step, _)| step))
         .expect("release workflow must retain the checksum-gated publication step");
     assert!(
-        publish_step.contains("KODE_CRATES_IO_RELEASE_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}"),
+        publish_step.contains("KESA_CRATES_IO_RELEASE_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}"),
         "publication step must receive the registry credential only in its secret-scoped environment"
     );
     let token_capture = publish_step
         .find(concat!(
             "release_crates_io_token=\"$",
-            "{KODE_CRATES_IO_RELEASE_TOKEN:-}\""
+            "{KESA_CRATES_IO_RELEASE_TOKEN:-}\""
         ))
         .expect("publication step must capture the injected token in a shell-only variable");
     let token_unset = publish_step
-        .find("unset KODE_CRATES_IO_RELEASE_TOKEN")
+        .find("unset KESA_CRATES_IO_RELEASE_TOKEN")
         .expect("publication step must remove the exported token before invoking subprocesses");
     let crate_reverification = publish_step
         .find("actual_crate_sha=\"$(sha256sum")
         .expect("publication step must reverify the crate after narrowing token scope");
     let token_handoff = publish_step
-        .find("KODE_CRATES_IO_RELEASE_TOKEN=\"$release_crates_io_token\"")
+        .find("KESA_CRATES_IO_RELEASE_TOKEN=\"$release_crates_io_token\"")
         .expect("publication step must hand the token only to the publish process");
     let cargo_publish = publish_step
         .find("cargo publish")
@@ -701,16 +701,16 @@ fn release_publication_never_builds_with_the_registry_token() {
         .map(|offset| token_handoff + offset)
         .expect("publication step must clear its shell-only token after Cargo returns");
     let receipt_validation = publish_step
-        .find("if [ -f \"$KODE_CREDENTIAL_RECEIPT\"")
+        .find("if [ -f \"$KESA_CREDENTIAL_RECEIPT\"")
         .expect("publication step must validate the credential receipt after token clearing");
     assert!(
         publish_step.contains(concat!(
             "run: |\n          set -euo pipefail\n          set +x\n          ",
             "release_crates_io_token=\"$",
-            "{KODE_CRATES_IO_RELEASE_TOKEN:-}\""
+            "{KESA_CRATES_IO_RELEASE_TOKEN:-}\""
         ),) && publish_step.contains("export -n release_crates_io_token")
             && publish_step
-                .matches("KODE_CRATES_IO_RELEASE_TOKEN=\"$release_crates_io_token\"")
+                .matches("KESA_CRATES_IO_RELEASE_TOKEN=\"$release_crates_io_token\"")
                 .count()
                 == 1
             && token_capture < token_unset
@@ -749,7 +749,7 @@ fn release_publication_never_builds_with_the_registry_token() {
         .expect("manual lane must require a registry token before its first subprocess");
     let manual_token_unset = manual_lane
         .find(
-            "builtin unset CARGO_REGISTRY_TOKEN CARGO_REGISTRIES_CRATES_IO_TOKEN \\\n  KODE_CRATES_IO_RELEASE_TOKEN",
+            "builtin unset CARGO_REGISTRY_TOKEN CARGO_REGISTRIES_CRATES_IO_TOKEN \\\n  KESA_CRATES_IO_RELEASE_TOKEN",
         )
         .expect("manual lane must remove every exported registry-token spelling");
     let manual_token_length = manual_lane
@@ -776,13 +776,13 @@ fn release_publication_never_builds_with_the_registry_token() {
     );
     assert!(
         manual_lane.contains("builtin export -n release_crates_io_token")
-            && !manual_lane.contains("KODE_CRATES_IO_RELEASE_TOKEN=\"$release_crates_io_token\"")
+            && !manual_lane.contains("KESA_CRATES_IO_RELEASE_TOKEN=\"$release_crates_io_token\"")
             && manual_lane.contains("builtin printf '%s\\n' \"$controller_token\" |")
             && manual_lane.contains("\"$release_bash_path\" --noprofile --norc -c")
-            && manual_lane.contains("[[ -z \"${KODE_CRATES_IO_RELEASE_TOKEN:-}\" ]]")
+            && manual_lane.contains("[[ -z \"${KESA_CRATES_IO_RELEASE_TOKEN:-}\" ]]")
             && manual_lane.contains("IFS= read -r scoped_release_token")
             && manual_lane
-                .contains("export KODE_CRATES_IO_RELEASE_TOKEN=\"$scoped_release_token\"",)
+                .contains("export KESA_CRATES_IO_RELEASE_TOKEN=\"$scoped_release_token\"",)
             && manual_lane.contains("unset scoped_release_token")
             && manual_lane.contains("exec 0</dev/null"),
         "manual release must pass the token through an anonymous pipe into exactly one clean child, never argv"
@@ -901,7 +901,7 @@ fn release_publication_never_builds_with_the_registry_token() {
         .map(|offset| clean_child + offset)
         .expect("clean publisher child must read the token from its pipe");
     let token_export = scoped_handoff[token_read..]
-        .find("export KODE_CRATES_IO_RELEASE_TOKEN=\"$scoped_release_token\"")
+        .find("export KESA_CRATES_IO_RELEASE_TOKEN=\"$scoped_release_token\"")
         .map(|offset| token_read + offset)
         .expect("clean publisher child must export the token only after reading it");
     let stdin_close = scoped_handoff[token_export..]
@@ -960,10 +960,10 @@ fn manual_release_token_handoff_is_not_argv_and_propagates_publish_failure() {
             r#"#!/bin/bash
 set -euo pipefail
 expected_token='fake release token +=:_[]/7391'
-test "${{KODE_CRATES_IO_RELEASE_TOKEN:-}}" = "$expected_token"
-test "${{KODE_EXPECTED_CRATE_NAME:-}}" = koompi_code_cli
-test "${{KODE_EXPECTED_CRATE_VERSION:-}}" = 0.2.0
-test "${{KODE_EXPECTED_CRATE_SHA256:-}}" = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+test "${{KESA_CRATES_IO_RELEASE_TOKEN:-}}" = "$expected_token"
+test "${{KESA_EXPECTED_CRATE_NAME:-}}" = koompi_code_cli
+test "${{KESA_EXPECTED_CRATE_VERSION:-}}" = 0.2.0
+test "${{KESA_EXPECTED_CRATE_SHA256:-}}" = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 test "$#" -eq 11
 test "$1" = publish
 test "$2" = --manifest-path
@@ -978,7 +978,7 @@ case "$cmdline" in *"$expected_token"*) exit 91 ;; esac
 stdin_target="$(readlink "/proc/$$/fd/0")"
 test "$stdin_target" = /dev/null
 printf 'token_exact=yes\nargv_token=no\nstdin=%s\n' "$stdin_target" \
-  > "$KODE_CREDENTIAL_RECEIPT"
+  > "$KESA_CREDENTIAL_RECEIPT"
 case "$3" in *failure.toml) exit 47 ;; esac
 {empty}"#,
             empty = "",
@@ -996,7 +996,7 @@ case "$3" in *failure.toml) exit 47 ;; esac
 release_crates_io_token="${{CARGO_REGISTRY_TOKEN:-}}"
 test -n "$release_crates_io_token"
 export -n release_crates_io_token
-unset CARGO_REGISTRY_TOKEN CARGO_REGISTRIES_CRATES_IO_TOKEN KODE_CRATES_IO_RELEASE_TOKEN
+unset CARGO_REGISTRY_TOKEN CARGO_REGISTRIES_CRATES_IO_TOKEN KESA_CRATES_IO_RELEASE_TOKEN
 fixture_dir="$1"
 success_receipt="$2"
 failure_receipt="$3"
@@ -1625,8 +1625,8 @@ fn manual_release_retries_use_fresh_attempts_and_exact_success_receipts() {
     );
     for retained_installer_control in [
         "TMPDIR=\"$installer_root/tmp\"",
-        "KODE_INSTALLER_RETAIN_TEMP=1",
-        "KODE_INSTALLER_LOCK_DIR=\"$installer_lock\"",
+        "KESA_INSTALLER_RETAIN_TEMP=1",
+        "KESA_INSTALLER_LOCK_DIR=\"$installer_lock\"",
         "test -d \"$installer_lock\" && test ! -L \"$installer_lock\"",
         "test -f \"$installer_lock/pid\" && test ! -L \"$installer_lock/pid\"",
         "Retaining installer temporary directory:",
@@ -5942,7 +5942,7 @@ fn release_gate_embedded_e2e_validator_binds_the_exact_parsed_bytes() {
     let wrapper = wrapper_dir.join("git");
     std::fs::write(
         &wrapper,
-        "#!/bin/sh\nif [ ! -f \"$KODE_E2E_RESTORE_MARKER\" ]; then\n  case \" $* \" in\n    *\" rev-parse --verify HEAD^{commit} \"*)\n      cp \"$KODE_E2E_ORIGINAL\" \"$KODE_E2E_TARGET\" || exit 97\n      : > \"$KODE_E2E_RESTORE_MARKER\" || exit 98\n      ;;\n  esac\nfi\nexec \"$KODE_E2E_REAL_GIT\" \"$@\"\n",
+        "#!/bin/sh\nif [ ! -f \"$KESA_E2E_RESTORE_MARKER\" ]; then\n  case \" $* \" in\n    *\" rev-parse --verify HEAD^{commit} \"*)\n      cp \"$KESA_E2E_ORIGINAL\" \"$KESA_E2E_TARGET\" || exit 97\n      : > \"$KESA_E2E_RESTORE_MARKER\" || exit 98\n      ;;\n  esac\nfi\nexec \"$KESA_E2E_REAL_GIT\" \"$@\"\n",
     )
     .expect("write E2E Git wrapper");
     let mut permissions = std::fs::metadata(&wrapper)
@@ -5960,10 +5960,10 @@ fn release_gate_embedded_e2e_validator_binds_the_exact_parsed_bytes() {
         release_gate_python_command(marker, &[root_arg, evidence_arg, "168"]);
     command
         .env("PATH", wrapped_path)
-        .env("KODE_E2E_REAL_GIT", &real_git)
-        .env("KODE_E2E_ORIGINAL", &original_path)
-        .env("KODE_E2E_TARGET", &summary_path)
-        .env("KODE_E2E_RESTORE_MARKER", marker_path);
+        .env("KESA_E2E_REAL_GIT", &real_git)
+        .env("KESA_E2E_ORIGINAL", &original_path)
+        .env("KESA_E2E_TARGET", &summary_path)
+        .env("KESA_E2E_RESTORE_MARKER", marker_path);
     let output = run_release_gate_python(command, &program);
     assert!(
         output.status.success(),
@@ -6344,7 +6344,7 @@ fn release_gate_embedded_conformance_validator_rechecks_final_bytes() {
     let wrapper = wrapper_dir.join("git");
     std::fs::write(
         &wrapper,
-        "#!/bin/sh\ncase \" $* \" in\n  *\" rev-parse --verify HEAD^{commit} \"*)\n    count=0\n    if [ -f \"$KODE_CONFORMANCE_COUNT\" ]; then IFS= read -r count < \"$KODE_CONFORMANCE_COUNT\"; fi\n    count=$((count + 1))\n    printf '%s\\n' \"$count\" > \"$KODE_CONFORMANCE_COUNT\" || exit 97\n    if [ \"$count\" -eq 2 ]; then printf ' ' >> \"$KODE_CONFORMANCE_TARGET\" || exit 98; fi\n    ;;\nesac\nexec \"$KODE_CONFORMANCE_REAL_GIT\" \"$@\"\n",
+        "#!/bin/sh\ncase \" $* \" in\n  *\" rev-parse --verify HEAD^{commit} \"*)\n    count=0\n    if [ -f \"$KESA_CONFORMANCE_COUNT\" ]; then IFS= read -r count < \"$KESA_CONFORMANCE_COUNT\"; fi\n    count=$((count + 1))\n    printf '%s\\n' \"$count\" > \"$KESA_CONFORMANCE_COUNT\" || exit 97\n    if [ \"$count\" -eq 2 ]; then printf ' ' >> \"$KESA_CONFORMANCE_TARGET\" || exit 98; fi\n    ;;\nesac\nexec \"$KESA_CONFORMANCE_REAL_GIT\" \"$@\"\n",
     )
     .expect("write conformance final Git wrapper");
     let mut permissions = std::fs::metadata(&wrapper)
@@ -6370,9 +6370,9 @@ fn release_gate_embedded_conformance_validator_rechecks_final_bytes() {
     let (mut command, program) = release_gate_python_command(marker, &args);
     command
         .env("PATH", wrapped_path)
-        .env("KODE_CONFORMANCE_REAL_GIT", real_git)
-        .env("KODE_CONFORMANCE_COUNT", counter)
-        .env("KODE_CONFORMANCE_TARGET", &summary_path);
+        .env("KESA_CONFORMANCE_REAL_GIT", real_git)
+        .env("KESA_CONFORMANCE_COUNT", counter)
+        .env("KESA_CONFORMANCE_TARGET", &summary_path);
     let output = run_release_gate_python(command, &program);
     assert!(
         !output.status.success(),
@@ -6439,7 +6439,7 @@ fn release_gate_embedded_dropin_validator_binds_parsed_bytes_and_modes() {
         let wrapper = wrapper_dir.join("git");
         std::fs::write(
             &wrapper,
-            "#!/bin/sh\ncase \" $* \" in\n  *\" rev-parse --verify HEAD^{commit} \"*)\n    if [ ! -f \"$KODE_DROPIN_RESTORE_MARKER\" ]; then\n      cp \"$KODE_DROPIN_ORIGINAL\" \"$KODE_DROPIN_TARGET\" || exit 97\n      : > \"$KODE_DROPIN_RESTORE_MARKER\" || exit 98\n    fi\n    ;;\nesac\nexec \"$KODE_DROPIN_REAL_GIT\" \"$@\"\n",
+            "#!/bin/sh\ncase \" $* \" in\n  *\" rev-parse --verify HEAD^{commit} \"*)\n    if [ ! -f \"$KESA_DROPIN_RESTORE_MARKER\" ]; then\n      cp \"$KESA_DROPIN_ORIGINAL\" \"$KESA_DROPIN_TARGET\" || exit 97\n      : > \"$KESA_DROPIN_RESTORE_MARKER\" || exit 98\n    fi\n    ;;\nesac\nexec \"$KESA_DROPIN_REAL_GIT\" \"$@\"\n",
         )
         .expect("write drop-in Git wrapper");
         let mut wrapper_permissions = std::fs::metadata(&wrapper)
@@ -6457,10 +6457,10 @@ fn release_gate_embedded_dropin_validator_binds_parsed_bytes_and_modes() {
         let (mut command, program) = release_gate_python_command(marker, &args);
         command
             .env("PATH", wrapped_path)
-            .env("KODE_DROPIN_REAL_GIT", real_git)
-            .env("KODE_DROPIN_ORIGINAL", &original_path)
-            .env("KODE_DROPIN_TARGET", &target)
-            .env("KODE_DROPIN_RESTORE_MARKER", restore_marker);
+            .env("KESA_DROPIN_REAL_GIT", real_git)
+            .env("KESA_DROPIN_ORIGINAL", &original_path)
+            .env("KESA_DROPIN_TARGET", &target)
+            .env("KESA_DROPIN_RESTORE_MARKER", restore_marker);
         let output = run_release_gate_python(command, &program);
         assert!(
             output.status.success(),
@@ -7263,17 +7263,17 @@ set -eu
 case " $* " in
   *" rev-parse --verify HEAD^{commit} "*)
     count=0
-    if [ -f "$KODE_RELEASE_GATE_TEST_COUNTER" ]; then
-      count=$(sed -n '1p' "$KODE_RELEASE_GATE_TEST_COUNTER")
+    if [ -f "$KESA_RELEASE_GATE_TEST_COUNTER" ]; then
+      count=$(sed -n '1p' "$KESA_RELEASE_GATE_TEST_COUNTER")
     fi
     count=$((count + 1))
-    printf '%s\n' "$count" > "$KODE_RELEASE_GATE_TEST_COUNTER"
+    printf '%s\n' "$count" > "$KESA_RELEASE_GATE_TEST_COUNTER"
     if [ "$count" -eq 2 ]; then
-      printf 'pub fn mutated_after_initial_hash() {}\n' > "$KODE_RELEASE_GATE_TEST_MUTATION_TARGET"
+      printf 'pub fn mutated_after_initial_hash() {}\n' > "$KESA_RELEASE_GATE_TEST_MUTATION_TARGET"
     fi
     ;;
 esac
-exec "$KODE_RELEASE_GATE_TEST_REAL_GIT" "$@"
+exec "$KESA_RELEASE_GATE_TEST_REAL_GIT" "$@"
 "#,
     )
     .expect("write snapshot Git wrapper");
@@ -7297,9 +7297,9 @@ exec "$KODE_RELEASE_GATE_TEST_REAL_GIT" "$@"
         release_gate_python_command("capture_repository_snapshot() {", &[root_arg]);
     command
         .env("PATH", wrapped_path)
-        .env("KODE_RELEASE_GATE_TEST_COUNTER", &counter)
-        .env("KODE_RELEASE_GATE_TEST_MUTATION_TARGET", &mutation_target)
-        .env("KODE_RELEASE_GATE_TEST_REAL_GIT", &real_git);
+        .env("KESA_RELEASE_GATE_TEST_COUNTER", &counter)
+        .env("KESA_RELEASE_GATE_TEST_MUTATION_TARGET", &mutation_target)
+        .env("KESA_RELEASE_GATE_TEST_REAL_GIT", &real_git);
     let output = run_release_gate_python(command, &program);
     assert!(
         !output.status.success(),
@@ -7359,9 +7359,9 @@ fn performance_source_binding_rejects_packaged_evidence_followup() {
 
 #[test]
 fn performance_source_binding_scrubs_hostile_git_environment() {
-    const CHILD_FLAG: &str = "KODE_RELEASE_GATE_HOSTILE_GIT_CHILD";
-    const ROOT_ENV: &str = "KODE_RELEASE_GATE_HOSTILE_GIT_ROOT";
-    const SOURCE_ENV: &str = "KODE_RELEASE_GATE_HOSTILE_GIT_SOURCE";
+    const CHILD_FLAG: &str = "KESA_RELEASE_GATE_HOSTILE_GIT_CHILD";
+    const ROOT_ENV: &str = "KESA_RELEASE_GATE_HOSTILE_GIT_ROOT";
+    const SOURCE_ENV: &str = "KESA_RELEASE_GATE_HOSTILE_GIT_SOURCE";
 
     if std::env::var_os(CHILD_FLAG).is_some() {
         let root = PathBuf::from(std::env::var_os(ROOT_ENV).expect("child fixture root"));

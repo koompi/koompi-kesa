@@ -210,7 +210,7 @@
       "user_impact": "No direct user impact. Infrastructure issue in test harness, not a provider behavior gap.",
       "evidence": "Legacy bead comments reported 10 provider_factory failures from missing `tests/fixtures/vcr/pi_runtime.json` when ambient VCR playback was enabled. Current proof: `rch exec -- env ... VCR_MODE=playback cargo test --test provider_factory -- --nocapture` passed 174 tests.",
       "remediation_status": "fixed",
-      "remediation_note": "Provider factory now bypasses ambient VCR clients for loopback mock-server base URLs unless KODE_VCR_ALLOW_LOOPBACK is set, preserving external VCR behavior while keeping mock HTTP fixture tests deterministic.",
+      "remediation_note": "Provider factory now bypasses ambient VCR clients for loopback mock-server base URLs unless KESA_VCR_ALLOW_LOOPBACK is set, preserving external VCR behavior while keeping mock HTTP fixture tests deterministic.",
       "remediation_beads": ["bd-ryg6j.5"],
       "affected_providers": ["multiple (test infra)"]
     },

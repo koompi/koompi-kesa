@@ -173,9 +173,9 @@ classification.
 differs between TS oracle and Rust runtime.
 
 **Fix**:
-- Set `KODE_TEST_MODE=1` to stabilize timestamps and CWD
-- Set `KODE_CONFORMANCE_SEED=42` for deterministic conformance diffs
-- Set `KODE_EXT_RANDOM_SEED=42 KODE_EXT_RANDOM_N=1` for bounded random-trial smoke runs
+- Set `KESA_TEST_MODE=1` to stabilize timestamps and CWD
+- Set `KESA_CONFORMANCE_SEED=42` for deterministic conformance diffs
+- Set `KESA_EXT_RANDOM_SEED=42 KESA_EXT_RANDOM_N=1` for bounded random-trial smoke runs
 - Use path canonicalization assertions (suffix matching, not exact)
 - Check `docs/extension-architecture.md` for normalization details
 
@@ -186,7 +186,7 @@ per extension. Complex extensions or slow machines may exceed this.
 
 **Fix**:
 ```bash
-export KODE_TS_ORACLE_TIMEOUT_SECS=60
+export KESA_TS_ORACLE_TIMEOUT_SECS=60
 ```
 
 The harness includes retry logic for flaky oracle timeouts.

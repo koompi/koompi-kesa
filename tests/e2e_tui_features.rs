@@ -158,10 +158,10 @@ fn e2e_tui_share_creates_gist_with_privacy_and_description() {
     )
     .expect("write settings.json");
 
-    // Override KODE_CONFIG_PATH so the binary reads our settings.json
-    // (TuiSession defaults KODE_CONFIG_PATH to env_root/config.toml).
+    // Override KESA_CONFIG_PATH so the binary reads our settings.json
+    // (TuiSession defaults KESA_CONFIG_PATH to env_root/config.toml).
     session.set_env(
-        "KODE_CONFIG_PATH",
+        "KESA_CONFIG_PATH",
         &pi_dir.join("settings.json").display().to_string(),
     );
 
@@ -240,9 +240,9 @@ fn e2e_tui_share_public_flag() {
     )
     .expect("write settings.json");
 
-    // Override KODE_CONFIG_PATH so the binary reads our settings.json.
+    // Override KESA_CONFIG_PATH so the binary reads our settings.json.
     session.set_env(
-        "KODE_CONFIG_PATH",
+        "KESA_CONFIG_PATH",
         &pi_dir.join("settings.json").display().to_string(),
     );
 
@@ -305,9 +305,9 @@ fn e2e_tui_share_missing_gh_shows_install_instructions() {
     )
     .expect("write settings.json");
 
-    // Override KODE_CONFIG_PATH so the binary reads our settings.json.
+    // Override KESA_CONFIG_PATH so the binary reads our settings.json.
     session.set_env(
-        "KODE_CONFIG_PATH",
+        "KESA_CONFIG_PATH",
         &pi_dir.join("settings.json").display().to_string(),
     );
 

@@ -155,11 +155,11 @@ async fn run_scenario(scenario: &Scenario) -> kesa::PiResult<()> {
             let tool = BashTool::with_shell(
                 root,
                 None,
-                Some("export KODE_G09_PREFIXED=from-prefix".to_string()),
+                Some("export KESA_G09_PREFIXED=from-prefix".to_string()),
             );
             let output = execute_text(
                 &tool,
-                json!({"command": "printf \"$KODE_G09_PREFIXED\\n\""}),
+                json!({"command": "printf \"$KESA_G09_PREFIXED\\n\""}),
             )
             .await?;
             assert_contains(&output, "from-prefix", &scenario.id);

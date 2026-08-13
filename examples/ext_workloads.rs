@@ -270,13 +270,13 @@ impl PmuBudgetSpec {
         }
 
         let mut budget = Self::default();
-        if let Some(value) = parse_env_f64("KODE_EXT_PMU_LLC_MISS_BUDGET_PCT") {
+        if let Some(value) = parse_env_f64("KESA_EXT_PMU_LLC_MISS_BUDGET_PCT") {
             budget.llc_miss_budget_pct = value.clamp(0.1, 100.0);
         }
-        if let Some(value) = parse_env_f64("KODE_EXT_PMU_BRANCH_MISS_BUDGET_PCT") {
+        if let Some(value) = parse_env_f64("KESA_EXT_PMU_BRANCH_MISS_BUDGET_PCT") {
             budget.branch_miss_budget_pct = value.clamp(0.1, 100.0);
         }
-        if let Some(value) = parse_env_f64("KODE_EXT_PMU_STALL_TOTAL_BUDGET_PCT") {
+        if let Some(value) = parse_env_f64("KESA_EXT_PMU_STALL_TOTAL_BUDGET_PCT") {
             budget.stall_total_budget_pct = value.clamp(0.1, 200.0);
         }
         budget
@@ -344,13 +344,13 @@ impl VoiBudgetConfig {
         }
 
         let mut config = Self::default();
-        if let Some(value) = parse_env_f64("KODE_EXT_VOI_BUDGET_MS") {
+        if let Some(value) = parse_env_f64("KESA_EXT_VOI_BUDGET_MS") {
             config.max_overhead_ms = value.clamp(5.0, 2_000.0);
         }
-        if let Some(value) = parse_env_usize("KODE_EXT_VOI_MAX_EXPERIMENTS") {
+        if let Some(value) = parse_env_usize("KESA_EXT_VOI_MAX_EXPERIMENTS") {
             config.max_experiments = value.clamp(1, 12);
         }
-        if let Some(value) = parse_env_f64("KODE_EXT_VOI_STALE_AFTER_HOURS") {
+        if let Some(value) = parse_env_f64("KESA_EXT_VOI_STALE_AFTER_HOURS") {
             config.stale_after_hours = value.clamp(1.0, 168.0);
         }
         config
@@ -1028,26 +1028,26 @@ fn annotate_pmu_payload(
 fn collect_pmu_metadata() -> Value {
     let budget = PmuBudgetSpec::from_env();
 
-    if let Ok(raw) = std::env::var("KODE_EXT_PMU_COUNTERS_JSON") {
+    if let Ok(raw) = std::env::var("KESA_EXT_PMU_COUNTERS_JSON") {
         return serde_json::from_str::<Value>(&raw).map_or_else(
             |_| {
                 json!({
                     "status": "invalid",
-                    "source": "env:KODE_EXT_PMU_COUNTERS_JSON",
+                    "source": "env:KESA_EXT_PMU_COUNTERS_JSON",
                     "reason": "failed_to_parse_json",
                     "budget": budget.as_json(),
                 })
             },
-            |parsed| annotate_pmu_payload(&parsed, "env:KODE_EXT_PMU_COUNTERS_JSON", None, budget),
+            |parsed| annotate_pmu_payload(&parsed, "env:KESA_EXT_PMU_COUNTERS_JSON", None, budget),
         );
     }
 
-    if let Ok(path) = std::env::var("KODE_EXT_PMU_COUNTERS_PATH") {
+    if let Ok(path) = std::env::var("KESA_EXT_PMU_COUNTERS_PATH") {
         return fs::read_to_string(&path).map_or_else(
             |_| {
                 json!({
                     "status": "missing",
-                    "source": "env:KODE_EXT_PMU_COUNTERS_PATH",
+                    "source": "env:KESA_EXT_PMU_COUNTERS_PATH",
                     "path": path,
                     "budget": budget.as_json(),
                 })
@@ -1057,7 +1057,7 @@ fn collect_pmu_metadata() -> Value {
                     |_| {
                         json!({
                             "status": "invalid",
-                            "source": "env:KODE_EXT_PMU_COUNTERS_PATH",
+                            "source": "env:KESA_EXT_PMU_COUNTERS_PATH",
                             "path": path,
                             "reason": "failed_to_parse_json",
                             "budget": budget.as_json(),
@@ -1066,7 +1066,7 @@ fn collect_pmu_metadata() -> Value {
                     |parsed| {
                         annotate_pmu_payload(
                             &parsed,
-                            "env:KODE_EXT_PMU_COUNTERS_PATH",
+                            "env:KESA_EXT_PMU_COUNTERS_PATH",
                             Some(&path),
                             budget,
                         )
@@ -1078,18 +1078,18 @@ fn collect_pmu_metadata() -> Value {
 
     json!({
         "status": "not_collected",
-        "reason": "set KODE_EXT_PMU_COUNTERS_JSON or KODE_EXT_PMU_COUNTERS_PATH to attach PMU counters",
+        "reason": "set KESA_EXT_PMU_COUNTERS_JSON or KESA_EXT_PMU_COUNTERS_PATH to attach PMU counters",
         "budget": budget.as_json(),
     })
 }
 
 fn collect_pmu_baseline_metadata(budget: PmuBudgetSpec) -> Value {
-    if let Ok(raw) = std::env::var("KODE_EXT_PMU_BASELINE_COUNTERS_JSON") {
+    if let Ok(raw) = std::env::var("KESA_EXT_PMU_BASELINE_COUNTERS_JSON") {
         return serde_json::from_str::<Value>(&raw).map_or_else(
             |_| {
                 json!({
                     "status": "invalid",
-                    "source": "env:KODE_EXT_PMU_BASELINE_COUNTERS_JSON",
+                    "source": "env:KESA_EXT_PMU_BASELINE_COUNTERS_JSON",
                     "reason": "failed_to_parse_json",
                     "budget": budget.as_json(),
                 })
@@ -1097,7 +1097,7 @@ fn collect_pmu_baseline_metadata(budget: PmuBudgetSpec) -> Value {
             |parsed| {
                 annotate_pmu_payload(
                     &parsed,
-                    "env:KODE_EXT_PMU_BASELINE_COUNTERS_JSON",
+                    "env:KESA_EXT_PMU_BASELINE_COUNTERS_JSON",
                     None,
                     budget,
                 )
@@ -1105,12 +1105,12 @@ fn collect_pmu_baseline_metadata(budget: PmuBudgetSpec) -> Value {
         );
     }
 
-    if let Ok(path) = std::env::var("KODE_EXT_PMU_BASELINE_COUNTERS_PATH") {
+    if let Ok(path) = std::env::var("KESA_EXT_PMU_BASELINE_COUNTERS_PATH") {
         return fs::read_to_string(&path).map_or_else(
             |_| {
                 json!({
                     "status": "missing",
-                    "source": "env:KODE_EXT_PMU_BASELINE_COUNTERS_PATH",
+                    "source": "env:KESA_EXT_PMU_BASELINE_COUNTERS_PATH",
                     "path": path,
                     "budget": budget.as_json(),
                 })
@@ -1120,7 +1120,7 @@ fn collect_pmu_baseline_metadata(budget: PmuBudgetSpec) -> Value {
                     |_| {
                         json!({
                             "status": "invalid",
-                            "source": "env:KODE_EXT_PMU_BASELINE_COUNTERS_PATH",
+                            "source": "env:KESA_EXT_PMU_BASELINE_COUNTERS_PATH",
                             "path": path,
                             "reason": "failed_to_parse_json",
                             "budget": budget.as_json(),
@@ -1129,7 +1129,7 @@ fn collect_pmu_baseline_metadata(budget: PmuBudgetSpec) -> Value {
                     |parsed| {
                         annotate_pmu_payload(
                             &parsed,
-                            "env:KODE_EXT_PMU_BASELINE_COUNTERS_PATH",
+                            "env:KESA_EXT_PMU_BASELINE_COUNTERS_PATH",
                             Some(&path),
                             budget,
                         )
@@ -1141,7 +1141,7 @@ fn collect_pmu_baseline_metadata(budget: PmuBudgetSpec) -> Value {
 
     json!({
         "status": "not_collected",
-        "reason": "set KODE_EXT_PMU_BASELINE_COUNTERS_JSON or KODE_EXT_PMU_BASELINE_COUNTERS_PATH for before/after PMU comparison",
+        "reason": "set KESA_EXT_PMU_BASELINE_COUNTERS_JSON or KESA_EXT_PMU_BASELINE_COUNTERS_PATH for before/after PMU comparison",
         "budget": budget.as_json(),
     })
 }
@@ -1293,12 +1293,12 @@ fn parse_perf_outcome_snapshot(raw: &Value) -> Option<PerfOutcomeSnapshot> {
 }
 
 fn collect_perf_baseline_metadata() -> Value {
-    if let Ok(raw) = std::env::var("KODE_EXT_BASELINE_OUTCOMES_JSON") {
+    if let Ok(raw) = std::env::var("KESA_EXT_BASELINE_OUTCOMES_JSON") {
         return serde_json::from_str::<Value>(&raw).map_or_else(
             |_| {
                 json!({
                     "status": "invalid",
-                    "source": "env:KODE_EXT_BASELINE_OUTCOMES_JSON",
+                    "source": "env:KESA_EXT_BASELINE_OUTCOMES_JSON",
                     "reason": "failed_to_parse_json",
                 })
             },
@@ -1306,7 +1306,7 @@ fn collect_perf_baseline_metadata() -> Value {
                 let parsed_snapshot = parse_perf_outcome_snapshot(&parsed);
                 json!({
                     "status": if parsed_snapshot.is_some() { "collected" } else { "invalid" },
-                    "source": "env:KODE_EXT_BASELINE_OUTCOMES_JSON",
+                    "source": "env:KESA_EXT_BASELINE_OUTCOMES_JSON",
                     "outcomes": parsed,
                     "normalized": parsed_snapshot,
                 })
@@ -1314,12 +1314,12 @@ fn collect_perf_baseline_metadata() -> Value {
         );
     }
 
-    if let Ok(path) = std::env::var("KODE_EXT_BASELINE_OUTCOMES_PATH") {
+    if let Ok(path) = std::env::var("KESA_EXT_BASELINE_OUTCOMES_PATH") {
         return fs::read_to_string(&path).map_or_else(
             |_| {
                 json!({
                     "status": "missing",
-                    "source": "env:KODE_EXT_BASELINE_OUTCOMES_PATH",
+                    "source": "env:KESA_EXT_BASELINE_OUTCOMES_PATH",
                     "path": path,
                 })
             },
@@ -1328,7 +1328,7 @@ fn collect_perf_baseline_metadata() -> Value {
                     |_| {
                         json!({
                             "status": "invalid",
-                            "source": "env:KODE_EXT_BASELINE_OUTCOMES_PATH",
+                            "source": "env:KESA_EXT_BASELINE_OUTCOMES_PATH",
                             "path": path,
                             "reason": "failed_to_parse_json",
                         })
@@ -1337,7 +1337,7 @@ fn collect_perf_baseline_metadata() -> Value {
                         let parsed_snapshot = parse_perf_outcome_snapshot(&parsed);
                         json!({
                             "status": if parsed_snapshot.is_some() { "collected" } else { "invalid" },
-                            "source": "env:KODE_EXT_BASELINE_OUTCOMES_PATH",
+                            "source": "env:KESA_EXT_BASELINE_OUTCOMES_PATH",
                             "path": path,
                             "outcomes": parsed,
                             "normalized": parsed_snapshot,
@@ -1350,7 +1350,7 @@ fn collect_perf_baseline_metadata() -> Value {
 
     json!({
         "status": "not_collected",
-        "reason": "set KODE_EXT_BASELINE_OUTCOMES_JSON or KODE_EXT_BASELINE_OUTCOMES_PATH for before/after outcome deltas",
+        "reason": "set KESA_EXT_BASELINE_OUTCOMES_JSON or KESA_EXT_BASELINE_OUTCOMES_PATH for before/after outcome deltas",
     })
 }
 
@@ -1436,7 +1436,7 @@ fn compare_perf_outcomes(
 }
 
 fn collect_flame_metadata() -> Value {
-    if let Ok(path) = std::env::var("KODE_EXT_FLAMEGRAPH_PATH") {
+    if let Ok(path) = std::env::var("KESA_EXT_FLAMEGRAPH_PATH") {
         let exists = Path::new(&path).exists();
         return json!({
             "status": if exists { "collected" } else { "missing" },
@@ -1447,7 +1447,7 @@ fn collect_flame_metadata() -> Value {
 
     json!({
         "status": "not_collected",
-        "reason": "set KODE_EXT_FLAMEGRAPH_PATH to attach flamegraph artifact",
+        "reason": "set KESA_EXT_FLAMEGRAPH_PATH to attach flamegraph artifact",
     })
 }
 

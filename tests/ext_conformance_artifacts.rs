@@ -1259,7 +1259,7 @@ fn test_scan_all_ts_entry_points() {
     let manifest_path = artifacts_dir.join("entry-point-scan.json");
     let json = serde_json::to_string_pretty(&results).expect("serialize scan results");
     let generate = matches!(
-        std::env::var("KODE_GENERATE_EXT_ENTRY_SCAN").as_deref(),
+        std::env::var("KESA_GENERATE_EXT_ENTRY_SCAN").as_deref(),
         Ok("1")
     );
     if generate {
@@ -1301,7 +1301,7 @@ fn test_scan_all_ts_entry_points() {
     if generate {
         eprintln!("Manifest:        {}", manifest_path.display());
     } else {
-        eprintln!("Manifest:        not written (set KODE_GENERATE_EXT_ENTRY_SCAN=1)");
+        eprintln!("Manifest:        not written (set KESA_GENERATE_EXT_ENTRY_SCAN=1)");
     }
 
     // Sanity: we should have a reasonable number of entry points.
@@ -1944,7 +1944,7 @@ fn test_generate_validated_manifest() {
     let manifest_path = repo_root.join("tests/ext_conformance/VALIDATED_MANIFEST.json");
     let json = serde_json::to_string_pretty(&manifest).expect("serialize manifest");
     let generate = matches!(
-        std::env::var("KODE_GENERATE_VALIDATED_MANIFEST").as_deref(),
+        std::env::var("KESA_GENERATE_VALIDATED_MANIFEST").as_deref(),
         Ok("1")
     );
     if generate {
@@ -1959,7 +1959,7 @@ fn test_generate_validated_manifest() {
         assert_eq!(
             committed, computed,
             "committed validated manifest is stale; regenerate explicitly with \
-             KODE_GENERATE_VALIDATED_MANIFEST=1 cargo test \
+             KESA_GENERATE_VALIDATED_MANIFEST=1 cargo test \
              --test ext_conformance_artifacts test_generate_validated_manifest -- --exact"
         );
     }

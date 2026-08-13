@@ -1229,7 +1229,7 @@ fn bench_dispatch_overhead_breakdown(c: &mut Criterion) {
 /// from memory, so no provider or filesystem latency is in these numbers.
 ///
 /// Toggle the stack from the environment and re-run:
-/// `KODE_HOSTCALL_SUPERINSTRUCTIONS=0 KODE_HOSTCALL_TRACE_JIT=0 cargo bench --bench extensions hostcall_optimizer`
+/// `KESA_HOSTCALL_SUPERINSTRUCTIONS=0 KESA_HOSTCALL_TRACE_JIT=0 cargo bench --bench extensions hostcall_optimizer`
 fn bench_hostcall_optimizer_dispatch(c: &mut Criterion) {
     use kesa::connectors::http::{HttpConnector, HttpConnectorConfig};
     use kesa::extensions::{

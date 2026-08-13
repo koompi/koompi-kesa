@@ -79,7 +79,7 @@ pi --extension-policy permissive
 
 **Environment variable:**
 ```bash
-export KODE_EXTENSION_POLICY=safe
+export KESA_EXTENSION_POLICY=safe
 ```
 
 **Config file** (`~/.config/pi/settings.json`):

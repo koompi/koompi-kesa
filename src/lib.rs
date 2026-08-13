@@ -107,6 +107,7 @@ pub mod doctor;
 #[doc(hidden)]
 pub(crate) mod embedded_assets;
 #[doc(hidden)]
+pub mod env;
 pub mod error;
 #[doc(hidden)]
 pub mod error_hints;

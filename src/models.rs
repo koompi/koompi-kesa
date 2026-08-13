@@ -978,7 +978,7 @@ fn merge_provider_model_ids(
 /// Path to the user's optional model-override file.
 ///
 /// Resolution order:
-/// 1. `KODE_MODELS_OVERRIDE` env var (absolute path) — primarily for tests and
+/// 1. `KESA_MODELS_OVERRIDE` env var (absolute path) — primarily for tests and
 ///    advanced users who want to keep the override outside the standard config
 ///    directory.
 /// 2. `<config_dir>/pi/models-override.json` — `<config_dir>` is whatever
@@ -988,7 +988,7 @@ fn merge_provider_model_ids(
 /// Returns `None` when no config directory can be resolved and no env override
 /// is set; callers treat that as "no override available".
 fn user_model_overrides_path() -> Option<PathBuf> {
-    if let Ok(env_path) = std::env::var("KODE_MODELS_OVERRIDE") {
+    if let Some(env_path) = crate::env::var("MODELS_OVERRIDE") {
         let trimmed = env_path.trim();
         if !trimmed.is_empty() {
             return Some(PathBuf::from(trimmed));

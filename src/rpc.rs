@@ -5780,7 +5780,7 @@ mod tests {
     }
 
     fn write_rpc_pressure_evidence(entry: &Value) {
-        let path = std::env::var_os("KODE_RPC_OUTPUT_PRESSURE_EVIDENCE")
+        let path = crate::env::var_os("RPC_OUTPUT_PRESSURE_EVIDENCE")
             .filter(|path| !path.as_os_str().is_empty())
             .map_or_else(
                 || {

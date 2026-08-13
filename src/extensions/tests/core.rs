@@ -2387,7 +2387,7 @@ fn explicit_compat_scan_disable_prevents_static_registration_fallback() {
         };
         config
             .env
-            .insert("KODE_EXT_COMPAT_SCAN".to_string(), "0".to_string());
+            .insert("KESA_EXT_COMPAT_SCAN".to_string(), "0".to_string());
         let js_runtime =
             JsExtensionRuntimeHandle::start(config, Arc::clone(&tools), manager.clone())
                 .await

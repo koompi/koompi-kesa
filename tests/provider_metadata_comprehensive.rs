@@ -965,7 +965,7 @@ fn generate_canonical_id_alias_table_json() {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("docs/provider-canonical-id-table.json");
     let generate = matches!(
-        std::env::var("KODE_GENERATE_PROVIDER_CANONICAL_ID_TABLE").as_deref(),
+        std::env::var("KESA_GENERATE_PROVIDER_CANONICAL_ID_TABLE").as_deref(),
         Ok("1")
     );
     if generate {
@@ -979,7 +979,7 @@ fn generate_canonical_id_alias_table_json() {
     assert_eq!(
         parsed, table,
         "committed provider canonical ID table is stale; regenerate explicitly with \
-         KODE_GENERATE_PROVIDER_CANONICAL_ID_TABLE=1 cargo test \
+         KESA_GENERATE_PROVIDER_CANONICAL_ID_TABLE=1 cargo test \
          --test provider_metadata_comprehensive generate_canonical_id_alias_table_json -- --exact"
     );
     assert_eq!(

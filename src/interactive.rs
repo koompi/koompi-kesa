@@ -133,7 +133,7 @@ use self::tree::{
 /// bindings are restored.
 ///
 /// The override is pane-scoped: other panes in the same tmux session are not
-/// affected.  If `KODE_TMUX_WHEEL_OVERRIDE=0` is set, no override is installed.
+/// affected.  If `KESA_TMUX_WHEEL_OVERRIDE=0` is set, no override is installed.
 struct TmuxWheelGuard {
     /// Original WheelUp binding (None if there was no binding).
     saved_wheel_up: Option<String>,
@@ -146,11 +146,11 @@ impl TmuxWheelGuard {
     ///
     /// Returns `None` if:
     /// - Not running inside tmux (`$TMUX` unset)
-    /// - `KODE_TMUX_WHEEL_OVERRIDE=0` env is set
+    /// - `KESA_TMUX_WHEEL_OVERRIDE=0` env is set
     /// - `tmux` binary is not available or returns errors
     fn install() -> Option<Self> {
         // Respect opt-out env var.
-        if std::env::var("KODE_TMUX_WHEEL_OVERRIDE").is_ok_and(|v| v == "0") {
+        if crate::env::var("TMUX_WHEEL_OVERRIDE").is_some_and(|v| v == "0") {
             return None;
         }
 
@@ -667,7 +667,7 @@ impl PiApp {
     fn effective_show_hardware_cursor(&self) -> bool {
         self.config
             .show_hardware_cursor
-            .unwrap_or_else(|| std::env::var("KODE_HARDWARE_CURSOR").is_ok_and(|val| val == "1"))
+            .unwrap_or_else(|| crate::env::var("HARDWARE_CURSOR").is_some_and(|val| val == "1"))
     }
 
     fn effective_default_permissive(&self) -> bool {
@@ -1323,7 +1323,7 @@ impl PiApp {
     }
 
     pub fn set_terminal_size(&mut self, width: usize, height: usize) {
-        let test_mode = std::env::var_os("KODE_TEST_MODE").is_some();
+        let test_mode = crate::env::var_os("TEST_MODE").is_some();
         let previous_height = self.term_height;
         self.term_width = width.max(1);
         self.term_height = height.max(1);
@@ -1755,16 +1755,16 @@ pub async fn run_interactive(
     let should_check_for_updates = config.should_check_for_updates();
     let show_hardware_cursor = config
         .show_hardware_cursor
-        .unwrap_or_else(|| std::env::var("KODE_HARDWARE_CURSOR").is_ok_and(|val| val == "1"));
+        .unwrap_or_else(|| crate::env::var("HARDWARE_CURSOR").is_some_and(|val| val == "1"));
     // Mouse capture defaults ON (preserves existing in-app wheel-scroll
     // behaviour). Users on Windows/CMD/Windows Terminal can opt out via
     // `--no-mouse-capture`, `disable_mouse_capture: true` in settings, or
-    // `KODE_NO_MOUSE_CAPTURE=1` env var to restore terminal-native click-to-
+    // `KESA_NO_MOUSE_CAPTURE=1` env var to restore terminal-native click-to-
     // select / right-click-paste / Shift-Insert. See pi_agent_rust#78 for
     // the OAuth-flow copy-out problem this solves.
     let disable_mouse_capture = config
         .disable_mouse_capture
-        .unwrap_or_else(|| std::env::var("KODE_NO_MOUSE_CAPTURE").is_ok_and(|val| val == "1"));
+        .unwrap_or_else(|| crate::env::var("NO_MOUSE_CAPTURE").is_some_and(|val| val == "1"));
     let mut stdout = std::io::stdout();
     if show_hardware_cursor {
         let _ = crossterm::execute!(stdout, cursor::Show);
@@ -1846,7 +1846,7 @@ pub async fn run_interactive(
     // Build the bubbletea program. Mouse capture is conditional: ON by
     // default (so in-app mouse-wheel scrolling routes to the TUI), but
     // disabled when the user opts out via --no-mouse-capture / settings /
-    // KODE_NO_MOUSE_CAPTURE so terminal-native copy/paste keeps working
+    // KESA_NO_MOUSE_CAPTURE so terminal-native copy/paste keeps working
     // (Windows-specific UX win — see pi_agent_rust#78). When disabled,
     // users scroll with Page Up/Down or arrow keys instead.
     {
@@ -2648,7 +2648,7 @@ impl PiApp {
     }
 
     fn autocomplete_refresh_cmd() -> Option<Cmd> {
-        if std::env::var_os("KODE_TEST_MODE").is_some() {
+        if crate::env::var_os("TEST_MODE").is_some() {
             return None;
         }
         Some(Cmd::new(|| {
@@ -2807,7 +2807,7 @@ impl PiApp {
         }
         let mut autocomplete = AutocompleteState::new(cwd.clone(), autocomplete_catalog);
         autocomplete.max_visible = autocomplete_max_visible;
-        if std::env::var_os("KODE_TEST_MODE").is_none() {
+        if crate::env::var_os("TEST_MODE").is_none() {
             autocomplete.provider.refresh_background();
         }
 
@@ -3064,7 +3064,7 @@ impl PiApp {
     }
 
     fn spinner_init_cmd(&self) -> Option<Cmd> {
-        if std::env::var_os("KODE_TEST_MODE").is_some() {
+        if crate::env::var_os("TEST_MODE").is_some() {
             None
         } else {
             BubbleteaModel::init(&self.spinner)

@@ -212,8 +212,8 @@ All extension-related logs must conform to the **ext.log.v1** schema
 
 **Deterministic runtime controls (TS oracle + Rust PiJS):**
 - Patched globals: `Date`/`Date.now`, `Math.random`, `process.cwd`, `process.env.HOME`, `pi.time.nowMs`.
-- Env vars: `KODE_DETERMINISTIC_TIME_MS`, `KODE_DETERMINISTIC_TIME_STEP_MS`, `KODE_DETERMINISTIC_RANDOM`,
-  `KODE_DETERMINISTIC_RANDOM_SEED`, `KODE_DETERMINISTIC_CWD`, `KODE_DETERMINISTIC_HOME`.
+- Env vars: `KESA_DETERMINISTIC_TIME_MS`, `KESA_DETERMINISTIC_TIME_STEP_MS`, `KESA_DETERMINISTIC_RANDOM`,
+  `KESA_DETERMINISTIC_RANDOM_SEED`, `KESA_DETERMINISTIC_CWD`, `KESA_DETERMINISTIC_HOME`.
 
 **CI consumption:**
 - Archive `target/ext_conformance/logs/**` as CI artifacts.

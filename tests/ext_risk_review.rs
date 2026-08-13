@@ -6,7 +6,7 @@
 //! 3. Runtime dependency risks (npm deps, `node_modules` requirements)
 //!
 //! Verifies the committed `tests/ext_conformance/artifacts/RISK_REVIEW.json`
-//! evidence log. Set `KODE_GENERATE_RISK_REVIEW=1` to regenerate it explicitly.
+//! evidence log. Set `KESA_GENERATE_RISK_REVIEW=1` to regenerate it explicitly.
 
 use kesa::extension_license::{
     License, Redistributable, SecuritySeverity, detect_license_from_content,
@@ -421,7 +421,7 @@ fn risk_review_evidence_log() {
     let json = serde_json::to_string_pretty(&review).expect("serialize risk review");
     let output_path = repo_root.join("tests/ext_conformance/artifacts/RISK_REVIEW.json");
     let generate = matches!(
-        std::env::var("KODE_GENERATE_RISK_REVIEW").as_deref(),
+        std::env::var("KESA_GENERATE_RISK_REVIEW").as_deref(),
         Ok("1")
     );
     if generate {
@@ -451,7 +451,7 @@ fn risk_review_evidence_log() {
         assert_eq!(
             committed, computed,
             "committed risk review evidence is stale; regenerate explicitly with \
-             KODE_GENERATE_RISK_REVIEW=1 cargo test --test ext_risk_review \
+             KESA_GENERATE_RISK_REVIEW=1 cargo test --test ext_risk_review \
              risk_review_evidence_log -- --exact"
         );
     }

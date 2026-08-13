@@ -305,19 +305,19 @@ impl TestHarness {
 
         let mut env = TestEnv::new();
         env.set(
-            "KODE_CODING_AGENT_DIR",
+            "KESA_CODING_AGENT_DIR",
             env_root.join("agent").display().to_string(),
         );
         env.set(
-            "KODE_CONFIG_PATH",
+            "KESA_CONFIG_PATH",
             env_root.join("settings.json").display().to_string(),
         );
         env.set(
-            "KODE_SESSIONS_DIR",
+            "KESA_SESSIONS_DIR",
             env_root.join("sessions").display().to_string(),
         );
         env.set(
-            "KODE_PACKAGE_DIR",
+            "KESA_PACKAGE_DIR",
             env_root.join("packages").display().to_string(),
         );
         env

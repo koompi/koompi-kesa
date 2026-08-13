@@ -99,8 +99,7 @@ fn compatible_tool_parallelism_limit() -> usize {
                 parallelism.get()
             });
         resolve_compatible_tool_parallelism(
-            std::env::var("KODE_MAX_CONCURRENT_COMPATIBLE_TOOLS")
-                .ok()
+            crate::env::var("MAX_CONCURRENT_COMPATIBLE_TOOLS")
                 .as_deref(),
             host_parallelism,
         )
@@ -124,7 +123,7 @@ fn resolve_compatible_tool_parallelism(
         Ok(0) => {
             warn!(
                 value = raw,
-                "Ignoring KODE_MAX_CONCURRENT_COMPATIBLE_TOOLS=0; using host-scaled default"
+                "Ignoring KESA_MAX_CONCURRENT_COMPATIBLE_TOOLS=0; using host-scaled default"
             );
             host_default
         }
@@ -133,7 +132,7 @@ fn resolve_compatible_tool_parallelism(
             warn!(
                 value = raw,
                 error = %err,
-                "Ignoring invalid KODE_MAX_CONCURRENT_COMPATIBLE_TOOLS; using host-scaled default"
+                "Ignoring invalid KESA_MAX_CONCURRENT_COMPATIBLE_TOOLS; using host-scaled default"
             );
             host_default
         }
@@ -502,7 +501,7 @@ pub fn tool_effect_batch_plan_evidence(
 /// Default cap for tool-call iterations per agent turn.
 ///
 /// Override per-invocation via `--max-tool-iterations` / the
-/// `KODE_MAX_TOOL_ITERATIONS` env var, or programmatically by writing
+/// `KESA_MAX_TOOL_ITERATIONS` env var, or programmatically by writing
 /// [`AgentConfig::max_tool_iterations`] directly. Resolved through
 /// [`resolve_max_tool_iterations`] which clamps invalid values back to this
 /// default rather than failing the run.
@@ -535,13 +534,13 @@ const ITERATION_WARN_DENOMINATOR: usize = 5;
 /// noise rather than help.
 const ITERATION_WARN_MIN_CAP: usize = 5;
 
-/// Resolve the effective tool-iteration cap from `KODE_MAX_TOOL_ITERATIONS`.
+/// Resolve the effective tool-iteration cap from `KESA_MAX_TOOL_ITERATIONS`.
 ///
 /// Falls back to [`MAX_TOOL_ITERATIONS_DEFAULT`] when unset/invalid. Used
 /// by callers that build an [`AgentConfig`] without going through the CLI
 /// parser (ACP server, SDK).
 pub fn resolved_max_tool_iterations_default() -> usize {
-    resolve_max_tool_iterations(std::env::var("KODE_MAX_TOOL_ITERATIONS").ok().as_deref())
+    resolve_max_tool_iterations(crate::env::var("MAX_TOOL_ITERATIONS").as_deref())
 }
 
 /// Pure resolver for `max_tool_iterations` string overrides.
@@ -556,21 +555,21 @@ pub fn resolve_max_tool_iterations(raw_override: Option<&str>) -> usize {
     match raw.parse::<usize>() {
         Ok(0) => {
             warn!(
-                "KODE_MAX_TOOL_ITERATIONS=0 is invalid; falling back to {}",
+                "KESA_MAX_TOOL_ITERATIONS=0 is invalid; falling back to {}",
                 MAX_TOOL_ITERATIONS_DEFAULT
             );
             MAX_TOOL_ITERATIONS_DEFAULT
         }
         Ok(n) if n > MAX_TOOL_ITERATIONS_CEILING => {
             warn!(
-                "KODE_MAX_TOOL_ITERATIONS={n} exceeds ceiling {MAX_TOOL_ITERATIONS_CEILING}; clamping to {MAX_TOOL_ITERATIONS_CEILING}"
+                "KESA_MAX_TOOL_ITERATIONS={n} exceeds ceiling {MAX_TOOL_ITERATIONS_CEILING}; clamping to {MAX_TOOL_ITERATIONS_CEILING}"
             );
             MAX_TOOL_ITERATIONS_CEILING
         }
         Ok(n) => n,
         Err(err) => {
             warn!(
-                "KODE_MAX_TOOL_ITERATIONS={raw:?} is not a valid usize ({err}); falling back to {}",
+                "KESA_MAX_TOOL_ITERATIONS={raw:?} is not a valid usize ({err}); falling back to {}",
                 MAX_TOOL_ITERATIONS_DEFAULT
             );
             MAX_TOOL_ITERATIONS_DEFAULT
@@ -10798,7 +10797,7 @@ fn safe_context_field(value: &str) -> String {
 
 /// Log a summary of auto-repair events that fired during extension loading.
 ///
-/// Default: one-line summary.  Set `KODE_AUTO_REPAIR_VERBOSE=1` for per-extension
+/// Default: one-line summary.  Set `KESA_AUTO_REPAIR_VERBOSE=1` for per-extension
 /// detail.  Structured tracing events are always emitted regardless of verbosity.
 fn log_repair_diagnostics(events: &[crate::extensions_js::ExtensionRepairEvent]) {
     use std::collections::BTreeMap;
@@ -10824,8 +10823,7 @@ fn log_repair_diagnostics(events: &[crate::extensions_js::ExtensionRepairEvent])
             .push(&ev.extension_id);
     }
 
-    let verbose = std::env::var("KODE_AUTO_REPAIR_VERBOSE")
-        .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
+    let verbose = crate::env::var("AUTO_REPAIR_VERBOSE").is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
 
     if verbose {
         warn!(
@@ -11931,7 +11929,7 @@ mod tests {
     fn test_agent_config_default() {
         // Tests don't mutate env (the crate forbids unsafe code, and
         // `std::env::set_var` is unsafe in 2024 edition); under typical
-        // `cargo test` invocation `KODE_MAX_TOOL_ITERATIONS` is unset, so
+        // `cargo test` invocation `KESA_MAX_TOOL_ITERATIONS` is unset, so
         // this assertion holds. If a developer's shell happens to export
         // that var, this test will reflect their effective default — which
         // is the correct behavior, not a bug.

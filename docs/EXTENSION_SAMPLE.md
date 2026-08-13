@@ -177,7 +177,7 @@ cargo test
 
 Normalization rules (remove non-determinism, preserve semantics):
 - Replace RFC3339 timestamp strings with `<TIMESTAMP>` and numeric `timestamp` fields with `0`.
-- Rewrite absolute paths under the repo to `<PROJECT_ROOT>` and the legacy repo root to `<KODE_MONO_ROOT>`.
+- Rewrite absolute paths under the repo to `<PROJECT_ROOT>` and the legacy repo root to `<KESA_MONO_ROOT>`.
 - Rewrite `run-<uuid>` to `<RUN_ID>` and bare UUIDs to `<UUID>`.
 - Rewrite mock OpenAI base URLs to `http://127.0.0.1:<PORT>/v1`.
 - Rewrite `Total output lines: N` to `Total output lines: <N>`.

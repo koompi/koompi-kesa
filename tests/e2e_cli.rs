@@ -38,8 +38,8 @@ const FAKE_NPM_SCRIPT: &str = r#"#!/bin/sh
 set -eu
 
 cmd="${1:-}"
-if [ -n "${KODE_E2E_FAKE_NPM_LEDGER:-}" ]; then
-    printf '%s\n' "$*" >> "$KODE_E2E_FAKE_NPM_LEDGER"
+if [ -n "${KESA_E2E_FAKE_NPM_LEDGER:-}" ]; then
+    printf '%s\n' "$*" >> "$KESA_E2E_FAKE_NPM_LEDGER"
 fi
 
 if [ "$cmd" = "root" ] && [ "${2:-}" = "-g" ]; then
@@ -151,19 +151,19 @@ impl CliTestHarness {
             env_root.join("home").display().to_string(),
         );
         env.insert(
-            "KODE_CODING_AGENT_DIR".to_string(),
+            "KESA_CODING_AGENT_DIR".to_string(),
             env_root.join("agent").display().to_string(),
         );
         env.insert(
-            "KODE_CONFIG_PATH".to_string(),
+            "KESA_CONFIG_PATH".to_string(),
             env_root.join("settings.json").display().to_string(),
         );
         env.insert(
-            "KODE_SESSIONS_DIR".to_string(),
+            "KESA_SESSIONS_DIR".to_string(),
             env_root.join("sessions").display().to_string(),
         );
         env.insert(
-            "KODE_PACKAGE_DIR".to_string(),
+            "KESA_PACKAGE_DIR".to_string(),
             env_root.join("packages").display().to_string(),
         );
 
@@ -221,12 +221,12 @@ impl CliTestHarness {
 
     #[cfg(unix)]
     fn global_settings_path(&self) -> PathBuf {
-        self.env.get("KODE_CONFIG_PATH").map_or_else(
+        self.env.get("KESA_CONFIG_PATH").map_or_else(
             || {
                 PathBuf::from(
                     self.env
-                        .get("KODE_CODING_AGENT_DIR")
-                        .expect("KODE_CODING_AGENT_DIR must be set"),
+                        .get("KESA_CODING_AGENT_DIR")
+                        .expect("KESA_CODING_AGENT_DIR must be set"),
                 )
                 .join("settings.json")
             },
@@ -267,7 +267,7 @@ impl CliTestHarness {
     }
 
     fn cli_timeout() -> Duration {
-        std::env::var("KODE_E2E_CLI_TIMEOUT_SECS")
+        std::env::var("KESA_E2E_CLI_TIMEOUT_SECS")
             .ok()
             .and_then(|value| value.parse::<u64>().ok())
             .filter(|value| *value > 0)
@@ -516,8 +516,8 @@ fn resolve_roots_for_cli_harness(harness: &CliTestHarness) -> ResolveRoots {
     let global_base_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_CODING_AGENT_DIR")
-            .expect("KODE_CODING_AGENT_DIR set by CliTestHarness::new"),
+            .get("KESA_CODING_AGENT_DIR")
+            .expect("KESA_CODING_AGENT_DIR set by CliTestHarness::new"),
     );
 
     ResolveRoots {
@@ -825,7 +825,7 @@ fn e2e_cli_explain_extension_policy_outputs_remediation() {
         to_allow_cli.iter().any(|entry| {
             entry
                 .as_str()
-                .is_some_and(|text| text.contains("KODE_EXTENSION_ALLOW_DANGEROUS=1"))
+                .is_some_and(|text| text.contains("KESA_EXTENSION_ALLOW_DANGEROUS=1"))
         }),
         "exec remediation should include allow-dangerous CLI guidance"
     );
@@ -1066,7 +1066,7 @@ fn e2e_cli_extension_compat_ledger_logged_when_enabled() {
     let mut harness = CliTestHarness::new("e2e_cli_extension_compat_ledger_logged_when_enabled");
     harness
         .env
-        .insert("KODE_EXT_COMPAT_SCAN".to_string(), "1".to_string());
+        .insert("KESA_EXT_COMPAT_SCAN".to_string(), "1".to_string());
     harness
         .env
         .insert("RUST_LOG".to_string(), "info".to_string());
@@ -1093,7 +1093,7 @@ fn e2e_cli_extension_compat_ledger_keeps_cli_extensions_with_no_extensions() {
     );
     harness
         .env
-        .insert("KODE_EXT_COMPAT_SCAN".to_string(), "1".to_string());
+        .insert("KESA_EXT_COMPAT_SCAN".to_string(), "1".to_string());
     harness
         .env
         .insert("RUST_LOG".to_string(), "info".to_string());
@@ -1167,7 +1167,7 @@ fn e2e_cli_fetch_models_is_a_standalone_stdout_command() {
     let sessions_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_SESSIONS_DIR")
+            .get("KESA_SESSIONS_DIR")
             .expect("isolated sessions dir"),
     );
     assert!(
@@ -1224,7 +1224,7 @@ fn e2e_cli_fetch_models_uses_models_json_route_credentials_and_headers() {
     let agent_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_CODING_AGENT_DIR")
+            .get("KESA_CODING_AGENT_DIR")
             .expect("isolated agent dir"),
     );
     fs::create_dir_all(&agent_dir).expect("create isolated agent dir");
@@ -1328,7 +1328,7 @@ fn e2e_cli_fetch_models_custom_authorization_skips_held_auth_lock() {
     let agent_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_CODING_AGENT_DIR")
+            .get("KESA_CODING_AGENT_DIR")
             .expect("isolated agent dir"),
     );
     fs::create_dir_all(&agent_dir).expect("create isolated agent dir");
@@ -1389,7 +1389,7 @@ fn e2e_cli_fetch_models_only_conflicts_with_explicit_hide_cwd_flag() {
         CliTestHarness::new("e2e_cli_fetch_models_only_conflicts_with_explicit_hide_cwd_flag");
     harness
         .env
-        .insert("KODE_HIDE_CWD_IN_PROMPT".to_string(), "true".to_string());
+        .insert("KESA_HIDE_CWD_IN_PROMPT".to_string(), "true".to_string());
 
     let env_only = harness.run(&["--fetch-models", "openai"]);
     assert_exit_code(&harness.harness, &env_only, 0);
@@ -1477,7 +1477,7 @@ fn e2e_cli_fetch_models_keyless_persist_updates_list_models_despite_held_auth_lo
     let agent_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_CODING_AGENT_DIR")
+            .get("KESA_CODING_AGENT_DIR")
             .expect("isolated agent dir"),
     );
     fs::create_dir_all(&agent_dir).expect("create isolated agent dir");
@@ -1531,7 +1531,7 @@ fn e2e_cli_persist_models_rejects_static_fallback() {
     let agent_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_CODING_AGENT_DIR")
+            .get("KESA_CODING_AGENT_DIR")
             .expect("isolated agent dir"),
     );
     assert!(
@@ -1577,7 +1577,7 @@ fn e2e_cli_fetch_models_rejects_unsafe_static_fallback_ids() {
     let agent_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_CODING_AGENT_DIR")
+            .get("KESA_CODING_AGENT_DIR")
             .expect("isolated agent dir"),
     );
     fs::create_dir_all(&agent_dir).expect("create isolated agent dir");
@@ -1737,7 +1737,7 @@ fn e2e_cli_config_resolves_installed_user_packages_with_one_npm_root_lookup() {
     );
     let ledger = harness.harness.temp_path("fake-npm-ledger.log");
     harness.env.insert(
-        "KODE_E2E_FAKE_NPM_LEDGER".to_string(),
+        "KESA_E2E_FAKE_NPM_LEDGER".to_string(),
         ledger.display().to_string(),
     );
 
@@ -1950,7 +1950,7 @@ fn e2e_cli_config_show_reports_empty_packages_when_none_configured() {
 #[test]
 fn e2e_cli_config_show_lists_discovered_package_resources() {
     let mut harness = CliTestHarness::new("e2e_cli_config_show_lists_discovered_package_resources");
-    harness.env.remove("KODE_CONFIG_PATH");
+    harness.env.remove("KESA_CONFIG_PATH");
 
     let package_root = harness.harness.create_dir("config-ui-pkg");
     fs::create_dir_all(package_root.join("extensions")).expect("create package extensions");
@@ -2018,7 +2018,7 @@ fn e2e_cli_config_show_lists_discovered_package_resources() {
 #[test]
 fn e2e_cli_config_show_surfaces_invalid_package_settings() {
     let mut harness = CliTestHarness::new("e2e_cli_config_show_surfaces_invalid_package_settings");
-    harness.env.remove("KODE_CONFIG_PATH");
+    harness.env.remove("KESA_CONFIG_PATH");
     let project_settings = harness
         .harness
         .temp_dir()
@@ -2058,7 +2058,7 @@ fn e2e_cli_config_show_surfaces_invalid_package_settings() {
 fn e2e_cli_config_without_tty_surfaces_invalid_package_settings() {
     let mut harness =
         CliTestHarness::new("e2e_cli_config_without_tty_surfaces_invalid_package_settings");
-    harness.env.remove("KODE_CONFIG_PATH");
+    harness.env.remove("KESA_CONFIG_PATH");
     let project_settings = harness
         .harness
         .temp_dir()
@@ -2170,8 +2170,8 @@ fn e2e_cli_print_mode_with_stdin_does_not_create_session_files() {
     let sessions_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_SESSIONS_DIR")
-            .expect("KODE_SESSIONS_DIR")
+            .get("KESA_SESSIONS_DIR")
+            .expect("KESA_SESSIONS_DIR")
             .clone(),
     );
 
@@ -2219,19 +2219,19 @@ fn e2e_cli_config_paths_honor_env_overrides() {
     std::fs::write(&config_path, "{}").expect("write override settings");
 
     harness.env.insert(
-        "KODE_CODING_AGENT_DIR".to_string(),
+        "KESA_CODING_AGENT_DIR".to_string(),
         agent_dir.display().to_string(),
     );
     harness.env.insert(
-        "KODE_CONFIG_PATH".to_string(),
+        "KESA_CONFIG_PATH".to_string(),
         config_path.display().to_string(),
     );
     harness.env.insert(
-        "KODE_SESSIONS_DIR".to_string(),
+        "KESA_SESSIONS_DIR".to_string(),
         sessions_dir.display().to_string(),
     );
     harness.env.insert(
-        "KODE_PACKAGE_DIR".to_string(),
+        "KESA_PACKAGE_DIR".to_string(),
         packages_dir.display().to_string(),
     );
 
@@ -2279,12 +2279,12 @@ fn e2e_cli_config_paths_fallback_to_agent_dir() {
     let agent_dir = kesa::extensions::strip_unc_prefix(agent_dir);
 
     harness.env.insert(
-        "KODE_CODING_AGENT_DIR".to_string(),
+        "KESA_CODING_AGENT_DIR".to_string(),
         agent_dir.display().to_string(),
     );
-    harness.env.remove("KODE_CONFIG_PATH");
-    harness.env.remove("KODE_SESSIONS_DIR");
-    harness.env.remove("KODE_PACKAGE_DIR");
+    harness.env.remove("KESA_CONFIG_PATH");
+    harness.env.remove("KESA_SESSIONS_DIR");
+    harness.env.remove("KESA_PACKAGE_DIR");
 
     let result = harness.run(&["config"]);
 
@@ -2333,7 +2333,7 @@ fn e2e_cli_list_subcommand_works_offline() {
 #[test]
 fn e2e_cli_packages_install_list_remove_offline() {
     let mut harness = CliTestHarness::new("e2e_cli_packages_install_list_remove_offline");
-    harness.env.remove("KODE_CONFIG_PATH");
+    harness.env.remove("KESA_CONFIG_PATH");
 
     harness.harness.section("install local (project)");
     harness.harness.create_dir("local-pkg");
@@ -2442,7 +2442,7 @@ fn e2e_cli_packages_install_list_remove_offline() {
 #[allow(clippy::too_many_lines)]
 fn e2e_cli_packages_update_respects_pinning_offline() {
     let mut harness = CliTestHarness::new("e2e_cli_packages_update_respects_pinning_offline");
-    harness.env.remove("KODE_CONFIG_PATH");
+    harness.env.remove("KESA_CONFIG_PATH");
 
     let git = |cwd: &Path, args: &[&str]| -> String {
         let output = Command::new("git")
@@ -2566,7 +2566,7 @@ fn e2e_cli_packages_update_respects_pinning_offline() {
 fn e2e_cli_extensions_install_update_manifest_resolution_offline() {
     let mut harness =
         CliTestHarness::new("e2e_cli_extensions_install_update_manifest_resolution_offline");
-    harness.env.remove("KODE_CONFIG_PATH");
+    harness.env.remove("KESA_CONFIG_PATH");
 
     let write_extension_package = |root: &Path,
                                    package_name: &str,
@@ -2842,7 +2842,7 @@ fn e2e_interactive_smoke_tmux() {
     // Used in src/interactive.rs for rendering behavior (and in src/app.rs for prompt determinism).
     harness
         .env
-        .insert("KODE_TEST_MODE".to_string(), "1".to_string());
+        .insert("KESA_TEST_MODE".to_string(), "1".to_string());
 
     // Force deterministic behavior (no resource discovery variability).
     harness
@@ -3295,8 +3295,8 @@ fn split_ascii_chunks(chunks: &[String], fragment_sizes: &[usize]) -> Vec<String
 /// Create a VCR cassette file and configure the harness for VCR playback.
 ///
 /// Writes a cassette JSON to a temp directory, then sets the `VCR_MODE`,
-/// `VCR_CASSETTE_DIR`, `KODE_VCR_TEST_NAME`, `ANTHROPIC_API_KEY`, and
-/// `KODE_TEST_MODE` env vars on the harness so the child binary will use
+/// `VCR_CASSETTE_DIR`, `KESA_VCR_TEST_NAME`, `ANTHROPIC_API_KEY`, and
+/// `KESA_TEST_MODE` env vars on the harness so the child binary will use
 /// VCR playback instead of real HTTP.
 fn setup_vcr_anthropic(
     harness: &mut CliTestHarness,
@@ -3359,13 +3359,13 @@ fn setup_vcr_anthropic_with_chunks(
     );
     harness
         .env
-        .insert("KODE_VCR_TEST_NAME".to_string(), cassette_name.to_string());
+        .insert("KESA_VCR_TEST_NAME".to_string(), cassette_name.to_string());
     harness
         .env
         .insert("ANTHROPIC_API_KEY".to_string(), "test-vcr-key".to_string());
     harness
         .env
-        .insert("KODE_TEST_MODE".to_string(), "1".to_string());
+        .insert("KESA_TEST_MODE".to_string(), "1".to_string());
     // Enable body debug output in VCR errors for easier troubleshooting.
     harness
         .env
@@ -3392,7 +3392,7 @@ const PRINT_MODE_ISOLATION_FLAGS: &[&str] = &[
 ];
 
 /// Build the system prompt that the binary produces when given `--system-prompt`
-/// with `KODE_TEST_MODE=1`.  The binary always appends a timestamp/cwd footer.
+/// with `KESA_TEST_MODE=1`.  The binary always appends a timestamp/cwd footer.
 fn expected_system_prompt(custom: &str) -> String {
     format!("{custom}\nCurrent date and time: <TIMESTAMP>\nCurrent working directory: <CWD>")
 }
@@ -3434,7 +3434,7 @@ fn log_tool_scenario_setup(
         .unwrap_or_else(|| "unset".to_string());
     let cassette_name = harness
         .env
-        .get("KODE_VCR_TEST_NAME")
+        .get("KESA_VCR_TEST_NAME")
         .cloned()
         .unwrap_or_else(|| "unset".to_string());
     let cassette_path = harness.env.get("VCR_CASSETTE_DIR").map_or_else(
@@ -3511,8 +3511,8 @@ fn e2e_cli_print_mode_vcr_roundtrip() {
     let sessions_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_SESSIONS_DIR")
-            .expect("KODE_SESSIONS_DIR"),
+            .get("KESA_SESSIONS_DIR")
+            .expect("KESA_SESSIONS_DIR"),
     );
     let jsonl_count = count_jsonl_files(&sessions_dir);
     harness
@@ -3567,8 +3567,8 @@ fn e2e_cli_print_mode_stdin_sends_to_provider() {
     let sessions_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_SESSIONS_DIR")
-            .expect("KODE_SESSIONS_DIR"),
+            .get("KESA_SESSIONS_DIR")
+            .expect("KESA_SESSIONS_DIR"),
     );
     let jsonl_count = count_jsonl_files(&sessions_dir);
     harness
@@ -4495,7 +4495,7 @@ fn e2e_cli_auth_failure_error() {
         cassette_dir.display().to_string(),
     );
     harness.env.insert(
-        "KODE_VCR_TEST_NAME".to_string(),
+        "KESA_VCR_TEST_NAME".to_string(),
         "e2e_auth_failure".to_string(),
     );
     harness
@@ -4503,7 +4503,7 @@ fn e2e_cli_auth_failure_error() {
         .insert("ANTHROPIC_API_KEY".to_string(), "bad-key".to_string());
     harness
         .env
-        .insert("KODE_TEST_MODE".to_string(), "1".to_string());
+        .insert("KESA_TEST_MODE".to_string(), "1".to_string());
     harness
         .env
         .insert("VCR_DEBUG_BODY".to_string(), "1".to_string());
@@ -4731,14 +4731,14 @@ fn e2e_cli_export_multi_entry_session_integrity() {
     assert_contains(&harness.harness, &html, "high");
 }
 
-/// Test 2: `KODE_SESSIONS_DIR` env override appears in `config` output.
+/// Test 2: `KESA_SESSIONS_DIR` env override appears in `config` output.
 #[test]
 fn e2e_cli_session_dir_override_via_env() {
     let mut harness = CliTestHarness::new("e2e_cli_session_dir_override_via_env");
 
     let custom_sessions = harness.harness.temp_path("my-custom-sessions");
     harness.env.insert(
-        "KODE_SESSIONS_DIR".to_string(),
+        "KESA_SESSIONS_DIR".to_string(),
         custom_sessions.display().to_string(),
     );
 
@@ -4790,8 +4790,8 @@ fn e2e_cli_no_session_flag_prevents_session_files() {
     let sessions_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_SESSIONS_DIR")
-            .expect("KODE_SESSIONS_DIR")
+            .get("KESA_SESSIONS_DIR")
+            .expect("KESA_SESSIONS_DIR")
             .clone(),
     );
 
@@ -4857,13 +4857,13 @@ fn e2e_interactive_session_creates_valid_jsonl_tmux() {
 
     harness
         .env
-        .insert("KODE_TEST_MODE".to_string(), "1".to_string());
+        .insert("KESA_TEST_MODE".to_string(), "1".to_string());
 
     let sessions_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_SESSIONS_DIR")
-            .expect("KODE_SESSIONS_DIR")
+            .get("KESA_SESSIONS_DIR")
+            .expect("KESA_SESSIONS_DIR")
             .clone(),
     );
 
@@ -5037,13 +5037,13 @@ fn e2e_interactive_session_continue_loads_previous_tmux() {
 
     harness
         .env
-        .insert("KODE_TEST_MODE".to_string(), "1".to_string());
+        .insert("KESA_TEST_MODE".to_string(), "1".to_string());
 
     let sessions_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_SESSIONS_DIR")
-            .expect("KODE_SESSIONS_DIR")
+            .get("KESA_SESSIONS_DIR")
+            .expect("KESA_SESSIONS_DIR")
             .clone(),
     );
 
@@ -5123,7 +5123,7 @@ fn e2e_interactive_session_continue_loads_previous_tmux() {
         cassette_dir.display().to_string(),
     );
     harness.env.insert(
-        "KODE_VCR_TEST_NAME".to_string(),
+        "KESA_VCR_TEST_NAME".to_string(),
         "e2e_session_continue".to_string(),
     );
     harness
@@ -5344,8 +5344,8 @@ fn e2e_cli_startup_migrations_run_by_default() {
     let agent_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_CODING_AGENT_DIR")
-            .expect("KODE_CODING_AGENT_DIR set"),
+            .get("KESA_CODING_AGENT_DIR")
+            .expect("KESA_CODING_AGENT_DIR set"),
     );
     fs::create_dir_all(&agent_dir).expect("create isolated agent dir");
 
@@ -5448,8 +5448,8 @@ fn e2e_cli_no_migrations_skips_startup_migrations() {
     let agent_dir = PathBuf::from(
         harness
             .env
-            .get("KODE_CODING_AGENT_DIR")
-            .expect("KODE_CODING_AGENT_DIR set"),
+            .get("KESA_CODING_AGENT_DIR")
+            .expect("KESA_CODING_AGENT_DIR set"),
     );
     fs::create_dir_all(&agent_dir).expect("create isolated agent dir");
 

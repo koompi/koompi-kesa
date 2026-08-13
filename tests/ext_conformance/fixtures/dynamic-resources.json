@@ -48,7 +48,7 @@
       },
       "outputs": {
         "stdout_normalized_jsonl": [
-          "{\"command\":\"get_commands\",\"data\":{\"commands\":[{\"description\":\"Example prompt template loaded from resources_discover (path:dynamic)\",\"location\":\"path\",\"name\":\"dynamic\",\"path\":\"<KODE_MONO_ROOT>/packages/coding-agent/examples/extensions/dynamic-resources/dynamic.md\",\"source\":\"template\"},{\"description\":\"Example skill loaded from resources_discover\",\"location\":\"path\",\"name\":\"skill:dynamic-resources\",\"path\":\"<KODE_MONO_ROOT>/packages/coding-agent/examples/extensions/dynamic-resources/SKILL.md\",\"source\":\"skill\"}]},\"id\":\"cmd-1\",\"success\":true,\"type\":\"response\"}"
+          "{\"command\":\"get_commands\",\"data\":{\"commands\":[{\"description\":\"Example prompt template loaded from resources_discover (path:dynamic)\",\"location\":\"path\",\"name\":\"dynamic\",\"path\":\"<KESA_MONO_ROOT>/packages/coding-agent/examples/extensions/dynamic-resources/dynamic.md\",\"source\":\"template\"},{\"description\":\"Example skill loaded from resources_discover\",\"location\":\"path\",\"name\":\"skill:dynamic-resources\",\"path\":\"<KESA_MONO_ROOT>/packages/coding-agent/examples/extensions/dynamic-resources/SKILL.md\",\"source\":\"skill\"}]},\"id\":\"cmd-1\",\"success\":true,\"type\":\"response\"}"
         ],
         "meta_normalized": {
           "agent_dir": "target/legacy_capture/scn-dynamic-resources-001/<RUN_ID>/agent",

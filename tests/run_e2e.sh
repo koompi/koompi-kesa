@@ -126,7 +126,7 @@ fi
 require_cmd cargo
 require_cmd jq
 
-MODELS_PATH="${KODE_MODELS_PATH:-$HOME/.kode/agent/models.json}"
+MODELS_PATH="${KESA_MODELS_PATH:-$HOME/.kode/agent/models.json}"
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT_DIR="${ROOT}/tests/e2e_results/${TIMESTAMP}"
 mkdir -p "$OUT_DIR"
@@ -186,8 +186,8 @@ for provider in "${TARGET_PROVIDERS[@]}"; do
   set +e
   if [[ "$RECORD_MODE" -eq 1 ]]; then
     CI_E2E_TESTS=1 \
-      KODE_LIVE_E2E_PROVIDER="$provider" \
-      KODE_E2E_EXPORT_DIR="$export_dir" \
+      KESA_LIVE_E2E_PROVIDER="$provider" \
+      KESA_E2E_EXPORT_DIR="$export_dir" \
       TEST_LOG_JSONL_PATH="$test_log" \
       TEST_ARTIFACT_INDEX_PATH="$artifact_index" \
       VCR_MODE=record \
@@ -195,8 +195,8 @@ for provider in "${TARGET_PROVIDERS[@]}"; do
       >"$cargo_output" 2>&1
   else
     CI_E2E_TESTS=1 \
-      KODE_LIVE_E2E_PROVIDER="$provider" \
-      KODE_E2E_EXPORT_DIR="$export_dir" \
+      KESA_LIVE_E2E_PROVIDER="$provider" \
+      KESA_E2E_EXPORT_DIR="$export_dir" \
       TEST_LOG_JSONL_PATH="$test_log" \
       TEST_ARTIFACT_INDEX_PATH="$artifact_index" \
       cargo test --test e2e_live_harness e2e_live_provider_harness_smoke -- --nocapture \

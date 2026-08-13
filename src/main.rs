@@ -624,7 +624,7 @@ fn main_impl() -> Result<()> {
     if cli.command.is_none()
         && let Some(pattern) = &cli.list_models
     {
-        let compat_scan_enabled = std::env::var("KODE_EXT_COMPAT_SCAN").is_ok_and(|value| {
+        let compat_scan_enabled = kesa::env::var("EXT_COMPAT_SCAN").is_some_and(|value| {
             matches!(
                 value.trim().to_ascii_lowercase().as_str(),
                 "1" | "true" | "yes" | "on"
@@ -997,7 +997,7 @@ fn extension_policy_migration_guardrails(
         "override_cli": {
             "safe_strict_mode": "pi --extension-policy safe <your command>",
             "balanced_prompt_mode": "pi --extension-policy balanced <your command>",
-            "balanced_with_dangerous_caps": "KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
+            "balanced_with_dangerous_caps": "KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
             "explicit_permissive": "pi --extension-policy permissive <your command>",
         },
         "settings_examples": {
@@ -1037,7 +1037,7 @@ fn capability_remediation(capability: Capability, decision: PolicyDecision) -> s
     let (to_allow_cli, to_allow_config, recommendation) = match (is_dangerous, decision) {
         (true, PolicyDecision::Deny) => (
             vec![
-                "KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
+                "KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
                 "pi --extension-policy permissive <your command>",
             ],
             vec![
@@ -1178,8 +1178,8 @@ fn print_resolved_extension_policy(resolved: &kesa::config::ResolvedExtensionPol
         "allow_dangerous": resolved.allow_dangerous,
         "profile_presets": profile_presets,
         "dangerous_capability_opt_in": {
-            "cli": "KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
-            "env_var": "KODE_EXTENSION_ALLOW_DANGEROUS=1",
+            "cli": "KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
+            "env_var": "KESA_EXTENSION_ALLOW_DANGEROUS=1",
             "config_example": policy_config_example("balanced", true),
         },
         "migration_guardrails": extension_policy_migration_guardrails(resolved),
@@ -1206,7 +1206,7 @@ fn print_resolved_repair_policy(resolved: &kesa::config::ResolvedRepairPolicy) -
             "auto-strict": "Automatically apply all fixes including code changes.",
         },
         "cli_override": "pi --repair-policy <mode> <your command>",
-        "env_var": "KODE_REPAIR_POLICY=<mode>",
+        "env_var": "KESA_REPAIR_POLICY=<mode>",
     });
 
     println!("{}", serde_json::to_string_pretty(&payload)?);
@@ -1223,7 +1223,7 @@ async fn run(
 
     // Resolve the HTTP request timeout before any provider HTTP client is
     // constructed so the client's single resolution path sees it. The
-    // `--request-timeout` flag is bound to the KODE_HTTP_REQUEST_TIMEOUT_SECS env
+    // `--request-timeout` flag is bound to the KESA_HTTP_REQUEST_TIMEOUT_SECS env
     // var via clap, so `cli.request_timeout` already reflects either the flag
     // or that env var. Config-file values are applied at the lowest precedence
     // before the first provider request. See pi_agent_rust#90.
@@ -1266,7 +1266,7 @@ async fn run(
     }
     if cli.no_mouse_capture {
         // The CLI flag takes precedence over the persisted setting. The
-        // KODE_NO_MOUSE_CAPTURE env var is read separately by run_interactive so
+        // KESA_NO_MOUSE_CAPTURE env var is read separately by run_interactive so
         // only the literal value `1` is truthy. Workaround for #78.
         config.disable_mouse_capture = Some(true);
     }
@@ -1601,7 +1601,7 @@ async fn run(
     } else {
         String::new()
     };
-    let test_mode = std::env::var_os("KODE_TEST_MODE").is_some();
+    let test_mode = kesa::env::var_os("TEST_MODE").is_some();
     let system_prompt = kesa::app::build_system_prompt(
         &cli,
         &cwd,
@@ -1620,7 +1620,7 @@ async fn run(
         providers::create_provider(&selection.model_entry, None).map_err(anyhow::Error::new)?;
     let stream_options =
         kesa::app::build_stream_options(&config, resolved_key.clone(), &selection, &session);
-    // CLI flag wins; fall back to KODE_MAX_TOOL_ITERATIONS env, then default.
+    // CLI flag wins; fall back to KESA_MAX_TOOL_ITERATIONS env, then default.
     // `clamp_max_tool_iterations` keeps invalid values out of the loop and
     // emits a warning instead of failing the run.
     let max_tool_iterations = if cli.max_tool_iterations.is_some() {

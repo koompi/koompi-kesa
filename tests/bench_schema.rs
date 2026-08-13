@@ -342,7 +342,7 @@ fn schema_doc_generation_enabled(raw: Option<&str>) -> bool {
 
 fn schema_doc_generation_requested() -> bool {
     schema_doc_generation_enabled(
-        std::env::var("KODE_GENERATE_BENCH_SCHEMA_DOCS")
+        std::env::var("KESA_GENERATE_BENCH_SCHEMA_DOCS")
             .ok()
             .as_deref(),
     )
@@ -616,7 +616,7 @@ case "$test_name" in
 {"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":124.0,"append_ms":90.0,"save_ms":54.0,"index_ms":21.0,"total_ms":289.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_1000000","replay_input":{"session_messages":1000000}}}
 {"schema":"pi.ext.rust_bench.v1","runtime":"koompi_code_cli","scenario":"session_workload_matrix","extension":"core","partition":"realistic","open_ms":198.0,"append_ms":146.0,"save_ms":88.0,"index_ms":33.0,"total_ms":465.0,"protocol_schema":"pi.bench.protocol.v1","protocol_version":"1.0.0","evidence_class":"measured","confidence":"high","correlation_id":"stub-correlation","scenario_metadata":{"runtime":"koompi_code_cli","build_profile":"perf","host":{"os":"linux","arch":"x86_64","cpu_model":"stub","cpu_cores":8},"scenario_id":"realistic/session_5000000","replay_input":{"session_messages":5000000}}}
 JSON
-    if [[ "${KODE_FAKE_DROP_INDEX_STAGE_SAMPLE:-0}" == "1" ]]; then
+    if [[ "${KESA_FAKE_DROP_INDEX_STAGE_SAMPLE:-0}" == "1" ]]; then
       python3 - "$target_dir/perf/scenario_runner.jsonl" <<'PY'
 import json
 import sys
@@ -640,7 +640,7 @@ for line in rows:
 path.write_text("\n".join(rewritten) + ("\n" if rewritten else ""), encoding="utf-8")
 PY
     fi
-    if [[ "${KODE_FAKE_DROP_ALL_STAGE_SAMPLES:-0}" == "1" ]]; then
+    if [[ "${KESA_FAKE_DROP_ALL_STAGE_SAMPLES:-0}" == "1" ]]; then
       python3 - "$target_dir/perf/scenario_runner.jsonl" <<'PY'
 import json
 import sys
@@ -717,7 +717,7 @@ for line in rows:
     rewritten.append(json.dumps(record, separators=(",", ":")))
 path.write_text("\n".join(rewritten) + ("\n" if rewritten else ""), encoding="utf-8")
 PY
-    if [[ "${KODE_FAKE_DROP_SWARM_METRICS:-0}" == "1" ]]; then
+    if [[ "${KESA_FAKE_DROP_SWARM_METRICS:-0}" == "1" ]]; then
       python3 - "$target_dir/perf/scenario_runner.jsonl" <<'PY'
 import json
 import sys
@@ -7192,7 +7192,7 @@ fn orchestrate_generates_phase1_matrix_validation_artifact() {
 #[test]
 fn orchestrate_phase1_matrix_treats_missing_index_as_incomplete() {
     let (output, temp_root) =
-        run_orchestrate_with_fake_toolchain_with_env(&[("KODE_FAKE_DROP_INDEX_STAGE_SAMPLE", "1")]);
+        run_orchestrate_with_fake_toolchain_with_env(&[("KESA_FAKE_DROP_INDEX_STAGE_SAMPLE", "1")]);
     assert_orchestrate_success(&output);
 
     let matrix_path = temp_root
@@ -7333,7 +7333,7 @@ fn orchestrate_phase1_matrix_treats_missing_index_as_incomplete() {
 #[test]
 fn orchestrate_phase1_matrix_treats_missing_swarm_metrics_as_incomplete() {
     let (output, temp_root) =
-        run_orchestrate_with_fake_toolchain_with_env(&[("KODE_FAKE_DROP_SWARM_METRICS", "1")]);
+        run_orchestrate_with_fake_toolchain_with_env(&[("KESA_FAKE_DROP_SWARM_METRICS", "1")]);
     assert_orchestrate_success(&output);
 
     let matrix_path = temp_root
@@ -7386,7 +7386,7 @@ fn orchestrate_phase1_matrix_treats_missing_swarm_metrics_as_incomplete() {
 #[test]
 fn orchestrate_phase1_weighted_attribution_missing_when_no_stage_cells_are_valid() {
     let (output, temp_root) =
-        run_orchestrate_with_fake_toolchain_with_env(&[("KODE_FAKE_DROP_ALL_STAGE_SAMPLES", "1")]);
+        run_orchestrate_with_fake_toolchain_with_env(&[("KESA_FAKE_DROP_ALL_STAGE_SAMPLES", "1")]);
     assert_orchestrate_success(&output);
 
     let matrix_path = temp_root
@@ -7650,7 +7650,7 @@ fn jsonl_records_have_stable_key_ordering() {
 fn generate_schema_doc() {
     if !schema_doc_generation_requested() {
         eprintln!(
-            "[schema] Documentation generation skipped; set KODE_GENERATE_BENCH_SCHEMA_DOCS=1 to write tracked schema files"
+            "[schema] Documentation generation skipped; set KESA_GENERATE_BENCH_SCHEMA_DOCS=1 to write tracked schema files"
         );
         return;
     }

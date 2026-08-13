@@ -445,7 +445,7 @@ Deterministic scenarios:
   - Expected: stable error message containing `Missing Google Antigravity OAuth credentials`
 
 - `antigravity-image-gen/tool/save_mode_custom_without_dir` (headless)
-  - Steps: invoke `generate_image { prompt: "a cat", save: "custom" }` with no `KODE_IMAGE_SAVE_DIR`
+  - Steps: invoke `generate_image { prompt: "a cat", save: "custom" }` with no `KESA_IMAGE_SAVE_DIR`
   - Expected: deterministic error or saveError surfaced (exact message may differ; assert presence of `save`/`custom` and missing dir indicator)
 
 VCR-backed (future):

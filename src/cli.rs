@@ -277,7 +277,8 @@ fn preprocess_extension_flags(raw_args: &[String]) -> (Vec<String>, Vec<Extensio
 
 pub fn parse_with_extension_flags(raw_args: Vec<String>) -> Result<ParsedCli, clap::Error> {
     if raw_args.is_empty() {
-        let cli = Cli::try_parse_from(["pi"])?;
+        let mut cli = Cli::try_parse_from(["pi"])?;
+        adopt_legacy_env(&mut cli);
         return Ok(ParsedCli {
             cli,
             extension_flags: Vec::new(),
@@ -302,19 +303,52 @@ pub fn parse_with_extension_flags(raw_args: Vec<String>) -> Result<ParsedCli, cl
 
     let (filtered_args, extension_flags) = preprocess_extension_flags(&raw_args);
     if extension_flags.is_empty() {
-        let cli = Cli::try_parse_from(raw_args)?;
+        let mut cli = Cli::try_parse_from(raw_args)?;
+        adopt_legacy_env(&mut cli);
         return Ok(ParsedCli {
             cli,
             extension_flags: Vec::new(),
         });
     }
 
-    let cli = Cli::try_parse_from(filtered_args)?;
+    let mut cli = Cli::try_parse_from(filtered_args)?;
+    adopt_legacy_env(&mut cli);
     Ok(ParsedCli {
         cli,
         extension_flags,
     })
 }
+
+/// clap reads `KESA_*` itself, so the pre-rename names have to be applied here
+/// or these five flags would be the only environment surface without a fallback.
+fn adopt_legacy_env(cli: &mut Cli) {
+    if cli.provider.is_none() {
+        cli.provider = crate::env::legacy_fallback("PROVIDER");
+    }
+    if cli.model.is_none() {
+        cli.model = crate::env::legacy_fallback("MODEL");
+    }
+    if cli.permission_mode.is_none() {
+        cli.permission_mode = crate::env::legacy_fallback("PERMISSION_MODE")
+            .filter(|mode| PERMISSION_MODES.contains(&mode.as_str()));
+    }
+    if cli.request_timeout.is_none() {
+        cli.request_timeout =
+            crate::env::legacy_fallback("HTTP_REQUEST_TIMEOUT_SECS")
+                .and_then(|raw| raw.trim().parse().ok());
+    }
+    if !cli.hide_cwd_in_prompt {
+        cli.hide_cwd_in_prompt = crate::env::legacy_fallback("HIDE_CWD_IN_PROMPT")
+            .is_some_and(|raw| {
+                matches!(
+                    raw.trim().to_ascii_lowercase().as_str(),
+                    "" | "1" | "true" | "yes" | "on"
+                )
+            });
+    }
+}
+
+const PERMISSION_MODES: &[&str] = &["default", "accept-edits", "plan", "read-only"];
 
 /// KOOMPI Code - AI coding agent CLI
 #[derive(Parser, Debug)]
@@ -338,11 +372,11 @@ pub struct Cli {
     // === Model Configuration ===
     /// LLM provider (e.g., anthropic, openai, google).
     /// Run --list-providers for canonical IDs + aliases.
-    #[arg(long, env = "KODE_PROVIDER")]
+    #[arg(long, env = "KESA_PROVIDER")]
     pub provider: Option<String>,
 
     /// Model ID (e.g., claude-opus-4, gpt-4o)
-    #[arg(long, env = "KODE_MODEL")]
+    #[arg(long, env = "KESA_MODEL")]
     pub model: Option<String>,
 
     /// API key (overrides environment variable)
@@ -362,9 +396,9 @@ pub struct Cli {
     /// 600s (10 minutes) for local providers (Ollama, LM Studio) where the
     /// first request can block while the model loads into memory. Raise this if
     /// a local model's cold start exceeds the default. Equivalent to the
-    /// `KODE_HTTP_REQUEST_TIMEOUT_SECS` env var and the `requestTimeoutSecs`
+    /// `KESA_HTTP_REQUEST_TIMEOUT_SECS` env var and the `requestTimeoutSecs`
     /// setting. See pi_agent_rust#90.
-    #[arg(long, value_name = "SECONDS", env = "KODE_HTTP_REQUEST_TIMEOUT_SECS")]
+    #[arg(long, value_name = "SECONDS", env = "KESA_HTTP_REQUEST_TIMEOUT_SECS")]
     pub request_timeout: Option<u64>,
 
     // === Thinking/Reasoning ===
@@ -420,14 +454,14 @@ pub struct Cli {
     /// terminal-native click-to-select / right-click-paste / Shift-Insert
     /// behaviour, making it effectively impossible to copy out the OAuth
     /// authorization URL (which is ~600 characters). Setting this flag (or
-    /// `disable_mouse_capture: true` in settings, or `KODE_NO_MOUSE_CAPTURE=1`)
+    /// `disable_mouse_capture: true` in settings, or `KESA_NO_MOUSE_CAPTURE=1`)
     /// turns the capture off so terminal-native copy/paste keeps working.
     /// In-app mouse wheel scrolling is sacrificed; users can still scroll
     /// with Page Up/Down or arrow keys.
     ///
     /// Note: the env-var path is intentionally read in `run_interactive`
     /// (not via `#[arg(env = "...")]` here) so the truthiness semantics
-    /// stay "only `=1` is truthy", matching how `KODE_HARDWARE_CURSOR`
+    /// stay "only `=1` is truthy", matching how `KESA_HARDWARE_CURSOR`
     /// behaves and avoiding clap's bool-env ambiguity where `=0` /
     /// `=false` may otherwise set the flag to true.
     #[arg(long)]
@@ -460,8 +494,8 @@ pub struct Cli {
     #[arg(
         long,
         value_name = "MODE",
-        env = "KODE_PERMISSION_MODE",
-        value_parser = ["default", "accept-edits", "plan", "read-only"]
+        env = "KESA_PERMISSION_MODE",
+        value_parser = PERMISSION_MODES.to_vec()
     )]
     pub permission_mode: Option<String>,
 
@@ -548,7 +582,7 @@ pub struct Cli {
 
     // === System prompt modifiers ===
     /// Hide the current working directory from the system prompt.
-    #[arg(long, env = "KODE_HIDE_CWD_IN_PROMPT")]
+    #[arg(long, env = "KESA_HIDE_CWD_IN_PROMPT")]
     pub hide_cwd_in_prompt: bool,
 
     /// Maximum tool-call iterations per agent turn before stopping.
@@ -557,7 +591,7 @@ pub struct Cli {
     /// at 80% of the cap, a one-shot steering message is injected so the agent
     /// can begin a graceful handoff rather than being silently killed at the
     /// ceiling. Override per-invocation via this flag, or globally via the
-    /// `KODE_MAX_TOOL_ITERATIONS` env var (read at agent start; invalid values
+    /// `KESA_MAX_TOOL_ITERATIONS` env var (read at agent start; invalid values
     /// fall back to the default with a warning, never abort startup).
     //
     // NOTE: `env =` is intentionally NOT set here. Clap's env wiring is strict
@@ -587,7 +621,7 @@ pub struct Cli {
     /// (OpenAI-compatible providers only). Falls back to the static registry
     /// when the live call fails. Long-lived library callers reuse successful
     /// results in-process for 5 minutes; separate CLI invocations do not share
-    /// that cache. Set `KODE_DISABLE_MODEL_CACHE=1` to bypass it.
+    /// that cache. Set `KESA_DISABLE_MODEL_CACHE=1` to bypass it.
     #[arg(long, value_name = "PROVIDER")]
     pub fetch_models: Option<String>,
 

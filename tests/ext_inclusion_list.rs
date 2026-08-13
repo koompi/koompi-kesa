@@ -525,7 +525,7 @@ fn generate_inclusion_list() {
 
     // Optional local update mode for maintainers intentionally regenerating
     // the canonical manifest.
-    if std::env::var_os("KODE_WRITE_INCLUSION_LIST").is_some() {
+    if std::env::var_os("KESA_WRITE_INCLUSION_LIST").is_some() {
         fs::write(&output_path, format!("{generated_json}\n"))
             .expect("overwrite committed inclusion list");
     }
@@ -585,7 +585,7 @@ fn generate_inclusion_list() {
     assert!(
         !has_diff,
         "Canonical extension manifest drift detected. \
-         Run `KODE_WRITE_INCLUSION_LIST=1 cargo test --test ext_inclusion_list -- --nocapture`, \
+         Run `KESA_WRITE_INCLUSION_LIST=1 cargo test --test ext_inclusion_list -- --nocapture`, \
          review `docs/extension-inclusion-list.json`, and re-run tests.\n\n{diff}"
     );
 

@@ -36,7 +36,7 @@
     {
       "boundary": "canonicalize_for_golden",
       "details": {
-        "cargo_tmp_path": "[KODE_AGENT_CARGO_TMP]/test/target",
+        "cargo_tmp_path": "[KESA_AGENT_CARGO_TMP]/test/target",
         "data_tmp_path": "[DATA_TMP]/pi-agent/fuzz-artifact.json",
         "git_sha_text": "[GIT_SHA]",
         "home_path": "[HOME]/.config/pi/settings.json",

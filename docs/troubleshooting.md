@@ -78,8 +78,8 @@ Sessions live under:
 ```
 
 Overrides:
-- `KODE_CODING_AGENT_DIR` (global base)
-- `KODE_SESSIONS_DIR` (sessions root)
+- `KESA_CODING_AGENT_DIR` (global base)
+- `KESA_SESSIONS_DIR` (sessions root)
 
 **Corruption recovery:**
 - Run with `--no-session` to bypass persistence.

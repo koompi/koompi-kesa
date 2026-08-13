@@ -15,7 +15,7 @@
 //! RCH omits repository metadata, so full replay-lineage runs must pass the
 //! authoritative source commit explicitly:
 //! ```bash
-//! KODE_PROVIDER_REPLAY_GIT_COMMIT="$(git rev-parse HEAD)" \
+//! KESA_PROVIDER_REPLAY_GIT_COMMIT="$(git rev-parse HEAD)" \
 //!   rch exec -- cargo test --test provider_streaming
 //! ```
 mod common;
@@ -79,7 +79,7 @@ pub(crate) fn vcr_strict() -> bool {
 
 const PROVIDER_REPLAY_CACHE_SCHEMA: &str = "pi.test.provider_replay_cache.v1";
 const PROVIDER_REPLAY_CACHE_CASSETTE_VERSION: &str = "1.0";
-const PROVIDER_REPLAY_GIT_COMMIT_ENV: &str = "KODE_PROVIDER_REPLAY_GIT_COMMIT";
+const PROVIDER_REPLAY_GIT_COMMIT_ENV: &str = "KESA_PROVIDER_REPLAY_GIT_COMMIT";
 
 pub(crate) struct ProviderReplayCacheSpec<'a> {
     pub provider: &'a str,

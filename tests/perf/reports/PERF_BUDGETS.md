@@ -135,5 +135,5 @@ CI-enforced budgets are checked on every PR. A budget violation blocks the PR fr
 cargo test --test perf_budgets -- --nocapture
 
 # Generate full budget report
-KODE_GENERATE_PERF_BUDGET_REPORT=1 cargo test --test perf_budgets generate_budget_report -- --nocapture
+KESA_GENERATE_PERF_BUDGET_REPORT=1 cargo test --test perf_budgets generate_budget_report -- --nocapture
 ```

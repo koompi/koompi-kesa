@@ -851,25 +851,25 @@ const CRASH_INTERRUPT_RECOVERY_HARNESS_SCHEMA: &str = "pi.rpc.crash_interrupt_re
 #[cfg(unix)]
 const CRASH_INTERRUPT_RECOVERY_WORKER_SCHEMA: &str = "pi.rpc.crash_interrupt_recovery_worker.v1";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_WORKER_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_WORKER";
+const CRASH_INTERRUPT_RECOVERY_WORKER_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_WORKER";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_ROLE_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_ROLE";
+const CRASH_INTERRUPT_RECOVERY_ROLE_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_ROLE";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_CYCLE_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_CYCLE";
+const CRASH_INTERRUPT_RECOVERY_CYCLE_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_CYCLE";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_MODE_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_MODE";
+const CRASH_INTERRUPT_RECOVERY_MODE_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_MODE";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_SESSIONS_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_SESSIONS_ROOT";
+const CRASH_INTERRUPT_RECOVERY_SESSIONS_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_SESSIONS_ROOT";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_ARTIFACT_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_ARTIFACT_DIR";
+const CRASH_INTERRUPT_RECOVERY_ARTIFACT_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_ARTIFACT_DIR";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_PROJECT_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_PROJECT_DIR";
+const CRASH_INTERRUPT_RECOVERY_PROJECT_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_PROJECT_DIR";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_READY_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_READY_PATH";
+const CRASH_INTERRUPT_RECOVERY_READY_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_READY_PATH";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_SUMMARY_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_SUMMARY_PATH";
+const CRASH_INTERRUPT_RECOVERY_SUMMARY_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_SUMMARY_PATH";
 #[cfg(unix)]
-const CRASH_INTERRUPT_RECOVERY_SESSION_ENV: &str = "KODE_CRASH_INTERRUPT_RECOVERY_SESSION_PATH";
+const CRASH_INTERRUPT_RECOVERY_SESSION_ENV: &str = "KESA_CRASH_INTERRUPT_RECOVERY_SESSION_PATH";
 #[cfg(unix)]
 const CRASH_INTERRUPT_RECOVERY_DEFAULT_TIMEOUT: Duration = Duration::from_secs(45);
 
@@ -947,12 +947,12 @@ fn crash_interrupt_recovery_schedule() -> Vec<CrashInterruptRecoveryMode> {
         CrashInterruptRecoveryMode::Sigint,
         CrashInterruptRecoveryMode::Sighup,
     ];
-    let configured_cycles = std::env::var("KODE_CRASH_INTERRUPT_RECOVERY_CYCLES")
+    let configured_cycles = std::env::var("KESA_CRASH_INTERRUPT_RECOVERY_CYCLES")
         .ok()
         .and_then(|value| value.parse::<usize>().ok())
         .filter(|value| *value > 0);
     let cycle_count = configured_cycles.unwrap_or_else(|| {
-        if std::env::var_os("KODE_CRASH_INTERRUPT_RECOVERY_LONG").is_some() {
+        if std::env::var_os("KESA_CRASH_INTERRUPT_RECOVERY_LONG").is_some() {
             base.len() * 3
         } else {
             base.len()
@@ -1930,7 +1930,7 @@ fn crash_interrupt_recovery_soak_harness_survives_signals_and_restarts() -> std:
     let summary_path = harness.temp_path("crash-interrupt-recovery-soak-summary.json");
     let summary = json!({
         "schema": CRASH_INTERRUPT_RECOVERY_HARNESS_SCHEMA,
-        "mode": if std::env::var_os("KODE_CRASH_INTERRUPT_RECOVERY_LONG").is_some() {
+        "mode": if std::env::var_os("KESA_CRASH_INTERRUPT_RECOVERY_LONG").is_some() {
             "long"
         } else {
             "ci"
@@ -1979,11 +1979,11 @@ fn rpc_binary_sigint_exits_orderly_and_preserves_session() -> std::io::Result<()
             "--session-dir",
         ])
         .arg(&sessions_root)
-        .env("KODE_CODING_AGENT_DIR", &agent_dir)
-        .env("KODE_CONFIG_PATH", &config_path)
-        .env("KODE_SESSIONS_DIR", &sessions_root)
-        .env("KODE_PACKAGE_DIR", &package_dir)
-        .env("KODE_TEST_MODE", "1")
+        .env("KESA_CODING_AGENT_DIR", &agent_dir)
+        .env("KESA_CONFIG_PATH", &config_path)
+        .env("KESA_SESSIONS_DIR", &sessions_root)
+        .env("KESA_PACKAGE_DIR", &package_dir)
+        .env("KESA_TEST_MODE", "1")
         .current_dir(&project_dir)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

@@ -7,7 +7,7 @@
 # Downloads the release binary for this machine, checks it against the
 # release's SHA256SUMS, and drops `kode` in ~/.local/bin.
 #
-# Environment overrides: OWNER, REPO, VERSION, DEST, KODE_NO_VERIFY.
+# Environment overrides: OWNER, REPO, VERSION, DEST, KESA_NO_VERIFY.
 
 set -euo pipefail
 
@@ -15,7 +15,7 @@ OWNER="${OWNER:-koompi}"
 REPO="${REPO:-koompi-code-cli}"
 VERSION="${VERSION:-}"
 DEST="${DEST:-$HOME/.local/bin}"
-NO_VERIFY="${KODE_NO_VERIFY:-0}"
+NO_VERIFY="${KESA_NO_VERIFY:-0}"
 BIN="kode"
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -92,9 +92,9 @@ if [ -z "$VERSION" ]; then
 fi
 
 ASSET="${BIN}-${VERSION}-${PLATFORM}.tar.gz"
-# KODE_DOWNLOAD_BASE points the download at a mirror. Bandwidth to GitHub from
+# KESA_DOWNLOAD_BASE points the download at a mirror. Bandwidth to GitHub from
 # Cambodia is the reason this exists.
-BASE="${KODE_DOWNLOAD_BASE:-https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}}"
+BASE="${KESA_DOWNLOAD_BASE:-https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}}"
 
 TMP="$(mktemp -d)"
 cleanup() { rm -rf "$TMP"; }

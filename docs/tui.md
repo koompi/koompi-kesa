@@ -37,7 +37,7 @@ Displays session statistics and status.
 
 ## Operator Telemetry
 
-Setting `KODE_PERF_TELEMETRY=1` enables bounded in-process timing samples for
+Setting `KESA_PERF_TELEMETRY=1` enables bounded in-process timing samples for
 operator diagnosis during long swarm runs. The samples are timing-only: they do
 not include prompts, tool arguments, provider payloads, transcript text, or
 credentials. Runtime summaries use the `pi.operator_tail_latency.v1` schema and

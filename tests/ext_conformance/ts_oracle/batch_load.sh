@@ -9,10 +9,10 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ARTIFACTS="${1:-$SCRIPT_DIR/../artifacts}"
 HARNESS="$SCRIPT_DIR/load_extension.ts"
-KODE_MONO_ROOT="$SCRIPT_DIR/../../../legacy_pi_mono_code/pi-mono"
+KESA_MONO_ROOT="$SCRIPT_DIR/../../../legacy_pi_mono_code/pi-mono"
 BUN="/home/ubuntu/.bun/bin/bun"
 
-export NODE_PATH="$KODE_MONO_ROOT/node_modules"
+export NODE_PATH="$KESA_MONO_ROOT/node_modules"
 
 passed=0
 failed=0

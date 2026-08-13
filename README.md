@@ -89,7 +89,7 @@ curl -fsSL .../install.sh | bash -s -- --version v0.2.0 --dest /usr/local/bin
 ```
 
 The installer checks the download against the release's `SHA256SUMS` before
-installing anything. `KODE_DOWNLOAD_BASE` points it at a mirror.
+installing anything. `KESA_DOWNLOAD_BASE` points it at a mirror.
 
 From source, with the pinned nightly in `rust-toolchain.toml`:
 
@@ -116,8 +116,8 @@ kode --resume                         # choose a session from the picker
 kode --permission-mode plan "how would you restructure the parser?"
 ```
 
-Point it at a provider with `--provider` and `--model`, or set `KODE_PROVIDER`
-and `KODE_MODEL`. Local models work the same way: Ollama and LM Studio get a
+Point it at a provider with `--provider` and `--model`, or set `KESA_PROVIDER`
+and `KESA_MODEL`. Local models work the same way: Ollama and LM Studio get a
 ten-minute first-request timeout so a cold model load does not read as a
 hang.
 

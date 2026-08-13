@@ -182,22 +182,22 @@ fn isolated_cli_env(harness: &TestHarness) -> BTreeMap<String, String> {
     let _ = std::fs::create_dir_all(&env_root);
 
     env.insert(
-        "KODE_CODING_AGENT_DIR".to_string(),
+        "KESA_CODING_AGENT_DIR".to_string(),
         env_root.join("agent").display().to_string(),
     );
     env.insert(
-        "KODE_CONFIG_PATH".to_string(),
+        "KESA_CONFIG_PATH".to_string(),
         env_root.join("settings.json").display().to_string(),
     );
     env.insert(
-        "KODE_SESSIONS_DIR".to_string(),
+        "KESA_SESSIONS_DIR".to_string(),
         env_root.join("sessions").display().to_string(),
     );
     env.insert(
-        "KODE_PACKAGE_DIR".to_string(),
+        "KESA_PACKAGE_DIR".to_string(),
         env_root.join("packages").display().to_string(),
     );
-    env.insert("KODE_TEST_MODE".to_string(), "1".to_string());
+    env.insert("KESA_TEST_MODE".to_string(), "1".to_string());
     env
 }
 
@@ -226,8 +226,8 @@ fn run_cli(
     command.env_remove("GROQ_API_KEY");
     command.env_remove("KIMI_API_KEY");
     command.env_remove("AZURE_OPENAI_API_KEY");
-    command.env_remove("KODE_OPENROUTER_API_KEY");
-    command.env_remove("KODE_AWS_ACCESS_KEY_ID");
+    command.env_remove("KESA_OPENROUTER_API_KEY");
+    command.env_remove("KESA_AWS_ACCESS_KEY_ID");
     command
         .args(args)
         .envs(env.clone())
@@ -1319,7 +1319,7 @@ fn cli_missing_api_key_clear_error() {
     // Ensure no API keys are set
     env.insert("ANTHROPIC_API_KEY".to_string(), String::new());
     env.insert("OPENAI_API_KEY".to_string(), String::new());
-    env.insert("KODE_API_KEY".to_string(), String::new());
+    env.insert("KESA_API_KEY".to_string(), String::new());
 
     let result = run_cli(
         &harness,

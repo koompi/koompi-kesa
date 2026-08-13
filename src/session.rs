@@ -2261,12 +2261,12 @@ fn build_share_viewer_url(base_url: Option<&str>, gist_id: &str) -> String {
 
 /// Get the share viewer URL for a gist ID.
 ///
-/// - Use `KODE_SHARE_VIEWER_URL` env var when set and non-empty, as `{base}#{gist_id}`
+/// - Use `KESA_SHARE_VIEWER_URL` env var when set and non-empty, as `{base}#{gist_id}`
 /// - Otherwise link the gist directly, so a share link resolves without KOOMPI
 ///   hosting a viewer
 #[must_use]
 pub fn get_share_viewer_url(gist_id: &str) -> String {
-    let base_url = std::env::var("KODE_SHARE_VIEWER_URL").ok();
+    let base_url = crate::env::var("SHARE_VIEWER_URL");
     build_share_viewer_url(base_url.as_deref(), gist_id)
 }
 
@@ -2320,8 +2320,7 @@ impl SessionStoreKind {
 const DEFAULT_AUTOSAVE_MAX_PENDING_MUTATIONS: usize = 256;
 
 fn autosave_max_pending_mutations() -> usize {
-    std::env::var("KODE_SESSION_AUTOSAVE_MAX_PENDING")
-        .ok()
+    crate::env::var("SESSION_AUTOSAVE_MAX_PENDING")
         .and_then(|raw| raw.parse::<usize>().ok())
         .filter(|value| *value > 0)
         .unwrap_or(DEFAULT_AUTOSAVE_MAX_PENDING_MUTATIONS)
@@ -2331,8 +2330,7 @@ fn autosave_max_pending_mutations() -> usize {
 const DEFAULT_COMPACTION_CHECKPOINT_INTERVAL: u64 = 50;
 
 fn compaction_checkpoint_interval() -> u64 {
-    std::env::var("KODE_SESSION_COMPACTION_INTERVAL")
-        .ok()
+    crate::env::var("SESSION_COMPACTION_INTERVAL")
         .and_then(|raw| raw.parse::<u64>().ok())
         .filter(|value| *value > 0)
         .unwrap_or(DEFAULT_COMPACTION_CHECKPOINT_INTERVAL)
@@ -2357,8 +2355,7 @@ impl AutosaveDurabilityMode {
     }
 
     fn from_env() -> Self {
-        std::env::var("KODE_SESSION_DURABILITY_MODE")
-            .ok()
+        crate::env::var("SESSION_DURABILITY_MODE")
             .as_deref()
             .and_then(Self::parse)
             .unwrap_or(Self::Balanced)
@@ -2992,8 +2989,7 @@ impl Session {
         let durability_mode = resolve_autosave_durability_mode(
             cli.session_durability.as_deref(),
             config.session_durability.as_deref(),
-            std::env::var("KODE_SESSION_DURABILITY_MODE")
-                .ok()
+            crate::env::var("SESSION_DURABILITY_MODE")
                 .as_deref(),
         );
         if cli.no_session {
@@ -7054,16 +7050,16 @@ fn open_from_v2_store_blocking(jsonl_path: &Path) -> Result<(Session, SessionOpe
     let v2_root = session_store_v2::v2_sidecar_path(&jsonl_path);
 
     // 3. Choose an explicit hydration strategy for resume:
-    // - env override (KODE_SESSION_V2_OPEN_MODE)
+    // - env override (KESA_SESSION_V2_OPEN_MODE)
     // - auto lazy mode for large sessions
-    let mode_override_raw = std::env::var("KODE_SESSION_V2_OPEN_MODE").ok();
-    let threshold_override_raw = std::env::var("KODE_SESSION_V2_LAZY_THRESHOLD").ok();
+    let mode_override_raw = crate::env::var("SESSION_V2_OPEN_MODE");
+    let threshold_override_raw = crate::env::var("SESSION_V2_LAZY_THRESHOLD");
     if let Some(raw) = mode_override_raw.as_deref()
         && parse_v2_open_mode(raw).is_none()
     {
         tracing::warn!(
             value = %raw,
-            "invalid KODE_SESSION_V2_OPEN_MODE; using automatic hydration mode selection"
+            "invalid KESA_SESSION_V2_OPEN_MODE; using automatic hydration mode selection"
         );
     }
     if let Some(raw) = threshold_override_raw.as_deref()
@@ -7071,7 +7067,7 @@ fn open_from_v2_store_blocking(jsonl_path: &Path) -> Result<(Session, SessionOpe
     {
         tracing::warn!(
             value = %raw,
-            "invalid KODE_SESSION_V2_LAZY_THRESHOLD; using default lazy hydration threshold"
+            "invalid KESA_SESSION_V2_LAZY_THRESHOLD; using default lazy hydration threshold"
         );
     }
 
@@ -8063,7 +8059,7 @@ fn parse_env_bool(value: &str) -> bool {
 fn session_entry_id_cache_enabled() -> bool {
     static ENABLED: OnceLock<bool> = OnceLock::new();
     *ENABLED.get_or_init(|| {
-        std::env::var("KODE_SESSION_ENTRY_ID_CACHE").map_or(true, |value| parse_env_bool(&value))
+        crate::env::var("SESSION_ENTRY_ID_CACHE").map_or(true, |value| parse_env_bool(&value))
     })
 }
 

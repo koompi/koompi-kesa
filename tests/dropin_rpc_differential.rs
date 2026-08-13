@@ -14,7 +14,7 @@ const SURFACE_DIFF: &str = include_str!("../docs/dropin-rpc-surface-diff.json");
 const SCENARIOS: &str =
     include_str!("dropin_rpc_differential/fixtures/g05_rpc_surface_scenarios.json");
 const RPC_RESPONSE_TIMEOUT: Duration = Duration::from_secs(15);
-const KODE_TEST_RUNNER: &str = env!("CARGO_BIN_EXE_kesa");
+const KESA_TEST_RUNNER: &str = env!("CARGO_BIN_EXE_kesa");
 const RPC_TEST_PROVIDER: &str = "ollama";
 const RPC_TEST_MODEL: &str = "qwen2.5:0.5b";
 
@@ -303,7 +303,7 @@ struct RpcDifferentialTester {
 impl RpcDifferentialTester {
     fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let temp_dir = tempfile::tempdir()?;
-        let rust_pi_path = PathBuf::from(KODE_TEST_RUNNER);
+        let rust_pi_path = PathBuf::from(KESA_TEST_RUNNER);
 
         Ok(Self {
             temp_dir,
@@ -312,7 +312,7 @@ impl RpcDifferentialTester {
     }
 
     fn execute_rust_command(&self, input: &Value) -> Result<Value, Box<dyn std::error::Error>> {
-        let mut child = Command::new(KODE_TEST_RUNNER)
+        let mut child = Command::new(KESA_TEST_RUNNER)
             .args([
                 "--mode",
                 "rpc",
@@ -326,19 +326,19 @@ impl RpcDifferentialTester {
                 "--no-themes",
             ])
             .env(
-                "KODE_CODING_AGENT_DIR",
+                "KESA_CODING_AGENT_DIR",
                 self.temp_dir.path().join("agent").as_os_str(),
             )
             .env(
-                "KODE_CONFIG_PATH",
+                "KESA_CONFIG_PATH",
                 self.temp_dir.path().join("settings.json").as_os_str(),
             )
             .env(
-                "KODE_SESSIONS_DIR",
+                "KESA_SESSIONS_DIR",
                 self.temp_dir.path().join("sessions").as_os_str(),
             )
             .env(
-                "KODE_PACKAGE_DIR",
+                "KESA_PACKAGE_DIR",
                 self.temp_dir.path().join("packages").as_os_str(),
             )
             .current_dir(self.temp_dir.path())

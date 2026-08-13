@@ -20,7 +20,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 const DEFAULT_USER_AGENT: &str = concat!("koompi_code_cli/", env!("CARGO_PKG_VERSION"));
-const ANTIGRAVITY_VERSION_ENV: &str = "KODE_AI_ANTIGRAVITY_VERSION";
+const ANTIGRAVITY_VERSION_ENV: &str = "AI_ANTIGRAVITY_VERSION";
 const MAX_HEADER_BYTES: usize = 64 * 1024;
 const READ_CHUNK_BYTES: usize = 16 * 1024;
 const MAX_BUFFERED_BYTES: usize = 256 * 1024;
@@ -42,7 +42,7 @@ const WRITE_ZERO_BACKOFF: std::time::Duration = std::time::Duration::from_millis
 /// Clap binds the `--request-timeout` CLI flag and the `requestTimeoutSecs`
 /// setting to this same env var, so the three configuration surfaces share a
 /// single resolution path.
-pub const REQUEST_TIMEOUT_ENV: &str = "KODE_HTTP_REQUEST_TIMEOUT_SECS";
+pub const REQUEST_TIMEOUT_ENV: &str = "HTTP_REQUEST_TIMEOUT_SECS";
 
 /// Default request timeout for remote (cloud) providers.
 ///
@@ -64,7 +64,7 @@ const DEFAULT_REMOTE_REQUEST_TIMEOUT_SECS: u64 = 60;
 /// 600s (10 minutes) is long enough to absorb realistic cold-start model loads
 /// while still bounding a truly hung/unreachable server so we never hang
 /// forever. Users who load enormous models on slow disks can raise it (or set
-/// it to `0` for unbounded) via `KODE_HTTP_REQUEST_TIMEOUT_SECS` /
+/// it to `0` for unbounded) via `KESA_HTTP_REQUEST_TIMEOUT_SECS` /
 /// `--request-timeout` / `requestTimeoutSecs`.
 #[cfg(not(test))]
 const DEFAULT_LOCAL_REQUEST_TIMEOUT_SECS: u64 = 600;
@@ -74,11 +74,11 @@ const DEFAULT_LOCAL_REQUEST_TIMEOUT_SECS: u64 = 600;
 enum RequestTimeout {
     /// Resolve a provider-aware default at send time based on the target URL
     /// (longer for local providers like Ollama, shorter for cloud APIs),
-    /// unless overridden by `KODE_HTTP_REQUEST_TIMEOUT_SECS`.
+    /// unless overridden by `KESA_HTTP_REQUEST_TIMEOUT_SECS`.
     Default,
     /// Explicit timeout duration (from `.timeout()` or the global env override).
     Explicit(std::time::Duration),
-    /// Explicitly unbounded (from `.no_timeout()` or `KODE_HTTP_REQUEST_TIMEOUT_SECS=0`).
+    /// Explicitly unbounded (from `.no_timeout()` or `KESA_HTTP_REQUEST_TIMEOUT_SECS=0`).
     Disabled,
 }
 
@@ -115,7 +115,7 @@ pub fn set_request_timeout_override(_secs: u64) {}
 ///
 /// Resolution order: an explicit application override (set via
 /// [`set_request_timeout_override`]) first, then the
-/// `KODE_HTTP_REQUEST_TIMEOUT_SECS` environment variable. In both cases `0` =>
+/// `KESA_HTTP_REQUEST_TIMEOUT_SECS` environment variable. In both cases `0` =>
 /// [`RequestTimeout::Disabled`]; any other value => an explicit duration.
 /// Returns `None` when neither is set so the provider-aware default applies.
 #[cfg(not(test))]
@@ -156,7 +156,7 @@ fn resolve_timeout(setting: RequestTimeout, url: &str) -> Option<std::time::Dura
     let resolved = match setting {
         RequestTimeout::Explicit(duration) => RequestTimeout::Explicit(duration),
         RequestTimeout::Disabled => RequestTimeout::Disabled,
-        RequestTimeout::Default => timeout_override(|| std::env::var(REQUEST_TIMEOUT_ENV).ok())
+        RequestTimeout::Default => timeout_override(|| crate::env::var(REQUEST_TIMEOUT_ENV))
             .unwrap_or_else(|| {
                 let secs = if url_is_local_provider(url) {
                     DEFAULT_LOCAL_REQUEST_TIMEOUT_SECS
@@ -196,8 +196,9 @@ fn timeout_error_message(url: &str, duration: std::time::Duration) -> String {
     let secs = duration.as_secs();
     let mut msg = format!(
         "Request timed out after {secs}s. Raise the timeout with \
-         {REQUEST_TIMEOUT_ENV}=<seconds> (or `--request-timeout <seconds>`, or \
-         `requestTimeoutSecs` in settings.json); set it to 0 for no timeout."
+         {}=<seconds> (or `--request-timeout <seconds>`, or \
+         `requestTimeoutSecs` in settings.json); set it to 0 for no timeout.",
+        crate::env::name(REQUEST_TIMEOUT_ENV)
     );
     if url_is_local_provider(url) {
         msg.push_str(
@@ -255,8 +256,8 @@ impl Client {
     pub fn new() -> Self {
         let tls = shared_tls_connector();
 
-        let user_agent = std::env::var(ANTIGRAVITY_VERSION_ENV).map_or_else(
-            |_| DEFAULT_USER_AGENT.to_string(),
+        let user_agent = crate::env::var(ANTIGRAVITY_VERSION_ENV).map_or_else(
+            || DEFAULT_USER_AGENT.to_string(),
             |v| format!("{DEFAULT_USER_AGENT} Antigravity/{v}"),
         );
 
@@ -2282,7 +2283,7 @@ mod tests {
             std::time::Duration::from_secs(600),
         );
         assert!(local.contains("600s"));
-        assert!(local.contains("KODE_HTTP_REQUEST_TIMEOUT_SECS"));
+        assert!(local.contains("KESA_HTTP_REQUEST_TIMEOUT_SECS"));
         assert!(local.contains("--request-timeout"));
         assert!(local.contains("requestTimeoutSecs"));
         assert!(local.contains("Ollama"));
@@ -2293,7 +2294,7 @@ mod tests {
             std::time::Duration::from_secs(60),
         );
         assert!(remote.contains("60s"));
-        assert!(remote.contains("KODE_HTTP_REQUEST_TIMEOUT_SECS"));
+        assert!(remote.contains("KESA_HTTP_REQUEST_TIMEOUT_SECS"));
         // Cloud providers should not get Ollama-specific guidance.
         assert!(!remote.contains("Ollama"));
     }
@@ -2697,11 +2698,11 @@ mod tests {
         });
     }
 
-    // ── KODE_AI_ANTIGRAVITY_VERSION env var ─────────────────────────────
+    // ── KESA_AI_ANTIGRAVITY_VERSION env var ─────────────────────────────
 
     #[test]
     fn antigravity_user_agent_format() {
-        // Verify the format string used when KODE_AI_ANTIGRAVITY_VERSION is set.
+        // Verify the format string used when KESA_AI_ANTIGRAVITY_VERSION is set.
         let version = "1.2.3";
         let ua = format!("{DEFAULT_USER_AGENT} Antigravity/{version}");
         assert!(ua.starts_with("koompi_code_cli/"));

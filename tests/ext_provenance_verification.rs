@@ -15,7 +15,7 @@
 //! It verifies the committed structured evidence log at
 //! `tests/ext_conformance/artifacts/PROVENANCE_VERIFICATION.json`
 //! for auditability. Maintainers can regenerate that file explicitly with
-//! `KODE_GENERATE_PROVENANCE_VERIFICATION=1`.
+//! `KESA_GENERATE_PROVENANCE_VERIFICATION=1`.
 
 use kesa::conformance::snapshot::{
     SourceTier, digest_artifact_dir, validate_directory, validate_id,
@@ -336,7 +336,7 @@ fn provenance_verification_evidence_log() {
     );
 
     let generate = matches!(
-        std::env::var("KODE_GENERATE_PROVENANCE_VERIFICATION").as_deref(),
+        std::env::var("KESA_GENERATE_PROVENANCE_VERIFICATION").as_deref(),
         Ok("1")
     );
     if generate {
@@ -368,7 +368,7 @@ fn provenance_verification_evidence_log() {
         assert_eq!(
             committed, computed,
             "committed provenance evidence is stale; regenerate explicitly with \
-             KODE_GENERATE_PROVENANCE_VERIFICATION=1 cargo test \
+             KESA_GENERATE_PROVENANCE_VERIFICATION=1 cargo test \
              --test ext_provenance_verification provenance_verification_evidence_log -- --exact"
         );
     }

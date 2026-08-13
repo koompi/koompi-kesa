@@ -1,6 +1,6 @@
 //! **Live E2E integration tests** — hit real provider APIs.
 //!
-//! These tests are gated behind `KODE_E2E_TESTS=1` (or `CI_E2E_TESTS=1`) so they
+//! These tests are gated behind `KESA_E2E_TESTS=1` (or `CI_E2E_TESTS=1`) so they
 //! never run in normal
 //! `cargo test`.  They exercise the full streaming pipeline using real API keys
 //! from `~/.kode/agent/models.json`.
@@ -8,7 +8,7 @@
 //! # Running
 //!
 //! ```bash
-//! KODE_E2E_TESTS=1 cargo test e2e_live -- --nocapture
+//! KESA_E2E_TESTS=1 cargo test e2e_live -- --nocapture
 //! CI_E2E_TESTS=1 cargo test e2e_live::azure_openai -- --nocapture # CI lane
 //! ```
 //!
@@ -44,7 +44,7 @@ use std::time::Instant;
 use url::Url;
 
 // ---------------------------------------------------------------------------
-// Gate: skip entire module unless KODE_E2E_TESTS=1 or CI_E2E_TESTS=1
+// Gate: skip entire module unless KESA_E2E_TESTS=1 or CI_E2E_TESTS=1
 // ---------------------------------------------------------------------------
 
 fn e2e_enabled() -> bool {
@@ -53,13 +53,13 @@ fn e2e_enabled() -> bool {
             .is_ok_and(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
     }
 
-    enabled_from("KODE_E2E_TESTS") || enabled_from("CI_E2E_TESTS")
+    enabled_from("KESA_E2E_TESTS") || enabled_from("CI_E2E_TESTS")
 }
 
 macro_rules! skip_unless_e2e {
     () => {
         if !e2e_enabled() {
-            eprintln!("SKIPPED (set KODE_E2E_TESTS=1 or CI_E2E_TESTS=1 to run)");
+            eprintln!("SKIPPED (set KESA_E2E_TESTS=1 or CI_E2E_TESTS=1 to run)");
             return;
         }
     };

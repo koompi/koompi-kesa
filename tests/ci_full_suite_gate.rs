@@ -148,7 +148,7 @@ const WAIVER_REQUIRED_FIELDS: &[&str] = &[
 const WAIVER_VALID_SCOPES: &[&str] = &["full", "preflight", "both"];
 const WAIVER_MAX_DURATION_DAYS: i64 = 30;
 const WAIVER_EXPIRY_WARN_DAYS: i64 = 3;
-const GENERATE_FULL_SUITE_GATE_ARTIFACTS_ENV: &str = "KODE_GENERATE_FULL_SUITE_GATE_ARTIFACTS";
+const GENERATE_FULL_SUITE_GATE_ARTIFACTS_ENV: &str = "KESA_GENERATE_FULL_SUITE_GATE_ARTIFACTS";
 
 fn full_suite_gate_artifact_generation_requested() -> bool {
     let raw = std::env::var(GENERATE_FULL_SUITE_GATE_ARTIFACTS_ENV).ok();

@@ -10,7 +10,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
 
-const KODE_TEST_RUNNER: &str = env!("CARGO_BIN_EXE_kesa");
+const KESA_TEST_RUNNER: &str = env!("CARGO_BIN_EXE_kesa");
 const RPC_TEST_PROVIDER: &str = "ollama";
 const RPC_TEST_MODEL: &str = "qwen2.5:0.5b";
 const UI_SCENARIOS: &str =
@@ -263,7 +263,7 @@ fn spawn_output_reader(stdout: ChildStdout) -> Receiver<io::Result<String>> {
 }
 
 fn spawn_rpc_child(root: &Path, extension_path: &Path) -> TestResult<RpcChild> {
-    let mut child = Command::new(KODE_TEST_RUNNER)
+    let mut child = Command::new(KESA_TEST_RUNNER)
         .args(["--mode", "rpc", "--print", "-e"])
         .arg(extension_path)
         .args([
@@ -277,10 +277,10 @@ fn spawn_rpc_child(root: &Path, extension_path: &Path) -> TestResult<RpcChild> {
             "--no-prompt-templates",
             "--no-themes",
         ])
-        .env("KODE_CODING_AGENT_DIR", root.join("agent").as_os_str())
-        .env("KODE_CONFIG_PATH", root.join("settings.json").as_os_str())
-        .env("KODE_SESSIONS_DIR", root.join("sessions").as_os_str())
-        .env("KODE_PACKAGE_DIR", root.join("packages").as_os_str())
+        .env("KESA_CODING_AGENT_DIR", root.join("agent").as_os_str())
+        .env("KESA_CONFIG_PATH", root.join("settings.json").as_os_str())
+        .env("KESA_SESSIONS_DIR", root.join("sessions").as_os_str())
+        .env("KESA_PACKAGE_DIR", root.join("packages").as_os_str())
         .current_dir(root)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

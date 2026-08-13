@@ -78,17 +78,17 @@ impl TraceJitConfig {
     /// Create from environment variables.
     #[must_use]
     pub fn from_env() -> Self {
-        let enabled = bool_from_env("KODE_HOSTCALL_TRACE_JIT", true);
+        let enabled = bool_from_env("HOSTCALL_TRACE_JIT", true);
         let min_jit_executions = u64_from_env(
-            "KODE_HOSTCALL_TRACE_JIT_MIN_EXECUTIONS",
+            "HOSTCALL_TRACE_JIT_MIN_EXECUTIONS",
             DEFAULT_MIN_JIT_EXECUTIONS,
         );
         let max_compiled_traces = usize_from_env(
-            "KODE_HOSTCALL_TRACE_JIT_MAX_TRACES",
+            "HOSTCALL_TRACE_JIT_MAX_TRACES",
             DEFAULT_MAX_COMPILED_TRACES,
         );
         let max_guard_failures = u64_from_env(
-            "KODE_HOSTCALL_TRACE_JIT_MAX_GUARD_FAILURES",
+            "HOSTCALL_TRACE_JIT_MAX_GUARD_FAILURES",
             DEFAULT_MAX_GUARD_FAILURES,
         );
         Self::new(
@@ -550,7 +550,7 @@ pub fn estimated_jit_cost(width: usize) -> i64 {
 // ── Environment helpers ──────────────────────────────────────────────
 
 fn bool_from_env(var: &str, default: bool) -> bool {
-    std::env::var(var).ok().as_deref().map_or(default, |value| {
+    crate::env::var(var).as_deref().map_or(default, |value| {
         !matches!(
             value.trim().to_ascii_lowercase().as_str(),
             "0" | "false" | "off" | "disabled"
@@ -559,15 +559,13 @@ fn bool_from_env(var: &str, default: bool) -> bool {
 }
 
 fn u64_from_env(var: &str, default: u64) -> u64 {
-    std::env::var(var)
-        .ok()
+    crate::env::var(var)
         .and_then(|raw| raw.trim().parse::<u64>().ok())
         .unwrap_or(default)
 }
 
 fn usize_from_env(var: &str, default: usize) -> usize {
-    std::env::var(var)
-        .ok()
+    crate::env::var(var)
         .and_then(|raw| raw.trim().parse::<usize>().ok())
         .unwrap_or(default)
 }

@@ -483,7 +483,7 @@ fn live_only_replay_commands_use_live_env() {
         if vcr_mode == "live-only" {
             let cmd = row["replay_command"].as_str().unwrap_or("");
             assert!(
-                cmd.contains("KODE_E2E_TESTS=1") || cmd.contains("--profile full"),
+                cmd.contains("KESA_E2E_TESTS=1") || cmd.contains("--profile full"),
                 "Live-only row {wf_id} replay_command should indicate live mode"
             );
         }

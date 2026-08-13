@@ -27,37 +27,34 @@ use super::openai::OpenAIProvider;
 const GITHUB_API_BASE: &str = "https://api.github.com";
 
 /// Editor version header value (required by Copilot API).
-/// Override via `KODE_COPILOT_EDITOR_VERSION`.
+/// Override via `KESA_COPILOT_EDITOR_VERSION`.
 const EDITOR_VERSION: &str = "vscode/1.96.2";
 
 /// User-Agent header value (required by Copilot API).
-/// Override via `KODE_COPILOT_USER_AGENT`.
+/// Override via `KESA_COPILOT_USER_AGENT`.
 const COPILOT_USER_AGENT: &str = "GitHubCopilotChat/0.26.7";
 
 /// GitHub API version header.
-/// Override via `KODE_GITHUB_API_VERSION`.
+/// Override via `KESA_GITHUB_API_VERSION`.
 const GITHUB_API_VERSION: &str = "2025-04-01";
 
 /// Safety margin: refresh the session token this many seconds before expiry.
 const TOKEN_REFRESH_MARGIN_SECS: i64 = 60;
 
 fn copilot_editor_version() -> String {
-    std::env::var("KODE_COPILOT_EDITOR_VERSION")
-        .ok()
+    crate::env::var("COPILOT_EDITOR_VERSION")
         .filter(|v| !v.is_empty())
         .unwrap_or_else(|| EDITOR_VERSION.to_string())
 }
 
 fn copilot_user_agent() -> String {
-    std::env::var("KODE_COPILOT_USER_AGENT")
-        .ok()
+    crate::env::var("COPILOT_USER_AGENT")
         .filter(|v| !v.is_empty())
         .unwrap_or_else(|| COPILOT_USER_AGENT.to_string())
 }
 
 fn github_api_version() -> String {
-    std::env::var("KODE_GITHUB_API_VERSION")
-        .ok()
+    crate::env::var("GITHUB_API_VERSION")
         .filter(|v| !v.is_empty())
         .unwrap_or_else(|| GITHUB_API_VERSION.to_string())
 }

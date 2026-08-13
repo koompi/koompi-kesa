@@ -75,8 +75,8 @@
         "X-Title": "Pi Agent Rust"
       },
       "env_overrides": {
-        "HTTP-Referer": ["OPENROUTER_HTTP_REFERER", "KODE_OPENROUTER_HTTP_REFERER"],
-        "X-Title": ["OPENROUTER_X_TITLE", "KODE_OPENROUTER_X_TITLE"]
+        "HTTP-Referer": ["OPENROUTER_HTTP_REFERER", "KESA_OPENROUTER_HTTP_REFERER"],
+        "X-Title": ["OPENROUTER_X_TITLE", "KESA_OPENROUTER_X_TITLE"]
       }
     }
   },

@@ -13,11 +13,11 @@
 //!   `cargo test --test ext_load_time_benchmark --features ext-conformance -- --nocapture`
 //!
 //! Environment variables:
-//!   `KODE_LOAD_BENCH_ITERATIONS`  - iterations per extension (default: 100)
-//!   `KODE_LOAD_BENCH_WARMUP`      - warmup loads before warm-start sampling (default: 1)
-//!   `KODE_LOAD_BENCH_BUDGET_MS`   - P99 budget in ms (default: 100)
-//!   `KODE_LOAD_BENCH_SCOPE`       - "all" (default) or "official"
-//!   `KODE_LOAD_BENCH_MAX`         - limit to first N extensions after filtering
+//!   `KESA_LOAD_BENCH_ITERATIONS`  - iterations per extension (default: 100)
+//!   `KESA_LOAD_BENCH_WARMUP`      - warmup loads before warm-start sampling (default: 1)
+//!   `KESA_LOAD_BENCH_BUDGET_MS`   - P99 budget in ms (default: 100)
+//!   `KESA_LOAD_BENCH_SCOPE`       - "all" (default) or "official"
+//!   `KESA_LOAD_BENCH_MAX`         - limit to first N extensions after filtering
 
 mod common;
 
@@ -36,21 +36,21 @@ use std::sync::Arc;
 // ─── Configuration ──────────────────────────────────────────────────────────
 
 fn iterations() -> usize {
-    std::env::var("KODE_LOAD_BENCH_ITERATIONS")
+    std::env::var("KESA_LOAD_BENCH_ITERATIONS")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(100)
 }
 
 fn warmup_iterations() -> usize {
-    std::env::var("KODE_LOAD_BENCH_WARMUP")
+    std::env::var("KESA_LOAD_BENCH_WARMUP")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(1)
 }
 
 fn p99_budget_ms() -> u64 {
-    std::env::var("KODE_LOAD_BENCH_BUDGET_MS")
+    std::env::var("KESA_LOAD_BENCH_BUDGET_MS")
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(100)
@@ -63,7 +63,7 @@ enum BenchScope {
 }
 
 fn scope() -> BenchScope {
-    match std::env::var("KODE_LOAD_BENCH_SCOPE")
+    match std::env::var("KESA_LOAD_BENCH_SCOPE")
         .ok()
         .unwrap_or_else(|| "all".to_string())
         .trim()
@@ -76,12 +76,12 @@ fn scope() -> BenchScope {
 }
 
 fn max_extensions() -> Option<usize> {
-    std::env::var("KODE_LOAD_BENCH_MAX")
+    std::env::var("KESA_LOAD_BENCH_MAX")
         .ok()
         .and_then(|v| v.parse().ok())
         // Legacy alias (prior to scope support).
         .or_else(|| {
-            std::env::var("KODE_OFFICIAL_MAX")
+            std::env::var("KESA_OFFICIAL_MAX")
                 .ok()
                 .and_then(|v| v.parse().ok())
         })

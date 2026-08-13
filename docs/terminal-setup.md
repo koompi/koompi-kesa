@@ -69,7 +69,7 @@ Add to `settings.json`:
 IntelliJ’s terminal can’t distinguish `Shift+Enter` from `Enter`. For the best experience,
 use an external terminal.
 
-If you want the hardware cursor visible, set `KODE_HARDWARE_CURSOR=1` before running `pi`.
+If you want the hardware cursor visible, set `KESA_HARDWARE_CURSOR=1` before running `pi`.
 
 ## Image Support
 

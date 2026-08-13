@@ -40,8 +40,8 @@
       "max_live_api_calls_per_suite": 50,
       "max_live_cost_usd_per_suite": 1.00,
       "rate_limit_delay_ms": 500,
-      "credential_env_prefix": "KODE_E2E_",
-      "skip_env_var": "KODE_SKIP_LIVE_E2E"
+      "credential_env_prefix": "KESA_E2E_",
+      "skip_env_var": "KESA_SKIP_LIVE_E2E"
     }
   },
   "rows": [
@@ -259,7 +259,7 @@
       "workflow_title": "Interactive TUI journey scripts via tmux capture",
       "status": "covered",
       "vcr_mode": "vcr-only",
-      "vcr_mode_rationale": "TUI tests use tmux scripting with VCR playback for provider responses. UI rendering is deterministic with KODE_TEST_MODE=1.",
+      "vcr_mode_rationale": "TUI tests use tmux scripting with VCR playback for provider responses. UI rendering is deterministic with KESA_TEST_MODE=1.",
       "owner": "bd-1f42.8.5.2",
       "provider_families": [
         "tui",
@@ -363,7 +363,7 @@
       "vcr_mode_rationale": "These suites exercise real provider APIs to validate parity between VCR-recorded and live behavior. By definition they cannot use VCR playback.",
       "live_skip_policy": {
         "skip_reason": "Requires live provider credentials and network access; non-blocking in default CI.",
-        "skip_env_var": "KODE_SKIP_LIVE_E2E",
+        "skip_env_var": "KESA_SKIP_LIVE_E2E",
         "required_credentials": [
           "ANTHROPIC_API_KEY",
           "OPENAI_API_KEY"
@@ -408,7 +408,7 @@
       ],
       "waiver_reason": "These suites require live credentials/network and remain non-blocking in default CI; deterministic parity boundaries are enforced separately.",
       "waiver_issue_id": "bd-1f42.8.5.3",
-      "replay_command": "KODE_E2E_TESTS=1 ./scripts/e2e/run_all.sh --profile full --suite e2e_live --suite e2e_live_harness --suite e2e_cross_provider_parity --suite provider_live_verify"
+      "replay_command": "KESA_E2E_TESTS=1 ./scripts/e2e/run_all.sh --profile full --suite e2e_live --suite e2e_live_harness --suite e2e_cross_provider_parity --suite provider_live_verify"
     },
     {
       "workflow_id": "wf-failure-injection-and-recovery-pack",
@@ -453,7 +453,7 @@
       "vcr_mode_rationale": "Interruption/resume tests use in-process deterministic providers for CI. Dual-mode allows periodic live validation of signal handling and session recovery.",
       "dual_mode_policy": {
         "default_ci_mode": "vcr",
-        "live_trigger_env": "KODE_E2E_LIVE_INTERRUPTION=1",
+        "live_trigger_env": "KESA_E2E_LIVE_INTERRUPTION=1",
         "live_frequency": "weekly-scheduled",
         "parity_check": "VCR replay must produce identical session state as live interrupted+resumed session"
       },
@@ -689,10 +689,10 @@
         "environment.json",
         "evidence_contract.json"
       ],
-      "replay_command": "KODE_E2E_TESTS=1 ./scripts/e2e/run_all.sh --profile full --suite e2e_ollama_live",
+      "replay_command": "KESA_E2E_TESTS=1 ./scripts/e2e/run_all.sh --profile full --suite e2e_ollama_live",
       "live_skip_policy": {
         "skip_reason": "Requires a local Ollama daemon and model availability; non-blocking in default CI.",
-        "skip_env_var": "KODE_SKIP_LIVE_E2E",
+        "skip_env_var": "KESA_SKIP_LIVE_E2E",
         "required_credentials": [],
         "budget_controls": {
           "max_api_calls": 50,

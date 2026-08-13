@@ -245,7 +245,7 @@ cargo test --test e2e_tui -- --nocapture
 
 **Remediation:**
 1. TUI tests require tmux. Verify `tmux` is installed and accessible.
-2. Set `KODE_TEST_MODE=1` for deterministic rendering.
+2. Set `KESA_TEST_MODE=1` for deterministic rendering.
 3. VCR cassettes provide provider responses; check cassette freshness.
 
 ---

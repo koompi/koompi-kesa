@@ -326,23 +326,23 @@ impl TuiSession {
 
         // Isolated environment
         env.insert(
-            "KODE_CODING_AGENT_DIR".to_string(),
+            "KESA_CODING_AGENT_DIR".to_string(),
             env_root.join("agent").display().to_string(),
         );
         env.insert(
-            "KODE_CONFIG_PATH".to_string(),
+            "KESA_CONFIG_PATH".to_string(),
             env_root.join("config.toml").display().to_string(),
         );
         env.insert(
-            "KODE_SESSIONS_DIR".to_string(),
+            "KESA_SESSIONS_DIR".to_string(),
             env_root.join("sessions").display().to_string(),
         );
         env.insert(
-            "KODE_PACKAGE_DIR".to_string(),
+            "KESA_PACKAGE_DIR".to_string(),
             env_root.join("packages").display().to_string(),
         );
         // Deterministic rendering
-        env.insert("KODE_TEST_MODE".to_string(), "1".to_string());
+        env.insert("KESA_TEST_MODE".to_string(), "1".to_string());
         env.insert("RUST_LOG".to_string(), "info".to_string());
 
         // Provide deterministic dummy API keys so provider validation doesn't fail during

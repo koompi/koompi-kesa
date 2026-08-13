@@ -55,8 +55,8 @@ const LIVE_TARGETS: [LiveProviderTarget; 6] = [
 const LIVE_PROVIDER_RESULT_SCHEMA: &str = "pi.test.live.result.v1";
 const LIVE_PROVIDER_COST_SCHEMA: &str = "pi.test.live.cost.v1";
 const REDACTED_VALUE: &str = "[REDACTED]";
-const LIVE_PROVIDER_FILTER_ENV: &str = "KODE_LIVE_E2E_PROVIDER";
-const LIVE_EXPORT_DIR_ENV: &str = "KODE_E2E_EXPORT_DIR";
+const LIVE_PROVIDER_FILTER_ENV: &str = "KESA_LIVE_E2E_PROVIDER";
+const LIVE_EXPORT_DIR_ENV: &str = "KESA_E2E_EXPORT_DIR";
 
 const SENSITIVE_KEY_FRAGMENTS: [&str; 10] = [
     "api_key",

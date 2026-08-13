@@ -11,7 +11,7 @@ Pi loads settings from (up to) two files:
 | `~/.kode/agent/settings.json` | Global (all projects) |
 | `.kode/settings.json` | Project (current directory) |
 
-You can override the path entirely with `KODE_CONFIG_PATH` (see below).
+You can override the path entirely with `KESA_CONFIG_PATH` (see below).
 
 Run `pi config` to print the effective paths and precedence.
 
@@ -23,9 +23,9 @@ Run `pi config` to print the effective paths and precedence.
 4. Global settings (`~/.kode/agent/settings.json`)
 5. Built-in defaults
 
-## `KODE_CONFIG_PATH` (single-file mode)
+## `KESA_CONFIG_PATH` (single-file mode)
 
-If `KODE_CONFIG_PATH` is set, Pi loads *only* that file and skips the global/project merge.
+If `KESA_CONFIG_PATH` is set, Pi loads *only* that file and skips the global/project merge.
 
 ## Merge behavior (global vs project)
 
@@ -61,7 +61,7 @@ Resulting behavior:
 - `theme` (string): Theme name to apply. Defaults to `dark` if unset.
 - `hide_thinking_block` (bool): Hide thinking blocks in interactive output. Default `false`.
 - `show_hardware_cursor` (bool): Show terminal hardware cursor. Default `false` unless
-  `KODE_HARDWARE_CURSOR=1`.
+  `KESA_HARDWARE_CURSOR=1`.
 
 ### Model selection
 

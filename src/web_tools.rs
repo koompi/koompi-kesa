@@ -21,11 +21,11 @@ pub const WEB_FETCH_SCHEMA: &str = "kode.web_fetch.page.v1";
 pub const WEB_SEARCH_SCHEMA: &str = "kode.web_search.results.v1";
 
 /// Opt-in for loopback / private / link-local targets.
-pub const ALLOW_PRIVATE_ENV: &str = "KODE_WEB_ALLOW_PRIVATE_HOSTS";
+pub const ALLOW_PRIVATE_ENV: &str = "WEB_ALLOW_PRIVATE_HOSTS";
 /// Search backend selector: `brave` or `tavily`.
-pub const SEARCH_PROVIDER_ENV: &str = "KODE_WEB_SEARCH_PROVIDER";
+pub const SEARCH_PROVIDER_ENV: &str = "WEB_SEARCH_PROVIDER";
 /// Search backend credential.
-pub const SEARCH_API_KEY_ENV: &str = "KODE_WEB_SEARCH_API_KEY";
+pub const SEARCH_API_KEY_ENV: &str = "WEB_SEARCH_API_KEY";
 
 const MAX_REDIRECTS: usize = 5;
 const DEFAULT_FETCH_BYTES: usize = 5 * 1024 * 1024;
@@ -114,13 +114,14 @@ fn refuse(host: &str, ip: IpAddr, reason: &str) -> Error {
         "web_fetch",
         format!(
             "Refusing to fetch {host}: it resolves to {ip}, a {reason}. \
-             Set {ALLOW_PRIVATE_ENV}=1 to allow private and loopback targets."
+             Set {}=1 to allow private and loopback targets.",
+            crate::env::name(ALLOW_PRIVATE_ENV)
         ),
     )
 }
 
 fn allow_private() -> bool {
-    std::env::var(ALLOW_PRIVATE_ENV).is_ok_and(|v| {
+    crate::env::var(ALLOW_PRIVATE_ENV).is_some_and(|v| {
         let v = v.trim();
         !v.is_empty() && v != "0" && !v.eq_ignore_ascii_case("false")
     })
@@ -665,21 +666,29 @@ fn env_value(name: &str) -> Option<String> {
         .filter(|v| !v.is_empty())
 }
 
+fn kesa_env_value(suffix: &str) -> Option<String> {
+    crate::env::var(suffix)
+        .map(|v| v.trim().to_owned())
+        .filter(|v| !v.is_empty())
+}
+
 fn no_provider_error() -> Error {
     Error::tool(
         "web_search",
         format!(
-            "No search provider is configured. Set {SEARCH_API_KEY_ENV} to a Brave Search API key \
-             (or set {SEARCH_PROVIDER_ENV}=tavily and {SEARCH_API_KEY_ENV} to a Tavily key). \
+            "No search provider is configured. Set {key} to a Brave Search API key \
+             (or set {provider}=tavily and {key} to a Tavily key). \
              Provider-specific {} and {} are also read.",
             SearchProvider::Brave.key_env(),
             SearchProvider::Tavily.key_env(),
+            key = crate::env::name(SEARCH_API_KEY_ENV),
+            provider = crate::env::name(SEARCH_PROVIDER_ENV),
         ),
     )
 }
 
 fn resolve_backend() -> Result<SearchBackend> {
-    let provider = match env_value(SEARCH_PROVIDER_ENV)
+    let provider = match kesa_env_value(SEARCH_PROVIDER_ENV)
         .map(|v| v.to_ascii_lowercase())
         .as_deref()
     {
@@ -688,11 +697,14 @@ fn resolve_backend() -> Result<SearchBackend> {
         Some(other) => {
             return Err(Error::tool(
                 "web_search",
-                format!("Unknown {SEARCH_PROVIDER_ENV}=`{other}`; expected `brave` or `tavily`"),
+                format!(
+                    "Unknown {}=`{other}`; expected `brave` or `tavily`",
+                    crate::env::name(SEARCH_PROVIDER_ENV)
+                ),
             ));
         }
     };
-    let api_key = env_value(SEARCH_API_KEY_ENV)
+    let api_key = kesa_env_value(SEARCH_API_KEY_ENV)
         .or_else(|| env_value(provider.key_env()))
         .ok_or_else(no_provider_error)?;
     Ok(SearchBackend { provider, api_key })
@@ -1060,7 +1072,7 @@ mod tests {
             let err = fetch_page("http://127.0.0.1:1/", 1024).await.unwrap_err();
             let text = err.to_string();
             assert!(text.contains("loopback address"), "{text}");
-            assert!(text.contains(ALLOW_PRIVATE_ENV), "{text}");
+            assert!(text.contains(&crate::env::name(ALLOW_PRIVATE_ENV)), "{text}");
 
             let err = fetch_page("http://169.254.169.254/latest/meta-data/", 1024)
                 .await
@@ -1146,8 +1158,8 @@ mod tests {
     #[test]
     fn missing_credential_names_the_key_to_set() {
         let err = no_provider_error().to_string();
-        assert!(err.contains(SEARCH_API_KEY_ENV), "{err}");
-        assert!(err.contains(SEARCH_PROVIDER_ENV), "{err}");
+        assert!(err.contains(&crate::env::name(SEARCH_API_KEY_ENV)), "{err}");
+        assert!(err.contains(&crate::env::name(SEARCH_PROVIDER_ENV)), "{err}");
         assert!(err.contains("BRAVE_SEARCH_API_KEY"), "{err}");
     }
 

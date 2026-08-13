@@ -558,7 +558,7 @@ fn hints_config_missing_file() {
     let err = Error::config("config file not found at /home/user/.kode/settings");
     let h = err.hints();
     assert_summary_contains(&h, "missing");
-    assert_any_hint_contains(&h, "KODE_CONFIG_PATH");
+    assert_any_hint_contains(&h, "KESA_CONFIG_PATH");
 }
 
 #[test]

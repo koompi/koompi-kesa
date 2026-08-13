@@ -59,7 +59,7 @@ struct Args {
     #[arg(long, default_value_t = 1)]
     jobs: usize,
 
-    /// Set `KODE_EXTENSION_ALLOW_DANGEROUS=1` for each invoked pi process.
+    /// Set `KESA_EXTENSION_ALLOW_DANGEROUS=1` for each invoked pi process.
     #[arg(long, default_value_t = false)]
     allow_dangerous: bool,
 
@@ -590,13 +590,13 @@ fn execute_case_command(
         seed_oauth_home(&args.provider, &home_dir)?;
     }
     command.env("HOME", &home_dir);
-    command.env("KODE_CODING_AGENT_DIR", env_root.join("agent"));
-    command.env("KODE_CONFIG_PATH", isolated_settings_path(env_root));
-    command.env("KODE_SESSIONS_DIR", env_root.join("sessions"));
-    command.env("KODE_PACKAGE_DIR", env_root.join("packages"));
-    command.env("KODE_TEST_MODE", "1");
+    command.env("KESA_CODING_AGENT_DIR", env_root.join("agent"));
+    command.env("KESA_CONFIG_PATH", isolated_settings_path(env_root));
+    command.env("KESA_SESSIONS_DIR", env_root.join("sessions"));
+    command.env("KESA_PACKAGE_DIR", env_root.join("packages"));
+    command.env("KESA_TEST_MODE", "1");
     if args.allow_dangerous {
-        command.env("KODE_EXTENSION_ALLOW_DANGEROUS", "1");
+        command.env("KESA_EXTENSION_ALLOW_DANGEROUS", "1");
     }
 
     let run_output = run_with_timeout(command, Duration::from_secs(args.timeout_secs))?;
@@ -731,7 +731,7 @@ fn render_markdown(report: &Report) -> String {
     let _ = writeln!(out, "- Parallel jobs: `{}`", report.jobs);
     let _ = writeln!(
         out,
-        "- KODE_EXTENSION_ALLOW_DANGEROUS: `{}`",
+        "- KESA_EXTENSION_ALLOW_DANGEROUS: `{}`",
         report.allow_dangerous
     );
     let _ = writeln!(

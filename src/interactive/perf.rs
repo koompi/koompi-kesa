@@ -20,7 +20,7 @@ pub(super) fn micros_as_u64(micros: u128) -> u64 {
 /// take `&mut self` (the `bubbletea::Model` trait requires `&self` for `view`).
 /// This is safe because the TUI event loop is single-threaded.
 ///
-/// Gated behind `KODE_PERF_TELEMETRY=1` environment variable.  When disabled,
+/// Gated behind `KESA_PERF_TELEMETRY=1` environment variable.  When disabled,
 /// no `Instant::now()` calls are made — zero runtime overhead.
 pub struct FrameTimingStats {
     pub(super) frame_times_us: std::cell::RefCell<VecDeque<u64>>,
@@ -38,7 +38,7 @@ pub(super) const FRAME_BUDGET_US: u64 = 16_667;
 impl FrameTimingStats {
     pub(super) fn new() -> Self {
         let enabled =
-            std::env::var_os("KODE_PERF_TELEMETRY").is_some_and(|v| v == "1" || v == "true");
+            crate::env::var_os("PERF_TELEMETRY").is_some_and(|v| v == "1" || v == "true");
         Self {
             frame_times_us: std::cell::RefCell::new(VecDeque::with_capacity(FRAME_TIMING_WINDOW)),
             content_build_times_us: std::cell::RefCell::new(VecDeque::with_capacity(
@@ -233,7 +233,7 @@ impl FrameTimingStats {
             .count();
         let fixture = json!({
             "name": "rolling_frame_window",
-            "source": "KODE_PERF_TELEMETRY",
+            "source": "KESA_PERF_TELEMETRY",
             "sample_window": FRAME_TIMING_WINDOW,
         });
         let snapshot = self.snapshot_json("interactive_tui", &fixture);
@@ -261,7 +261,7 @@ impl FrameTimingStats {
     #[allow(clippy::cast_precision_loss)]
     pub(super) fn summary(&self) -> String {
         if !self.enabled {
-            return String::from("Frame telemetry disabled (set KODE_PERF_TELEMETRY=1 to enable)");
+            return String::from("Frame telemetry disabled (set KESA_PERF_TELEMETRY=1 to enable)");
         }
         let frame = Self::percentiles(&self.frame_times_us.borrow());
         let content = Self::percentiles(&self.content_build_times_us.borrow());

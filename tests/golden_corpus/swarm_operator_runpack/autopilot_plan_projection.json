@@ -191,13 +191,13 @@
       "headroom_paths": {
         "CARGO_TARGET_DIR": {
           "available_kb": 52428800,
-          "path": "[KODE_AGENT_CARGO_TMP]/test/target",
+          "path": "[KESA_AGENT_CARGO_TMP]/test/target",
           "problem": null,
           "ready": true
         },
         "TMPDIR": {
           "available_kb": 52428800,
-          "path": "[KODE_AGENT_CARGO_TMP]/test/tmp",
+          "path": "[KESA_AGENT_CARGO_TMP]/test/tmp",
           "problem": null,
           "ready": true
         }
@@ -215,12 +215,12 @@
       "active_agents": 1,
       "active_builds": 8,
       "active_reservations": 1,
-      "cargo_target_dir": "[KODE_AGENT_CARGO_TMP]/test/target",
+      "cargo_target_dir": "[KESA_AGENT_CARGO_TMP]/test/target",
       "queue_depth": 4,
       "queue_recommended_action": "backoff",
       "queued_builds": 4,
       "slot_pressure": "saturated",
-      "tmpdir": "[KODE_AGENT_CARGO_TMP]/test/tmp"
+      "tmpdir": "[KESA_AGENT_CARGO_TMP]/test/tmp"
     },
     "current_profile": {
       "critical_failures": [],
@@ -230,13 +230,13 @@
       "headroom_paths": {
         "CARGO_TARGET_DIR": {
           "available_kb": 52428800,
-          "path": "[KODE_AGENT_CARGO_TMP]/test/target",
+          "path": "[KESA_AGENT_CARGO_TMP]/test/target",
           "problem": null,
           "ready": true
         },
         "TMPDIR": {
           "available_kb": 52428800,
-          "path": "[KODE_AGENT_CARGO_TMP]/test/tmp",
+          "path": "[KESA_AGENT_CARGO_TMP]/test/tmp",
           "problem": null,
           "ready": true
         }

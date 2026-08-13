@@ -1096,7 +1096,7 @@ schema exactly. One log entry per line.
 
 **Log sinks (documented contract):**
 - **Runtime:** `~/.kode/agent/logs/extensions/<session_id>.jsonl`
-  (override with `KODE_EXTENSION_LOG_DIR`).
+  (override with `KESA_EXTENSION_LOG_DIR`).
 - **Capture:** `tests/ext_conformance/capture/<ext>/<scenario>/extension.log.jsonl`
 - **Harness:** `target/ext_conformance/logs/<scenario_id>.jsonl`
 
@@ -1320,7 +1320,7 @@ To inspect exactly why each capability is allowed/prompted/denied, run:
 pi --explain-extension-policy
 pi --explain-extension-policy --extension-policy safe
 pi --explain-extension-policy --extension-policy balanced
-KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 ```
 
 `--explain-extension-policy` emits:
@@ -1333,7 +1333,7 @@ KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extens
 Recommended rollout order:
 1. Start in `safe` and inspect decisions (`pi --explain-extension-policy`).
 2. Move to `balanced` to validate prompt-mode UX while dangerous caps remain denied.
-3. Use `KODE_EXTENSION_ALLOW_DANGEROUS=1` only for runs that require dangerous caps.
+3. Use `KESA_EXTENSION_ALLOW_DANGEROUS=1` only for runs that require dangerous caps.
 4. Use `permissive` only as a short-lived debugging override, then revert.
 
 Local operator baseline (`settings.json`):
@@ -1352,7 +1352,7 @@ Local verification:
 ```bash
 pi --explain-extension-policy
 pi --extension-policy balanced --explain-extension-policy
-KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 ```
 
 CI baseline (default deny posture):
@@ -1364,11 +1364,11 @@ pi --extension-policy safe --explain-extension-policy
 CI opt-in job (only for suites that require dangerous capabilities):
 
 ```bash
-KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 ```
 
 Rollback:
-- remove `KODE_EXTENSION_ALLOW_DANGEROUS` from the environment,
+- remove `KESA_EXTENSION_ALLOW_DANGEROUS` from the environment,
 - set `extensionPolicy.profile` to `safe`,
 - re-run `pi --explain-extension-policy` and verify dangerous capability decisions are `deny`.
 
@@ -1483,10 +1483,10 @@ latency across the corpus, enforces budgets, and detects regressions.
 
 ```bash
 # Quick PR check (10 diverse extensions, 3 iterations)
-KODE_BENCH_MODE=pr cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
+KESA_BENCH_MODE=pr cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 
 # Nightly full corpus (103 safe extensions, 10 iterations)
-KODE_BENCH_MODE=nightly KODE_BENCH_MAX=103 KODE_BENCH_ITERATIONS=10 \
+KESA_BENCH_MODE=nightly KESA_BENCH_MAX=103 KESA_BENCH_ITERATIONS=10 \
   cargo test --test ext_bench_harness --features ext-conformance -- --nocapture
 ```
 

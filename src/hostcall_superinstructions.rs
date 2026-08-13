@@ -70,13 +70,11 @@ impl HostcallSuperinstructionCompiler {
 
     #[must_use]
     pub fn from_env() -> Self {
-        let enabled = bool_from_env("KODE_HOSTCALL_SUPERINSTRUCTIONS", true);
-        let min_support = std::env::var("KODE_HOSTCALL_SUPERINSTRUCTION_MIN_SUPPORT")
-            .ok()
+        let enabled = bool_from_env("HOSTCALL_SUPERINSTRUCTIONS", true);
+        let min_support = crate::env::var("HOSTCALL_SUPERINSTRUCTION_MIN_SUPPORT")
             .and_then(|raw| raw.trim().parse::<u32>().ok())
             .map_or(DEFAULT_MIN_SUPPORT, |value| value.max(2));
-        let max_window = std::env::var("KODE_HOSTCALL_SUPERINSTRUCTION_MAX_WINDOW")
-            .ok()
+        let max_window = crate::env::var("HOSTCALL_SUPERINSTRUCTION_MAX_WINDOW")
             .and_then(|raw| raw.trim().parse::<usize>().ok())
             .map_or(DEFAULT_MAX_WINDOW, |value| value.max(2));
         Self::new(enabled, min_support, max_window)
@@ -321,7 +319,7 @@ fn opcode_window_signature(window: &[String]) -> String {
 }
 
 fn bool_from_env(var: &str, default: bool) -> bool {
-    std::env::var(var).ok().as_deref().map_or(default, |value| {
+    crate::env::var(var).as_deref().map_or(default, |value| {
         match value.trim().to_ascii_lowercase().as_str() {
             "1" | "true" | "on" | "enabled" | "yes" => true,
             "0" | "false" | "off" | "disabled" | "no" => false,

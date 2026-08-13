@@ -34,7 +34,7 @@
       "command_templates": [
         {
           "action": "block",
-          "command": "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=[KESA_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KESA_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,
@@ -210,7 +210,7 @@
       "command_templates": [
         {
           "action": "would_run",
-          "command": "rch exec -- env CARGO_TARGET_DIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KODE_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets",
+          "command": "rch exec -- env CARGO_TARGET_DIR=[KESA_AGENT_CARGO_TMP]/${USER:-agent}/target TMPDIR=[KESA_AGENT_CARGO_TMP]/${USER:-agent}/tmp cargo check --all-targets",
           "group_id": "all_targets_check",
           "local_fallback_rejection_reason": "RCH-required validation must not fail open into a local cargo build.",
           "rank": 1,

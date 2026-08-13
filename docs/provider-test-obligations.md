@@ -247,7 +247,7 @@ Current cassette inventory includes 90+ files covering the 10 native provider im
 ### E2E Test Approach
 
 - Use VCR playback (`VCR_MODE=playback`) to avoid real API calls
-- Set `KODE_TEST_MODE=1` for deterministic system prompts
+- Set `KESA_TEST_MODE=1` for deterministic system prompts
 - Use `--thinking off` for deterministic test behavior
 - Use isolation flags: `--no-tools --no-extensions --no-skills --no-prompt-templates --no-themes`
 

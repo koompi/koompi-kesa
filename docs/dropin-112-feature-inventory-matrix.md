@@ -24,8 +24,8 @@
 
 | Flag | TS Pi | Rust Pi | Notes |
 |------|-------|---------|-------|
-| `--provider <name>` | Y | Y | env: KODE_PROVIDER in both |
-| `--model <id>` | Y | Y | env: KODE_MODEL in both |
+| `--provider <name>` | Y | Y | env: KESA_PROVIDER in both |
+| `--model <id>` | Y | Y | env: KESA_MODEL in both |
 | `--api-key <key>` | Y | Y | Overrides env vars |
 | `--models <patterns>` | Y | Y | Ctrl+P cycling, comma-separated globs |
 | `--list-models [search]` | Y | Y | Optional fuzzy search pattern |
@@ -370,27 +370,27 @@
 
 | Variable | TS Pi | Rust Pi | Notes |
 |----------|-------|---------|-------|
-| `KODE_CODING_AGENT_DIR` | Y | Y | Config root |
-| `KODE_PACKAGE_DIR` | Y | Y | Package directory |
-| `KODE_SESSIONS_DIR` | N | Y | Rust-only |
-| `KODE_CONFIG_PATH` | N | Y | Rust-only |
-| `KODE_SHARE_VIEWER_URL` | Y | ? | Share viewer base URL |
+| `KESA_CODING_AGENT_DIR` | Y | Y | Config root |
+| `KESA_PACKAGE_DIR` | Y | Y | Package directory |
+| `KESA_SESSIONS_DIR` | N | Y | Rust-only |
+| `KESA_CONFIG_PATH` | N | Y | Rust-only |
+| `KESA_SHARE_VIEWER_URL` | Y | ? | Share viewer base URL |
 
 ### Development / Testing
 
 | Variable | TS Pi | Rust Pi | Notes |
 |----------|-------|---------|-------|
-| `KODE_TEST_MODE` | Y | Y | Deterministic rendering |
-| `KODE_TIMING` | Y | ? | Timing output |
-| `KODE_SKIP_VERSION_CHECK` | Y | ? | Skip version check |
-| `KODE_HARDWARE_CURSOR` | Y | ? | Hardware cursor |
-| `KODE_CLEAR_ON_SHRINK` | Y | ? | Clear on shrink |
+| `KESA_TEST_MODE` | Y | Y | Deterministic rendering |
+| `KESA_TIMING` | Y | ? | Timing output |
+| `KESA_SKIP_VERSION_CHECK` | Y | ? | Skip version check |
+| `KESA_HARDWARE_CURSOR` | Y | ? | Hardware cursor |
+| `KESA_CLEAR_ON_SHRINK` | Y | ? | Clear on shrink |
 | `VCR_MODE` | N | Y | Rust-only VCR testing |
 | `VCR_CASSETTE_DIR` | N | Y | Rust-only VCR testing |
-| `KODE_VCR_TEST_NAME` | N | Y | Rust-only VCR testing |
-| `KODE_EXTENSION_ALLOW_DANGEROUS` | N | Y | Rust-only |
-| `KODE_REPAIR_POLICY` | N | Y | Rust-only |
-| `KODE_EXT_COMPAT_SCAN` | N | Y | Rust-only |
+| `KESA_VCR_TEST_NAME` | N | Y | Rust-only VCR testing |
+| `KESA_EXTENSION_ALLOW_DANGEROUS` | N | Y | Rust-only |
+| `KESA_REPAIR_POLICY` | N | Y | Rust-only |
+| `KESA_EXT_COMPAT_SCAN` | N | Y | Rust-only |
 
 ---
 
@@ -732,7 +732,7 @@
 5. **Session**: Labels, branch markers, notes entry types; SQLite backend
 6. **Config**: sessionStore, sessionPickerInput, ghPath, extensionPolicy, repairPolicy, extensionRisk
 7. **Thinking aliases**: Numeric aliases (0-4) and short forms (min, med)
-8. **VCR test infrastructure**: VCR_MODE, VCR_CASSETTE_DIR, KODE_VCR_TEST_NAME
+8. **VCR test infrastructure**: VCR_MODE, VCR_CASSETTE_DIR, KESA_VCR_TEST_NAME
 
 ---
 

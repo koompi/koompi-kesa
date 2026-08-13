@@ -556,7 +556,7 @@ struct DataContractFailure {
 }
 
 fn perf_strict_mode() -> bool {
-    std::env::var("KODE_PERF_STRICT").is_ok_and(|v| v == "1")
+    std::env::var("KESA_PERF_STRICT").is_ok_and(|v| v == "1")
 }
 
 fn budget_report_generation_enabled(raw: Option<&str>) -> bool {
@@ -565,14 +565,14 @@ fn budget_report_generation_enabled(raw: Option<&str>) -> bool {
 
 fn budget_report_generation_requested() -> bool {
     budget_report_generation_enabled(
-        std::env::var("KODE_GENERATE_PERF_BUDGET_REPORT")
+        std::env::var("KESA_GENERATE_PERF_BUDGET_REPORT")
             .ok()
             .as_deref(),
     )
 }
 
 fn max_artifact_age_hours() -> f64 {
-    std::env::var("KODE_PERF_MAX_ARTIFACT_AGE_HOURS")
+    std::env::var("KESA_PERF_MAX_ARTIFACT_AGE_HOURS")
         .ok()
         .and_then(|raw| raw.parse::<f64>().ok())
         .filter(|hours| *hours > 0.0)
@@ -583,7 +583,7 @@ fn perf_run_id() -> Option<String> {
     [
         "PERF_CLAIM_CORRELATION_ID",
         "CI_CORRELATION_ID",
-        "KODE_PERF_CORRELATION_ID",
+        "KESA_PERF_CORRELATION_ID",
     ]
     .into_iter()
     .find_map(|key| {
@@ -4219,7 +4219,7 @@ fn checked_in_budget_summary_matches_fresh_canonical_evaluation_exactly() {
 fn generate_budget_report() {
     if !budget_report_generation_requested() {
         eprintln!(
-            "[budget] Report generation skipped; set KODE_GENERATE_PERF_BUDGET_REPORT=1 to write tracked reports"
+            "[budget] Report generation skipped; set KESA_GENERATE_PERF_BUDGET_REPORT=1 to write tracked reports"
         );
         return;
     }
@@ -4435,7 +4435,7 @@ fn generate_budget_report() {
     md.push_str("# Run budget checks\n");
     md.push_str("cargo test --test perf_budgets -- --nocapture\n\n");
     md.push_str("# Generate full budget report\n");
-    md.push_str("KODE_GENERATE_PERF_BUDGET_REPORT=1 cargo test --test perf_budgets generate_budget_report -- --nocapture\n");
+    md.push_str("KESA_GENERATE_PERF_BUDGET_REPORT=1 cargo test --test perf_budgets generate_budget_report -- --nocapture\n");
     md.push_str("```\n");
 
     let md_path = reports_dir.join("PERF_BUDGETS.md");

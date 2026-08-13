@@ -757,34 +757,28 @@ impl Default for DualExecOracleConfig {
 
 impl DualExecOracleConfig {
     fn from_env() -> Self {
-        let sample_ppm = std::env::var("KODE_EXT_DUAL_EXEC_SAMPLE_PPM")
-            .ok()
+        let sample_ppm = crate::env::var("EXT_DUAL_EXEC_SAMPLE_PPM")
             .and_then(|raw| raw.trim().parse::<u32>().ok())
             .unwrap_or(DUAL_EXEC_DEFAULT_SAMPLE_PPM)
             .min(DUAL_EXEC_SAMPLE_MODULUS_PPM);
-        let divergence_window = std::env::var("KODE_EXT_DUAL_EXEC_DIVERGENCE_WINDOW")
-            .ok()
+        let divergence_window = crate::env::var("EXT_DUAL_EXEC_DIVERGENCE_WINDOW")
             .and_then(|raw| raw.trim().parse::<usize>().ok())
             .unwrap_or(DUAL_EXEC_DEFAULT_DIVERGENCE_WINDOW)
             .max(1);
-        let divergence_budget = std::env::var("KODE_EXT_DUAL_EXEC_DIVERGENCE_BUDGET")
-            .ok()
+        let divergence_budget = crate::env::var("EXT_DUAL_EXEC_DIVERGENCE_BUDGET")
             .and_then(|raw| raw.trim().parse::<usize>().ok())
             .unwrap_or(DUAL_EXEC_DEFAULT_DIVERGENCE_BUDGET)
             .max(1);
-        let rollback_requests = std::env::var("KODE_EXT_DUAL_EXEC_ROLLBACK_REQUESTS")
-            .ok()
+        let rollback_requests = crate::env::var("EXT_DUAL_EXEC_ROLLBACK_REQUESTS")
             .and_then(|raw| raw.trim().parse::<usize>().ok())
             .unwrap_or(DUAL_EXEC_DEFAULT_ROLLBACK_REQUESTS)
             .max(1);
-        let overhead_budget_us = std::env::var("KODE_EXT_DUAL_EXEC_OVERHEAD_BUDGET_US")
-            .ok()
+        let overhead_budget_us = crate::env::var("EXT_DUAL_EXEC_OVERHEAD_BUDGET_US")
             .and_then(|raw| raw.trim().parse::<u64>().ok())
             .unwrap_or(DUAL_EXEC_DEFAULT_OVERHEAD_BUDGET_US)
             .max(1);
         let overhead_backoff_requests =
-            std::env::var("KODE_EXT_DUAL_EXEC_OVERHEAD_BACKOFF_REQUESTS")
-                .ok()
+            crate::env::var("EXT_DUAL_EXEC_OVERHEAD_BACKOFF_REQUESTS")
                 .and_then(|raw| raw.trim().parse::<usize>().ok())
                 .unwrap_or(DUAL_EXEC_DEFAULT_OVERHEAD_BACKOFF_REQUESTS)
                 .max(1);
@@ -1174,7 +1168,7 @@ fn is_shadow_safe_request(request: &HostcallRequest) -> bool {
 }
 
 fn parse_env_bool(name: &str, default: bool) -> bool {
-    std::env::var(name).ok().map_or(default, |raw| {
+    crate::env::var(name).map_or(default, |raw| {
         match raw.trim().to_ascii_lowercase().as_str() {
             "1" | "true" | "yes" | "on" | "enabled" => true,
             "0" | "false" | "no" | "off" | "disabled" => false,
@@ -1185,26 +1179,25 @@ fn parse_env_bool(name: &str, default: bool) -> bool {
 
 fn io_uring_lane_policy_from_env() -> IoUringLanePolicyConfig {
     let default = IoUringLanePolicyConfig::conservative();
-    let max_queue_depth = std::env::var("KODE_EXT_IO_URING_MAX_QUEUE_DEPTH")
-        .ok()
+    let max_queue_depth = crate::env::var("EXT_IO_URING_MAX_QUEUE_DEPTH")
         .and_then(|raw| raw.trim().parse::<usize>().ok())
         .unwrap_or(default.max_queue_depth)
         .max(1);
 
     IoUringLanePolicyConfig {
-        enabled: parse_env_bool("KODE_EXT_IO_URING_ENABLED", default.enabled),
-        ring_available: parse_env_bool("KODE_EXT_IO_URING_RING_AVAILABLE", default.ring_available),
+        enabled: parse_env_bool("EXT_IO_URING_ENABLED", default.enabled),
+        ring_available: parse_env_bool("EXT_IO_URING_RING_AVAILABLE", default.ring_available),
         max_queue_depth,
         allow_filesystem: parse_env_bool(
-            "KODE_EXT_IO_URING_ALLOW_FILESYSTEM",
+            "EXT_IO_URING_ALLOW_FILESYSTEM",
             default.allow_filesystem,
         ),
-        allow_network: parse_env_bool("KODE_EXT_IO_URING_ALLOW_NETWORK", default.allow_network),
+        allow_network: parse_env_bool("EXT_IO_URING_ALLOW_NETWORK", default.allow_network),
     }
 }
 
 fn io_uring_force_compat_from_env() -> bool {
-    parse_env_bool("KODE_EXT_IO_URING_FORCE_COMPAT", false)
+    parse_env_bool("EXT_IO_URING_FORCE_COMPAT", false)
 }
 
 fn hostcall_io_hint(kind: &HostcallKind) -> HostcallIoHint {

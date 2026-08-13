@@ -9,21 +9,21 @@
 //!
 //! This suite is deliberately **isolated from required CI gates**.  A provider
 //! outage or quota issue must not block unrelated merges.  The gate env var
-//! `KODE_LIVE_PROVIDER_TESTS=1` enables the suite; individual provider tests
+//! `KESA_LIVE_PROVIDER_TESTS=1` enables the suite; individual provider tests
 //! further gate on secret availability.
 //!
 //! # Running
 //!
 //! ```bash
 //! # Run with any available provider secrets:
-//! KODE_LIVE_PROVIDER_TESTS=1 cargo test provider_live_verify -- --nocapture
+//! KESA_LIVE_PROVIDER_TESTS=1 cargo test provider_live_verify -- --nocapture
 //!
 //! # Run only Anthropic live tests:
-//! KODE_LIVE_PROVIDER_TESTS=1 ANTHROPIC_API_KEY=sk-... \
+//! KESA_LIVE_PROVIDER_TESTS=1 ANTHROPIC_API_KEY=sk-... \
 //!     cargo test provider_live_verify::anthropic -- --nocapture
 //!
 //! # Run only OpenAI-compatible providers:
-//! KODE_LIVE_PROVIDER_TESTS=1 cargo test provider_live_verify::oai_compat -- --nocapture
+//! KESA_LIVE_PROVIDER_TESTS=1 cargo test provider_live_verify::oai_compat -- --nocapture
 //! ```
 //!
 //! # Cost control
@@ -49,7 +49,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 // ============================================================================
-// Gate: skip entire module unless KODE_LIVE_PROVIDER_TESTS=1 (or KODE_E2E_TESTS=1)
+// Gate: skip entire module unless KESA_LIVE_PROVIDER_TESTS=1 (or KESA_E2E_TESTS=1)
 // ============================================================================
 
 fn live_tests_enabled() -> bool {
@@ -57,13 +57,13 @@ fn live_tests_enabled() -> bool {
         env::var(name)
             .is_ok_and(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
     }
-    flag("KODE_LIVE_PROVIDER_TESTS") || flag("KODE_E2E_TESTS") || flag("CI_E2E_TESTS")
+    flag("KESA_LIVE_PROVIDER_TESTS") || flag("KESA_E2E_TESTS") || flag("CI_E2E_TESTS")
 }
 
 macro_rules! skip_unless_live {
     () => {
         if !live_tests_enabled() {
-            eprintln!("SKIPPED (set KODE_LIVE_PROVIDER_TESTS=1 or KODE_E2E_TESTS=1 to run)");
+            eprintln!("SKIPPED (set KESA_LIVE_PROVIDER_TESTS=1 or KESA_E2E_TESTS=1 to run)");
             return;
         }
     };

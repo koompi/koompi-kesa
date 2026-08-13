@@ -12,7 +12,7 @@
 //! let scenario = CliScenario::new("basic_chat")
 //!     .arg("--no-tools")
 //!     .arg("--no-extensions")
-//!     .env("KODE_TEST_MODE", "1")
+//!     .env("KESA_TEST_MODE", "1")
 //!     .step(ScenarioStep::send_text("Hello", "Hello").label("greeting"))
 //!     .step(ScenarioStep::wait("response text").timeout_secs(30))
 //!     .exit(ExitStrategy::Graceful);
@@ -439,7 +439,7 @@ impl ScenarioRunner {
         if let Some(vcr) = &scenario.vcr {
             session.set_env("VCR_MODE", "playback");
             session.set_env("VCR_CASSETTE_DIR", &vcr.cassette_dir.display().to_string());
-            session.set_env("KODE_VCR_TEST_NAME", &vcr.test_name);
+            session.set_env("KESA_VCR_TEST_NAME", &vcr.test_name);
         }
 
         // Launch
@@ -567,7 +567,7 @@ impl ScenarioRunner {
         // Write TUI step artifacts first
         session.write_artifacts();
 
-        let session_root = scenario.env.get("KODE_SESSIONS_DIR").map_or_else(
+        let session_root = scenario.env.get("KESA_SESSIONS_DIR").map_or_else(
             || session.harness.temp_dir().join("env").join("sessions"),
             PathBuf::from,
         );

@@ -51,19 +51,19 @@ impl GoldenPathHarness {
         let mut env = BTreeMap::new();
         // Fully isolate from user environment.
         env.insert(
-            "KODE_CODING_AGENT_DIR".into(),
+            "KESA_CODING_AGENT_DIR".into(),
             env_root.join("agent").display().to_string(),
         );
         env.insert(
-            "KODE_CONFIG_PATH".into(),
+            "KESA_CONFIG_PATH".into(),
             env_root.join("settings.json").display().to_string(),
         );
         env.insert(
-            "KODE_SESSIONS_DIR".into(),
+            "KESA_SESSIONS_DIR".into(),
             env_root.join("sessions").display().to_string(),
         );
         env.insert(
-            "KODE_PACKAGE_DIR".into(),
+            "KESA_PACKAGE_DIR".into(),
             env_root.join("packages").display().to_string(),
         );
         // Offline-friendly npm.

@@ -241,13 +241,13 @@
         "additional_headers": [
           {
             "header": "HTTP-Referer",
-            "env_vars": ["OPENROUTER_HTTP_REFERER", "KODE_OPENROUTER_HTTP_REFERER"],
+            "env_vars": ["OPENROUTER_HTTP_REFERER", "KESA_OPENROUTER_HTTP_REFERER"],
             "required": false,
             "purpose": "Attribution for OpenRouter dashboard"
           },
           {
             "header": "X-Title",
-            "env_vars": ["OPENROUTER_X_TITLE", "KODE_OPENROUTER_X_TITLE"],
+            "env_vars": ["OPENROUTER_X_TITLE", "KESA_OPENROUTER_X_TITLE"],
             "required": false,
             "purpose": "Application title for OpenRouter dashboard"
           }

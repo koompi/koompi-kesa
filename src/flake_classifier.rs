@@ -205,15 +205,15 @@ impl RetryPolicy {
         F: Fn(&str) -> std::result::Result<String, std::env::VarError>,
     {
         Self {
-            max_retries: get_env("KODE_CONFORMANCE_MAX_RETRIES")
+            max_retries: get_env("CONFORMANCE_MAX_RETRIES")
                 .ok()
                 .and_then(|v| v.parse::<u32>().ok())
                 .map_or(1, |v| v.min(100)), // Cap at 100 retries to prevent DoS
-            retry_delay_secs: get_env("KODE_CONFORMANCE_RETRY_DELAY")
+            retry_delay_secs: get_env("CONFORMANCE_RETRY_DELAY")
                 .ok()
                 .and_then(|v| v.parse::<u32>().ok())
                 .map_or(5, |v| v.min(3600)), // Cap at 1 hour to prevent DoS
-            flake_budget: get_env("KODE_CONFORMANCE_FLAKE_BUDGET")
+            flake_budget: get_env("CONFORMANCE_FLAKE_BUDGET")
                 .ok()
                 .and_then(|v| v.parse::<u32>().ok())
                 .map_or(3, |v| v.min(1000)), // Cap at 1000 to prevent DoS
@@ -397,9 +397,9 @@ mod tests {
     #[test]
     fn retry_policy_bounds_environment_variables() {
         let policy = RetryPolicy::from_env(|key| match key {
-            "KODE_CONFORMANCE_MAX_RETRIES"
-            | "KODE_CONFORMANCE_RETRY_DELAY"
-            | "KODE_CONFORMANCE_FLAKE_BUDGET" => Ok("999999999".to_string()),
+            "KESA_CONFORMANCE_MAX_RETRIES"
+            | "KESA_CONFORMANCE_RETRY_DELAY"
+            | "KESA_CONFORMANCE_FLAKE_BUDGET" => Ok("999999999".to_string()),
             _ => Err(std::env::VarError::NotPresent),
         });
 

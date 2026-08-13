@@ -289,9 +289,9 @@
       "AWS_SECRET_ACCESS_KEY",
       "AWS_BEARER_TOKEN_BEDROCK",
       "AWS_REGION",
-      "KODE_PACKAGE_DIR",
-      "KODE_SHARE_VIEWER_URL",
-      "KODE_AI_ANTIGRAVITY_VERSION"
+      "KESA_PACKAGE_DIR",
+      "KESA_SHARE_VIEWER_URL",
+      "KESA_AI_ANTIGRAVITY_VERSION"
     ]
   },
   "reproducibility": {

@@ -7,7 +7,7 @@
 //! - `unknown`: Cannot determine classification
 //!
 //! Output is verified against `docs/extension-entry-scan.json`; maintainers can
-//! regenerate that file explicitly with `KODE_GENERATE_EXT_ENTRY_SCAN=1`.
+//! regenerate that file explicitly with `KESA_GENERATE_EXT_ENTRY_SCAN=1`.
 //!
 //! Bead: bd-2u2s
 
@@ -429,7 +429,7 @@ fn scan_extension_entry_points() {
         .join("extension-entry-scan.json");
     let json = serde_json::to_string_pretty(&output).expect("serialize scan output");
     let generate = matches!(
-        std::env::var("KODE_GENERATE_EXT_ENTRY_SCAN").as_deref(),
+        std::env::var("KESA_GENERATE_EXT_ENTRY_SCAN").as_deref(),
         Ok("1")
     );
     if generate {
@@ -445,7 +445,7 @@ fn scan_extension_entry_points() {
         assert_eq!(
             committed, generated,
             "committed extension entry scan is stale; regenerate explicitly with \
-             KODE_GENERATE_EXT_ENTRY_SCAN=1 cargo test --test ext_entry_scan \
+             KESA_GENERATE_EXT_ENTRY_SCAN=1 cargo test --test ext_entry_scan \
              scan_extension_entry_points -- --exact"
         );
     }

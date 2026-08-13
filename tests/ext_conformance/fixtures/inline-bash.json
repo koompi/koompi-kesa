@@ -62,7 +62,7 @@
       },
       "outputs": {
         "stdout_normalized_jsonl": [
-          "{\"cwd\":\"<KODE_MONO_ROOT>\",\"id\":\"<UUID>\",\"timestamp\":\"<TIMESTAMP>\",\"type\":\"session\",\"version\":3}",
+          "{\"cwd\":\"<KESA_MONO_ROOT>\",\"id\":\"<UUID>\",\"timestamp\":\"<TIMESTAMP>\",\"type\":\"session\",\"version\":3}",
           "{\"type\":\"agent_start\"}",
           "{\"type\":\"turn_start\"}",
           "{\"message\":{\"content\":[{\"text\":\"What's in /repo?\",\"type\":\"text\"}],\"role\":\"user\",\"timestamp\":0},\"type\":\"message_start\"}",

@@ -4461,7 +4461,7 @@ fn write_settings_json_atomic(path: &Path, value: &Value) -> Result<()> {
 }
 
 fn compat_scan_enabled() -> bool {
-    let value = std::env::var("KODE_EXT_COMPAT_SCAN").unwrap_or_default();
+    let value = crate::env::var("EXT_COMPAT_SCAN").unwrap_or_default();
     matches!(
         value.trim().to_ascii_lowercase().as_str(),
         "1" | "true" | "yes" | "on"

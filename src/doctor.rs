@@ -61,14 +61,14 @@ const SWARM_DOCTOR_CONFLICT_PREDICTOR_SCHEMA: &str = "pi.doctor.cross_agent_conf
 const SWARM_DOCTOR_RESERVATION_RECOMMENDATIONS_SCHEMA: &str =
     "pi.doctor.swarm_reservation_recommendations.v1";
 const SWARM_CARGO_SCRATCH_ROOT: &str = "/data/tmp/koompi_code_cli_cargo";
-const SWARM_RCH_AFFINITY_JOBS_ENV: &str = "KODE_DOCTOR_RCH_AFFINITY_JOBS_JSON";
-const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV: &str = "KODE_DOCTOR_RCH_QUEUE_JSON";
-const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV: &str = "KODE_DOCTOR_RCH_QUEUE_JSON_PATH";
+const SWARM_RCH_AFFINITY_JOBS_ENV: &str = "DOCTOR_RCH_AFFINITY_JOBS_JSON";
+const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV: &str = "DOCTOR_RCH_QUEUE_JSON";
+const SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV: &str = "DOCTOR_RCH_QUEUE_JSON_PATH";
 const SWARM_RESOURCE_PREFLIGHT_LOCAL_BUILD_PROCESS_COUNT_ENV: &str =
-    "KODE_DOCTOR_LOCAL_BUILD_PROCESS_COUNT";
-const SWARM_RESOURCE_PREFLIGHT_LOGICAL_CPU_CORES_ENV: &str = "KODE_DOCTOR_LOGICAL_CPU_CORES";
-const SWARM_VALIDATION_BROKER_STORE_ENV: &str = "KODE_VALIDATION_BROKER_STORE";
-const SWARM_PROGRESS_SLO_JSON_ENV: &str = "KODE_SWARM_PROGRESS_SLO_JSON";
+    "DOCTOR_LOCAL_BUILD_PROCESS_COUNT";
+const SWARM_RESOURCE_PREFLIGHT_LOGICAL_CPU_CORES_ENV: &str = "DOCTOR_LOGICAL_CPU_CORES";
+const SWARM_VALIDATION_BROKER_STORE_ENV: &str = "VALIDATION_BROKER_STORE";
+const SWARM_PROGRESS_SLO_JSON_ENV: &str = "SWARM_PROGRESS_SLO_JSON";
 const SWARM_BUILD_SLOT_SOON_EXPIRING_MINUTES: i64 = 30;
 const SWARM_ACTIVE_AGENT_WINDOW_HOURS: i64 = 24;
 const SWARM_DASHBOARD_AGENT_LIMIT: usize = 12;
@@ -1443,14 +1443,14 @@ fn build_swarm_doctor_capacity_plan_with_inventory(
 fn live_load_from_beads_summary(summary: &BeadsLedgerSummary) -> SwarmLiveLoad {
     SwarmLiveLoad::empty()
         .with_active_agents(
-            env_u64("KODE_DOCTOR_SWARM_ACTIVE_AGENTS")
+            env_u64("DOCTOR_SWARM_ACTIVE_AGENTS")
                 .unwrap_or_else(|| usize_to_u64(summary.in_progress)),
         )
-        .with_active_tool_calls(env_u64("KODE_DOCTOR_SWARM_ACTIVE_TOOL_CALLS").unwrap_or(0))
+        .with_active_tool_calls(env_u64("DOCTOR_SWARM_ACTIVE_TOOL_CALLS").unwrap_or(0))
         .with_extension_hostcall_lanes(
-            env_u64("KODE_DOCTOR_SWARM_EXTENSION_HOSTCALL_LANES").unwrap_or(0),
+            env_u64("DOCTOR_SWARM_EXTENSION_HOSTCALL_LANES").unwrap_or(0),
         )
-        .with_active_rch_jobs(env_u64("KODE_DOCTOR_SWARM_ACTIVE_RCH_JOBS").unwrap_or(0))
+        .with_active_rch_jobs(env_u64("DOCTOR_SWARM_ACTIVE_RCH_JOBS").unwrap_or(0))
 }
 
 fn classify_swarm_admission(
@@ -2374,7 +2374,7 @@ fn format_swarm_resource_preflight_detail(
 
 fn read_cgroup_cpu_quota(source_errors: &mut Vec<String>) -> CgroupCpuQuota {
     if let Some((source, raw)) = read_first_existing_trimmed(
-        "KODE_DOCTOR_CGROUP_CPU_MAX_PATH",
+        "DOCTOR_CGROUP_CPU_MAX_PATH",
         &["/sys/fs/cgroup/cpu.max"],
         source_errors,
     ) {
@@ -2386,12 +2386,12 @@ fn read_cgroup_cpu_quota(source_errors: &mut Vec<String>) -> CgroupCpuQuota {
     }
 
     let quota = read_first_existing_trimmed(
-        "KODE_DOCTOR_CGROUP_CPU_CFS_QUOTA_US_PATH",
+        "DOCTOR_CGROUP_CPU_CFS_QUOTA_US_PATH",
         &["/sys/fs/cgroup/cpu/cpu.cfs_quota_us"],
         source_errors,
     );
     let period = read_first_existing_trimmed(
-        "KODE_DOCTOR_CGROUP_CPU_CFS_PERIOD_US_PATH",
+        "DOCTOR_CGROUP_CPU_CFS_PERIOD_US_PATH",
         &["/sys/fs/cgroup/cpu/cpu.cfs_period_us"],
         source_errors,
     );
@@ -2416,7 +2416,7 @@ fn read_cgroup_cpu_quota(source_errors: &mut Vec<String>) -> CgroupCpuQuota {
 
 fn read_cpuset_snapshot(source_errors: &mut Vec<String>) -> CpuSetSnapshot {
     let Some((source, raw)) = read_first_existing_trimmed(
-        "KODE_DOCTOR_CPUSET_CPUS_PATH",
+        "DOCTOR_CPUSET_CPUS_PATH",
         &[
             "/sys/fs/cgroup/cpuset.cpus.effective",
             "/sys/fs/cgroup/cpuset.cpus",
@@ -2449,7 +2449,7 @@ fn read_cpuset_snapshot(source_errors: &mut Vec<String>) -> CpuSetSnapshot {
 
 fn read_numa_topology(source_errors: &mut Vec<String>) -> NumaTopologySnapshot {
     let Some((source, raw)) = read_first_existing_trimmed(
-        "KODE_DOCTOR_NUMA_ONLINE_PATH",
+        "DOCTOR_NUMA_ONLINE_PATH",
         &["/sys/devices/system/node/online"],
         source_errors,
     ) else {
@@ -2473,7 +2473,7 @@ fn read_numa_topology(source_errors: &mut Vec<String>) -> NumaTopologySnapshot {
 
 fn read_memory_limit_snapshot(source_errors: &mut Vec<String>) -> MemoryLimitSnapshot {
     let mem_total_bytes = read_first_existing_trimmed(
-        "KODE_DOCTOR_MEMINFO_PATH",
+        "DOCTOR_MEMINFO_PATH",
         &["/proc/meminfo"],
         source_errors,
     )
@@ -2485,7 +2485,7 @@ fn read_memory_limit_snapshot(source_errors: &mut Vec<String>) -> MemoryLimitSna
         parsed
     });
     let (source, parsed_limit) = read_first_existing_trimmed(
-        "KODE_DOCTOR_CGROUP_MEMORY_MAX_PATH",
+        "DOCTOR_CGROUP_MEMORY_MAX_PATH",
         &[
             "/sys/fs/cgroup/memory.max",
             "/sys/fs/cgroup/memory/memory.limit_in_bytes",
@@ -2583,7 +2583,7 @@ fn collect_local_build_pressure(effective_cpu_cores: u64) -> LocalBuildPressureS
             || ("/proc".to_string(), count_local_build_processes()),
             |count| {
                 (
-                    format!("env:{SWARM_RESOURCE_PREFLIGHT_LOCAL_BUILD_PROCESS_COUNT_ENV}"),
+                    format!("env:{}", crate::env::name(SWARM_RESOURCE_PREFLIGHT_LOCAL_BUILD_PROCESS_COUNT_ENV)),
                     Some(count),
                 )
             },
@@ -2648,29 +2648,31 @@ fn count_local_build_processes() -> Option<u64> {
 }
 
 fn read_rch_queue_posture(source_errors: &mut Vec<String>) -> RchQueuePostureSnapshot {
-    if let Ok(raw) = std::env::var(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV) {
+    if let Some(raw) = crate::env::var(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV) {
         return parse_rch_queue_posture_json(
             &raw,
-            format!("env:{SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV}"),
+            format!("env:{}", crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV)),
             source_errors,
         );
     }
 
-    if let Some(path) = std::env::var_os(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV) {
+    if let Some(path) = crate::env::var_os(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV) {
         let path = PathBuf::from(path);
         match std::fs::read_to_string(&path) {
             Ok(raw) => {
                 return parse_rch_queue_posture_json(
                     &raw,
                     format!(
-                        "env:{SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV}:{}",
+                        "env:{}:{}",
+                    crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV),
                         path.display()
                     ),
                     source_errors,
                 );
             }
             Err(err) => source_errors.push(format!(
-                "{SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV} failed to read {}: {err}",
+                "{} failed to read {}: {err}",
+                        crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV),
                 path.display()
             )),
         }
@@ -2960,7 +2962,7 @@ fn read_first_existing_trimmed(
     defaults: &[&str],
     source_errors: &mut Vec<String>,
 ) -> Option<(String, String)> {
-    let override_path = std::env::var_os(env_key).map(PathBuf::from);
+    let override_path = crate::env::var_os(env_key).map(PathBuf::from);
     let candidates = override_path.as_ref().map_or_else(
         || defaults.iter().map(PathBuf::from).collect(),
         |path| vec![path.clone()],
@@ -3104,7 +3106,7 @@ fn format_ratio_label(value: f64) -> String {
 }
 
 fn env_u64(key: &str) -> Option<u64> {
-    std::env::var(key).ok()?.trim().parse::<u64>().ok()
+    crate::env::var(key)?.trim().parse::<u64>().ok()
 }
 
 const fn bytes_to_mib_ceil(bytes: u64) -> u64 {
@@ -5535,14 +5537,14 @@ fn count_map_value(counts: &BTreeMap<String, usize>, key: &str) -> usize {
 #[allow(clippy::too_many_lines)]
 fn check_swarm_validation_broker(cwd: &Path, findings: &mut Vec<Finding>) {
     let cat = CheckCategory::Swarm;
-    let Some(store_raw) = first_non_empty_env(&[SWARM_VALIDATION_BROKER_STORE_ENV]) else {
+    let Some(store_raw) = crate::env::var(SWARM_VALIDATION_BROKER_STORE_ENV) else {
         findings.push(
             Finding::info(cat, "Validation broker posture not configured")
                 .with_detail(
                     "No validation broker slot store is configured for Doctor projection",
                 )
                 .with_remediation(format!(
-                    "Set {SWARM_VALIDATION_BROKER_STORE_ENV} when using validation-broker advisory handoff"
+                    "Set {} when using validation-broker advisory handoff", crate::env::name(SWARM_VALIDATION_BROKER_STORE_ENV)
                 ))
                 .with_data(validation_broker_not_configured_json()),
         );
@@ -5741,7 +5743,7 @@ fn validation_broker_not_configured_json() -> serde_json::Value {
         },
         "degraded_reasons": ["validation_broker_store_not_configured"],
         "recommended_next_actions": [
-            "Set KODE_VALIDATION_BROKER_STORE only when broker-guided validation handoff is in use"
+            "Set KESA_VALIDATION_BROKER_STORE only when broker-guided validation handoff is in use"
         ],
         "guards": {
             "advisory_only": true,
@@ -5816,7 +5818,7 @@ fn validation_broker_recommended_actions(
 }
 
 fn check_swarm_progress_slo(cwd: &Path, findings: &mut Vec<Finding>) {
-    let raw_path = first_non_empty_env(&[SWARM_PROGRESS_SLO_JSON_ENV]);
+    let raw_path = crate::env::var(SWARM_PROGRESS_SLO_JSON_ENV);
     findings.push(build_swarm_progress_slo_finding(cwd, raw_path.as_deref()));
 }
 
@@ -5828,7 +5830,7 @@ fn build_swarm_progress_slo_finding(cwd: &Path, raw_path: Option<&str>) -> Findi
             "not_configured",
             None,
             Some(format!(
-                "Set {SWARM_PROGRESS_SLO_JSON_ENV} to a pi.swarm.progress_slo.v1 JSON report when projecting progress SLO posture into Doctor"
+                "Set {} to a pi.swarm.progress_slo.v1 JSON report when projecting progress SLO posture into Doctor", crate::env::name(SWARM_PROGRESS_SLO_JSON_ENV)
             )),
             &[],
         );
@@ -9513,13 +9515,14 @@ fn build_rch_affinity_plan_from_env(
 ) -> std::result::Result<RchAffinityPlan, String> {
     let recommended_target_dir = default_rch_affinity_target_dir();
     let current_git_commit = current_git_commit.map(str::to_string);
-    let raw_jobs = match std::env::var(SWARM_RCH_AFFINITY_JOBS_ENV) {
-        Ok(raw) if raw.trim().is_empty() => None,
-        Ok(raw) => Some(raw),
-        Err(std::env::VarError::NotPresent) => None,
-        Err(std::env::VarError::NotUnicode(_)) => {
+    let raw_jobs = match crate::env::var_os(SWARM_RCH_AFFINITY_JOBS_ENV).map(std::ffi::OsString::into_string) {
+        None => None,
+        Some(Ok(raw)) if raw.trim().is_empty() => None,
+        Some(Ok(raw)) => Some(raw),
+        Some(Err(_)) => {
             return Err(format!(
-                "{SWARM_RCH_AFFINITY_JOBS_ENV} contains non-UTF-8 data"
+                "{} contains non-UTF-8 data",
+                crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
             ));
         }
     };
@@ -9533,13 +9536,13 @@ fn build_rch_affinity_plan_from_env(
             groups: Vec::new(),
             blockers: vec!["no_job_specs".to_string()],
             notes: vec![format!(
-                "Set {SWARM_RCH_AFFINITY_JOBS_ENV} to a JSON array of cargo jobs before launching a swarm"
+                "Set {} to a JSON array of cargo jobs before launching a swarm", crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
             )],
         });
     };
 
     let specs = serde_json::from_str::<Vec<RchAffinityJobSpec>>(&raw_jobs)
-        .map_err(|err| format!("{SWARM_RCH_AFFINITY_JOBS_ENV} is not a valid job array: {err}"))?;
+        .map_err(|err| format!("{} is not a valid job array: {err}", crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)))?;
     Ok(build_rch_affinity_plan_from_specs(
         specs,
         current_git_commit,
@@ -9754,7 +9757,7 @@ fn classify_rch_affinity_plan(plan: &RchAffinityPlan) -> Finding {
         return Finding::info(CheckCategory::Swarm, "RCH warm-target affinity plan needs job specs")
             .with_detail(detail)
             .with_remediation(format!(
-                "Set {SWARM_RCH_AFFINITY_JOBS_ENV} before swarm launches to preview safe worker/target reuse"
+                "Set {} before swarm launches to preview safe worker/target reuse", crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
             ))
             .with_data(data);
     }
@@ -9779,7 +9782,7 @@ fn rch_affinity_parse_error_finding(err: &str, current_git_commit: Option<&str>)
     )
     .with_detail(err.to_string())
     .with_remediation(format!(
-        "Fix {SWARM_RCH_AFFINITY_JOBS_ENV} JSON or unset it to use the default no-job diagnostic"
+        "Fix {} JSON or unset it to use the default no-job diagnostic", crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
     ))
     .with_data(serde_json::json!({
         "schema": SWARM_DOCTOR_RCH_AFFINITY_SCHEMA,
@@ -9796,7 +9799,7 @@ fn rch_affinity_plan_data(plan: &RchAffinityPlan) -> serde_json::Value {
     serde_json::json!({
         "schema": SWARM_DOCTOR_RCH_AFFINITY_SCHEMA,
         "source": plan.source,
-        "job_spec_env": SWARM_RCH_AFFINITY_JOBS_ENV,
+        "job_spec_env": crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV),
         "current_git_commit": &plan.current_git_commit,
         "scratch_root": SWARM_CARGO_SCRATCH_ROOT,
         "recommended_target_dir": &plan.recommended_target_dir,
@@ -10809,11 +10812,11 @@ fn check_extension(
                 )
                 .with_detail(err.to_string())
                 .with_remediation(
-                    "Fix the malformed settings.json, point KODE_CONFIG_PATH at a valid file, or rerun with `--policy <safe|balanced|permissive>` to inspect extension compatibility independently",
+                    "Fix the malformed settings.json, point KESA_CONFIG_PATH at a valid file, or rerun with `--policy <safe|balanced|permissive>` to inspect extension compatibility independently",
                 ),
             );
             let has_explicit_policy =
-                policy_override.is_some() || std::env::var_os("KODE_EXTENSION_POLICY").is_some();
+                policy_override.is_some() || crate::env::var_os("EXTENSION_POLICY").is_some();
             if has_explicit_policy {
                 Config::default().resolve_extension_policy_with_metadata(policy_override)
             } else {

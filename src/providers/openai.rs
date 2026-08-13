@@ -111,12 +111,14 @@ fn first_non_empty_env(keys: &[&str]) -> Option<String> {
 }
 
 fn openrouter_default_http_referer() -> String {
-    first_non_empty_env(&["OPENROUTER_HTTP_REFERER", "KODE_OPENROUTER_HTTP_REFERER"])
+    first_non_empty_env(&["OPENROUTER_HTTP_REFERER"])
+        .or_else(|| crate::env::var("OPENROUTER_HTTP_REFERER"))
         .unwrap_or_else(|| OPENROUTER_DEFAULT_HTTP_REFERER.to_string())
 }
 
 fn openrouter_default_x_title() -> String {
-    first_non_empty_env(&["OPENROUTER_X_TITLE", "KODE_OPENROUTER_X_TITLE"])
+    first_non_empty_env(&["OPENROUTER_X_TITLE"])
+        .or_else(|| crate::env::var("OPENROUTER_X_TITLE"))
         .unwrap_or_else(|| OPENROUTER_DEFAULT_X_TITLE.to_string())
 }
 

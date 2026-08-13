@@ -8649,7 +8649,7 @@ fn assert_view_bounded(surface: &str, view: &str, terminal_height: usize) {
     );
 }
 
-const TUI_PERF_ARTIFACT_GENERATION_ENV: &str = "KODE_GENERATE_TUI_PERF_ARTIFACTS";
+const TUI_PERF_ARTIFACT_GENERATION_ENV: &str = "KESA_GENERATE_TUI_PERF_ARTIFACTS";
 
 fn tui_perf_artifact_generation_enabled() -> bool {
     let Some(value) = std::env::var_os(TUI_PERF_ARTIFACT_GENERATION_ENV) else {

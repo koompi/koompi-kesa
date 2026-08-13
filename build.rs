@@ -110,10 +110,10 @@ fn emit_benchmark_build_fingerprint() -> Result<(), Box<dyn std::error::Error>> 
     features.sort_unstable();
     features.dedup();
 
-    println!("cargo:rustc-env=KODE_BUILD_PROFILE_FAMILY={profile_family}");
-    println!("cargo:rustc-env=KODE_BUILD_OPT_LEVEL={opt_level}");
-    println!("cargo:rustc-env=KODE_BUILD_DEBUG={debug}");
-    println!("cargo:rustc-env=KODE_BUILD_FEATURES={}", features.join(","));
+    println!("cargo:rustc-env=KESA_BUILD_PROFILE_FAMILY={profile_family}");
+    println!("cargo:rustc-env=KESA_BUILD_OPT_LEVEL={opt_level}");
+    println!("cargo:rustc-env=KESA_BUILD_DEBUG={debug}");
+    println!("cargo:rustc-env=KESA_BUILD_FEATURES={}", features.join(","));
     Ok(())
 }
 

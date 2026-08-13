@@ -28,10 +28,10 @@ Run these before claiming work in a multi-agent session:
 
 ```bash
 export AGENT_NAME="${AGENT_NAME:-$(whoami)}"
-export KODE_CARGO_AGENT_SUFFIX="$AGENT_NAME"
+export KESA_CARGO_AGENT_SUFFIX="$AGENT_NAME"
 export CARGO_TARGET_DIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME}/target"
 export TMPDIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME}/tmp"
-capture_dir="${KODE_SWARM_CAPTURE_DIR:-/data/tmp/pi_swarm_runpack/${AGENT_NAME}}"
+capture_dir="${KESA_SWARM_CAPTURE_DIR:-/data/tmp/pi_swarm_runpack/${AGENT_NAME}}"
 mkdir -p "$CARGO_TARGET_DIR" "$TMPDIR" "$capture_dir"
 
 git status --short --branch
@@ -404,7 +404,7 @@ br list --status=in_progress --json > "$capture_dir/beads-in-progress.json"
 git status --short --branch > "$capture_dir/git-status.txt"
 rch status > "$capture_dir/rch-status.txt"
 rch queue > "$capture_dir/rch-queue.txt"
-KODE_SWARM_PROGRESS_SLO_JSON="$capture_dir/progress-slo.json" \
+KESA_SWARM_PROGRESS_SLO_JSON="$capture_dir/progress-slo.json" \
   pi doctor --only swarm --format json > "$capture_dir/doctor-swarm.json"
 ```
 
@@ -471,7 +471,7 @@ When the report should appear in Doctor or an operator runpack, pass the JSON
 explicitly:
 
 ```bash
-KODE_SWARM_PROGRESS_SLO_JSON="$capture_dir/progress-slo.json" \
+KESA_SWARM_PROGRESS_SLO_JSON="$capture_dir/progress-slo.json" \
   pi doctor --only swarm --format json \
   | jq '.findings[] | select(.id == "progress_slo_current_posture")'
 
@@ -797,7 +797,7 @@ Typical read-only status capture:
 
 ```bash
 pi validation-broker status \
-  --store "$KODE_VALIDATION_BROKER_STORE" \
+  --store "$KESA_VALIDATION_BROKER_STORE" \
   --format json \
   --out-json "$capture_dir/validation-broker-status.json"
 ```
@@ -808,7 +808,7 @@ Typical plan request:
 pi validation-broker plan \
   --request "$capture_dir/validation-request.json" \
   --inputs "$capture_dir/validation-inputs.json" \
-  --store "$KODE_VALIDATION_BROKER_STORE" \
+  --store "$KESA_VALIDATION_BROKER_STORE" \
   --policy "$capture_dir/validation-policy.json" \
   --format json \
   --out-json "$capture_dir/validation-broker-plan.json"
@@ -831,19 +831,19 @@ Acquire, renew, and release mutate only the append-only slot store:
 ```bash
 pi validation-broker acquire \
   --request "$capture_dir/validation-request.json" \
-  --store "$KODE_VALIDATION_BROKER_STORE" \
+  --store "$KESA_VALIDATION_BROKER_STORE" \
   --started-at "$started_at_utc" \
   --expires-at "$expires_at_utc"
 
 pi validation-broker renew \
-  --store "$KODE_VALIDATION_BROKER_STORE" \
+  --store "$KESA_VALIDATION_BROKER_STORE" \
   --slot-id "$slot_id" \
   --owner "$AGENT_NAME" \
   --heartbeat-at "$heartbeat_at_utc" \
   --expires-at "$expires_at_utc"
 
 pi validation-broker release \
-  --store "$KODE_VALIDATION_BROKER_STORE" \
+  --store "$KESA_VALIDATION_BROKER_STORE" \
   --slot-id "$slot_id" \
   --owner "$AGENT_NAME" \
   --at "$released_at_utc" \

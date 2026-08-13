@@ -1429,7 +1429,7 @@ pub mod normalization {
     pub const PLACEHOLDER_TRACE_ID: &str = "<TRACE_ID>";
     pub const PLACEHOLDER_SPAN_ID: &str = "<SPAN_ID>";
     pub const PLACEHOLDER_UUID: &str = "<UUID>";
-    pub const PLACEHOLDER_PI_MONO_ROOT: &str = "<KODE_MONO_ROOT>";
+    pub const PLACEHOLDER_PI_MONO_ROOT: &str = "<KESA_MONO_ROOT>";
     pub const PLACEHOLDER_PROJECT_ROOT: &str = "<PROJECT_ROOT>";
     pub const PLACEHOLDER_PORT: &str = "<PORT>";
     pub const PLACEHOLDER_PID: &str = "<PID>";

@@ -40,7 +40,7 @@
 #   PERF_EVIDENCE_DIR         Optional repo-visible staged evidence root consumed by perf_budgets report generation
 #   PERF_EVIDENCE_DIRS        Optional path-list of additional staged evidence roots
 #   PERF_EVIDENCE_CACHE_DIR   Optional perf evidence cache directory (default: $CARGO_TARGET_DIR/perf/evidence_cache)
-#   KODE_PERF_EVIDENCE_CACHE_TTL_HOURS
+#   KESA_PERF_EVIDENCE_CACHE_TTL_HOURS
 #                             Maximum reusable perf evidence cache TTL in hours (default: 168)
 #   PERF_QUICK                Set to 1 for PR-safe subset (same as --profile quick)
 #   PERF_SKIP_CRITERION       Set to 1 to skip criterion benchmarks
@@ -49,7 +49,7 @@
 #   BENCH_QUICK               Forwarded to perf_bench_harness (1 = fewer iterations)
 #   BENCH_ITERATIONS          Override iteration count for bench harness
 #   PERF_REGRESSION_FULL      Forwarded to perf_regression (1 = full mode)
-#   KODE_PERF_STRICT            Set to 1 to fail CI-enforced budgets on NO_DATA (auto-set for ci/full profiles)
+#   KESA_PERF_STRICT            Set to 1 to fail CI-enforced budgets on NO_DATA (auto-set for ci/full profiles)
 #   PERF_CARGO_RUNNER         Cargo runner mode: rch | auto | local (default: rch)
 
 set -euo pipefail
@@ -75,7 +75,7 @@ CROSS_ENV_BASELINES="${PERF_CROSS_ENV_BASELINES:-}"
 CROSS_ENV_VARIANCE_ALERT_PCT="${PERF_CROSS_ENV_VARIANCE_ALERT_PCT:-10.0}"
 CROSS_ENV_ENFORCE="${PERF_CROSS_ENV_ENFORCE:-0}"
 EVIDENCE_CACHE_DIR="${PERF_EVIDENCE_CACHE_DIR:-$TARGET_DIR/perf/evidence_cache}"
-EVIDENCE_CACHE_TTL_HOURS="${KODE_PERF_EVIDENCE_CACHE_TTL_HOURS:-168}"
+EVIDENCE_CACHE_TTL_HOURS="${KESA_PERF_EVIDENCE_CACHE_TTL_HOURS:-168}"
 CORRELATION_ID="${CI_CORRELATION_ID:-}"
 PROFILE="full"
 SKIP_BUILD="${PERF_SKIP_BUILD:-0}"
@@ -368,7 +368,7 @@ resolve_suites() {
       if [[ "$SKIP_CRITERION" != "1" ]]; then
         SELECTED_SUITES+=("${!CRITERION_BENCHES[@]}")
       fi
-      export KODE_PERF_STRICT=1
+      export KESA_PERF_STRICT=1
       ;;
     quick)
       # Fast subset: schema validation + budgets only, no criterion
@@ -380,7 +380,7 @@ resolve_suites() {
       # CI: all test suites, skip heavy criterion benches
       SELECTED_SUITES=("${!SUITE_TARGETS[@]}")
       SKIP_CRITERION=1
-      export KODE_PERF_STRICT=1
+      export KESA_PERF_STRICT=1
       ;;
     *)
       die "Unknown profile: $PROFILE (available: full, quick, ci)"
@@ -556,7 +556,7 @@ if [[ "$SKIP_BUILD" -eq 0 ]]; then
     log_step "Building release pi binary for release-size gates..."
     if "${CARGO_RUNNER_ARGS[@]}" build --bin pi --release >"$OUTPUT_DIR/logs/build_release_pi.log" 2>&1; then
       log_ok "Release pi binary built: $TARGET_DIR/release/pi"
-    elif [[ "${KODE_PERF_STRICT:-0}" == "1" ]]; then
+    elif [[ "${KESA_PERF_STRICT:-0}" == "1" ]]; then
       die "Failed to build release pi binary required for binary-size gates (see logs/build_release_pi.log)"
     else
       log_warn "Failed to build release pi binary (see logs/build_release_pi.log); binary-size checks may return NO_DATA"
@@ -843,7 +843,7 @@ else
   log_warn "Artifact staging manifest was not generated"
 fi
 
-if [[ "$ARTIFACT_STAGING_STATUS" == "blocked" && "${KODE_PERF_STRICT:-0}" == "1" ]]; then
+if [[ "$ARTIFACT_STAGING_STATUS" == "blocked" && "${KESA_PERF_STRICT:-0}" == "1" ]]; then
   suite_fail=$((suite_fail + 1))
   SUITE_RESULTS+=("{\"suite\":\"artifact_staging\",\"status\":\"fail\",\"exit_code\":$staging_exit,\"elapsed_ms\":0}")
   log_warn "Strict mode: artifact staging blockers mark the run failed (blockers=$ARTIFACT_STAGING_BLOCKERS)"

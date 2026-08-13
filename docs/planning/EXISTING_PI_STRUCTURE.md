@@ -893,8 +893,8 @@ pub struct TerminalSettings {
 
 ```rust
 // Config paths
-KODE_CODING_AGENT_DIR     // Override ~/.kode/agent
-KODE_PACKAGE_DIR          // Override package assets
+KESA_CODING_AGENT_DIR     // Override ~/.kode/agent
+KESA_PACKAGE_DIR          // Override package assets
 
 // API Keys (per provider)
 ANTHROPIC_API_KEY

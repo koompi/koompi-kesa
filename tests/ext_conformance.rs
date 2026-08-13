@@ -125,7 +125,7 @@ fn parse_and_normalize_jsonl(
         let parsed: Value = serde_json::from_str(line)
             .map_err(|err| format!("line {idx}: JSON parse error: {err}"))?;
         let normalized = normalize_ext_log_line(parsed, ctx);
-        if std::env::var_os("KODE_TEST_MODE").is_some() {
+        if std::env::var_os("KESA_TEST_MODE").is_some() {
             trace!(
                 target: "ext_conformance.normalize",
                 line = idx + 1,
@@ -214,7 +214,7 @@ fn normalizes_dynamic_fields_paths_and_ansi() {
     let msg = normalized["message"].as_str().unwrap_or_default();
     // Windows PathBuf::join uses backslash, so accept both separators
     assert!(
-        msg.contains("<KODE_MONO_ROOT>/file.txt") || msg.contains("<KODE_MONO_ROOT>\\file.txt"),
+        msg.contains("<KESA_MONO_ROOT>/file.txt") || msg.contains("<KESA_MONO_ROOT>\\file.txt"),
     );
     assert!(!msg.contains(&cwd.display().to_string()));
     assert!(!msg.contains("\u{1b}["));
@@ -222,8 +222,8 @@ fn normalizes_dynamic_fields_paths_and_ansi() {
 
     let path = normalized["data"]["path"].as_str().unwrap_or_default();
     assert!(
-        path.contains("<KODE_MONO_ROOT>/dir/sub/file.rs")
-            || path.contains("<KODE_MONO_ROOT>\\dir\\sub\\file.rs"),
+        path.contains("<KESA_MONO_ROOT>/dir/sub/file.rs")
+            || path.contains("<KESA_MONO_ROOT>\\dir\\sub\\file.rs"),
     );
     assert!(!path.contains(&cwd.display().to_string()));
 
@@ -541,7 +541,7 @@ fn regression_dynamic_resources_full_normalization_pipeline() {
         PLACEHOLDER_SESSION_ID
     );
 
-    // Paths in data should be rewritten to use KODE_MONO_ROOT placeholder
+    // Paths in data should be rewritten to use KESA_MONO_ROOT placeholder
     let prompt_paths = normalized["data"]["promptPaths"]
         .as_array()
         .expect("promptPaths array");

@@ -81,15 +81,15 @@ fn load_guard_extension(ext_id: &str, entry_file: &str) -> Result<LoadedExtensio
     let tools = Arc::new(ToolRegistry::new(&[], &cwd, None));
 
     let mut env = HashMap::new();
-    env.insert("KODE_DETERMINISTIC_TIME_MS".to_string(), settings.time_ms);
+    env.insert("KESA_DETERMINISTIC_TIME_MS".to_string(), settings.time_ms);
     env.insert(
-        "KODE_DETERMINISTIC_TIME_STEP_MS".to_string(),
+        "KESA_DETERMINISTIC_TIME_STEP_MS".to_string(),
         "1".to_string(),
     );
-    env.insert("KODE_DETERMINISTIC_CWD".to_string(), settings.cwd.clone());
-    env.insert("KODE_DETERMINISTIC_HOME".to_string(), settings.home.clone());
+    env.insert("KESA_DETERMINISTIC_CWD".to_string(), settings.cwd.clone());
+    env.insert("KESA_DETERMINISTIC_HOME".to_string(), settings.home.clone());
     env.insert("HOME".to_string(), settings.home);
-    env.insert("KODE_DETERMINISTIC_RANDOM".to_string(), "0.5".to_string());
+    env.insert("KESA_DETERMINISTIC_RANDOM".to_string(), "0.5".to_string());
 
     let js_config = PiJsRuntimeConfig {
         cwd: settings.cwd,

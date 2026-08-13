@@ -183,7 +183,7 @@ fn provider_has_dedicated_login_flow(provider: &str) -> bool {
 /// Choose the GitHub Copilot device flow over the browser flow when the
 /// current process cannot rely on a localhost OAuth redirect — i.e. the
 /// session is running headless / over SSH and the user's browser cannot reach
-/// the callback server bound on this host. `KODE_COPILOT_FORCE_DEVICE_FLOW=1`
+/// the callback server bound on this host. `KESA_COPILOT_FORCE_DEVICE_FLOW=1`
 /// opts in unconditionally.
 ///
 /// When `GITHUB_COPILOT_CLIENT_ID` is unset we fall back to the well-known
@@ -192,8 +192,7 @@ fn provider_has_dedicated_login_flow(provider: &str) -> bool {
 /// no client id is explicitly configured, since that path is the most robust on
 /// headless/SSH sessions where a localhost OAuth redirect can't be reached.
 fn should_use_copilot_device_flow() -> bool {
-    if std::env::var("KODE_COPILOT_FORCE_DEVICE_FLOW")
-        .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "yes"))
+    if crate::env::var("COPILOT_FORCE_DEVICE_FLOW").is_some_and(|v| matches!(v.as_str(), "1" | "true" | "yes"))
     {
         return true;
     }

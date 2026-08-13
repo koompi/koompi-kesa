@@ -7,7 +7,7 @@
 - Prompt: `Respond with exactly: ok`
 - Timeout per extension: `600`s
 - Parallel jobs: `10`
-- KODE_EXTENSION_ALLOW_DANGEROUS: `false`
+- KESA_EXTENSION_ALLOW_DANGEROUS: `false`
 - Counts: pass `20` / total `20` (fail `0`)
 
 | id | status | ms | exit | tier | source |

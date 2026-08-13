@@ -800,9 +800,9 @@ fn flake_triage_documents_quarantine_required_fields() {
 fn flake_triage_has_configuration_variables() {
     let policy = load_text(FLAKE_TRIAGE_PATH);
     let vars = [
-        "KODE_CONFORMANCE_MAX_RETRIES",
-        "KODE_CONFORMANCE_RETRY_DELAY",
-        "KODE_CONFORMANCE_FLAKE_BUDGET",
+        "KESA_CONFORMANCE_MAX_RETRIES",
+        "KESA_CONFORMANCE_RETRY_DELAY",
+        "KESA_CONFORMANCE_FLAKE_BUDGET",
     ];
     for var in &vars {
         assert!(

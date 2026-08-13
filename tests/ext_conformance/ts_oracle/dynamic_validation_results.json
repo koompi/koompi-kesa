@@ -77,7 +77,7 @@
           {
             "name": "generate_image",
             "label": "Generate image",
-            "description": "Generate an image via Google Antigravity image models. Returns the image as a tool result attachment. Optional saving via save=project|global|custom|none, or KODE_IMAGE_SAVE_MODE/KODE_IMAGE_SAVE_DIR.",
+            "description": "Generate an image via Google Antigravity image models. Returns the image as a tool result attachment. Optional saving via save=project|global|custom|none, or KESA_IMAGE_SAVE_MODE/KESA_IMAGE_SAVE_DIR.",
             "parameters": {
               "type": "object",
               "required": [
@@ -117,7 +117,7 @@
                   ]
                 },
                 "saveDir": {
-                  "description": "Directory to save image when save=custom. Defaults to KODE_IMAGE_SAVE_DIR if set.",
+                  "description": "Directory to save image when save=custom. Defaults to KESA_IMAGE_SAVE_DIR if set.",
                   "type": "string"
                 }
               }
@@ -3167,7 +3167,7 @@
           {
             "name": "generate_image",
             "label": "Generate image",
-            "description": "Generate an image via Google Antigravity's Gemini 3 Pro Image model. Returns the image as a tool result attachment for inline terminal rendering. Optional saving via save=project|global|custom|none, or KODE_IMAGE_SAVE_MODE/KODE_IMAGE_SAVE_DIR.",
+            "description": "Generate an image via Google Antigravity's Gemini 3 Pro Image model. Returns the image as a tool result attachment for inline terminal rendering. Optional saving via save=project|global|custom|none, or KESA_IMAGE_SAVE_MODE/KESA_IMAGE_SAVE_DIR.",
             "parameters": {
               "type": "object",
               "required": [
@@ -3203,7 +3203,7 @@
                   ]
                 },
                 "saveDir": {
-                  "description": "Directory to save image when save=custom. Defaults to KODE_IMAGE_SAVE_DIR if set.",
+                  "description": "Directory to save image when save=custom. Defaults to KESA_IMAGE_SAVE_DIR if set.",
                   "type": "string"
                 }
               }

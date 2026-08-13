@@ -122,7 +122,7 @@ fn auth_hints(msg: &str) -> ErrorHint {
             summary: "GitHub Copilot OAuth client_id not configured",
             hints: &[
                 "Set GITHUB_COPILOT_CLIENT_ID to your GitHub OAuth App / GitHub App client id",
-                "Or run on a workstation with a browser, or use device flow over SSH (set KODE_COPILOT_FORCE_DEVICE_FLOW=1)",
+                "Or run on a workstation with a browser, or use device flow over SSH (set KESA_COPILOT_FORCE_DEVICE_FLOW=1)",
             ],
             context_fields: &["provider"],
         };
@@ -511,7 +511,7 @@ fn api_hints(msg: &str) -> ErrorHint {
         return ErrorHint {
             summary: "Request timed out",
             hints: &[
-                "Raise the timeout: --request-timeout <seconds>, KODE_HTTP_REQUEST_TIMEOUT_SECS=<seconds>, or requestTimeoutSecs in settings.json (0 = no timeout)",
+                "Raise the timeout: --request-timeout <seconds>, KESA_HTTP_REQUEST_TIMEOUT_SECS=<seconds>, or requestTimeoutSecs in settings.json (0 = no timeout)",
                 "Local providers (Ollama/LM Studio): the first request can block while the model loads — ensure the model is pulled (ollama pull <model>) and the server is reachable (ollama list)",
             ],
             context_fields: &["url", "timeout_seconds"],

@@ -226,7 +226,7 @@ snapshot at runtime. The file uses the same shape as the bundled snapshot:
 
 `<config_dir>` is whatever `dirs::config_dir()` reports — `~/.config` on Linux,
 `~/Library/Application Support` on macOS, `%APPDATA%` on Windows. Set
-`KODE_MODELS_OVERRIDE=/path/to/file.json` in the environment to point pi at a
+`KESA_MODELS_OVERRIDE=/path/to/file.json` in the environment to point pi at a
 file outside the standard config directory.
 
 Behavior:
