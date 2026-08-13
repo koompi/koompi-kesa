@@ -8,12 +8,8 @@ expression: view
 
   ╭──────────────────────────────────────────────────────────────────────────╮
   │ Welcome to KOOMPI Code!                                                  │
-  │ Type a message to begin, or /help for commands.                          │
-  ╰──────────────────────────────────────────────────────────────────────────╯
-  ╭──────────────────────────────────────────────────────────────────────────╮
   │ Ask for a change, paste an error, or drag files here.                    │
   │ /help commands   @file attach context   Shift+Tab mode   Ctrl+L model    │
-  │ Start with a plan: "inspect this repo and propose the smallest safe fix" │
   ╰──────────────────────────────────────────────────────────────────────────╯
 
   ⣾  Running read ...

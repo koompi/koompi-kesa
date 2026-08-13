@@ -2082,7 +2082,6 @@ fn build_startup_welcome_message(config: &Config, available_models: &[ModelEntry
     }
 
     let mut message = String::from("  Welcome to KOOMPI Code!\n");
-    message.push_str("  Type a message to begin, or /help for commands.\n");
 
     if available_models
         .iter()

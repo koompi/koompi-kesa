@@ -475,7 +475,7 @@ impl PiApp {
         if !self.startup_welcome.trim().is_empty() {
             let width = box_width(self.term_width);
             let mut rows = Vec::new();
-            for line in self.startup_welcome.lines() {
+            for line in self.startup_welcome.trim_end().lines() {
                 let line = line.trim_start();
                 if line.is_empty() {
                     rows.push(String::new());
@@ -485,29 +485,19 @@ impl PiApp {
                     rows.push(self.styles.muted_italic.render(segment));
                 }
             }
+            rows.push(
+                self.styles
+                    .accent_bold
+                    .render("Ask for a change, paste an error, or drag files here."),
+            );
+            rows.push(
+                self.styles.muted.render(
+                    "/help commands   @file attach context   Shift+Tab mode   Ctrl+L model",
+                ),
+            );
             for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
                 let _ = writeln!(output, "  {line}");
             }
-        }
-
-        let quickstart_rows = vec![
-            self.styles
-                .accent_bold
-                .render("Ask for a change, paste an error, or drag files here."),
-            self.styles
-                .muted
-                .render("/help commands   @file attach context   Shift+Tab mode   Ctrl+L model"),
-            self.styles.muted.render(
-                "Start with a plan: \"inspect this repo and propose the smallest safe fix\"",
-            ),
-        ];
-        let quickstart_width = box_width(self.term_width);
-        for line in bordered_box(
-            quickstart_rows.iter().map(String::as_str),
-            quickstart_width,
-            &self.styles.border,
-        ) {
-            let _ = writeln!(output, "  {line}");
         }
 
         match &self.startup_changelog {

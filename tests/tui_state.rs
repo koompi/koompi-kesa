@@ -4052,8 +4052,8 @@ fn tui_state_slash_clear_clears_conversation_and_sets_status() {
     type_text(&harness, &mut app, "/clear");
     let step = press_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, "Conversation cleared");
-    assert_after_contains(&harness, &step, "Welcome to Pi!");
-    assert_after_contains(&harness, &step, "Type a message to begin");
+    assert_after_contains(&harness, &step, "Welcome to KOOMPI Code!");
+    assert_after_contains(&harness, &step, "Ask for a change");
 }
 
 #[test]
