@@ -227,6 +227,14 @@ fn default_system_prompt(enabled_tools: &[&str], package_dir: &Path) -> String {
         ("read", "Read file contents"),
         ("bash", "Execute bash commands (ls, grep, find, etc.)"),
         (
+            "bash_output",
+            "Read new output from a background shell started by bash with run_in_background",
+        ),
+        (
+            "kill_shell",
+            "Stop a background shell and every process it spawned",
+        ),
+        (
             "edit",
             "Make surgical edits to files (find exact text and replace)",
         ),
@@ -1233,6 +1241,20 @@ mod tests {
     use super::*;
     use crate::auth::AuthStorage;
     use crate::provider::{InputType, Model, ModelCost};
+
+    #[test]
+    fn system_prompt_describes_every_default_tool() {
+        let tools: Vec<&str> = crate::cli::DEFAULT_TOOLS.split(',').collect();
+        let prompt = default_system_prompt(&tools, Path::new("."));
+        let missing: Vec<&&str> = tools
+            .iter()
+            .filter(|tool| !prompt.contains(&format!("- {tool}: ")))
+            .collect();
+        assert!(
+            missing.is_empty(),
+            "enabled but absent from the system prompt's tool list: {missing:?}"
+        );
+    }
 
     fn test_model_entry(id: &str, provider: &str, reasoning: bool) -> ModelEntry {
         ModelEntry {
