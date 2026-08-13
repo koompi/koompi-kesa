@@ -9,6 +9,9 @@ pub(super) fn format_tool_output(
     details: Option<&Value>,
     show_images: bool,
 ) -> Option<String> {
+    if let Some(block) = details.and_then(todo_checkbox_block) {
+        return Some(block);
+    }
     let mut output = tool_content_blocks_to_text(content, show_images);
     if let Some(details) = details {
         // `edit` includes a unified diff-like view in `details.diff`. Surface it in the TUI
@@ -35,6 +38,20 @@ pub(super) fn format_tool_output(
     }
 }
 
+/// A todo write carries the whole list in `details`; show it as checkboxes rather
+/// than the raw payload.
+fn todo_checkbox_block(details: &Value) -> Option<String> {
+    if details.get("schema").and_then(Value::as_str)? != crate::todo::TODO_LIST_SCHEMA {
+        return None;
+    }
+    let todos: Vec<crate::todo::TodoItem> =
+        serde_json::from_value(details.get("todos")?.clone()).ok()?;
+    if todos.is_empty() {
+        return None;
+    }
+    Some(crate::todo::render_todo_list(&todos))
+}
+
 /// Width budget for the argument shown beside a tool name in the call header.
 const TOOL_ARG_MAX_WIDTH: usize = 60;
 
@@ -54,6 +71,7 @@ fn display_tool_name(name: &str) -> String {
     match name {
         "ls" => "List".to_string(),
         "hashline_edit" => "Edit".to_string(),
+        "todo" => "Todos".to_string(),
         _ => {
             let mut chars = name.chars();
             match chars.next() {
@@ -71,6 +89,7 @@ fn tool_primary_arg(name: &str, arguments: &Value) -> Option<String> {
         "grep" => &["pattern", "query"],
         "find" => &["pattern", "glob", "name"],
         "subagent" => &["agent", "name", "prompt"],
+        "todo" => &[],
         _ => &["path", "file_path", "command", "pattern", "query", "name"],
     };
     keys.iter()
@@ -122,7 +141,14 @@ pub(super) fn render_tool_message(text: &str, styles: &TuiStyles) -> String {
         if idx > 0 {
             out.push('\n');
         }
-        out.push_str(&styles.muted.render(line));
+        if line
+            .trim_start()
+            .starts_with(crate::todo::TodoStatus::InProgress.glyph())
+        {
+            out.push_str(&styles.accent_bold.render(line));
+        } else {
+            out.push_str(&styles.muted.render(line));
+        }
     }
 
     if !found_diff_header {
@@ -459,6 +485,29 @@ mod tests {
         let result = format_tool_output(&blocks, Some(&details), true).unwrap();
         assert!(result.contains("status"));
         assert!(result.contains("ok"));
+    }
+
+    #[test]
+    fn format_tool_output_renders_todo_checkboxes() {
+        let details = serde_json::json!({
+            "schema": crate::todo::TODO_LIST_SCHEMA,
+            "todos": [
+                {"content": "Read the file", "status": "completed", "active_form": "Reading the file"},
+                {"content": "Run the tests", "status": "in_progress", "active_form": "Running the tests"},
+                {"content": "Write the report", "status": "pending", "active_form": "Writing the report"},
+            ],
+        });
+        let blocks = vec![ContentBlock::Text(TextContent::new("ignored".to_string()))];
+        assert_eq!(
+            format_tool_output(&blocks, Some(&details), true),
+            Some("☑ Read the file\n▣ Running the tests\n☐ Write the report".to_string())
+        );
+    }
+
+    #[test]
+    fn todo_call_header_has_no_argument() {
+        let args = serde_json::json!({"todos": []});
+        assert_eq!(format_tool_call_header("todo", &args), "Todos");
     }
 
     #[test]

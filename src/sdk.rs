@@ -80,6 +80,7 @@ pub const BUILTIN_TOOL_NAMES: &[&str] = &[
     "find",
     "ls",
     "hashline_edit",
+    "todo",
 ];
 
 /// Create a read tool configured for `cwd`.
@@ -122,6 +123,12 @@ pub fn create_hashline_edit_tool(cwd: &Path) -> Box<dyn Tool> {
     Box::new(HashlineEditTool::new(cwd))
 }
 
+/// Create a todo tool. Its list is process-wide, so `cwd` plays no part.
+#[must_use]
+pub fn create_todo_tool() -> Box<dyn Tool> {
+    Box::new(crate::todo::TodoTool)
+}
+
 /// Create the default non-delegating built-in tools configured for `cwd`.
 pub fn create_all_tools(cwd: &Path) -> Vec<Box<dyn Tool>> {
     vec![
@@ -133,6 +140,7 @@ pub fn create_all_tools(cwd: &Path) -> Vec<Box<dyn Tool>> {
         create_find_tool(cwd),
         create_ls_tool(cwd),
         create_hashline_edit_tool(cwd),
+        create_todo_tool(),
     ]
 }
 
@@ -2656,10 +2664,14 @@ mod tests {
     }
 
     #[test]
-    fn create_all_tools_returns_eight() {
+    fn create_all_tools_returns_every_builtin() {
         let tmp = tempdir().expect("tempdir");
         let tools = super::create_all_tools(tmp.path());
-        assert_eq!(tools.len(), 8, "should create all 8 built-in tools");
+        assert_eq!(
+            tools.len(),
+            BUILTIN_TOOL_NAMES.len(),
+            "should create every built-in tool"
+        );
 
         let names: Vec<&str> = tools.iter().map(|t| t.name()).collect();
         for expected in BUILTIN_TOOL_NAMES {
@@ -2682,10 +2694,10 @@ mod tests {
     }
 
     #[test]
-    fn all_tool_definitions_returns_eight_schemas() {
+    fn all_tool_definitions_returns_every_builtin_schema() {
         let tmp = tempdir().expect("tempdir");
         let defs = super::all_tool_definitions(tmp.path());
-        assert_eq!(defs.len(), 8);
+        assert_eq!(defs.len(), BUILTIN_TOOL_NAMES.len());
 
         for def in &defs {
             assert!(!def.name.is_empty());

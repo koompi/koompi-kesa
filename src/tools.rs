@@ -5030,6 +5030,7 @@ impl ToolRegistry {
                 "ls" => tools.push(Box::new(LsTool::new(cwd))),
                 "hashline_edit" => tools.push(Box::new(HashlineEditTool::new(cwd))),
                 "subagent" => tools.push(Box::new(crate::subagents::SubagentTool::new(cwd))),
+                "todo" => tools.push(Box::new(crate::todo::TodoTool)),
                 _ => {}
             }
         }
