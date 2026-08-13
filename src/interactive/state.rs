@@ -48,6 +48,8 @@ pub(super) const TOOL_COLLAPSE_PREVIEW_LINES: usize = 5;
 pub(super) const THINKING_COLLAPSED_MAX_LINES: usize = 12;
 /// Pasted line count at which the editor shows a placeholder instead of the text.
 pub(super) const PASTE_COLLAPSE_MIN_LINES: usize = 20;
+/// Window in which a second Ctrl+C quits instead of aborting or clearing.
+pub(super) const CTRLC_QUIT_WINDOW: std::time::Duration = std::time::Duration::from_millis(500);
 
 /// A message in the conversation history.
 #[derive(Debug, Clone)]

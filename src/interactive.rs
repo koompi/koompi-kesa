@@ -107,7 +107,7 @@ use self::perf::{
 };
 pub use self::state::{AgentState, InputMode, PendingInput};
 use self::state::{
-    ApprovalAction, AutocompleteState, BranchPickerOverlay, CapabilityAction,
+    ApprovalAction, AutocompleteState, BranchPickerOverlay, CTRLC_QUIT_WINDOW, CapabilityAction,
     CapabilityPromptOverlay, ExtensionCustomOverlay, HistoryList, InjectedMessageQueue,
     InteractiveMessageQueue, PASTE_COLLAPSE_MIN_LINES, PendingLoginKind, PendingOAuth,
     QueuedMessageKind, SessionPickerOverlay, SettingsUiEntry, SettingsUiState,
@@ -1656,6 +1656,83 @@ const fn bool_label(value: bool) -> &'static str {
     if value { "on" } else { "off" }
 }
 
+/// Reads crossterm events on bubbletea's behalf so Ctrl+C reaches `update()`.
+struct TerminalInputReader {
+    stop: Arc<AtomicBool>,
+    handle: Option<std::thread::JoinHandle<()>>,
+}
+
+impl TerminalInputReader {
+    const POLL: std::time::Duration = std::time::Duration::from_millis(20);
+
+    fn spawn(tx: std::sync::mpsc::Sender<Message>) -> Self {
+        let stop = Arc::new(AtomicBool::new(false));
+        let thread_stop = Arc::clone(&stop);
+        let handle = std::thread::spawn(move || {
+            while !thread_stop.load(Ordering::Relaxed) {
+                match crossterm::event::poll(Self::POLL) {
+                    Ok(true) => {}
+                    Ok(false) => continue,
+                    Err(_) => break,
+                }
+                let Ok(event) = crossterm::event::read() else {
+                    break;
+                };
+                let Some(msg) = terminal_event_message(event) else {
+                    continue;
+                };
+                if tx.send(msg).is_err() {
+                    break;
+                }
+            }
+        });
+        Self {
+            stop,
+            handle: Some(handle),
+        }
+    }
+
+    fn stop(mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+        if let Some(handle) = self.handle.take() {
+            let _ = handle.join();
+        }
+    }
+}
+
+fn terminal_event_message(event: crossterm::event::Event) -> Option<Message> {
+    use crossterm::event::{Event, KeyEventKind};
+
+    match event {
+        Event::Key(key) if key.kind == KeyEventKind::Press => Some(Message::new(
+            bubbletea::key::from_crossterm_key(key.code, key.modifiers),
+        )),
+        Event::Key(_) => None,
+        Event::Mouse(mouse) => Some(Message::new(bubbletea::mouse::from_crossterm_mouse(mouse))),
+        Event::Resize(width, height) => Some(Message::new(WindowSizeMsg { width, height })),
+        Event::Paste(text) => Some(Message::new(KeyMsg {
+            key_type: KeyType::Runes,
+            runes: text.chars().collect(),
+            alt: false,
+            paste: true,
+        })),
+        Event::FocusGained | Event::FocusLost => None,
+    }
+}
+
+/// bubbletea skips its own `disable_raw_mode` on panic under `custom_io`.
+fn install_raw_mode_panic_hook() {
+    static INSTALLED: AtomicBool = AtomicBool::new(false);
+    if INSTALLED.swap(true, Ordering::Relaxed) {
+        return;
+    }
+    let previous = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let _ = terminal::disable_raw_mode();
+        previous(info);
+    }));
+}
+
 /// Run the interactive mode.
 #[allow(clippy::too_many_arguments)]
 pub async fn run_interactive(
@@ -1698,6 +1775,7 @@ pub async fn run_interactive(
     let (event_tx, mut event_rx) = mpsc::channel::<PiMsg>(1024);
     let shutdown_event_tx = event_tx.clone();
     let (ui_tx, ui_rx) = std::sync::mpsc::channel::<Message>();
+    let input_tx = ui_tx.clone();
 
     let ui_bridge_cx = Cx::current().unwrap_or_else(Cx::for_request);
     runtime_handle.spawn(async move {
@@ -1794,13 +1872,29 @@ pub async fn run_interactive(
         ));
         let mut app = app;
         app.attach_tool_policy(tool_policy, pending_approvals);
+        // bubbletea's own crossterm reader turns Ctrl+C into InterruptMsg and
+        // quits before update() sees it, so the abort/double-tap logic in
+        // handle_action is unreachable from a real terminal. custom_io stops
+        // that reader (it keeps alt screen, mouse, bracketed paste and the
+        // panic hook) and terminal_input_reader feeds the same events in,
+        // Ctrl+C included, as an ordinary KeyMsg.
         let mut program = Program::new(app)
             .with_alt_screen()
+            .with_custom_io()
             .with_input_receiver(ui_rx);
         if !disable_mouse_capture {
             program = program.with_mouse_all_motion();
         }
-        program.run()?;
+
+        let reader = TerminalInputReader::spawn(input_tx);
+        install_raw_mode_panic_hook();
+        let raw_mode = terminal::enable_raw_mode();
+        let result = program.run();
+        if raw_mode.is_ok() {
+            let _ = terminal::disable_raw_mode();
+        }
+        reader.stop();
+        result?;
     }
 
     // Tell the async bridge to exit promptly even if some background task still

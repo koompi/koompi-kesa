@@ -718,11 +718,21 @@ impl PiApp {
                 // Ctrl+C: abort if processing, clear editor if has text, or quit on double-tap
                 // Note: Copy and Clear both bound to Ctrl+C - Copy takes precedence in lookup
                 // When selection is implemented, Copy should only trigger with active selection
+                let now = std::time::Instant::now();
+                let double_tap = self
+                    .last_ctrlc_time
+                    .is_some_and(|last| now.duration_since(last) < CTRLC_QUIT_WINDOW);
+
                 if self.agent_state != AgentState::Idle {
+                    if double_tap {
+                        return Some(self.quit_cmd());
+                    }
                     if let Some(handle) = &self.abort_handle {
                         handle.abort();
                     }
-                    self.status_message = Some("Aborting request...".to_string());
+                    self.last_ctrlc_time = Some(now);
+                    self.status_message =
+                        Some("Aborting request... press Ctrl+C again to quit".to_string());
                     return None;
                 }
 
@@ -731,18 +741,14 @@ impl PiApp {
                 if !editor_text.is_empty() {
                     self.input.reset();
                     self.pasted_blocks.clear();
-                    self.last_ctrlc_time = Some(std::time::Instant::now());
+                    self.last_ctrlc_time = Some(now);
                     self.status_message = Some("Input cleared".to_string());
                     return None;
                 }
 
                 // Editor is empty - check for double-tap to quit
-                let now = std::time::Instant::now();
-                if let Some(last_time) = self.last_ctrlc_time {
-                    // Double-tap within 500ms quits
-                    if now.duration_since(last_time) < std::time::Duration::from_millis(500) {
-                        return Some(self.quit_cmd());
-                    }
+                if double_tap {
+                    return Some(self.quit_cmd());
                 }
                 // Record this Ctrl+C and show hint
                 self.last_ctrlc_time = Some(now);
@@ -1954,6 +1960,96 @@ mod tests {
                 "thinking must wrap to the viewport: {line:?}"
             );
         }
+    }
+
+    fn is_quit(cmd: Option<Cmd>) -> bool {
+        cmd.is_some_and(|cmd| {
+            cmd.execute()
+                .is_some_and(|msg| msg.is::<bubbletea::QuitMsg>())
+        })
+    }
+
+    /// A real terminal only reaches `update()` through `terminal_event_message`,
+    /// so the regression is only visible when the raw crossterm event drives it.
+    fn ctrl_c_event() -> KeyMsg {
+        use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+
+        let msg = super::super::terminal_event_message(Event::Key(KeyEvent::new(
+            KeyCode::Char('c'),
+            KeyModifiers::CONTROL,
+        )))
+        .expect("ctrl+c must reach the model as a key message, not an interrupt");
+        msg.downcast_ref::<KeyMsg>()
+            .expect("ctrl+c must stay a KeyMsg")
+            .clone()
+    }
+
+    #[test]
+    fn ctrl_c_mid_turn_aborts_and_keeps_the_session() {
+        let mut app = busy_app();
+        app.input.set_value("half typed");
+
+        let key = ctrl_c_event();
+        assert_eq!(key.key_type, KeyType::CtrlC);
+        assert!(
+            !is_quit(BubbleteaModel::update(&mut app, Message::new(key))),
+            "the first Ctrl+C during a turn must abort, not quit"
+        );
+        assert_eq!(app.input.value(), "half typed");
+        assert!(
+            app.status_message
+                .as_deref()
+                .is_some_and(|msg| msg.contains("Ctrl+C again")),
+            "the abort must say how to quit: {:?}",
+            app.status_message
+        );
+    }
+
+    #[test]
+    fn second_ctrl_c_mid_turn_quits() {
+        let mut app = busy_app();
+        let _ = BubbleteaModel::update(&mut app, Message::new(ctrl_c_event()));
+
+        assert!(
+            is_quit(BubbleteaModel::update(
+                &mut app,
+                Message::new(ctrl_c_event())
+            )),
+            "a second Ctrl+C inside the window must quit"
+        );
+    }
+
+    #[test]
+    fn ctrl_c_mid_turn_after_the_window_aborts_again() {
+        let mut app = busy_app();
+        let _ = BubbleteaModel::update(&mut app, Message::new(ctrl_c_event()));
+        app.last_ctrlc_time = Some(std::time::Instant::now() - CTRLC_QUIT_WINDOW * 2);
+
+        assert!(
+            !is_quit(BubbleteaModel::update(
+                &mut app,
+                Message::new(ctrl_c_event())
+            )),
+            "a late second Ctrl+C must abort again rather than quit"
+        );
+    }
+
+    #[test]
+    fn ctrl_c_when_idle_still_quits_on_the_second_press() {
+        let mut app = busy_app();
+        app.agent_state = AgentState::Idle;
+
+        assert!(!is_quit(BubbleteaModel::update(
+            &mut app,
+            Message::new(ctrl_c_event())
+        )));
+        assert!(
+            is_quit(BubbleteaModel::update(
+                &mut app,
+                Message::new(ctrl_c_event())
+            )),
+            "idle Ctrl+C must keep its double-tap quit"
+        );
     }
 
     fn strip_ansi(input: &str) -> String {
