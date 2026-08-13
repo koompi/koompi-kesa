@@ -5,10 +5,10 @@
 //! Ordinary runs verify `docs/extension-conformance-test-plan.json`; set
 //! `KODE_GENERATE_CONFORMANCE_TEST_PLAN=1` to regenerate it explicitly.
 
-use kode::extension_conformance_matrix::{
+use kesa::extension_conformance_matrix::{
     ApiMatrix, ConformanceTestPlan, HostCapability, build_test_plan,
 };
-use kode::extension_inclusion::InclusionList;
+use kesa::extension_inclusion::InclusionList;
 use serde_json::{Value, json};
 use std::collections::BTreeSet;
 use std::fs;

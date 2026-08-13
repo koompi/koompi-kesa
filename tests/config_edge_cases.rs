@@ -10,7 +10,7 @@
 mod common;
 
 use common::TestHarness;
-use kode::config::{Config, SettingsScope};
+use kesa::config::{Config, SettingsScope};
 use serde_json::json;
 use std::path::Path;
 use std::sync::{Mutex, OnceLock};
@@ -493,7 +493,7 @@ fn repair_policy_defaults_to_suggest() {
     assert_eq!(resolved.source, "cli");
     assert_eq!(
         resolved.effective_mode,
-        kode::extensions::RepairPolicyMode::Suggest
+        kesa::extensions::RepairPolicyMode::Suggest
     );
 }
 
@@ -506,7 +506,7 @@ fn repair_policy_cli_override_wins() {
     assert_eq!(resolved.source, "cli");
     assert_eq!(
         resolved.effective_mode,
-        kode::extensions::RepairPolicyMode::Off
+        kesa::extensions::RepairPolicyMode::Off
     );
 }
 
@@ -521,7 +521,7 @@ fn repair_policy_auto_strict_from_config() {
     assert_eq!(resolved.source, "cli");
     assert_eq!(
         resolved.effective_mode,
-        kode::extensions::RepairPolicyMode::AutoStrict
+        kesa::extensions::RepairPolicyMode::AutoStrict
     );
 }
 
@@ -532,7 +532,7 @@ fn repair_policy_unknown_mode_falls_back_to_suggest() {
     let resolved = config.resolve_repair_policy_with_metadata(Some("invalid-mode"));
     assert_eq!(
         resolved.effective_mode,
-        kode::extensions::RepairPolicyMode::Suggest
+        kesa::extensions::RepairPolicyMode::Suggest
     );
 }
 

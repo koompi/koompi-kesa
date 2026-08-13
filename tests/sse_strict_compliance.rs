@@ -1,4 +1,4 @@
-use kode::sse::SseParser;
+use kesa::sse::SseParser;
 
 #[test]
 fn test_sse_bom_stripping() {

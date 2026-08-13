@@ -6,11 +6,11 @@ use super::{
     user_text, vcr_mode, vcr_strict,
 };
 use crate::common::TestHarness;
-use kode::http::client::Client;
-use kode::model::{Message, StopReason};
-use kode::provider::{Context, Provider, StreamOptions, ToolDef};
-use kode::providers::gemini::GeminiProvider;
-use kode::vcr::{VcrMode, VcrRecorder};
+use kesa::http::client::Client;
+use kesa::model::{Message, StopReason};
+use kesa::provider::{Context, Provider, StreamOptions, ToolDef};
+use kesa::providers::gemini::GeminiProvider;
+use kesa::vcr::{VcrMode, VcrRecorder};
 use serde_json::json;
 use std::env;
 

@@ -12,7 +12,7 @@
     clippy::unreadable_literal
 )]
 
-use kode::perf_build::{
+use kesa::perf_build::{
     BINARY_SIZE_RELEASE_BUDGET_MB, BUILD_FINGERPRINT_CONTRACT, BenchmarkBuildVerification,
     BenchmarkProvenance, CANONICAL_PIJS_PERF_FEATURES, benchmark_provenance_config_hash,
     matches_canonical_perf_build_fingerprint, matches_canonical_pijs_perf_features,
@@ -987,7 +987,7 @@ fn build_binary_size_candidate_paths(
 }
 
 fn binary_size_candidate_paths(root: &Path) -> Vec<PathBuf> {
-    let detected_profile = kode::perf_build::detect_build_profile();
+    let detected_profile = kesa::perf_build::detect_build_profile();
     let release_binary_override = binary_size_release_override();
     let mut paths = Vec::new();
     for dir in perf_evidence_dirs(root) {

@@ -5,12 +5,12 @@
 
 mod common;
 
-use kode::extension_preflight::{
+use kesa::extension_preflight::{
     INSTALL_TIME_RISK_SCHEMA, InstallRecommendation, InstallTimeRiskReport, PreflightVerdict,
     RiskTier, SECURITY_RULEBOOK_VERSION, SECURITY_SCAN_SCHEMA, SecurityRuleId, SecurityScanReport,
     SecurityScanner, classify_extension_source, security_evidence_ledger_jsonl,
 };
-use kode::extensions::ExtensionPolicy;
+use kesa::extensions::ExtensionPolicy;
 
 // ============================================================================
 // Helpers

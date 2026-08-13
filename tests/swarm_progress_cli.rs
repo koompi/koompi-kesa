@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use kode::swarm_progress_slo::{
+use kesa::swarm_progress_slo::{
     AgentMailHealth, FreshnessState, ProgressSloEvaluationInput, ProgressSloMetrics,
     ProgressSloSourceStatus, ProgressSloTimeWindow, RchPosture, RedactionState, SourceAvailability,
     ValidationBrokerPosture,
@@ -23,7 +23,7 @@ fn repo_root() -> PathBuf {
 }
 
 fn binary_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_kode"))
+    PathBuf::from(env!("CARGO_BIN_EXE_kesa"))
 }
 
 fn test_workspace(name: &str) -> TestResult<PathBuf> {

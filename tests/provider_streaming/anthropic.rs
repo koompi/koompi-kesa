@@ -7,11 +7,11 @@ use super::{
 };
 use crate::common::TestHarness;
 use chrono::{SecondsFormat, Utc};
-use kode::http::client::Client;
-use kode::model::{Message, StopReason, ThinkingLevel, UserContent};
-use kode::provider::{CacheRetention, Context, Provider, StreamOptions, ThinkingBudgets, ToolDef};
-use kode::providers::anthropic::AnthropicProvider;
-use kode::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
+use kesa::http::client::Client;
+use kesa::model::{Message, StopReason, ThinkingLevel, UserContent};
+use kesa::provider::{CacheRetention, Context, Provider, StreamOptions, ThinkingBudgets, ToolDef};
+use kesa::providers::anthropic::AnthropicProvider;
+use kesa::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::env;

@@ -43,7 +43,7 @@ struct GoldenPathHarness {
 impl GoldenPathHarness {
     fn new(name: &str) -> Self {
         let harness = TestHarness::new(name);
-        let binary_path = PathBuf::from(env!("CARGO_BIN_EXE_kode"));
+        let binary_path = PathBuf::from(env!("CARGO_BIN_EXE_kesa"));
 
         let env_root = harness.temp_path("pi-env");
         let _ = fs::create_dir_all(&env_root);

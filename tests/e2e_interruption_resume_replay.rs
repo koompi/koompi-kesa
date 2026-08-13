@@ -28,15 +28,15 @@ mod common;
 use async_trait::async_trait;
 use common::{TestHarness, run_async};
 use futures::Stream;
-use kode::agent::{AbortHandle, Agent, AgentConfig, AgentEvent, AgentSession};
-use kode::compaction::ResolvedCompactionSettings;
-use kode::error::Result;
-use kode::model::{
+use kesa::agent::{AbortHandle, Agent, AgentConfig, AgentEvent, AgentSession};
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::error::Result;
+use kesa::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall, Usage,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::path::Path;
 use std::pin::Pin;

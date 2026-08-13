@@ -1,9 +1,9 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use kode::auth::{AuthCredential, AuthStorage};
-use kode::http::client::Client;
-use kode::vcr::{VcrMode, VcrRecorder};
+use kesa::auth::{AuthCredential, AuthStorage};
+use kesa::http::client::Client;
+use kesa::vcr::{VcrMode, VcrRecorder};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;

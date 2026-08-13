@@ -8,7 +8,7 @@
 
 use asupersync::lab::{LabConfig, LabRuntime};
 use asupersync::types::Budget;
-use kode::extensions::{ExtensionManager, PROTOCOL_VERSION, RegisterPayload};
+use kesa::extensions::{ExtensionManager, PROTOCOL_VERSION, RegisterPayload};
 use serde_json::{Value, json};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -286,12 +286,12 @@ fn budget_constants_under_lab() {
         .state
         .create_task(region, Budget::INFINITE, async move {
             const {
-                assert!(kode::extensions::EXTENSION_EVENT_TIMEOUT_MS >= 1_000);
-                assert!(kode::extensions::EXTENSION_EVENT_TIMEOUT_MS <= 60_000);
-                assert!(kode::extensions::EXTENSION_TOOL_BUDGET_MS >= 5_000);
-                assert!(kode::extensions::EXTENSION_TOOL_BUDGET_MS <= 300_000);
-                assert!(kode::extensions::EXTENSION_UI_BUDGET_MS >= 100);
-                assert!(kode::extensions::EXTENSION_UI_BUDGET_MS <= 10_000);
+                assert!(kesa::extensions::EXTENSION_EVENT_TIMEOUT_MS >= 1_000);
+                assert!(kesa::extensions::EXTENSION_EVENT_TIMEOUT_MS <= 60_000);
+                assert!(kesa::extensions::EXTENSION_TOOL_BUDGET_MS >= 5_000);
+                assert!(kesa::extensions::EXTENSION_TOOL_BUDGET_MS <= 300_000);
+                assert!(kesa::extensions::EXTENSION_UI_BUDGET_MS >= 100);
+                assert!(kesa::extensions::EXTENSION_UI_BUDGET_MS <= 10_000);
             };
             p.fetch_add(1, Ordering::SeqCst);
         })

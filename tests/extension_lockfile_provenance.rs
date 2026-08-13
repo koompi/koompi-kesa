@@ -5,7 +5,7 @@
 
 mod common;
 
-use kode::package_manager::{
+use kesa::package_manager::{
     PACKAGE_LOCK_SCHEMA, PACKAGE_TRUST_AUDIT_SCHEMA, PackageEntryTrustState, PackageLockAction,
     PackageLockEntry, PackageLockfile, PackageResolvedProvenance, PackageSourceKind,
     digest_package_path, evaluate_lock_transition, read_package_lockfile, sort_lock_entries,

@@ -3677,7 +3677,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "koompi-code-cli"
+name = "koompi-kesa"
 version = "0.2.0"
 dependencies = [
  "anyhow",

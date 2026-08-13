@@ -10,13 +10,13 @@ use std::time::Instant;
 use anyhow::{Context, Result, anyhow};
 use chrono::{DateTime, SecondsFormat, Utc};
 use clap::Parser;
-use kode::extension_popularity::{
+use kesa::extension_popularity::{
     CandidateItem, CandidatePool, CandidateSource, GitHubRepoCandidate, GitHubRepoMetrics,
     GitHubRepoRef, NpmDownloads, NpmRegistryMeta, github_repo_candidate_from_url,
     github_repo_guesses_from_slug, parse_github_repo_response, parse_npm_downloads_response,
     parse_npm_registry_response,
 };
-use kode::http::client::Client;
+use kesa::http::client::Client;
 use serde::Serialize;
 
 #[derive(Debug, Parser)]
@@ -606,7 +606,7 @@ fn fetch_github_repo_metrics_via_gh(
 }
 
 fn apply_npm_signals(
-    target: &mut kode::extension_popularity::PopularityEvidence,
+    target: &mut kesa::extension_popularity::PopularityEvidence,
     item: &CandidateItem,
     npm_map: &HashMap<String, NpmSnapshot>,
 ) -> bool {
@@ -635,7 +635,7 @@ fn apply_npm_signals(
 }
 
 fn apply_github_signals(
-    target: &mut kode::extension_popularity::PopularityEvidence,
+    target: &mut kesa::extension_popularity::PopularityEvidence,
     item: &CandidateItem,
     npm_map: &HashMap<String, NpmSnapshot>,
     github_map: &HashMap<String, GitHubLookup>,
@@ -665,7 +665,7 @@ fn apply_github_signals(
     false
 }
 
-fn has_any_signal(evidence: &kode::extension_popularity::PopularityEvidence) -> bool {
+fn has_any_signal(evidence: &kesa::extension_popularity::PopularityEvidence) -> bool {
     evidence.github_repo.is_some()
         || evidence.github_stars.is_some()
         || evidence.github_forks.is_some()
@@ -764,7 +764,7 @@ fn ratio_pct(numerator: usize, denominator: usize) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use kode::extension_popularity::{PopularityEvidence, Sha256Checksum};
+    use kesa::extension_popularity::{PopularityEvidence, Sha256Checksum};
 
     fn mk_item(
         id: &str,

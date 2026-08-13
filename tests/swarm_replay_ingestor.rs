@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use kode::swarm_replay::{
+use kesa::swarm_replay::{
     SWARM_REPLAY_PERFORMANCE_EVIDENCE_SCHEMA, SWARM_REPLAY_POLICY_REPORT_SCHEMA,
     SWARM_REPLAY_REPORT_SCHEMA, SWARM_REPLAY_TRACE_SCHEMA, SwarmReplayBaselinePolicy,
     SwarmReplayEvent, SwarmReplayEventUncertainty, SwarmReplayGuards, SwarmReplayIngestRequest,
@@ -501,7 +501,7 @@ fn write_no_mock_e2e_sources(root: &Path) -> std::io::Result<()> {
 fn source_row<'a>(
     trace: &'a SwarmReplayTrace,
     source_id: &str,
-) -> Result<&'a kode::swarm_replay::SwarmReplaySourceInventoryRow, String> {
+) -> Result<&'a kesa::swarm_replay::SwarmReplaySourceInventoryRow, String> {
     trace
         .source_inventory
         .iter()
@@ -639,7 +639,7 @@ fn trace_from_events(events: Vec<SwarmReplayEvent>) -> SwarmReplayTrace {
     }
 }
 
-fn diagnostic_codes(report: &kode::swarm_replay::SwarmReplayReport) -> BTreeSet<String> {
+fn diagnostic_codes(report: &kesa::swarm_replay::SwarmReplayReport) -> BTreeSet<String> {
     report
         .diagnostics
         .iter()
@@ -741,7 +741,7 @@ fn with_event(mut events: Vec<SwarmReplayEvent>, event: SwarmReplayEvent) -> Vec
     events
 }
 
-fn metamorphic_state_projection(report: &kode::swarm_replay::SwarmReplayReport) -> Value {
+fn metamorphic_state_projection(report: &kesa::swarm_replay::SwarmReplayReport) -> Value {
     let beads = report
         .final_state
         .beads
@@ -821,8 +821,8 @@ fn push_metamorphic_comparison(
     records: &mut Vec<Value>,
     transform_id: &str,
     fixture_id: &str,
-    left: &kode::swarm_replay::SwarmReplayReport,
-    right: &kode::swarm_replay::SwarmReplayReport,
+    left: &kesa::swarm_replay::SwarmReplayReport,
+    right: &kesa::swarm_replay::SwarmReplayReport,
     expected_equivalent: bool,
 ) -> bool {
     let compared_fields = [
@@ -881,8 +881,8 @@ fn decision<'a>(
 fn write_no_mock_e2e_outputs(
     root: &Path,
     trace: &SwarmReplayTrace,
-    replay: &kode::swarm_replay::SwarmReplayReport,
-    policy_report: &kode::swarm_replay::SwarmReplayPolicyReport,
+    replay: &kesa::swarm_replay::SwarmReplayReport,
+    policy_report: &kesa::swarm_replay::SwarmReplayPolicyReport,
 ) -> Result<Value, Box<dyn Error>> {
     write_json(root, "evidence/trace.json", &serde_json::to_value(trace)?)?;
     write_json(

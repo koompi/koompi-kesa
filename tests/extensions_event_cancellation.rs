@@ -10,11 +10,11 @@
 
 mod common;
 
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use serde_json::{Value, json};
 use std::sync::Arc;
 
@@ -420,7 +420,7 @@ fn no_cancellation_when_no_hooks_registered() {
 
 #[test]
 fn session_before_switch_event_serialization() {
-    use kode::extension_events::ExtensionEvent;
+    use kesa::extension_events::ExtensionEvent;
 
     let event = ExtensionEvent::SessionBeforeSwitch {
         current_session: Some("session-1".to_string()),
@@ -446,7 +446,7 @@ fn session_before_switch_event_serialization() {
 
 #[test]
 fn session_before_fork_event_serialization() {
-    use kode::extension_events::ExtensionEvent;
+    use kesa::extension_events::ExtensionEvent;
 
     let event = ExtensionEvent::SessionBeforeFork {
         current_session: None,

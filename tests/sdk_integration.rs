@@ -1,6 +1,6 @@
 //! SDK integration test suite (bd-2hcex: PARITY-V3).
 //!
-//! Validates that the programmatic SDK API (`kode::sdk`) works correctly:
+//! Validates that the programmatic SDK API (`kesa::sdk`) works correctly:
 //! session creation, model selection, event streaming, tool execution,
 //! persistence, abort, compaction, error handling.
 //!
@@ -14,20 +14,20 @@ mod common;
 use async_trait::async_trait;
 use common::{TestHarness, run_async};
 use futures::Stream;
-use kode::agent::{AgentConfig, AgentEvent, AgentSession};
-use kode::compaction::ResolvedCompactionSettings;
-use kode::error::{Error, Result};
-use kode::extensions::SecurityAlertCategory;
-use kode::model::{
+use kesa::agent::{AgentConfig, AgentEvent, AgentSession};
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::error::{Error, Result};
+use kesa::extensions::SecurityAlertCategory;
+use kesa::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall, Usage,
     UserContent, UserMessage,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::sdk::{
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::sdk::{
     AgentSessionHandle, AgentSessionState, SessionOptions, SubscriptionId, create_agent_session,
 };
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -195,7 +195,7 @@ fn run_scripted(
             tool_approval: None,
             tool_policy: None,
         };
-        let agent = kode::agent::Agent::new(provider, tools, config);
+        let agent = kesa::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));
@@ -641,7 +641,7 @@ fn sdk_thinking_level() {
     let harness = TestHarness::new("sdk_thinking_level");
     let options = SessionOptions {
         api_key: Some(TEST_API_KEY.to_string()),
-        thinking: Some(kode::model::ThinkingLevel::High),
+        thinking: Some(kesa::model::ThinkingLevel::High),
         working_directory: Some(harness.temp_dir().to_path_buf()),
         no_session: true,
         ..SessionOptions::default()
@@ -650,7 +650,7 @@ fn sdk_thinking_level() {
     let handle = run_async(create_agent_session(options)).expect("create session");
     assert_eq!(
         handle.thinking_level(),
-        Some(kode::model::ThinkingLevel::High),
+        Some(kesa::model::ThinkingLevel::High),
         "thinking level should be High"
     );
 
@@ -989,7 +989,7 @@ fn sdk_conformance_agent_event_json_schema() {
         AgentEvent::ToolExecutionEnd {
             tool_call_id: "tc-1".to_string(),
             tool_name: "read".to_string(),
-            result: kode::tools::ToolOutput {
+            result: kesa::tools::ToolOutput {
                 content: vec![ContentBlock::Text(TextContent::new("file contents"))],
                 details: None,
                 is_error: false,
@@ -1030,7 +1030,7 @@ fn sdk_conformance_agent_event_json_schema() {
 /// callbacks.
 #[test]
 fn sdk_conformance_session_tool_hooks() {
-    use kode::sdk::EventListeners;
+    use kesa::sdk::EventListeners;
 
     let harness = TestHarness::new("sdk_conformance_session_tool_hooks");
     let target = harness.temp_dir().join("hook_test.txt");
@@ -1065,7 +1065,7 @@ fn sdk_conformance_session_tool_hooks() {
             tool_approval: None,
             tool_policy: None,
         };
-        let agent = kode::agent::Agent::new(provider, tools, config);
+        let agent = kesa::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));
@@ -1123,7 +1123,7 @@ fn sdk_conformance_session_tool_hooks() {
 /// the same events, and that session-level subscribers fire before per-prompt.
 #[test]
 fn sdk_conformance_combined_callback_ordering() {
-    use kode::sdk::EventListeners;
+    use kesa::sdk::EventListeners;
 
     let harness = TestHarness::new("sdk_conformance_combined_callback_ordering");
     let cwd = harness.temp_dir().to_path_buf();
@@ -1150,7 +1150,7 @@ fn sdk_conformance_combined_callback_ordering() {
             tool_approval: None,
             tool_policy: None,
         };
-        let agent = kode::agent::Agent::new(provider, tools, config);
+        let agent = kesa::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));
@@ -1235,7 +1235,7 @@ fn sdk_conformance_combined_callback_ordering() {
 
 #[test]
 fn sdk_continue_turn_uses_combined_listener_path() {
-    use kode::sdk::EventListeners;
+    use kesa::sdk::EventListeners;
 
     let harness = TestHarness::new("sdk_continue_turn_uses_combined_listener_path");
     let cwd = harness.temp_dir().to_path_buf();
@@ -1262,7 +1262,7 @@ fn sdk_continue_turn_uses_combined_listener_path() {
             tool_approval: None,
             tool_policy: None,
         };
-        let agent = kode::agent::Agent::new(provider, tools, config);
+        let agent = kesa::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));
@@ -1274,7 +1274,7 @@ fn sdk_continue_turn_uses_combined_listener_path() {
         );
 
         {
-            let cx = kode::agent_cx::AgentCx::for_request();
+            let cx = kesa::agent_cx::AgentCx::for_request();
             let mut guard = session.lock(cx.cx()).await.expect("lock session");
             guard.append_model_message(Message::User(UserMessage {
                 content: UserContent::Text("prior user message".to_string()),
@@ -1329,7 +1329,7 @@ fn sdk_continue_turn_uses_combined_listener_path() {
 
 #[test]
 fn sdk_continue_turn_with_abort_returns_aborted_message() {
-    use kode::sdk::EventListeners;
+    use kesa::sdk::EventListeners;
 
     let harness = TestHarness::new("sdk_continue_turn_with_abort_returns_aborted_message");
     let cwd = harness.temp_dir().to_path_buf();
@@ -1351,7 +1351,7 @@ fn sdk_continue_turn_with_abort_returns_aborted_message() {
             tool_approval: None,
             tool_policy: None,
         };
-        let agent = kode::agent::Agent::new(provider, tools, config);
+        let agent = kesa::agent::Agent::new(provider, tools, config);
         let session = Arc::new(asupersync::sync::Mutex::new(Session::create_with_dir(
             Some(cwd),
         )));

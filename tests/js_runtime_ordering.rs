@@ -9,8 +9,8 @@
 mod common;
 
 use common::TestHarness;
-use kode::extensions_js::{PiJsRuntime, PiJsRuntimeConfig, PiJsRuntimeLimits};
-use kode::scheduler::{DeterministicClock, HostcallOutcome};
+use kesa::extensions_js::{PiJsRuntime, PiJsRuntimeConfig, PiJsRuntimeLimits};
+use kesa::scheduler::{DeterministicClock, HostcallOutcome};
 use std::sync::Arc;
 
 // ---------------------------------------------------------------------------
@@ -822,7 +822,7 @@ fn now_ms_tracks_clock() {
 fn hostcall_kinds_are_correctly_classified() {
     let _harness = TestHarness::new("hostcall_kinds_classified");
     futures::executor::block_on(async {
-        use kode::extensions_js::HostcallKind;
+        use kesa::extensions_js::HostcallKind;
 
         let (runtime, _clock) = make_runtime().await;
 

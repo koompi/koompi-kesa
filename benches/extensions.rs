@@ -15,12 +15,12 @@ use std::time::Duration;
 
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use futures::executor::block_on;
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::{HostcallKind, HostcallRequest, PiJsRuntime, PiJsRuntimeConfig};
-use kode::scheduler::HostcallOutcome;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::{HostcallKind, HostcallRequest, PiJsRuntime, PiJsRuntimeConfig};
+use kesa::scheduler::HostcallOutcome;
+use kesa::tools::ToolRegistry;
 use serde_json::{Value, json};
 
 const BENCH_TOOL_CALL: &str = r#"
@@ -49,7 +49,7 @@ fn artifact_single_file_entry(name: &str) -> PathBuf {
 struct BenchSession;
 
 #[async_trait::async_trait]
-impl kode::extensions::ExtensionSession for BenchSession {
+impl kesa::extensions::ExtensionSession for BenchSession {
     async fn get_state(&self) -> Value {
         json!({
             "sessionFile": "bench-session.jsonl",
@@ -57,7 +57,7 @@ impl kode::extensions::ExtensionSession for BenchSession {
         })
     }
 
-    async fn get_messages(&self) -> Vec<kode::session::SessionMessage> {
+    async fn get_messages(&self) -> Vec<kesa::session::SessionMessage> {
         Vec::new()
     }
 
@@ -69,14 +69,14 @@ impl kode::extensions::ExtensionSession for BenchSession {
         Vec::new()
     }
 
-    async fn set_name(&self, _name: String) -> kode::error::Result<()> {
+    async fn set_name(&self, _name: String) -> kesa::error::Result<()> {
         Ok(())
     }
 
     async fn append_message(
         &self,
-        _message: kode::session::SessionMessage,
-    ) -> kode::error::Result<()> {
+        _message: kesa::session::SessionMessage,
+    ) -> kesa::error::Result<()> {
         Ok(())
     }
 
@@ -84,11 +84,11 @@ impl kode::extensions::ExtensionSession for BenchSession {
         &self,
         _custom_type: String,
         _data: Option<Value>,
-    ) -> kode::error::Result<()> {
+    ) -> kesa::error::Result<()> {
         Ok(())
     }
 
-    async fn set_model(&self, _provider: String, _model_id: String) -> kode::error::Result<()> {
+    async fn set_model(&self, _provider: String, _model_id: String) -> kesa::error::Result<()> {
         Ok(())
     }
 
@@ -96,7 +96,7 @@ impl kode::extensions::ExtensionSession for BenchSession {
         (None, None)
     }
 
-    async fn set_thinking_level(&self, _level: String) -> kode::error::Result<()> {
+    async fn set_thinking_level(&self, _level: String) -> kesa::error::Result<()> {
         Ok(())
     }
 
@@ -108,7 +108,7 @@ impl kode::extensions::ExtensionSession for BenchSession {
         &self,
         _target_id: String,
         _label: Option<String>,
-    ) -> kode::error::Result<()> {
+    ) -> kesa::error::Result<()> {
         Ok(())
     }
 }
@@ -117,27 +117,27 @@ impl kode::extensions::ExtensionSession for BenchSession {
 struct BenchUiHandler;
 
 #[async_trait::async_trait]
-impl kode::extension_dispatcher::ExtensionUiHandler for BenchUiHandler {
+impl kesa::extension_dispatcher::ExtensionUiHandler for BenchUiHandler {
     async fn request_ui(
         &self,
-        _request: kode::extensions::ExtensionUiRequest,
-    ) -> kode::error::Result<Option<kode::extensions::ExtensionUiResponse>> {
+        _request: kesa::extensions::ExtensionUiRequest,
+    ) -> kesa::error::Result<Option<kesa::extensions::ExtensionUiResponse>> {
         Ok(None)
     }
 }
 
 fn bench_extension_policy(c: &mut Criterion) {
-    let prompt = kode::extensions::ExtensionPolicy::default();
-    let strict = kode::extensions::ExtensionPolicy {
-        mode: kode::extensions::ExtensionPolicyMode::Strict,
-        ..kode::extensions::ExtensionPolicy::default()
+    let prompt = kesa::extensions::ExtensionPolicy::default();
+    let strict = kesa::extensions::ExtensionPolicy {
+        mode: kesa::extensions::ExtensionPolicyMode::Strict,
+        ..kesa::extensions::ExtensionPolicy::default()
     };
-    let permissive = kode::extensions::ExtensionPolicy {
-        mode: kode::extensions::ExtensionPolicyMode::Permissive,
-        ..kode::extensions::ExtensionPolicy::default()
+    let permissive = kesa::extensions::ExtensionPolicy {
+        mode: kesa::extensions::ExtensionPolicyMode::Permissive,
+        ..kesa::extensions::ExtensionPolicy::default()
     };
 
-    let cases: Vec<(&str, &kode::extensions::ExtensionPolicy, &str)> = vec![
+    let cases: Vec<(&str, &kesa::extensions::ExtensionPolicy, &str)> = vec![
         ("prompt_allow", &prompt, "read"),
         ("prompt_prompt", &prompt, "session"),
         ("prompt_deny", &prompt, "exec"),
@@ -168,10 +168,10 @@ fn bench_required_capability_for_host_call(c: &mut Criterion) {
     };
     let empty = json!({});
 
-    let cases: Vec<(&str, kode::extensions::HostCallPayload)> = vec![
+    let cases: Vec<(&str, kesa::extensions::HostCallPayload)> = vec![
         (
             "tool_read_small",
-            kode::extensions::HostCallPayload {
+            kesa::extensions::HostCallPayload {
                 call_id: "call-1".to_string(),
                 capability: "read".to_string(),
                 method: "tool".to_string(),
@@ -183,7 +183,7 @@ fn bench_required_capability_for_host_call(c: &mut Criterion) {
         ),
         (
             "tool_read_large",
-            kode::extensions::HostCallPayload {
+            kesa::extensions::HostCallPayload {
                 call_id: "call-1".to_string(),
                 capability: "read".to_string(),
                 method: "tool".to_string(),
@@ -195,7 +195,7 @@ fn bench_required_capability_for_host_call(c: &mut Criterion) {
         ),
         (
             "tool_bash",
-            kode::extensions::HostCallPayload {
+            kesa::extensions::HostCallPayload {
                 call_id: "call-1".to_string(),
                 capability: "exec".to_string(),
                 method: "tool".to_string(),
@@ -207,7 +207,7 @@ fn bench_required_capability_for_host_call(c: &mut Criterion) {
         ),
         (
             "exec",
-            kode::extensions::HostCallPayload {
+            kesa::extensions::HostCallPayload {
                 call_id: "call-1".to_string(),
                 capability: "exec".to_string(),
                 method: "exec".to_string(),
@@ -219,7 +219,7 @@ fn bench_required_capability_for_host_call(c: &mut Criterion) {
         ),
         (
             "http",
-            kode::extensions::HostCallPayload {
+            kesa::extensions::HostCallPayload {
                 call_id: "call-1".to_string(),
                 capability: "http".to_string(),
                 method: "http".to_string(),
@@ -231,7 +231,7 @@ fn bench_required_capability_for_host_call(c: &mut Criterion) {
         ),
         (
             "unknown",
-            kode::extensions::HostCallPayload {
+            kesa::extensions::HostCallPayload {
                 call_id: "call-1".to_string(),
                 capability: "unknown".to_string(),
                 method: "unknown".to_string(),
@@ -248,7 +248,7 @@ fn bench_required_capability_for_host_call(c: &mut Criterion) {
     for (case, call) in cases {
         group.bench_function(BenchmarkId::new("host_call", case), move |b| {
             b.iter(|| {
-                black_box(kode::extensions::required_capability_for_host_call(
+                black_box(kesa::extensions::required_capability_for_host_call(
                     black_box(&call),
                 ))
             });
@@ -258,9 +258,9 @@ fn bench_required_capability_for_host_call(c: &mut Criterion) {
 }
 
 fn bench_dispatch_decision(c: &mut Criterion) {
-    let policy = kode::extensions::ExtensionPolicy::default();
+    let policy = kesa::extensions::ExtensionPolicy::default();
 
-    let warm_call = kode::extensions::HostCallPayload {
+    let warm_call = kesa::extensions::HostCallPayload {
         call_id: "call-1".to_string(),
         capability: "read".to_string(),
         method: "tool".to_string(),
@@ -273,7 +273,7 @@ fn bench_dispatch_decision(c: &mut Criterion) {
 
     group.bench_function("decision_warm", |b| {
         b.iter(|| {
-            let cap = kode::extensions::required_capability_for_host_call(black_box(&warm_call))
+            let cap = kesa::extensions::required_capability_for_host_call(black_box(&warm_call))
                 .unwrap_or_else(|| "unknown".to_string());
             black_box(policy.evaluate(&cap))
         });
@@ -281,7 +281,7 @@ fn bench_dispatch_decision(c: &mut Criterion) {
 
     group.bench_function("decision_cold", |b| {
         b.iter_batched(
-            || kode::extensions::HostCallPayload {
+            || kesa::extensions::HostCallPayload {
                 call_id: "call-1".to_string(),
                 capability: "read".to_string(),
                 method: "tool".to_string(),
@@ -291,7 +291,7 @@ fn bench_dispatch_decision(c: &mut Criterion) {
                 context: None,
             },
             |call| {
-                let cap = kode::extensions::required_capability_for_host_call(black_box(&call))
+                let cap = kesa::extensions::required_capability_for_host_call(black_box(&call))
                     .unwrap_or_else(|| "unknown".to_string());
                 black_box(policy.evaluate(&cap))
             },
@@ -303,19 +303,19 @@ fn bench_dispatch_decision(c: &mut Criterion) {
 }
 
 fn bench_snapshot_lookup(c: &mut Criterion) {
-    let mut policy = kode::extensions::ExtensionPolicy::default();
+    let mut policy = kesa::extensions::ExtensionPolicy::default();
     policy.default_caps.push("read".to_string());
     policy.default_caps.push("write".to_string());
     policy.default_caps.push("http".to_string());
     policy.deny_caps.push("exec".to_string());
 
-    let mut ext_overrides = kode::extensions::ExtensionOverride::default();
+    let mut ext_overrides = kesa::extensions::ExtensionOverride::default();
     ext_overrides.allow.push("exec".to_string());
     policy
         .per_extension
         .insert("ext.special".to_string(), ext_overrides);
 
-    let snapshot = kode::extensions::PolicySnapshot::compile(&policy);
+    let snapshot = kesa::extensions::PolicySnapshot::compile(&policy);
 
     let mut group = c.benchmark_group("ext_snapshot");
     group.throughput(Throughput::Elements(1));
@@ -343,7 +343,7 @@ fn bench_snapshot_lookup(c: &mut Criterion) {
 
     group.bench_function("compile", |b| {
         b.iter(|| {
-            black_box(kode::extensions::PolicySnapshot::compile(black_box(
+            black_box(kesa::extensions::PolicySnapshot::compile(black_box(
                 &policy,
             )))
         });
@@ -355,14 +355,14 @@ fn bench_snapshot_lookup(c: &mut Criterion) {
 fn bench_protocol_parse_and_validate(c: &mut Criterion) {
     let host_call_small = format!(
         r#"{{"id":"msg-1","version":"{}","type":"host_call","payload":{{"call_id":"call-1","capability":"read","method":"tool","params":{{"name":"read"}}}}}}"#,
-        kode::extensions::PROTOCOL_VERSION
+        kesa::extensions::PROTOCOL_VERSION
     );
 
     let big_text = "x".repeat(16 * 1024);
     let log_big = format!(
         r#"{{"id":"msg-2","version":"{}","type":"log","payload":{{"schema":"{}","ts":"2026-02-03T00:00:00.000Z","level":"info","event":"bench","message":"{}","correlation":{{"extension_id":"ext","scenario_id":"scn"}},"source":{{"component":"runtime"}}}}}}"#,
-        kode::extensions::PROTOCOL_VERSION,
-        kode::extensions::LOG_SCHEMA_VERSION,
+        kesa::extensions::PROTOCOL_VERSION,
+        kesa::extensions::LOG_SCHEMA_VERSION,
         big_text
     );
 
@@ -374,7 +374,7 @@ fn bench_protocol_parse_and_validate(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(payload.len() as u64));
         group.bench_function(BenchmarkId::new("parse_and_validate", name), |b| {
             b.iter(|| {
-                black_box(kode::extensions::ExtensionMessage::parse_and_validate(
+                black_box(kesa::extensions::ExtensionMessage::parse_and_validate(
                     payload,
                 ))
             });
@@ -387,16 +387,16 @@ fn bench_protocol_dispatch(c: &mut Criterion) {
     let cwd = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let runtime = Rc::new(block_on(PiJsRuntime::new()).expect("create PiJsRuntime"));
     let tools = Arc::new(ToolRegistry::new(&[], &cwd, None));
-    let http_connector = Arc::new(kode::connectors::http::HttpConnector::new(
-        kode::connectors::http::HttpConnectorConfig::default(),
+    let http_connector = Arc::new(kesa::connectors::http::HttpConnector::new(
+        kesa::connectors::http::HttpConnectorConfig::default(),
     ));
-    let session: Arc<dyn kode::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
-    let ui_handler: Arc<dyn kode::extension_dispatcher::ExtensionUiHandler + Send + Sync> =
+    let session: Arc<dyn kesa::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
+    let ui_handler: Arc<dyn kesa::extension_dispatcher::ExtensionUiHandler + Send + Sync> =
         Arc::new(BenchUiHandler);
     let dispatcher =
-        kode::ExtensionDispatcher::new(runtime, tools, http_connector, session, ui_handler, cwd);
+        kesa::ExtensionDispatcher::new(runtime, tools, http_connector, session, ui_handler, cwd);
 
-    let host_call = kode::extensions::HostCallPayload {
+    let host_call = kesa::extensions::HostCallPayload {
         call_id: "bench-call-1".to_string(),
         capability: "session".to_string(),
         method: "session".to_string(),
@@ -405,10 +405,10 @@ fn bench_protocol_dispatch(c: &mut Criterion) {
         cancel_token: None,
         context: None,
     };
-    let message = kode::extensions::ExtensionMessage {
+    let message = kesa::extensions::ExtensionMessage {
         id: "bench-msg-1".to_string(),
-        version: kode::extensions::PROTOCOL_VERSION.to_string(),
-        body: kode::extensions::ExtensionBody::HostCall(host_call),
+        version: kesa::extensions::PROTOCOL_VERSION.to_string(),
+        body: kesa::extensions::ExtensionBody::HostCall(host_call),
     };
 
     let mut group = c.benchmark_group("ext_protocol_dispatch");
@@ -650,7 +650,7 @@ fn bench_js_runtime(c: &mut Criterion) {
 
     let tool_runtime = block_on(
         PiJsRuntime::with_clock_and_config_with_policy_for_extension(
-            kode::scheduler::WallClock,
+            kesa::scheduler::WallClock,
             PiJsRuntimeConfig::default(),
             None,
             "ext.bench".to_string(),
@@ -745,7 +745,7 @@ fn bench_hostcall_params_hash(c: &mut Criterion) {
 /// Measure `hostcall_request_to_payload` conversion overhead for various
 /// hostcall kinds and payload sizes.
 fn bench_hostcall_request_to_payload(c: &mut Criterion) {
-    use kode::extensions::hostcall_request_to_payload;
+    use kesa::extensions::hostcall_request_to_payload;
 
     let tool_small = HostcallRequest {
         call_id: "call-1".to_string(),
@@ -813,8 +813,8 @@ fn bench_hostcall_request_to_payload(c: &mut Criterion) {
 /// Measure `host_result_to_outcome` and `outcome_to_host_result` conversion
 /// overhead (the Rust↔JS result bridge).
 fn bench_hostcall_outcome_conversion(c: &mut Criterion) {
-    use kode::extensions::{host_result_to_outcome, outcome_to_host_result};
-    use kode::scheduler::HostcallOutcome;
+    use kesa::extensions::{host_result_to_outcome, outcome_to_host_result};
+    use kesa::scheduler::HostcallOutcome;
 
     let success_small = HostcallOutcome::Success(json!({"ok": true}));
     let success_large = HostcallOutcome::Success(json!({
@@ -869,8 +869,8 @@ fn bench_hostcall_outcome_conversion(c: &mut Criterion) {
 /// Measure the full `dispatch_host_call_shared` roundtrip for session ops,
 /// which are the most common lightweight hostcalls.
 fn bench_dispatch_shared_session(c: &mut Criterion) {
-    use kode::connectors::http::{HttpConnector, HttpConnectorConfig};
-    use kode::extensions::{
+    use kesa::connectors::http::{HttpConnector, HttpConnectorConfig};
+    use kesa::extensions::{
         ExtensionManager, ExtensionPolicy, HostCallContext, HostCallPayload,
         dispatch_host_call_shared,
     };
@@ -881,7 +881,7 @@ fn bench_dispatch_shared_session(c: &mut Criterion) {
     let policy = ExtensionPolicy::default();
 
     let manager = ExtensionManager::new();
-    let session: Arc<dyn kode::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
+    let session: Arc<dyn kesa::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
     manager.set_session(session);
 
     let calls: Vec<(&str, HostCallPayload)> = vec![
@@ -965,8 +965,8 @@ fn bench_dispatch_shared_session(c: &mut Criterion) {
 
 /// Measure the full `dispatch_host_call_shared` roundtrip for events ops.
 fn bench_dispatch_shared_events(c: &mut Criterion) {
-    use kode::connectors::http::{HttpConnector, HttpConnectorConfig};
-    use kode::extensions::{
+    use kesa::connectors::http::{HttpConnector, HttpConnectorConfig};
+    use kesa::extensions::{
         ExtensionManager, ExtensionPolicy, HostCallContext, HostCallPayload,
         dispatch_host_call_shared,
     };
@@ -1057,7 +1057,7 @@ fn bench_js_serde_bridge(c: &mut Criterion) {
     // same Rust-owned identity boundary as production extension shards.
     let rt = block_on(
         PiJsRuntime::with_clock_and_config_with_policy_for_extension(
-            kode::scheduler::WallClock,
+            kesa::scheduler::WallClock,
             PiJsRuntimeConfig::default(),
             None,
             "ext.bench".to_string(),
@@ -1127,8 +1127,8 @@ fn bench_js_serde_bridge(c: &mut Criterion) {
 /// Measure policy evaluation in the full shared-dispatch context including
 /// quota check and runtime risk evaluation overhead.
 fn bench_dispatch_overhead_breakdown(c: &mut Criterion) {
-    use kode::connectors::http::{HttpConnector, HttpConnectorConfig};
-    use kode::extensions::{
+    use kesa::connectors::http::{HttpConnector, HttpConnectorConfig};
+    use kesa::extensions::{
         ExtensionManager, ExtensionPolicy, ExtensionPolicyMode, HostCallContext, HostCallPayload,
         dispatch_host_call_shared,
     };
@@ -1194,7 +1194,7 @@ fn bench_dispatch_overhead_breakdown(c: &mut Criterion) {
 
     // With manager (full overhead: quota + risk eval)
     let manager = ExtensionManager::new();
-    let session: Arc<dyn kode::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
+    let session: Arc<dyn kesa::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
     manager.set_session(session);
 
     for (policy_name, policy) in &policies {
@@ -1231,8 +1231,8 @@ fn bench_dispatch_overhead_breakdown(c: &mut Criterion) {
 /// Toggle the stack from the environment and re-run:
 /// `KODE_HOSTCALL_SUPERINSTRUCTIONS=0 KODE_HOSTCALL_TRACE_JIT=0 cargo bench --bench extensions hostcall_optimizer`
 fn bench_hostcall_optimizer_dispatch(c: &mut Criterion) {
-    use kode::connectors::http::{HttpConnector, HttpConnectorConfig};
-    use kode::extensions::{
+    use kesa::connectors::http::{HttpConnector, HttpConnectorConfig};
+    use kesa::extensions::{
         ExtensionManager, ExtensionPolicy, HostCallContext, HostCallPayload,
         dispatch_host_call_shared,
     };
@@ -1244,7 +1244,7 @@ fn bench_hostcall_optimizer_dispatch(c: &mut Criterion) {
     let policy = ExtensionPolicy::default();
 
     let manager = ExtensionManager::new();
-    let session: Arc<dyn kode::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
+    let session: Arc<dyn kesa::extensions::ExtensionSession + Send + Sync> = Arc::new(BenchSession);
     manager.set_session(session);
 
     let session_call = |op: &str| HostCallPayload {
@@ -1303,16 +1303,16 @@ fn bench_hostcall_optimizer_dispatch(c: &mut Criterion) {
 /// Price each hostcall module's own hot function in isolation, so the
 /// end-to-end delta can be attributed.
 fn bench_hostcall_optimizer_modules(c: &mut Criterion) {
-    use kode::hostcall_amac::{AmacBatchExecutor, AmacBatchExecutorConfig};
-    use kode::hostcall_io_uring_lane::{
+    use kesa::hostcall_amac::{AmacBatchExecutor, AmacBatchExecutorConfig};
+    use kesa::hostcall_io_uring_lane::{
         HostcallCapabilityClass, HostcallIoHint, IoUringLaneDecisionInput, IoUringLanePolicyConfig,
         decide_io_uring_lane,
     };
-    use kode::hostcall_s3_fifo::{S3FifoConfig, S3FifoPolicy};
-    use kode::hostcall_superinstructions::{
+    use kesa::hostcall_s3_fifo::{S3FifoConfig, S3FifoPolicy};
+    use kesa::hostcall_superinstructions::{
         HostcallSuperinstructionCompiler, execute_with_superinstruction,
     };
-    use kode::hostcall_trace_jit::{GuardContext, TraceJitCompiler, TraceJitConfig};
+    use kesa::hostcall_trace_jit::{GuardContext, TraceJitCompiler, TraceJitConfig};
 
     let mut group = c.benchmark_group("hostcall_modules");
     group.throughput(Throughput::Elements(1));

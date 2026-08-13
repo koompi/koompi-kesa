@@ -8,7 +8,7 @@
 use arbitrary::{Arbitrary, Unstructured};
 use futures::executor::block_on;
 use libfuzzer_sys::fuzz_target;
-use kode::tools::{EditTool, Tool};
+use kesa::tools::{EditTool, Tool};
 use serde_json::json;
 use tempfile::tempdir;
 

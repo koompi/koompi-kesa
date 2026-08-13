@@ -6,8 +6,8 @@
 //! `pi.*`, drains the resulting `HostcallRequest`, and verifies the
 //! `HostcallKind`, payload, and JS-side result when completed.
 
-use kode::extensions_js::{HostcallKind, HostcallRequest, PiJsRuntime, PiJsRuntimeConfig};
-use kode::scheduler::{DeterministicClock, HostcallOutcome};
+use kesa::extensions_js::{HostcallKind, HostcallRequest, PiJsRuntime, PiJsRuntimeConfig};
+use kesa::scheduler::{DeterministicClock, HostcallOutcome};
 use serde_json::{Value, json};
 use std::collections::VecDeque;
 

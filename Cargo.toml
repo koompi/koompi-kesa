@@ -1,9 +1,9 @@
 [package]
-name = "koompi-code-cli"
+name = "koompi-kesa"
 version = "0.2.0"
 edition = "2024"
 rust-version = "1.95"
-description = "KOOMPI Code - native AI coding agent CLI for KOOMPI OS"
+description = "KOOMPI KESA - native AI coding agent CLI for KOOMPI OS"
 authors = ["KOOMPI", "Jeffrey Emanuel (pi_agent_rust, upstream)"]
 license-file = "LICENSE"
 repository = "https://github.com/koompi/koompi-code-cli"
@@ -15,7 +15,7 @@ categories = ["command-line-utilities", "development-tools"]
 autobins = false
 # Binary organization per bd-uuwgi.1/bd-uuwgi.2 classification:
 # - SHIPPING: src/main.rs (pi) - main CLI binary
-# - INTERNAL/OPT-IN: src/bin/kode_legacy_capture.rs (pending RULE 1 approval)
+# - INTERNAL/OPT-IN: src/bin/kesa_legacy_capture.rs (pending RULE 1 approval)
 # - DEV-ONLY: moved to examples/ (23 files: ext_*, test_*, debug utilities)
 include = [
     "/docs/extension-artifact-provenance.json",
@@ -39,11 +39,11 @@ include = [
 ]
 
 [lib]
-name = "kode"
+name = "kesa"
 path = "src/lib.rs"
 
 [[bin]]
-name = "kode"
+name = "kesa"
 path = "src/main.rs"
 # The `pi` binary is the interactive terminal front-end; it requires the full
 # TUI stack (crossterm + charmed_rust). `tui` is in the default feature set, so
@@ -54,13 +54,13 @@ required-features = ["tui"]
 
 # RETIRABLE internal conformance utility (pending RULE 1 approval). Keeping it
 # behind a non-default feature prevents an ordinary `cargo install
-# koompi_code_cli` from installing this unsupported executable. Repository gates
+# koompi-kesa` from installing this unsupported executable. Repository gates
 # that exercise it explicitly enable `internal-legacy-capture`; the matching
-# integration test is gated below so CARGO_BIN_EXE_kode_legacy_capture is defined
+# integration test is gated below so CARGO_BIN_EXE_kesa_legacy_capture is defined
 # whenever that test is compiled.
 [[bin]]
-name = "kode_legacy_capture"
-path = "src/bin/kode_legacy_capture.rs"
+name = "kesa_legacy_capture"
+path = "src/bin/kesa_legacy_capture.rs"
 required-features = ["internal-legacy-capture"]
 
 # Examples (moved from src/bin/ to examples/)

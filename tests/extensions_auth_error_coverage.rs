@@ -16,9 +16,9 @@
 mod common;
 
 use common::TestHarness;
-use kode::auth::{AuthCredential, AuthStorage, CredentialStatus};
-use kode::error::Error;
-use kode::error_hints::{format_error_with_hints, hints_for_error};
+use kesa::auth::{AuthCredential, AuthStorage, CredentialStatus};
+use kesa::error::Error;
+use kesa::error_hints::{format_error_with_hints, hints_for_error};
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -474,7 +474,7 @@ fn resolve_aws_stored_iam_credentials() {
     // resolve_aws_credentials checks env vars first, then falls back to stored.
     // If env vars happen to be set, the result will differ.
     // We just verify the function doesn't panic and returns Some.
-    let resolved = kode::auth::resolve_aws_credentials(&storage);
+    let resolved = kesa::auth::resolve_aws_credentials(&storage);
     assert!(resolved.is_some(), "should resolve stored AWS credentials");
 }
 
@@ -491,7 +491,7 @@ fn resolve_aws_stored_bearer_token() {
         },
     );
 
-    let resolved = kode::auth::resolve_aws_credentials(&storage);
+    let resolved = kesa::auth::resolve_aws_credentials(&storage);
     assert!(resolved.is_some(), "should resolve stored bearer token");
 }
 
@@ -501,7 +501,7 @@ fn resolve_aws_empty_storage_does_not_panic() {
     let h = TestHarness::new("aws_empty");
     let storage = AuthStorage::load(h.temp_dir().join("auth.json")).unwrap();
     // May return Some if AWS env vars are set in CI, or None if not
-    let _ = kode::auth::resolve_aws_credentials(&storage);
+    let _ = kesa::auth::resolve_aws_credentials(&storage);
 }
 
 /// Legacy API key stored for bedrock resolves as bearer.
@@ -517,7 +517,7 @@ fn resolve_aws_legacy_api_key_as_bearer() {
         },
     );
 
-    let resolved = kode::auth::resolve_aws_credentials(&storage);
+    let resolved = kesa::auth::resolve_aws_credentials(&storage);
     // If env vars are not set, this should resolve as Bearer with legacy key
     assert!(
         resolved.is_some(),
@@ -547,7 +547,7 @@ fn resolve_sap_stored_service_key() {
 
     // If AICORE_SERVICE_KEY env var is set, it takes precedence.
     // We verify the function works without panicking.
-    let resolved = kode::auth::resolve_sap_credentials(&storage);
+    let resolved = kesa::auth::resolve_sap_credentials(&storage);
     assert!(resolved.is_some(), "stored SAP credentials should resolve");
 }
 
@@ -570,7 +570,7 @@ fn resolve_sap_stored_incomplete() {
 
     // If env vars provide the missing fields, this will succeed.
     // Otherwise, it returns None. Either way, no panic.
-    let _ = kode::auth::resolve_sap_credentials(&storage);
+    let _ = kesa::auth::resolve_sap_credentials(&storage);
 }
 
 /// Empty storage for SAP does not panic.
@@ -578,7 +578,7 @@ fn resolve_sap_stored_incomplete() {
 fn resolve_sap_empty_storage_does_not_panic() {
     let h = TestHarness::new("sap_empty");
     let storage = AuthStorage::load(h.temp_dir().join("auth.json")).unwrap();
-    let _ = kode::auth::resolve_sap_credentials(&storage);
+    let _ = kesa::auth::resolve_sap_credentials(&storage);
 }
 
 // ===========================================================================
@@ -852,7 +852,7 @@ fn auth_credential_aws_minimal() {
 fn load_default_auth_creates_if_missing() {
     let h = TestHarness::new("default_auth");
     let path = h.temp_dir().join("auth.json");
-    let storage = kode::auth::load_default_auth(&path).expect("should succeed");
+    let storage = kesa::auth::load_default_auth(&path).expect("should succeed");
     assert_eq!(storage.credential_status("any"), CredentialStatus::Missing);
 }
 

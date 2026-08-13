@@ -5,8 +5,8 @@
 //! - Mixed built-in + extension flag sets
 //! - Parity with TypeScript behavior
 
-use kode::cli::parse_with_extension_flags;
-use kode::extensions::ExtensionManager;
+use kesa::cli::parse_with_extension_flags;
+use kesa::extensions::ExtensionManager;
 
 /// Test fixture scenarios covering mixed built-in and extension flags
 #[derive(Debug)]
@@ -102,7 +102,7 @@ fn get_extension_flag_fixtures() -> Vec<ExtensionFlagFixture> {
     ]
 }
 
-fn assert_extension_flag(parsed: &kode::cli::ParsedCli, name: &str, value: Option<&str>) {
+fn assert_extension_flag(parsed: &kesa::cli::ParsedCli, name: &str, value: Option<&str>) {
     assert!(
         parsed
             .extension_flags
@@ -186,15 +186,15 @@ fn test_extension_flag_application_integration() {
     // This test validates that the extension flags are properly structured
     // and can be created without panicking
     let test_flags = [
-        kode::cli::ExtensionCliFlag {
+        kesa::cli::ExtensionCliFlag {
             name: "debug".to_string(),
             value: Some("true".to_string()),
         },
-        kode::cli::ExtensionCliFlag {
+        kesa::cli::ExtensionCliFlag {
             name: "level".to_string(),
             value: Some("info".to_string()),
         },
-        kode::cli::ExtensionCliFlag {
+        kesa::cli::ExtensionCliFlag {
             name: "unknown-flag".to_string(),
             value: None,
         },

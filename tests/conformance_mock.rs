@@ -9,13 +9,13 @@
 mod common;
 
 use async_trait::async_trait;
-use kode::PiResult;
-use kode::extensions::{
+use kesa::PiResult;
+use kesa::extensions::{
     ExtensionManager, ExtensionSession, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::session::SessionMessage;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::session::SessionMessage;
+use kesa::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
@@ -962,7 +962,7 @@ fn event_hook_extension_registers_hooks() {
 
 #[test]
 fn event_dispatch_through_manager() {
-    use kode::extensions::ExtensionEventName;
+    use kesa::extensions::ExtensionEventName;
 
     let harness = common::TestHarness::new("event_dispatch_through_manager");
     let spec = ConformanceMockSpec {

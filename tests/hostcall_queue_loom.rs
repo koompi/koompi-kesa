@@ -1,6 +1,6 @@
 #![cfg(feature = "loom-tests")]
 
-use kode::hostcall_queue::{
+use kesa::hostcall_queue::{
     BravoBiasMode, ContentionSample, ContentionSignature, HostcallQueueMode, HostcallRequestQueue,
 };
 use loom::sync::{Arc, Condvar, Mutex};

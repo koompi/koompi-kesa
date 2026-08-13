@@ -12,13 +12,13 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, ExtensionPolicy, HostcallReactorConfig,
     JsExtensionLoadSpec, PolicyProfile,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::hostcall_s3_fifo::{S3FifoConfig, S3FifoDecisionKind, S3FifoPolicy};
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::hostcall_s3_fifo::{S3FifoConfig, S3FifoDecisionKind, S3FifoPolicy};
+use kesa::tools::ToolRegistry;
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, HashMap};
@@ -1845,7 +1845,7 @@ fn load_extensions_with_policy(
         let manager = manager.clone();
         let tools = Arc::clone(&tools);
         async move {
-            kode::extensions::JsExtensionRuntimeHandle::start_with_policy(
+            kesa::extensions::JsExtensionRuntimeHandle::start_with_policy(
                 js_config, tools, manager, policy,
             )
             .await

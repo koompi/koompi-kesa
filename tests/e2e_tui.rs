@@ -19,12 +19,12 @@ use clap::Parser as _;
 use common::run_async;
 use common::tmux::TuiSession;
 use fs4::fs_std::FileExt as _;
-use kode::app::build_system_prompt;
-use kode::cli;
-use kode::model::ContentBlock;
-use kode::session::SESSION_VERSION;
-use kode::tools::{ReadTool, Tool};
-use kode::vcr::{
+use kesa::app::build_system_prompt;
+use kesa::cli;
+use kesa::model::ContentBlock;
+use kesa::session::SESSION_VERSION;
+use kesa::tools::{ReadTool, Tool};
+use kesa::vcr::{
     Cassette, Interaction, RecordedRequest, RecordedResponse, VCR_ENV_DIR, VCR_ENV_MODE,
 };
 use serde_json::{Value, json};

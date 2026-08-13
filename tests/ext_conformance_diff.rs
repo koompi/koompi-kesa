@@ -13,9 +13,9 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;

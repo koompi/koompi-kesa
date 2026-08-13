@@ -2,8 +2,8 @@
 mod bench_env;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use kode::model::UserContent;
-use kode::session::{Session, SessionMessage};
+use kesa::model::UserContent;
+use kesa::session::{Session, SessionMessage};
 use std::hint::black_box;
 
 fn build_large_session(message_count: usize) -> Session {

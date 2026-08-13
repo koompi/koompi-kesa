@@ -11,15 +11,15 @@
 mod common;
 
 use common::TestHarness;
-use kode::connectors::http::HttpConnector;
-use kode::extensions::{
+use kesa::connectors::http::HttpConnector;
+use kesa::extensions::{
     BaselineDriftReport, ExtensionManager, ExtensionPolicy, ExtensionPolicyMode, HostCallContext,
     HostCallPayload, RUNTIME_RISK_BASELINE_SCHEMA_VERSION, RuntimeRiskBaselineModel,
     RuntimeRiskConfig, RuntimeRiskStateLabelValue, build_baseline_from_ledger,
     build_baseline_from_ledger_with_options, detect_baseline_drift, dispatch_host_call_shared,
     verify_runtime_risk_ledger_artifact,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::fs;
 

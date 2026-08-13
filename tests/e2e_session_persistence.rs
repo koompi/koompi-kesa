@@ -12,25 +12,25 @@ use common::TestHarness;
 #[cfg(unix)]
 use common::tmux::{TmuxInstance, sh_escape};
 use futures::Stream;
-use kode::agent::{Agent, AgentConfig, AgentSession};
-use kode::cli::Cli;
-use kode::compaction::ResolvedCompactionSettings;
-use kode::config::Config;
-use kode::error::{Error, Result};
-use kode::model::{
+use kesa::agent::{Agent, AgentConfig, AgentSession};
+use kesa::cli::Cli;
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::config::Config;
+use kesa::error::{Error, Result};
+use kesa::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall, Usage,
     UserContent,
 };
-use kode::provider::{Context, Provider, StreamOptions};
+use kesa::provider::{Context, Provider, StreamOptions};
 #[cfg(unix)]
-use kode::session::encode_cwd;
-use kode::session::{
+use kesa::session::encode_cwd;
+use kesa::session::{
     Session, SessionEntry, SessionMessage, SessionStoreKind, create_v2_sidecar_from_jsonl,
     migration_status,
 };
-use kode::session_index::SessionIndex;
-use kode::session_store_v2::SessionStoreV2;
-use kode::tools::ToolRegistry;
+use kesa::session_index::SessionIndex;
+use kesa::session_store_v2::SessionStoreV2;
+use kesa::tools::ToolRegistry;
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use std::collections::{BTreeMap, HashSet};
@@ -213,7 +213,7 @@ struct SessionChaosChildResult {
 }
 
 fn cli_binary_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_kode"))
+    PathBuf::from(env!("CARGO_BIN_EXE_kesa"))
 }
 
 fn isolated_cli_env(harness: &TestHarness) -> BTreeMap<String, String> {
@@ -2165,7 +2165,7 @@ fn explicit_session_flag_preserves_custom_session_root_for_index_updates() {
 
     run_async_test(async {
         let custom_root = harness.temp_path("custom-root");
-        let session_dir = custom_root.join(kode::session::encode_cwd(
+        let session_dir = custom_root.join(kesa::session::encode_cwd(
             &std::env::current_dir().expect("current dir"),
         ));
         let session_path = session_dir.join("session.jsonl");

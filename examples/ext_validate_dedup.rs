@@ -21,8 +21,8 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use kode::extension_popularity::CandidatePool;
-use kode::extension_validation::{
+use kesa::extension_popularity::CandidatePool;
+use kesa::extension_validation::{
     CodeSearchInventory, CuratedListSummary, NpmScanSummary, RepoSearchSummary, ValidationConfig,
     ValidationStatus, run_validation_pipeline,
 };

@@ -1,16 +1,16 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use kode::agent::{Agent, AgentConfig, AgentEvent, AgentSession};
-use kode::config::Config;
-use kode::http::client::Client;
-use kode::model::{ContentBlock, Message, StopReason, TextContent};
-use kode::provider::StreamOptions;
-use kode::providers::anthropic::AnthropicProvider;
-use kode::providers::openai::OpenAIProvider;
-use kode::session::Session;
-use kode::tools::ToolRegistry;
-use kode::vcr::{VcrMode, VcrRecorder};
+use kesa::agent::{Agent, AgentConfig, AgentEvent, AgentSession};
+use kesa::config::Config;
+use kesa::http::client::Client;
+use kesa::model::{ContentBlock, Message, StopReason, TextContent};
+use kesa::provider::StreamOptions;
+use kesa::providers::anthropic::AnthropicProvider;
+use kesa::providers::openai::OpenAIProvider;
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
+use kesa::vcr::{VcrMode, VcrRecorder};
 use serde_json::json;
 use std::fs::File;
 use std::io::Write as _;
@@ -173,7 +173,7 @@ fn agent_loop_openai_vcr_basic() {
             agent,
             session,
             true,
-            kode::compaction::ResolvedCompactionSettings::default(),
+            kesa::compaction::ResolvedCompactionSettings::default(),
         );
 
         let timeline: Arc<Mutex<Vec<serde_json::Value>>> = Arc::new(Mutex::new(Vec::new()));
@@ -357,7 +357,7 @@ fn agent_loop_anthropic_simple_text() {
             agent,
             session,
             true,
-            kode::compaction::ResolvedCompactionSettings::default(),
+            kesa::compaction::ResolvedCompactionSettings::default(),
         );
 
         let timeline: Arc<Mutex<Vec<serde_json::Value>>> = Arc::new(Mutex::new(Vec::new()));
@@ -458,7 +458,7 @@ fn agent_loop_anthropic_error_stream() {
             agent,
             session,
             true,
-            kode::compaction::ResolvedCompactionSettings::default(),
+            kesa::compaction::ResolvedCompactionSettings::default(),
         );
 
         let timeline: Arc<Mutex<Vec<serde_json::Value>>> = Arc::new(Mutex::new(Vec::new()));
@@ -542,7 +542,7 @@ fn agent_loop_anthropic_tool_call_stop() {
             agent,
             session,
             true,
-            kode::compaction::ResolvedCompactionSettings::default(),
+            kesa::compaction::ResolvedCompactionSettings::default(),
         );
 
         let timeline: Arc<Mutex<Vec<serde_json::Value>>> = Arc::new(Mutex::new(Vec::new()));

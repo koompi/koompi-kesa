@@ -12,18 +12,18 @@
 mod common;
 
 use common::TestHarness;
-use kode::agent::{Agent, AgentConfig, AgentSession};
-use kode::auth::AuthStorage;
-use kode::config::Config;
-use kode::http::client::Client;
-use kode::model::{AssistantMessage, ContentBlock, StopReason, TextContent, Usage, UserContent};
-use kode::provider::Provider;
-use kode::providers::openai::OpenAIProvider;
-use kode::resources::ResourceLoader;
-use kode::rpc::{RpcOptions, run};
-use kode::session::{Session, SessionMessage};
-use kode::tools::ToolRegistry;
-use kode::vcr::{VcrMode, VcrRecorder};
+use kesa::agent::{Agent, AgentConfig, AgentSession};
+use kesa::auth::AuthStorage;
+use kesa::config::Config;
+use kesa::http::client::Client;
+use kesa::model::{AssistantMessage, ContentBlock, StopReason, TextContent, Usage, UserContent};
+use kesa::provider::Provider;
+use kesa::providers::openai::OpenAIProvider;
+use kesa::resources::ResourceLoader;
+use kesa::rpc::{RpcOptions, run};
+use kesa::session::{Session, SessionMessage};
+use kesa::tools::ToolRegistry;
+use kesa::vcr::{VcrMode, VcrRecorder};
 use serde_json::Value;
 use std::env;
 use std::path::{Path, PathBuf};
@@ -51,7 +51,7 @@ fn build_agent_session(session: Session, cassette_dir: &Path) -> AgentSession {
         agent,
         session,
         false,
-        kode::compaction::ResolvedCompactionSettings::default(),
+        kesa::compaction::ResolvedCompactionSettings::default(),
     )
 }
 

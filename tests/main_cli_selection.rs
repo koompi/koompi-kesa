@@ -6,19 +6,19 @@ mod common;
 use base64::Engine as _;
 use clap::{Parser, error::ErrorKind};
 use common::{TestHarness, validate_jsonl};
-use kode::app::{
+use kesa::app::{
     apply_piped_stdin, build_initial_content, build_system_prompt, normalize_cli,
     prepare_initial_message, resolve_api_key, resolve_model_scope, select_model_and_thinking,
     validate_rpc_args,
 };
-use kode::auth::{AuthCredential, AuthStorage};
-use kode::cli;
-use kode::config::Config;
-use kode::model::{ContentBlock, ThinkingLevel};
-use kode::models::{ModelEntry, ModelRegistry};
-use kode::provider::{InputType, Model, ModelCost};
-use kode::session::Session;
-use kode::tools::process_file_arguments;
+use kesa::auth::{AuthCredential, AuthStorage};
+use kesa::cli;
+use kesa::config::Config;
+use kesa::model::{ContentBlock, ThinkingLevel};
+use kesa::models::{ModelEntry, ModelRegistry};
+use kesa::provider::{InputType, Model, ModelCost};
+use kesa::session::Session;
+use kesa::tools::process_file_arguments;
 use std::collections::HashMap;
 
 fn make_registry(harness: &TestHarness, creds: &[(&str, &str)]) -> ModelRegistry {
@@ -1086,7 +1086,7 @@ fn cli_ts_flag_parity_matrix_reports_full_coverage() {
 
 #[test]
 fn extension_registered_flags_can_be_passed_through_cli_parser() {
-    let manager = kode::extensions::ExtensionManager::new();
+    let manager = kesa::extensions::ExtensionManager::new();
     manager.register_flag(serde_json::json!({
         "name": "plan",
         "type": "string",

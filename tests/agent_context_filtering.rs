@@ -2,10 +2,10 @@
 mod tests {
     use async_trait::async_trait;
     use futures::Stream;
-    use kode::agent::{Agent, AgentConfig};
-    use kode::model::{CustomMessage, Message, UserContent, UserMessage};
-    use kode::provider::{Context, Provider, StreamOptions};
-    use kode::tools::ToolRegistry;
+    use kesa::agent::{Agent, AgentConfig};
+    use kesa::model::{CustomMessage, Message, UserContent, UserMessage};
+    use kesa::provider::{Context, Provider, StreamOptions};
+    use kesa::tools::ToolRegistry;
     use std::pin::Pin;
     use std::sync::Arc;
 
@@ -41,8 +41,8 @@ mod tests {
             &self,
             context: &Context<'_>,
             _options: &StreamOptions,
-        ) -> kode::error::Result<
-            Pin<Box<dyn Stream<Item = kode::error::Result<kode::model::StreamEvent>> + Send>>,
+        ) -> kesa::error::Result<
+            Pin<Box<dyn Stream<Item = kesa::error::Result<kesa::model::StreamEvent>> + Send>>,
         > {
             let mut guard = self.context.lock().unwrap();
             *guard = Some(context.messages.to_vec());

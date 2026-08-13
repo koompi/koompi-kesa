@@ -1,8 +1,8 @@
 #![cfg(feature = "sqlite-sessions")]
 
 use asupersync::runtime::RuntimeBuilder;
-use kode::model::UserContent;
-use kode::session::{Session, SessionMessage, SessionStoreKind};
+use kesa::model::UserContent;
+use kesa::session::{Session, SessionMessage, SessionStoreKind};
 use std::future::Future;
 use std::path::Path;
 

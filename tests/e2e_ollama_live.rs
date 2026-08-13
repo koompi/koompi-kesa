@@ -10,10 +10,10 @@
 
 use asupersync::runtime::RuntimeBuilder;
 use futures::StreamExt;
-use kode::model::{Message, StreamEvent, UserContent, UserMessage};
-use kode::models::ModelEntry;
-use kode::provider::{Context, InputType, Model, ModelCost, StreamOptions};
-use kode::providers::create_provider;
+use kesa::model::{Message, StreamEvent, UserContent, UserMessage};
+use kesa::models::ModelEntry;
+use kesa::provider::{Context, InputType, Model, ModelCost, StreamOptions};
+use kesa::providers::create_provider;
 use std::collections::HashMap;
 
 const OLLAMA_BASE: &str = "http://127.0.0.1:11434/v1";

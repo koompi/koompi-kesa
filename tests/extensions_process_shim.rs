@@ -7,8 +7,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use kode::extensions_js::{HostcallKind, PiJsRuntime, PiJsRuntimeConfig, is_env_var_allowed};
-use kode::scheduler::DeterministicClock;
+use kesa::extensions_js::{HostcallKind, PiJsRuntime, PiJsRuntimeConfig, is_env_var_allowed};
+use kesa::scheduler::DeterministicClock;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-use kode::extensions_js::PiJsRuntime;
+use kesa::extensions_js::PiJsRuntime;
 use std::fs;
 use tempfile::TempDir;
 

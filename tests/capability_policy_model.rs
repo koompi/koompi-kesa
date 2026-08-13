@@ -7,7 +7,7 @@
 //   - Full 5-layer precedence chain
 //   - Edge cases (empty, unknown, case sensitivity)
 
-use kode::extensions::{
+use kesa::extensions::{
     ALL_CAPABILITIES, Capability, ExtensionOverride, ExtensionPolicy, ExtensionPolicyMode,
     PolicyDecision, PolicyProfile,
 };

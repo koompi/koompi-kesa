@@ -17,14 +17,14 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use kode::extension_inclusion::{
+use kesa::extension_inclusion::{
     ExclusionNote, InclusionEntry, InclusionList, InclusionStats, VersionPin, build_rationale,
     classify_registrations,
 };
-use kode::extension_license::ScreeningReport;
-use kode::extension_popularity::{CandidateItem, CandidatePool, CandidateSource};
-use kode::extension_scoring::ScoringReport;
-use kode::extension_validation::{ValidationReport, ValidationStatus};
+use kesa::extension_license::ScreeningReport;
+use kesa::extension_popularity::{CandidateItem, CandidatePool, CandidateSource};
+use kesa::extension_scoring::ScoringReport;
+use kesa::extension_validation::{ValidationReport, ValidationStatus};
 
 #[derive(Debug, Parser)]
 #[command(name = "ext_inclusion_list")]
@@ -275,7 +275,7 @@ fn main() -> Result<()> {
 
     let list = InclusionList {
         schema: "pi.ext.inclusion.v1".to_string(),
-        generated_at: kode::extension_validation::chrono_now_iso(),
+        generated_at: kesa::extension_validation::chrono_now_iso(),
         task: Some(args.task_id),
         stats: Some(stats),
         tier0,

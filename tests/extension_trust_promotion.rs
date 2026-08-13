@@ -6,12 +6,12 @@
 
 mod common;
 
-use kode::extension_preflight::{
+use kesa::extension_preflight::{
     ExtensionTrustState, ExtensionTrustTracker, InstallRecommendation, InstallTimeRiskReport,
     TRUST_LIFECYCLE_SCHEMA, TrustTransitionError, TrustTransitionKind, classify_extension_source,
     initial_trust_state, is_hostcall_allowed_for_trust,
 };
-use kode::extensions::ExtensionPolicy;
+use kesa::extensions::ExtensionPolicy;
 
 // ============================================================================
 // Helpers

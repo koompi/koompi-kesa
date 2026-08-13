@@ -15,10 +15,10 @@
 mod common;
 
 use futures::StreamExt;
-use kode::http::client::Client;
-use kode::model::{Message, StopReason, StreamEvent, UserContent, UserMessage};
-use kode::provider::{Context, Provider, StreamOptions, ToolDef};
-use kode::vcr::{VcrMode, VcrRecorder};
+use kesa::http::client::Client;
+use kesa::model::{Message, StopReason, StreamEvent, UserContent, UserMessage};
+use kesa::provider::{Context, Provider, StreamOptions, ToolDef};
+use kesa::vcr::{VcrMode, VcrRecorder};
 use serde_json::{Value, json};
 use std::env;
 use std::path::PathBuf;
@@ -380,10 +380,10 @@ macro_rules! error_auth_contract {
 // Provider constructors that accept a VCR recorder
 // ═══════════════════════════════════════════════════════════════════════
 
-use kode::providers::anthropic::AnthropicProvider;
-use kode::providers::cohere::CohereProvider;
-use kode::providers::gemini::GeminiProvider;
-use kode::providers::openai::OpenAIProvider;
+use kesa::providers::anthropic::AnthropicProvider;
+use kesa::providers::cohere::CohereProvider;
+use kesa::providers::gemini::GeminiProvider;
+use kesa::providers::openai::OpenAIProvider;
 
 fn anthropic_with_vcr(vcr: VcrRecorder) -> Arc<dyn Provider> {
     let client = Client::new().with_vcr(vcr);

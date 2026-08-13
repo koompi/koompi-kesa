@@ -5,10 +5,10 @@
 //! - `PreflightAnalyzer` policy + compatibility evaluation
 //! - structured report categories and verdicts
 
-use kode::extension_preflight::{
+use kesa::extension_preflight::{
     FindingCategory, FindingSeverity, PreflightAnalyzer, PreflightReport, PreflightVerdict,
 };
-use kode::extensions::{
+use kesa::extensions::{
     CompatCapabilityEvidence, CompatEvidence, CompatIssueEvidence, CompatLedger,
     CompatRewriteEvidence, CompatibilityScanner, ExtensionPolicy,
 };
@@ -34,27 +34,27 @@ fn analyze_path_source(source: &str) -> PreflightReport {
 fn compatibility_contracts_keep_their_public_type_identity() {
     assert_eq!(
         std::any::type_name::<CompatEvidence>(),
-        "kode::extensions::CompatEvidence"
+        "kesa::extensions::CompatEvidence"
     );
     assert_eq!(
         std::any::type_name::<CompatCapabilityEvidence>(),
-        "kode::extensions::CompatCapabilityEvidence"
+        "kesa::extensions::CompatCapabilityEvidence"
     );
     assert_eq!(
         std::any::type_name::<CompatRewriteEvidence>(),
-        "kode::extensions::CompatRewriteEvidence"
+        "kesa::extensions::CompatRewriteEvidence"
     );
     assert_eq!(
         std::any::type_name::<CompatIssueEvidence>(),
-        "kode::extensions::CompatIssueEvidence"
+        "kesa::extensions::CompatIssueEvidence"
     );
     assert_eq!(
         std::any::type_name::<CompatLedger>(),
-        "kode::extensions::CompatLedger"
+        "kesa::extensions::CompatLedger"
     );
     assert_eq!(
         std::any::type_name::<CompatibilityScanner>(),
-        "kode::extensions::CompatibilityScanner"
+        "kesa::extensions::CompatibilityScanner"
     );
 }
 
@@ -64,8 +64,8 @@ fn decomposed_extension_contracts_keep_their_public_type_identity() {
         ($($name:ident),+ $(,)?) => {
             $(
                 assert_eq!(
-                    std::any::type_name::<kode::extensions::$name>(),
-                    concat!("kode::extensions::", stringify!($name)),
+                    std::any::type_name::<kesa::extensions::$name>(),
+                    concat!("kesa::extensions::", stringify!($name)),
                 );
             )+
         };
@@ -133,16 +133,16 @@ fn decomposed_extension_contracts_keep_their_public_type_identity() {
     );
 
     assert_eq!(
-        std::any::type_name::<kode::extensions::HostCallContext<'static>>(),
-        "kode::extensions::HostCallContext<'_>",
+        std::any::type_name::<kesa::extensions::HostCallContext<'static>>(),
+        "kesa::extensions::HostCallContext<'_>",
     );
     assert_eq!(
-        std::any::type_name::<&dyn kode::extensions::ExtensionSession>(),
-        "&dyn kode::extensions::ExtensionSession",
+        std::any::type_name::<&dyn kesa::extensions::ExtensionSession>(),
+        "&dyn kesa::extensions::ExtensionSession",
     );
     assert_eq!(
-        std::any::type_name::<&dyn kode::extensions::ExtensionHostActions>(),
-        "&dyn kode::extensions::ExtensionHostActions",
+        std::any::type_name::<&dyn kesa::extensions::ExtensionHostActions>(),
+        "&dyn kesa::extensions::ExtensionHostActions",
     );
 }
 

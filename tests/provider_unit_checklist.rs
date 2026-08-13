@@ -17,18 +17,18 @@
 
 mod common;
 
-use kode::model::{Message, UserContent, UserMessage};
-use kode::provider::{Context, Provider, StreamOptions, ToolDef};
-use kode::providers::anthropic::AnthropicProvider;
-use kode::providers::azure::AzureOpenAIProvider;
-use kode::providers::bedrock::BedrockProvider;
-use kode::providers::cohere::CohereProvider;
-use kode::providers::copilot::CopilotProvider;
-use kode::providers::gemini::GeminiProvider;
-use kode::providers::gitlab::GitLabProvider;
-use kode::providers::openai::OpenAIProvider;
-use kode::providers::openai_responses::OpenAIResponsesProvider;
-use kode::providers::vertex::VertexProvider;
+use kesa::model::{Message, UserContent, UserMessage};
+use kesa::provider::{Context, Provider, StreamOptions, ToolDef};
+use kesa::providers::anthropic::AnthropicProvider;
+use kesa::providers::azure::AzureOpenAIProvider;
+use kesa::providers::bedrock::BedrockProvider;
+use kesa::providers::cohere::CohereProvider;
+use kesa::providers::copilot::CopilotProvider;
+use kesa::providers::gemini::GeminiProvider;
+use kesa::providers::gitlab::GitLabProvider;
+use kesa::providers::openai::OpenAIProvider;
+use kesa::providers::openai_responses::OpenAIResponsesProvider;
+use kesa::providers::vertex::VertexProvider;
 use serde_json::{Value, json};
 use std::path::PathBuf;
 

@@ -63,10 +63,10 @@ fn bench_truncate_head(c: &mut Criterion) {
             &content,
             |b, content| {
                 b.iter(|| {
-                    kode::tools::truncate_head(
+                    kesa::tools::truncate_head(
                         black_box(content).clone(),
-                        kode::tools::DEFAULT_MAX_LINES,
-                        kode::tools::DEFAULT_MAX_BYTES,
+                        kesa::tools::DEFAULT_MAX_LINES,
+                        kesa::tools::DEFAULT_MAX_BYTES,
                     )
                 });
             },
@@ -87,10 +87,10 @@ fn bench_truncate_tail(c: &mut Criterion) {
             &content,
             |b, content| {
                 b.iter(|| {
-                    kode::tools::truncate_tail(
+                    kesa::tools::truncate_tail(
                         black_box(content).clone(),
-                        kode::tools::DEFAULT_MAX_LINES,
-                        kode::tools::DEFAULT_MAX_BYTES,
+                        kesa::tools::DEFAULT_MAX_LINES,
+                        kesa::tools::DEFAULT_MAX_BYTES,
                     )
                 });
             },
@@ -112,20 +112,20 @@ fn bench_truncate_no_truncation(c: &mut Criterion) {
 
     group.bench_function("head_no_trunc_500", |b| {
         b.iter(|| {
-            kode::tools::truncate_head(
+            kesa::tools::truncate_head(
                 black_box(&content).clone(),
-                kode::tools::DEFAULT_MAX_LINES,
-                kode::tools::DEFAULT_MAX_BYTES,
+                kesa::tools::DEFAULT_MAX_LINES,
+                kesa::tools::DEFAULT_MAX_BYTES,
             )
         });
     });
 
     group.bench_function("tail_no_trunc_500", |b| {
         b.iter(|| {
-            kode::tools::truncate_tail(
+            kesa::tools::truncate_tail(
                 black_box(&content).clone(),
-                kode::tools::DEFAULT_MAX_LINES,
-                kode::tools::DEFAULT_MAX_BYTES,
+                kesa::tools::DEFAULT_MAX_LINES,
+                kesa::tools::DEFAULT_MAX_BYTES,
             )
         });
     });
@@ -145,7 +145,7 @@ fn bench_sse_parsing(c: &mut Criterion) {
         group.throughput(Throughput::Elements(event_count as u64));
         group.bench_with_input(BenchmarkId::new("parse", event_count), &data, |b, data| {
             b.iter(|| {
-                let mut parser = kode::sse::SseParser::new();
+                let mut parser = kesa::sse::SseParser::new();
                 let events = parser.feed(black_box(data));
                 black_box(events)
             });
@@ -175,7 +175,7 @@ fn bench_sse_stream(c: &mut Criterion) {
         group.bench_function(BenchmarkId::new("parse", chunk_size), |b| {
             b.iter(|| {
                 let stream = futures::stream::iter(chunks.iter().cloned().map(Ok));
-                let mut sse = kode::sse::SseStream::new(stream);
+                let mut sse = kesa::sse::SseStream::new(stream);
                 let parsed = futures::executor::block_on(async move {
                     let mut count = 0usize;
                     while let Some(event) = sse.next().await {
@@ -199,7 +199,7 @@ fn bench_sse_stream(c: &mut Criterion) {
 /// Simulates the streaming hot path: accumulate text via `push_str`, then share
 /// with event consumers via `Arc::clone` (O(1)) instead of deep clone (O(n)).
 fn bench_streaming_arc(c: &mut Criterion) {
-    use kode::model::{AssistantMessage, ContentBlock, StopReason, TextContent, Usage};
+    use kesa::model::{AssistantMessage, ContentBlock, StopReason, TextContent, Usage};
     use std::sync::Arc;
 
     let mut group = c.benchmark_group("streaming_clone");

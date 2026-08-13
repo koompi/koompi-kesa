@@ -13,15 +13,15 @@
 //! - `build_js_context` / `build_js_options` fidelity
 
 use futures::StreamExt;
-use kode::agent::{Agent, AgentConfig, AgentEvent};
-use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::model::{
+use kesa::agent::{Agent, AgentConfig, AgentEvent};
+use kesa::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::model::{
     AssistantMessageEvent, ContentBlock, Message, StopReason, StreamEvent, UserContent, UserMessage,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::providers::create_provider;
-use kode::tools::ToolRegistry;
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::providers::create_provider;
+use kesa::tools::ToolRegistry;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tempfile::tempdir;
@@ -85,10 +85,10 @@ fn make_runtime() -> asupersync::runtime::Runtime {
 
 /// Collect all stream events into a Vec.
 async fn collect_events(
-    provider: &dyn kode::provider::Provider,
+    provider: &dyn kesa::provider::Provider,
     ctx: &Context<'_>,
     opts: &StreamOptions,
-) -> Vec<Result<StreamEvent, kode::error::Error>> {
+) -> Vec<Result<StreamEvent, kesa::error::Error>> {
     let mut stream = provider.stream(ctx, opts).await.expect("stream");
     let mut events = Vec::new();
     while let Some(item) = stream.next().await {
@@ -105,7 +105,7 @@ async fn collect_events(
 }
 
 type TestProviderStream =
-    std::pin::Pin<Box<dyn futures::Stream<Item = Result<StreamEvent, kode::error::Error>> + Send>>;
+    std::pin::Pin<Box<dyn futures::Stream<Item = Result<StreamEvent, kesa::error::Error>> + Send>>;
 
 struct CollidingProviderFixture {
     // Struct fields drop in declaration order. Keep every runtime-facing
@@ -986,7 +986,7 @@ fn stream_simple_cache_retention_passed_to_options() {
         let ctx = basic_context();
         let opts = StreamOptions {
             api_key: Some("sk-test".to_string()),
-            cache_retention: kode::provider::CacheRetention::Long,
+            cache_retention: kesa::provider::CacheRetention::Long,
             ..Default::default()
         };
         let events = collect_events(provider.as_ref(), &ctx, &opts).await;

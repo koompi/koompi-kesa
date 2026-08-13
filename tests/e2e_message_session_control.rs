@@ -17,20 +17,20 @@ mod common;
 
 use async_trait::async_trait;
 use futures::Stream;
-use kode::agent::{Agent, AgentConfig, AgentSession};
-use kode::compaction::ResolvedCompactionSettings;
-use kode::error::Result;
-use kode::extensions::{
+use kesa::agent::{Agent, AgentConfig, AgentSession};
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::error::Result;
+use kesa::extensions::{
     ExtensionHostActions, ExtensionManager, ExtensionSendMessage, ExtensionSendUserMessage,
     ExtensionSession, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::model::{
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::model::{
     AssistantMessage, ContentBlock, StopReason, StreamEvent, TextContent, Usage, UserContent,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::session::{Session, SessionHandle, SessionMessage};
-use kode::tools::ToolRegistry;
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::session::{Session, SessionHandle, SessionMessage};
+use kesa::tools::ToolRegistry;
 use serde_json::Value;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};

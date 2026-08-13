@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use kode::extensions::{DangerousCommandClass, classify_dangerous_command};
+    use kesa::extensions::{DangerousCommandClass, classify_dangerous_command};
 
     #[test]
     fn repro_rm_rf_dot_slash_bypass() {

@@ -13,12 +13,12 @@
 
 mod common;
 
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
     PROTOCOL_VERSION, RegisterPayload,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::HashSet;
 use std::path::PathBuf;

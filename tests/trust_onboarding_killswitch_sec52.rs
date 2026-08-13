@@ -13,11 +13,11 @@
 mod common;
 
 use common::TestHarness;
-use kode::extension_preflight::{
+use kesa::extension_preflight::{
     ExtensionTrustState, ExtensionTrustTracker, InstallRecommendation, TRUST_LIFECYCLE_SCHEMA,
     classify_extension_source, initial_trust_state, is_hostcall_allowed_for_trust,
 };
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionManager, ExtensionPolicy, SECURITY_ALERT_SCHEMA_VERSION, SecurityAlert,
     SecurityAlertAction, SecurityAlertCategory, SecurityAlertFilter, SecurityAlertSeverity,
     query_security_alerts,
@@ -263,7 +263,7 @@ fn re_onboarding_after_kill_switch_requires_fresh_ack() {
     assert!(
         matches!(
             err,
-            kode::extension_preflight::TrustTransitionError::OperatorAckRequired { .. }
+            kesa::extension_preflight::TrustTransitionError::OperatorAckRequired { .. }
         ),
         "re-promotion without ack must be rejected"
     );

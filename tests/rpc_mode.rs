@@ -6,18 +6,18 @@ mod common;
 
 use common::logging::TestLogger;
 use common::{TestEnv, TestHarness};
-use kode::agent::{Agent, AgentConfig, AgentSession};
-use kode::auth::AuthStorage;
-use kode::config::Config;
-use kode::http::client::Client;
-use kode::model::{AssistantMessage, ContentBlock, StopReason, TextContent, ToolCall, Usage};
-use kode::provider::Provider;
-use kode::providers::openai::OpenAIProvider;
-use kode::resources::ResourceLoader;
-use kode::rpc::{RpcOptions, run};
-use kode::session::{Session, SessionMessage};
-use kode::tools::ToolRegistry;
-use kode::vcr::{VcrMode, VcrRecorder};
+use kesa::agent::{Agent, AgentConfig, AgentSession};
+use kesa::auth::AuthStorage;
+use kesa::config::Config;
+use kesa::http::client::Client;
+use kesa::model::{AssistantMessage, ContentBlock, StopReason, TextContent, ToolCall, Usage};
+use kesa::provider::Provider;
+use kesa::providers::openai::OpenAIProvider;
+use kesa::resources::ResourceLoader;
+use kesa::rpc::{RpcOptions, run};
+use kesa::session::{Session, SessionMessage};
+use kesa::tools::ToolRegistry;
+use kesa::vcr::{VcrMode, VcrRecorder};
 use std::env;
 use std::path::Path;
 use std::path::PathBuf;
@@ -175,7 +175,7 @@ fn rpc_get_state_and_prompt() {
             agent,
             session,
             false,
-            kode::compaction::ResolvedCompactionSettings::default(),
+            kesa::compaction::ResolvedCompactionSettings::default(),
         );
 
         let auth_dir = tempfile::tempdir().unwrap();
@@ -443,7 +443,7 @@ fn rpc_session_stats_counts_tool_calls_and_results() {
         session.header.model_id = Some(model);
         session.header.thinking_level = Some("off".to_string());
         session.append_message(SessionMessage::User {
-            content: kode::model::UserContent::Text("hi".to_string()),
+            content: kesa::model::UserContent::Text("hi".to_string()),
             timestamp: Some(now),
         });
         session.append_message(SessionMessage::Assistant {
@@ -483,7 +483,7 @@ fn rpc_session_stats_counts_tool_calls_and_results() {
             agent,
             session,
             false,
-            kode::compaction::ResolvedCompactionSettings::default(),
+            kesa::compaction::ResolvedCompactionSettings::default(),
         );
 
         let auth_dir = tempfile::tempdir().unwrap();

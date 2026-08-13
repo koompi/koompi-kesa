@@ -9,10 +9,10 @@
 //! - **Recording**: [`HostcallLog`] — unified interaction recording for all types
 
 use async_trait::async_trait;
-use kode::error::Result;
-use kode::extension_dispatcher::ExtensionUiHandler;
-use kode::extensions::{ExtensionSession, ExtensionUiRequest, ExtensionUiResponse};
-use kode::session::SessionMessage;
+use kesa::error::Result;
+use kesa::extension_dispatcher::ExtensionUiHandler;
+use kesa::extensions::{ExtensionSession, ExtensionUiRequest, ExtensionUiResponse};
+use kesa::session::SessionMessage;
 use serde_json::Value;
 use std::collections::VecDeque;
 use std::fmt;

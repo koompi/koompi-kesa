@@ -6,8 +6,8 @@
 //! semantics.
 
 use asupersync::runtime::RuntimeBuilder;
-use kode::model::UserContent;
-use kode::session::{Session, SessionMessage};
+use kesa::model::UserContent;
+use kesa::session::{Session, SessionMessage};
 use serde_json::json;
 use std::future::Future;
 use std::io::Write as _;
@@ -337,7 +337,7 @@ fn crash_shutdown_strict_propagates_save_error() {
     let mut session = Session::create();
     // Point at non-existent directory to force IO failure.
     session.path = Some(temp_dir.path().join("nodir").join("session.jsonl"));
-    session.set_autosave_durability_mode(kode::session::AutosaveDurabilityMode::Strict);
+    session.set_autosave_durability_mode(kesa::session::AutosaveDurabilityMode::Strict);
     session.append_message(make_test_message("must save"));
 
     // Explicit save (not autosave) so we don't need queue mutation.
@@ -353,7 +353,7 @@ fn crash_shutdown_balanced_swallows_via_shutdown_api() {
     let temp_dir = tempfile::tempdir().unwrap();
     let mut session = Session::create();
     session.path = Some(temp_dir.path().join("nodir").join("session.jsonl"));
-    session.set_autosave_durability_mode(kode::session::AutosaveDurabilityMode::Balanced);
+    session.set_autosave_durability_mode(kesa::session::AutosaveDurabilityMode::Balanced);
     session.append_message(make_test_message("best effort"));
 
     // flush_autosave_on_shutdown is best-effort in balanced mode.
@@ -370,7 +370,7 @@ fn crash_shutdown_throughput_skips_flush() {
     let temp_dir = tempfile::tempdir().unwrap();
     let mut session = Session::create();
     session.path = Some(temp_dir.path().join("nodir").join("session.jsonl"));
-    session.set_autosave_durability_mode(kode::session::AutosaveDurabilityMode::Throughput);
+    session.set_autosave_durability_mode(kesa::session::AutosaveDurabilityMode::Throughput);
     session.append_message(make_test_message("no flush"));
 
     let result = run_async(async { session.flush_autosave_on_shutdown().await });
@@ -531,9 +531,9 @@ fn crash_durability_mode_is_readable_and_settable() {
     let mode = session.autosave_durability_mode();
     assert_eq!(mode.as_str(), "balanced");
 
-    session.set_autosave_durability_mode(kode::session::AutosaveDurabilityMode::Strict);
+    session.set_autosave_durability_mode(kesa::session::AutosaveDurabilityMode::Strict);
     assert_eq!(session.autosave_durability_mode().as_str(), "strict");
 
-    session.set_autosave_durability_mode(kode::session::AutosaveDurabilityMode::Throughput);
+    session.set_autosave_durability_mode(kesa::session::AutosaveDurabilityMode::Throughput);
     assert_eq!(session.autosave_durability_mode().as_str(), "throughput");
 }

@@ -22,13 +22,13 @@ mod common;
 
 use common::{MockHttpResponse, TestHarness};
 use futures::{Stream, StreamExt};
-use kode::model::{
+use kesa::model::{
     AssistantMessage, ContentBlock, Cost, Message, StopReason, StreamEvent, ToolCall,
     ToolResultMessage, Usage, UserContent, UserMessage,
 };
-use kode::provider::{Context, Provider, StreamOptions, ToolDef};
-use kode::providers::cursor::CursorProvider;
-use kode::vcr::{Cassette, VcrMode};
+use kesa::provider::{Context, Provider, StreamOptions, ToolDef};
+use kesa::providers::cursor::CursorProvider;
+use kesa::vcr::{Cassette, VcrMode};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::env;
@@ -594,7 +594,7 @@ pub(crate) struct StreamOutcome {
 
 pub(crate) async fn collect_events<S>(mut stream: S) -> StreamOutcome
 where
-    S: Stream<Item = kode::PiResult<StreamEvent>> + Unpin,
+    S: Stream<Item = kesa::PiResult<StreamEvent>> + Unpin,
 {
     let mut events = Vec::new();
     let mut stream_error = None;
@@ -1002,7 +1002,7 @@ pub(crate) fn tool_result_message(
     Message::ToolResult(std::sync::Arc::new(ToolResultMessage {
         tool_call_id: tool_call_id.to_string(),
         tool_name: tool_name.to_string(),
-        content: vec![ContentBlock::Text(kode::model::TextContent::new(
+        content: vec![ContentBlock::Text(kesa::model::TextContent::new(
             content.to_string(),
         ))],
         details: None,
@@ -1115,7 +1115,7 @@ mod backpressure_tests {
     ) -> AssistantMessage {
         AssistantMessage {
             content: vec![
-                ContentBlock::Text(kode::model::TextContent::new(text.to_string())),
+                ContentBlock::Text(kesa::model::TextContent::new(text.to_string())),
                 ContentBlock::ToolCall(tool_call),
             ],
             api: "stream".to_string(),
@@ -1911,7 +1911,7 @@ fn cursor_streaming_smoke_proves_text_done_and_connect_request() {
 #[cfg(test)]
 mod replay_cache_tests {
     use super::*;
-    use kode::vcr::{Interaction, RecordedRequest, RecordedResponse};
+    use kesa::vcr::{Interaction, RecordedRequest, RecordedResponse};
 
     const TEST_GIT_COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 

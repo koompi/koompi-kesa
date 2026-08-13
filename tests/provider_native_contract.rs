@@ -14,10 +14,10 @@ mod common;
 use common::harness::MockHttpRequest;
 use common::{MockHttpResponse, TestHarness};
 use futures::StreamExt;
-use kode::model::{Message, StreamEvent, UserContent, UserMessage};
-use kode::models::ModelEntry;
-use kode::provider::{Context, InputType, Model, ModelCost, StreamOptions, ToolDef};
-use kode::providers::create_provider;
+use kesa::model::{Message, StreamEvent, UserContent, UserMessage};
+use kesa::models::ModelEntry;
+use kesa::provider::{Context, InputType, Model, ModelCost, StreamOptions, ToolDef};
+use kesa::providers::create_provider;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -145,7 +145,7 @@ fn options_with_key(key: &str) -> StreamOptions {
 
 /// Drive a provider stream to Done and collect all events.
 fn collect_stream_events(
-    provider: Arc<dyn kode::provider::Provider>,
+    provider: Arc<dyn kesa::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) -> Vec<StreamEvent> {
@@ -1849,7 +1849,7 @@ mod alibaba_contract {
 // ── Gap-provider metadata consistency ───────────────────────────────────
 
 mod gap_provider_metadata {
-    use kode::provider_metadata::{
+    use kesa::provider_metadata::{
         PROVIDER_METADATA, canonical_provider_id, provider_auth_env_keys, provider_routing_defaults,
     };
 
@@ -2230,7 +2230,7 @@ mod longtail_contract {
 }
 
 mod longtail_provider_metadata {
-    use kode::provider_metadata::{
+    use kesa::provider_metadata::{
         PROVIDER_METADATA, provider_auth_env_keys, provider_routing_defaults,
     };
 
@@ -2323,8 +2323,8 @@ mod longtail_provider_metadata {
 // ============================================================================
 
 mod failure_taxonomy {
-    use kode::error::Error;
-    use kode::provider_metadata::{PROVIDER_METADATA, provider_auth_env_keys};
+    use kesa::error::Error;
+    use kesa::provider_metadata::{PROVIDER_METADATA, provider_auth_env_keys};
 
     /// All gap + longtail providers that must have complete error hint coverage.
     const TAXONOMY_PROVIDERS: [&str; 12] = [
@@ -2459,7 +2459,7 @@ mod failure_taxonomy {
 
     #[test]
     fn auth_diagnostic_codes_all_have_remediation() {
-        use kode::error::AuthDiagnosticCode;
+        use kesa::error::AuthDiagnosticCode;
         let codes = [
             AuthDiagnosticCode::MissingApiKey,
             AuthDiagnosticCode::InvalidApiKey,
@@ -2501,7 +2501,7 @@ mod failure_taxonomy {
 
     #[test]
     fn flake_classifier_covers_all_categories() {
-        use kode::flake_classifier::{FlakeCategory, classify_failure};
+        use kesa::flake_classifier::{FlakeCategory, classify_failure};
         // Each FlakeCategory must be reachable via classify_failure.
         let cases: Vec<(FlakeCategory, &str)> = vec![
             (
@@ -2533,14 +2533,14 @@ mod failure_taxonomy {
         for (expected_cat, output) in &cases {
             let result = classify_failure(output);
             match result {
-                kode::flake_classifier::FlakeClassification::Transient { category, .. } => {
+                kesa::flake_classifier::FlakeClassification::Transient { category, .. } => {
                     assert_eq!(
                         &category, expected_cat,
                         "Expected {expected_cat:?} for output: {output}"
                     );
                     covered.insert(category);
                 }
-                kode::flake_classifier::FlakeClassification::Deterministic => {
+                kesa::flake_classifier::FlakeClassification::Deterministic => {
                     panic!(
                         "Expected Transient({expected_cat:?}) but got Deterministic for: {output}"
                     );
@@ -2592,7 +2592,7 @@ mod failure_taxonomy {
 
     #[test]
     fn deterministic_failures_produce_non_retriable_classification() {
-        use kode::flake_classifier::classify_failure;
+        use kesa::flake_classifier::classify_failure;
         // Real assertion failures (not flakes) must be classified as Deterministic.
         let deterministic_outputs = [
             "assertion failed: expected 200 but got 401",
@@ -2652,7 +2652,7 @@ mod failure_taxonomy {
 // ============================================================================
 
 mod docs_runtime_consistency {
-    use kode::provider_metadata::{PROVIDER_METADATA, provider_auth_env_keys};
+    use kesa::provider_metadata::{PROVIDER_METADATA, provider_auth_env_keys};
 
     /// Gap providers whose setup docs we validate.
     const DOC_PROVIDERS: [(&str, &str); 5] = [

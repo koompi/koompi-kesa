@@ -17,13 +17,13 @@
 )]
 
 use futures::executor::block_on;
-use kode::error::Result;
-use kode::extensions::{
+use kesa::error::Result;
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::perf_build;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::perf_build;
+use kesa::tools::ToolRegistry;
 use serde::Serialize;
 use serde_json::{Map, Value, json};
 use sha2::{Digest, Sha256};
@@ -509,7 +509,7 @@ async fn resolve_extension_callable(
         return Ok(("command".to_string(), command_name.to_string()));
     }
 
-    Err(kode::error::Error::extension(format!(
+    Err(kesa::error::Error::extension(format!(
         "No callable tool/command registered for extension: {extension_id}"
     )))
 }
@@ -530,7 +530,7 @@ async fn scenario_cold_start(
         load_extension(&runtime, spec).await?;
         timings.push(start.elapsed());
         if !runtime.manager.shutdown(Duration::from_secs(5)).await {
-            return Err(kode::error::Error::extension(
+            return Err(kesa::error::Error::extension(
                 "benchmark runtime did not shut down after cold start",
             ));
         }
@@ -567,7 +567,7 @@ async fn scenario_warm_start(
     let runtime = new_runtime(js_cwd, Some(warm_cache_dir.clone())).await?;
     load_extension(&runtime, spec).await?;
     if !runtime.manager.shutdown(Duration::from_secs(5)).await {
-        return Err(kode::error::Error::extension(
+        return Err(kesa::error::Error::extension(
             "benchmark warmup runtime did not shut down",
         ));
     }
@@ -581,7 +581,7 @@ async fn scenario_warm_start(
         load_extension(&warm_rt, spec).await?;
         timings.push(start.elapsed());
         if !warm_rt.manager.shutdown(Duration::from_secs(5)).await {
-            return Err(kode::error::Error::extension(
+            return Err(kesa::error::Error::extension(
                 "benchmark runtime did not shut down after warm start",
             ));
         }
@@ -626,7 +626,7 @@ async fn scenario_tool_call(
     for _ in 0..iterations {
         if started_at.elapsed() >= budget {
             let _ = runtime.manager.shutdown(Duration::from_secs(5)).await;
-            return Err(kode::error::Error::extension(format!(
+            return Err(kesa::error::Error::extension(format!(
                 "tool-call benchmark timed out after {}ms",
                 budget.as_millis()
             )));
@@ -667,7 +667,7 @@ async fn scenario_tool_call(
     }
     let elapsed = started_at.elapsed();
     if !runtime.manager.shutdown(Duration::from_secs(5)).await {
-        return Err(kode::error::Error::extension(
+        return Err(kesa::error::Error::extension(
             "benchmark runtime did not shut down after callable dispatch",
         ));
     }
@@ -717,7 +717,7 @@ async fn scenario_event_dispatch(
     for _ in 0..iterations {
         if started_at.elapsed() >= budget {
             let _ = runtime.manager.shutdown(Duration::from_secs(5)).await;
-            return Err(kode::error::Error::extension(format!(
+            return Err(kesa::error::Error::extension(format!(
                 "event-dispatch benchmark timed out after {}ms",
                 budget.as_millis()
             )));
@@ -740,7 +740,7 @@ async fn scenario_event_dispatch(
     }
     let elapsed = started_at.elapsed();
     if !runtime.manager.shutdown(Duration::from_secs(5)).await {
-        return Err(kode::error::Error::extension(
+        return Err(kesa::error::Error::extension(
             "benchmark runtime did not shut down after event dispatch",
         ));
     }

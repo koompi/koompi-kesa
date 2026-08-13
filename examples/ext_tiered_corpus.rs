@@ -23,13 +23,13 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use kode::extension_license::{ScreeningReport, VerdictStatus};
-use kode::extension_popularity::{CandidateItem, CandidatePool};
-use kode::extension_scoring::{
+use kesa::extension_license::{ScreeningReport, VerdictStatus};
+use kesa::extension_popularity::{CandidateItem, CandidatePool};
+use kesa::extension_scoring::{
     CandidateInput, CompatStatus, Compatibility, Gates, LicenseInfo, MarketplaceSignals, Recency,
     Redistribution, RiskInfo, Signals, Tags, score_candidates,
 };
-use kode::extension_validation::{ValidationReport, ValidationStatus};
+use kesa::extension_validation::{ValidationReport, ValidationStatus};
 
 #[derive(Debug, Parser)]
 #[command(name = "ext_tiered_corpus")]

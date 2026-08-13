@@ -7,11 +7,11 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use kode::agent::{AbortHandle, AgentEvent};
-use kode::model::{
+use kesa::agent::{AbortHandle, AgentEvent};
+use kesa::model::{
     AssistantMessage, ContentBlock, StopReason, StreamEvent, TextContent, ThinkingLevel, Usage,
 };
-use kode::sdk::{
+use kesa::sdk::{
     AgentSessionHandle, AgentSessionState, EventListeners, RpcBashResult, RpcCancelledResult,
     RpcCommandInfo, RpcCompactionResult, RpcCycleModelResult, RpcExportHtmlResult,
     RpcExtensionUiResponse, RpcForkMessage, RpcForkResult, RpcLastAssistantText, RpcModelInfo,
@@ -19,7 +19,7 @@ use kode::sdk::{
     SessionOptions, SessionPromptResult, SessionTransportEvent, SessionTransportState,
     create_agent_session,
 };
-use kode::tools::{ToolOutput, ToolRegistry};
+use kesa::tools::{ToolOutput, ToolRegistry};
 use serde_json::json;
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -304,7 +304,7 @@ fn lifecycle_state_after_model_switch() {
         let state_before = handle.state().await?;
         handle.set_model("openai", "gpt-4o").await?;
         let state_after = handle.state().await?;
-        Ok::<_, kode::error::Error>((state_before, state_after))
+        Ok::<_, kesa::error::Error>((state_before, state_after))
     })
     .expect("state transitions");
     assert_eq!(state_before.provider, "anthropic");
@@ -1233,10 +1233,10 @@ fn tool_registry_from_sdk_tools_lookup() {
     let harness = TestHarness::new("tool_registry_from_sdk_tools_lookup");
 
     let tmp = tempfile::tempdir().expect("tempdir");
-    let tools = kode::sdk::create_all_tools(tmp.path());
+    let tools = kesa::sdk::create_all_tools(tmp.path());
     let registry = ToolRegistry::from_tools(tools);
 
-    for name in kode::sdk::BUILTIN_TOOL_NAMES {
+    for name in kesa::sdk::BUILTIN_TOOL_NAMES {
         assert!(
             registry.get(name).is_some(),
             "registry should contain tool: {name}"
@@ -1249,7 +1249,7 @@ fn tool_registry_from_sdk_tools_lookup() {
         .info_ctx("sdk", "tool registry lookup ok", |ctx| {
             ctx.push((
                 "tools_found".to_string(),
-                kode::sdk::BUILTIN_TOOL_NAMES.len().to_string(),
+                kesa::sdk::BUILTIN_TOOL_NAMES.len().to_string(),
             ));
         });
 }
@@ -1259,7 +1259,7 @@ fn tool_definitions_have_required_schema_fields() {
     let harness = TestHarness::new("tool_definitions_have_required_schema_fields");
 
     let tmp = tempfile::tempdir().expect("tempdir");
-    let defs = kode::sdk::all_tool_definitions(tmp.path());
+    let defs = kesa::sdk::all_tool_definitions(tmp.path());
 
     for def in &defs {
         assert!(!def.name.is_empty(), "tool name should be non-empty");

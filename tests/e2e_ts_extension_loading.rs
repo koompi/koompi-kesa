@@ -11,10 +11,10 @@
 
 mod common;
 
-use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::package_manager::{PackageManager, ResolveExtensionSourcesOptions};
-use kode::tools::ToolRegistry;
+use kesa::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::package_manager::{PackageManager, ResolveExtensionSourcesOptions};
+use kesa::tools::ToolRegistry;
 use serde_json::Value;
 use std::sync::Arc;
 

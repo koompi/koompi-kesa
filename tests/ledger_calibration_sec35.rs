@@ -11,8 +11,8 @@
 mod common;
 
 use common::TestHarness;
-use kode::connectors::http::HttpConnector;
-use kode::extensions::{
+use kesa::connectors::http::HttpConnector;
+use kesa::extensions::{
     ExtensionManager, ExtensionPolicy, ExtensionPolicyMode, HostCallContext, HostCallPayload,
     RUNTIME_RISK_EXPLANATION_SCHEMA_VERSION, RUNTIME_RISK_LEDGER_SCHEMA_VERSION,
     RuntimeRiskActionValue, RuntimeRiskCalibrationConfig, RuntimeRiskCalibrationObjective,
@@ -23,7 +23,7 @@ use kode::extensions::{
     replay_runtime_risk_ledger_artifact, runtime_risk_compute_ledger_hash_artifact,
     runtime_risk_ledger_data_hash, verify_runtime_risk_ledger_artifact,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 
 // ============================================================================

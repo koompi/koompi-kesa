@@ -18,11 +18,11 @@
 
 mod common;
 
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::{PiJsRuntimeConfig, PiJsRuntimeLimits};
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::{PiJsRuntimeConfig, PiJsRuntimeLimits};
+use kesa::tools::ToolRegistry;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;

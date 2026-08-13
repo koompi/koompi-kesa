@@ -10,7 +10,7 @@
 //! approved runtime risk ledger traces, including deterministic artifact
 //! generation, sparse-data fallbacks, and explainable drift detection.
 
-use kode::extensions::{
+use kesa::extensions::{
     BaselineDriftReport, RUNTIME_RISK_BASELINE_SCHEMA_VERSION,
     RUNTIME_RISK_EXPLANATION_SCHEMA_VERSION, RUNTIME_RISK_LEDGER_SCHEMA_VERSION,
     RuntimeRiskActionValue, RuntimeRiskBaselineModel, RuntimeRiskExpectedLossEvidence,

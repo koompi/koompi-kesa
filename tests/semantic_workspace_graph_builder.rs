@@ -6,19 +6,19 @@ use asupersync::sync::Mutex;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::Stream;
-use kode::agent::{Agent, AgentConfig, AgentSession, SemanticContextBundleInjection};
-use kode::compaction::ResolvedCompactionSettings;
-use kode::model::{AssistantMessage, ContentBlock, Message, StopReason, TextContent, Usage};
-use kode::provider::{Context, Provider, StreamEvent, StreamOptions};
-use kode::semantic_workspace_graph::{
+use kesa::agent::{Agent, AgentConfig, AgentSession, SemanticContextBundleInjection};
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::model::{AssistantMessage, ContentBlock, Message, StopReason, TextContent, Usage};
+use kesa::provider::{Context, Provider, StreamEvent, StreamOptions};
+use kesa::semantic_workspace_graph::{
     BeadActionabilityStatus, ContextArtifactCacheScope, ContextArtifactCacheStatus,
     ContextBundleBudget, ContextBundleCacheProbe, ContextBundleRequest, EvidenceFreshnessStatus,
     GraphInputStatus, RedactionStatus, SemanticContextBundlePlanner, SemanticEdgeType,
     SemanticNodeType, SemanticWorkspaceGraph, SemanticWorkspaceGraphBuildOptions,
     SemanticWorkspaceGraphBuilder, classify_evidence_freshness, normalize_context_artifact_path,
 };
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::error::Error;
@@ -788,7 +788,7 @@ impl Provider for ContextE2eProvider {
         &self,
         context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> kode::error::Result<Pin<Box<dyn Stream<Item = kode::error::Result<StreamEvent>> + Send>>>
+    ) -> kesa::error::Result<Pin<Box<dyn Stream<Item = kesa::error::Result<StreamEvent>> + Send>>>
     {
         match self.calls.lock() {
             Ok(calls) => calls,
@@ -846,7 +846,7 @@ fn node_with_source<'a>(
     graph: &'a SemanticWorkspaceGraph,
     node_type: SemanticNodeType,
     source_path: &str,
-) -> TestResult<&'a kode::semantic_workspace_graph::SemanticGraphNode> {
+) -> TestResult<&'a kesa::semantic_workspace_graph::SemanticGraphNode> {
     graph
         .nodes
         .iter()
@@ -901,7 +901,7 @@ fn bead_status(
 }
 
 fn bundle_golden_summary(
-    bundle: &kode::semantic_workspace_graph::SemanticContextBundle,
+    bundle: &kesa::semantic_workspace_graph::SemanticContextBundle,
 ) -> serde_json::Value {
     json!({
         "selected": bundle
@@ -3644,7 +3644,7 @@ fn no_mock_context_intelligence_e2e_logs_and_replays_real_workspace() -> TestRes
         assert!(!context_content.contains("hidden token"));
 
         let session_path = {
-            let cx = kode::agent_cx::AgentCx::for_request();
+            let cx = kesa::agent_cx::AgentCx::for_request();
             let session = session
                 .lock(cx.cx())
                 .await

@@ -17,9 +17,9 @@
 mod common;
 
 use common::TestHarness;
-use kode::connectors::http::HttpConnector;
-use kode::extension_preflight::{PREFLIGHT_SCHEMA, PreflightAnalyzer, PreflightVerdict};
-use kode::extensions::{
+use kesa::connectors::http::HttpConnector;
+use kesa::extension_preflight::{PREFLIGHT_SCHEMA, PreflightAnalyzer, PreflightVerdict};
+use kesa::extensions::{
     ExecMediationPolicy, ExtensionManager, ExtensionOverride, ExtensionPolicy, ExtensionPolicyMode,
     ExtensionQuotaConfig, HostCallContext, HostCallPayload, IncidentBundleFilter,
     IncidentBundleRedactionPolicy, PolicyDecision, PolicyProfile,
@@ -27,7 +27,7 @@ use kode::extensions::{
     SECURITY_ALERT_SCHEMA_VERSION, SecretBrokerPolicy, SecurityAlertCategory,
     dispatch_host_call_shared, verify_runtime_risk_ledger_artifact,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::fs;
 use std::path::Path;

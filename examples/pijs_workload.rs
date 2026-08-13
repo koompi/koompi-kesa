@@ -4,15 +4,15 @@
 
 use clap::{Parser, ValueEnum};
 use futures::executor::block_on;
-use kode::error::{Error, Result};
-use kode::extensions::{
+use kesa::error::{Error, Result};
+use kesa::extensions::{
     ExtensionManager, ExtensionRuntimeHandle, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
     NativeRustExtensionLoadSpec, NativeRustExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::perf_build;
-use kode::scheduler::HostcallOutcome;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::perf_build;
+use kesa::scheduler::HostcallOutcome;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::VecDeque;
 use std::fs;
@@ -650,7 +650,7 @@ fn run_tool_roundtrip_native_runtime(runtime: &ExtensionRuntimeHandle) -> Result
 #[cfg(test)]
 mod tests {
     use clap::Parser;
-    use kode::perf_build::profile_from_target_path;
+    use kesa::perf_build::profile_from_target_path;
     use std::path::Path;
     use std::time::Duration;
 

@@ -28,15 +28,15 @@ mod common;
 use async_trait::async_trait;
 use common::{TestHarness, run_async};
 use futures::Stream;
-use kode::agent::{Agent, AgentConfig, AgentEvent, AgentSession};
-use kode::compaction::ResolvedCompactionSettings;
-use kode::error::{Error, Result};
-use kode::model::{
+use kesa::agent::{Agent, AgentConfig, AgentEvent, AgentSession};
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::error::{Error, Result};
+use kesa::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall, Usage,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::BTreeMap;
 use std::io::Write as _;
@@ -173,7 +173,7 @@ fn write_jsonl_artifacts(harness: &TestHarness, test_name: &str) {
 }
 
 fn cli_binary_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_kode"))
+    PathBuf::from(env!("CARGO_BIN_EXE_kesa"))
 }
 
 fn isolated_cli_env(harness: &TestHarness) -> BTreeMap<String, String> {
@@ -1219,8 +1219,8 @@ fn session_persist_reload_messages_survive() {
     // Verify user message content survived
     let has_user_msg = messages.iter().any(|m| match m {
         Message::User(u) => match &u.content {
-            kode::model::UserContent::Text(t) => t.contains("persist me"),
-            kode::model::UserContent::Blocks(blocks) => blocks.iter().any(|b| match b {
+            kesa::model::UserContent::Text(t) => t.contains("persist me"),
+            kesa::model::UserContent::Blocks(blocks) => blocks.iter().any(|b| match b {
                 ContentBlock::Text(t) => t.text.contains("persist me"),
                 _ => false,
             }),
@@ -1715,8 +1715,8 @@ fn session_unicode_messages_round_trip() {
     // Verify unicode survived
     let has_unicode = messages.iter().any(|m| match m {
         Message::User(u) => match &u.content {
-            kode::model::UserContent::Text(t) => t.contains('\u{1F600}'),
-            kode::model::UserContent::Blocks(blocks) => blocks.iter().any(|b| match b {
+            kesa::model::UserContent::Text(t) => t.contains('\u{1F600}'),
+            kesa::model::UserContent::Blocks(blocks) => blocks.iter().any(|b| match b {
                 ContentBlock::Text(t) => t.text.contains('\u{1F600}'),
                 _ => false,
             }),

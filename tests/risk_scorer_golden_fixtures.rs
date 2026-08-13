@@ -9,13 +9,13 @@
 mod common;
 
 use common::TestHarness;
-use kode::connectors::http::HttpConnector;
-use kode::extensions::{
+use kesa::connectors::http::HttpConnector;
+use kesa::extensions::{
     ExtensionManager, ExtensionPolicy, ExtensionPolicyMode, HostCallContext, HostCallPayload,
     RUNTIME_RISK_EXPLANATION_SCHEMA_VERSION, RuntimeRiskConfig, dispatch_host_call_shared,
     replay_runtime_risk_ledger_artifact, verify_runtime_risk_ledger_artifact,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::BTreeSet;
 
@@ -66,7 +66,7 @@ async fn dispatch_call(
 fn run_golden_trace(
     harness: &TestHarness,
     ext_id: &'static str,
-) -> kode::extensions::RuntimeRiskLedgerArtifact {
+) -> kesa::extensions::RuntimeRiskLedgerArtifact {
     let tools = ToolRegistry::new(&[], harness.temp_dir(), None);
     let http = HttpConnector::with_defaults();
     let manager = ExtensionManager::new();

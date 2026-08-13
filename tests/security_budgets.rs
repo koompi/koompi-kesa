@@ -3,8 +3,8 @@
 //! Tests verify that `PiJsRuntime` enforces CPU, memory, and stack budgets,
 //! and that hostcall timeouts terminate runaway operations cleanly.
 
-use kode::extensions_js::{PiJsRuntime, PiJsRuntimeConfig, PiJsRuntimeLimits};
-use kode::scheduler::DeterministicClock;
+use kesa::extensions_js::{PiJsRuntime, PiJsRuntimeConfig, PiJsRuntimeLimits};
+use kesa::scheduler::DeterministicClock;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -364,8 +364,8 @@ fn stack_limit_allows_reasonable_recursion() {
 
 #[test]
 fn hostcall_timeout_is_tracked_in_stats() {
-    use kode::extensions_js::HostcallKind;
-    use kode::scheduler::HostcallOutcome;
+    use kesa::extensions_js::HostcallKind;
+    use kesa::scheduler::HostcallOutcome;
     use serde_json::Value;
 
     futures::executor::block_on(async {

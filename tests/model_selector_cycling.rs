@@ -16,19 +16,19 @@ use asupersync::channel::mpsc;
 use bubbletea::{KeyMsg, KeyType, Model as BubbleteaModel};
 use common::TestHarness;
 use futures::stream;
-use kode::agent::{Agent, AgentConfig};
-use kode::config::Config;
-use kode::interactive::{
+use kesa::agent::{Agent, AgentConfig};
+use kesa::config::Config;
+use kesa::interactive::{
     PiApp, model_entry_matches, parse_scoped_model_patterns, resolve_scoped_model_entries,
     strip_thinking_level_suffix,
 };
-use kode::keybindings::KeyBindings;
-use kode::model::{StreamEvent, Usage};
-use kode::models::ModelEntry;
-use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
-use kode::resources::{ResourceCliOptions, ResourceLoader};
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::keybindings::KeyBindings;
+use kesa::model::{StreamEvent, Usage};
+use kesa::models::ModelEntry;
+use kesa::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
+use kesa::resources::{ResourceCliOptions, ResourceLoader};
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use std::collections::HashMap;
 use std::pin::Pin;
 use std::sync::{Arc, OnceLock};
@@ -66,8 +66,8 @@ impl Provider for DummyProvider {
         &self,
         _context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> kode::error::Result<
-        Pin<Box<dyn futures::Stream<Item = kode::error::Result<StreamEvent>> + Send>>,
+    ) -> kesa::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kesa::error::Result<StreamEvent>> + Send>>,
     > {
         Ok(Box::pin(stream::empty()))
     }

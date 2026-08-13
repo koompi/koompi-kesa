@@ -6,9 +6,9 @@
 mod common;
 
 use common::TestHarness;
-use kode::extensions::{ExtensionManager, ExtensionRegion};
-use kode::theme::{Theme, looks_like_theme_path};
-use kode::tui::PiConsole;
+use kesa::extensions::{ExtensionManager, ExtensionRegion};
+use kesa::theme::{Theme, looks_like_theme_path};
+use kesa::tui::PiConsole;
 use proptest::prelude::*;
 use std::fmt::Write;
 use std::time::Duration;
@@ -358,7 +358,7 @@ fn theme_discover_from_temp_dirs() {
     let theme_json = serde_json::to_string_pretty(&Theme::dark()).unwrap();
     std::fs::write(global_themes_dir.join("custom.json"), &theme_json).unwrap();
 
-    let roots = kode::theme::ThemeRoots {
+    let roots = kesa::theme::ThemeRoots {
         global_dir,
         project_dir,
     };

@@ -1,4 +1,4 @@
-use kode::extension_dispatcher::{DualExecOracleConfig, DualExecOracleState};
+use kesa::extension_dispatcher::{DualExecOracleConfig, DualExecOracleState};
 
 const fn backoff_test_config() -> DualExecOracleConfig {
     DualExecOracleConfig {

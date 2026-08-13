@@ -4,8 +4,8 @@
 //! Also includes `LabRuntime`-backed deterministic tests (bd-48tv).
 #![forbid(unsafe_code)]
 
-use kode::extensions_js::{ClockHandle, MacrotaskKind, ManualClock, PiEventLoop};
-use kode::scheduler::{self, HostcallOutcome, Scheduler};
+use kesa::extensions_js::{ClockHandle, MacrotaskKind, ManualClock, PiEventLoop};
+use kesa::scheduler::{self, HostcallOutcome, Scheduler};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
@@ -363,7 +363,7 @@ impl scheduler::Clock for LabBridgeClock {
 }
 
 // Note: `Arc<LabBridgeClock>` implements `scheduler::Clock` via the blanket
-// `impl<C: Clock> Clock for Arc<C>` in kode::scheduler.
+// `impl<C: Clock> Clock for Arc<C>` in kesa::scheduler.
 
 /// Trace a `Scheduler` macrotask to a string for determinism comparison.
 fn trace_scheduler_task(task: &scheduler::Macrotask) -> String {

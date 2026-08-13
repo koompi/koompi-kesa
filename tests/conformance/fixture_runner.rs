@@ -6,9 +6,9 @@ use crate::conformance::{
     FixtureFile, SetupStep, TestCase, TestResult, validate_expected_with_goldens,
 };
 use clap::error::ErrorKind;
-use kode::cli::{Cli, Commands, ExtensionCliFlag, parse_with_extension_flags};
-use kode::model::ContentBlock;
-use kode::tools::Tool;
+use kesa::cli::{Cli, Commands, ExtensionCliFlag, parse_with_extension_flags};
+use kesa::model::ContentBlock;
+use kesa::tools::Tool;
 use serde_json::{Value, json};
 use std::path::{Component, Path, PathBuf};
 use tempfile::TempDir;
@@ -48,14 +48,14 @@ async fn run_test_case(tool_name: &str, case: &TestCase) -> TestResult {
 
     // Create the tool
     let tool: Box<dyn Tool> = match tool_name {
-        "read" => Box::new(kode::tools::ReadTool::new(temp_dir.path())),
-        "bash" => Box::new(kode::tools::BashTool::new(temp_dir.path())),
-        "edit" => Box::new(kode::tools::EditTool::new(temp_dir.path())),
-        "write" => Box::new(kode::tools::WriteTool::new(temp_dir.path())),
-        "grep" => Box::new(kode::tools::GrepTool::new(temp_dir.path())),
-        "find" => Box::new(kode::tools::FindTool::new(temp_dir.path())),
-        "ls" => Box::new(kode::tools::LsTool::new(temp_dir.path())),
-        "hashline_edit" => Box::new(kode::tools::HashlineEditTool::new(temp_dir.path())),
+        "read" => Box::new(kesa::tools::ReadTool::new(temp_dir.path())),
+        "bash" => Box::new(kesa::tools::BashTool::new(temp_dir.path())),
+        "edit" => Box::new(kesa::tools::EditTool::new(temp_dir.path())),
+        "write" => Box::new(kesa::tools::WriteTool::new(temp_dir.path())),
+        "grep" => Box::new(kesa::tools::GrepTool::new(temp_dir.path())),
+        "find" => Box::new(kesa::tools::FindTool::new(temp_dir.path())),
+        "ls" => Box::new(kesa::tools::LsTool::new(temp_dir.path())),
+        "hashline_edit" => Box::new(kesa::tools::HashlineEditTool::new(temp_dir.path())),
         _ => {
             return TestResult::fail(&case_name, format!("Unknown tool: {tool_name}"));
         }
@@ -397,9 +397,9 @@ fn command_value(command: Option<&Commands>) -> Value {
     }
 }
 
-fn validation_broker_command_value(command: &kode::cli::ValidationBrokerCommand) -> Value {
+fn validation_broker_command_value(command: &kesa::cli::ValidationBrokerCommand) -> Value {
     match command {
-        kode::cli::ValidationBrokerCommand::Status {
+        kesa::cli::ValidationBrokerCommand::Status {
             store,
             format,
             out_json,
@@ -414,7 +414,7 @@ fn validation_broker_command_value(command: &kode::cli::ValidationBrokerCommand)
             "out_text": out_text,
             "generated_at": generated_at,
         }),
-        kode::cli::ValidationBrokerCommand::Plan {
+        kesa::cli::ValidationBrokerCommand::Plan {
             request,
             inputs,
             store,
@@ -435,17 +435,17 @@ fn validation_broker_command_value(command: &kode::cli::ValidationBrokerCommand)
             "out_text": out_text,
             "generated_at": generated_at,
         }),
-        kode::cli::ValidationBrokerCommand::Acquire { .. }
-        | kode::cli::ValidationBrokerCommand::Renew { .. }
-        | kode::cli::ValidationBrokerCommand::Release { .. } => {
+        kesa::cli::ValidationBrokerCommand::Acquire { .. }
+        | kesa::cli::ValidationBrokerCommand::Renew { .. }
+        | kesa::cli::ValidationBrokerCommand::Release { .. } => {
             validation_broker_lease_command_value(command)
         }
     }
 }
 
-fn validation_broker_lease_command_value(command: &kode::cli::ValidationBrokerCommand) -> Value {
+fn validation_broker_lease_command_value(command: &kesa::cli::ValidationBrokerCommand) -> Value {
     match command {
-        kode::cli::ValidationBrokerCommand::Acquire {
+        kesa::cli::ValidationBrokerCommand::Acquire {
             request,
             store,
             started_at,
@@ -464,7 +464,7 @@ fn validation_broker_lease_command_value(command: &kode::cli::ValidationBrokerCo
             "out_json": out_json,
             "out_text": out_text,
         }),
-        kode::cli::ValidationBrokerCommand::Renew {
+        kesa::cli::ValidationBrokerCommand::Renew {
             store,
             slot_id,
             owner,
@@ -485,7 +485,7 @@ fn validation_broker_lease_command_value(command: &kode::cli::ValidationBrokerCo
             "out_json": out_json,
             "out_text": out_text,
         }),
-        kode::cli::ValidationBrokerCommand::Release {
+        kesa::cli::ValidationBrokerCommand::Release {
             store,
             slot_id,
             owner,
@@ -506,8 +506,8 @@ fn validation_broker_lease_command_value(command: &kode::cli::ValidationBrokerCo
             "out_json": out_json,
             "out_text": out_text,
         }),
-        kode::cli::ValidationBrokerCommand::Status { .. }
-        | kode::cli::ValidationBrokerCommand::Plan { .. } => {
+        kesa::cli::ValidationBrokerCommand::Status { .. }
+        | kesa::cli::ValidationBrokerCommand::Plan { .. } => {
             unreachable!("status and plan commands are handled by validation_broker_command_value")
         }
     }
@@ -614,7 +614,7 @@ pub fn run_truncation_tests(fixture: &FixtureFile) -> Vec<TestResult> {
 
 /// Run a single truncation test case.
 fn run_truncation_test_case(case: &TestCase) -> TestResult {
-    use kode::tools::{truncate_head, truncate_tail};
+    use kesa::tools::{truncate_head, truncate_tail};
 
     let case_name = case.display_name();
 
@@ -622,15 +622,15 @@ fn run_truncation_test_case(case: &TestCase) -> TestResult {
     let max_lines = usize::try_from(
         case.input["max_lines"]
             .as_u64()
-            .unwrap_or(kode::tools::DEFAULT_MAX_LINES as u64),
+            .unwrap_or(kesa::tools::DEFAULT_MAX_LINES as u64),
     )
-    .unwrap_or(kode::tools::DEFAULT_MAX_LINES);
+    .unwrap_or(kesa::tools::DEFAULT_MAX_LINES);
     let max_bytes = usize::try_from(
         case.input["max_bytes"]
             .as_u64()
-            .unwrap_or(kode::tools::DEFAULT_MAX_BYTES as u64),
+            .unwrap_or(kesa::tools::DEFAULT_MAX_BYTES as u64),
     )
-    .unwrap_or(kode::tools::DEFAULT_MAX_BYTES);
+    .unwrap_or(kesa::tools::DEFAULT_MAX_BYTES);
 
     let direction = case
         .input
@@ -659,8 +659,8 @@ fn run_truncation_test_case(case: &TestCase) -> TestResult {
     let details = serde_json::json!({
         "truncated": result.truncated,
         "truncated_by": result.truncated_by.map(|t| match t {
-            kode::tools::TruncatedBy::Lines => "lines",
-            kode::tools::TruncatedBy::Bytes => "bytes",
+            kesa::tools::TruncatedBy::Lines => "lines",
+            kesa::tools::TruncatedBy::Bytes => "bytes",
         }),
         "total_lines": result.total_lines,
         "output_lines": result.output_lines,

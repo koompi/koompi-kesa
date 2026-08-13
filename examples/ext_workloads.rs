@@ -19,17 +19,17 @@
 use chrono::{DateTime, SecondsFormat, Utc};
 use clap::Parser;
 use futures::executor::block_on;
-use kode::error::{Error, Result};
-use kode::extension_scoring::{
+use kesa::error::{Error, Result};
+use kesa::extension_scoring::{
     InterferenceMatrixCompletenessReport, evaluate_interference_matrix_completeness,
     format_interference_pair_key, parse_interference_pair_key,
 };
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::perf_build;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::perf_build;
+use kesa::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};

@@ -24,50 +24,50 @@ use asupersync::runtime::{RuntimeBuilder, RuntimeHandle};
 use asupersync::sync::{Mutex, OwnedMutexGuard};
 use bubbletea::{Cmd, KeyMsg, KeyType, Message as BubbleMessage, Program, quit};
 use clap::error::ErrorKind;
-use kode::agent::{
+use kesa::agent::{
     AbortHandle, Agent, AgentConfig, AgentEvent, AgentSession, PreWarmedExtensionRuntime,
     SharedToolPolicy,
 };
-use kode::app::StartupError;
-use kode::auth::{AuthCredential, AuthStorage};
-use kode::cli;
-use kode::compaction::{ResolvedCompactionSettings, context_window_tokens_for_entry};
-use kode::config::Config;
-use kode::config::SettingsScope;
-use kode::extension_index::{
+use kesa::app::StartupError;
+use kesa::auth::{AuthCredential, AuthStorage};
+use kesa::cli;
+use kesa::compaction::{ResolvedCompactionSettings, context_window_tokens_for_entry};
+use kesa::config::Config;
+use kesa::config::SettingsScope;
+use kesa::extension_index::{
     DEFAULT_INDEX_MAX_AGE, ExtensionIndex, ExtensionIndexEntry, ExtensionIndexStore,
     ExtensionSafetyProvenance,
 };
-use kode::extensions::{
+use kesa::extensions::{
     ALL_CAPABILITIES, Capability, ExtensionLoadSpec, ExtensionRegion, ExtensionRuntimeHandle,
     JsExtensionRuntimeHandle, NativeRustExtensionRuntimeHandle, PolicyDecision,
     resolve_extension_load_spec,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::model::{AssistantMessage, ContentBlock, StopReason, ThinkingLevel};
-use kode::models::{ModelEntry, ModelRegistry, default_models_path, fetched_models_path};
-use kode::package_manager::{
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::model::{AssistantMessage, ContentBlock, StopReason, ThinkingLevel};
+use kesa::models::{ModelEntry, ModelRegistry, default_models_path, fetched_models_path};
+use kesa::package_manager::{
     PackageEntry, PackageManager, PackageScope, ResolvedPaths, ResolvedResource, ResourceOrigin,
 };
-use kode::provider::InputType;
-use kode::provider_metadata::{self, PROVIDER_METADATA};
-use kode::providers;
-use kode::resources::{ResourceCliOptions, ResourceLoader};
-use kode::session::Session;
-use kode::session_index::SessionIndex;
-use kode::swarm_progress_slo::{
+use kesa::provider::InputType;
+use kesa::provider_metadata::{self, PROVIDER_METADATA};
+use kesa::providers;
+use kesa::resources::{ResourceCliOptions, ResourceLoader};
+use kesa::session::Session;
+use kesa::session_index::SessionIndex;
+use kesa::swarm_progress_slo::{
     ProgressSloEvaluationInput, ProgressSloReport, SWARM_PROGRESS_SLO_SCHEMA, evaluate_progress_slo,
 };
-use kode::swarm_replay::{
+use kesa::swarm_replay::{
     SWARM_REPLAY_POLICY_REPORT_SCHEMA, SWARM_REPLAY_REPORT_SCHEMA, SWARM_REPLAY_TRACE_SCHEMA,
     SwarmReplayBaselinePolicy, SwarmReplayPolicyAdapter, SwarmReplayPolicyComparison,
     SwarmReplayTrace, default_swarm_replay_baseline_policies,
     evaluate_swarm_replay_baseline_policies, replay_swarm_trace,
 };
-use kode::tool_policy::{PermissionMode, ToolPolicy};
-use kode::tools::ToolRegistry;
-use kode::tui::PiConsole;
-use kode::validation_broker::{
+use kesa::tool_policy::{PermissionMode, ToolPolicy};
+use kesa::tools::ToolRegistry;
+use kesa::tui::PiConsole;
+use kesa::validation_broker::{
     VALIDATION_BROKER_CLI_LEASE_MUTATION_SCHEMA, VALIDATION_BROKER_CLI_PLAN_SCHEMA,
     VALIDATION_BROKER_CLI_STATUS_SCHEMA, VALIDATION_BROKER_DECISION_SCHEMA,
     VALIDATION_BROKER_INPUT_SCHEMA, ValidationAdmissionDecision, ValidationAdmissionDecisionRecord,
@@ -304,19 +304,19 @@ async fn resolve_selection_with_auth(
     models_path: &Path,
     allow_setup_prompt: bool,
     extra_entries: &[ModelEntry],
-) -> Result<Option<(kode::app::ModelSelection, Option<String>)>> {
+) -> Result<Option<(kesa::app::ModelSelection, Option<String>)>> {
     loop {
         let scoped_models = if scoped_patterns.is_empty() {
             Vec::new()
         } else {
-            kode::app::resolve_model_scope(
+            kesa::app::resolve_model_scope(
                 scoped_patterns,
                 model_registry,
                 has_cli_api_key_override(cli.api_key.as_deref()),
             )
         };
 
-        let selection = match kode::app::select_model_and_thinking(
+        let selection = match kesa::app::select_model_and_thinking(
             cli,
             config,
             session,
@@ -343,7 +343,7 @@ async fn resolve_selection_with_auth(
             }
         };
 
-        match kode::app::resolve_api_key(auth, cli, &selection.model_entry) {
+        match kesa::app::resolve_api_key(auth, cli, &selection.model_entry) {
             // Structured SAP credentials are deliberately resolved in the provider, after
             // custom-header precedence is known. Eager exchange here would touch auth.json or
             // the network even when a complete Authorization override (or authHeader:false)
@@ -386,8 +386,8 @@ fn build_extension_bootstrap_selection(
     config: &Config,
     model_registry: &ModelRegistry,
     models_path: &Path,
-) -> Result<kode::app::ModelSelection> {
-    let model_entry = kode::app::bootstrap_model_entry(model_registry).ok_or_else(|| {
+) -> Result<kesa::app::ModelSelection> {
+    let model_entry = kesa::app::bootstrap_model_entry(model_registry).ok_or_else(|| {
         anyhow::Error::new(StartupError::NoModelsAvailable {
             models_path: models_path.to_path_buf(),
         })
@@ -397,7 +397,7 @@ fn build_extension_bootstrap_selection(
         .as_deref()
         .and_then(|value| value.parse::<ThinkingLevel>().ok());
 
-    Ok(kode::app::ModelSelection {
+    Ok(kesa::app::ModelSelection {
         thinking_level: model_entry
             .clamp_thinking_level(thinking_level.unwrap_or(ThinkingLevel::XHigh)),
         model_entry,
@@ -428,15 +428,15 @@ fn main_impl() -> Result<()> {
         argv,
     }) = &cli.command
     {
-        let Err(message) = kode::sandbox::restrict_self_and_exec(workspace, write, argv);
+        let Err(message) = kesa::sandbox::restrict_self_and_exec(workspace, write, argv);
         bail!(message);
     }
 
-    kode::sandbox::configure(kode::sandbox::SandboxSettings {
+    kesa::sandbox::configure(kesa::sandbox::SandboxSettings {
         mode: if cli.no_sandbox {
-            kode::sandbox::SandboxMode::Off
+            kesa::sandbox::SandboxMode::Off
         } else {
-            kode::sandbox::SandboxMode::Enforce
+            kesa::sandbox::SandboxMode::Enforce
         },
         extra_writable: cli.sandbox_write.clone(),
     });
@@ -688,14 +688,14 @@ fn main_impl() -> Result<()> {
         && cli.mode.as_deref().is_none_or(|mode| mode.ne("rpc"))
     {
         let stdin_content = read_piped_stdin()?;
-        kode::app::apply_piped_stdin(&mut cli, stdin_content);
+        kesa::app::apply_piped_stdin(&mut cli, stdin_content);
     }
 
     if !cli.print && cli.mode.is_none() && !cli.message_args().is_empty() {
         cli.print = true;
     }
 
-    kode::app::normalize_cli(&mut cli);
+    kesa::app::normalize_cli(&mut cli);
 
     let early_mode = cli.mode.clone().unwrap_or_else(|| {
         if !cli.print && cli.export.is_none() {
@@ -747,8 +747,8 @@ fn main_impl() -> Result<()> {
 
 fn print_error_with_hints(err: &anyhow::Error) {
     for cause in err.chain() {
-        if let Some(pi_error) = cause.downcast_ref::<kode::error::Error>() {
-            eprint!("{}", kode::error_hints::format_error_with_hints(pi_error));
+        if let Some(pi_error) = cause.downcast_ref::<kesa::error::Error>() {
+            eprint!("{}", kesa::error_hints::format_error_with_hints(pi_error));
             return;
         }
     }
@@ -774,8 +774,8 @@ fn is_usage_error(err: &anyhow::Error) -> bool {
 
     if err.chain().any(|cause| {
         cause
-            .downcast_ref::<kode::error::Error>()
-            .is_some_and(|pi_error| matches!(pi_error, kode::error::Error::Validation(_)))
+            .downcast_ref::<kesa::error::Error>()
+            .is_some_and(|pi_error| matches!(pi_error, kesa::error::Error::Validation(_)))
     }) {
         return true;
     }
@@ -823,9 +823,9 @@ fn build_tool_policy(cli: &cli::Cli, config: &Config) -> Result<SharedToolPolicy
 
 fn validate_theme_path_spec(theme_spec: Option<&str>, cwd: &Path) -> Result<()> {
     if let Some(theme_spec) = theme_spec
-        && kode::theme::looks_like_theme_path(theme_spec)
+        && kesa::theme::looks_like_theme_path(theme_spec)
     {
-        kode::theme::Theme::resolve_spec(theme_spec, cwd).map_err(anyhow::Error::new)?;
+        kesa::theme::Theme::resolve_spec(theme_spec, cwd).map_err(anyhow::Error::new)?;
     }
     Ok(())
 }
@@ -834,7 +834,7 @@ fn parse_bool_flag_value(flag_name: &str, raw: &str) -> Result<bool> {
     match raw.trim().to_ascii_lowercase().as_str() {
         "1" | "true" | "yes" | "on" => Ok(true),
         "0" | "false" | "no" | "off" => Ok(false),
-        _ => Err(kode::error::Error::validation(format!(
+        _ => Err(kesa::error::Error::validation(format!(
             "Invalid boolean value for extension flag --{flag_name}: \"{raw}\". Use one of: true,false,1,0,yes,no,on,off."
         ))
         .into()),
@@ -855,7 +855,7 @@ fn coerce_extension_flag_value(
         }
         "number" | "int" | "integer" | "float" => {
             let Some(raw) = flag.value.as_deref() else {
-                return Err(kode::error::Error::validation(format!(
+                return Err(kesa::error::Error::validation(format!(
                     "Extension flag --{} requires a numeric value.",
                     flag.name
                 ))
@@ -865,13 +865,13 @@ fn coerce_extension_flag_value(
                 return Ok(Value::Number(parsed.into()));
             }
             let parsed = raw.parse::<f64>().map_err(|_| {
-                kode::error::Error::validation(format!(
+                kesa::error::Error::validation(format!(
                     "Invalid numeric value for extension flag --{}: \"{}\"",
                     flag.name, raw
                 ))
             })?;
             let Some(number) = serde_json::Number::from_f64(parsed) else {
-                return Err(kode::error::Error::validation(format!(
+                return Err(kesa::error::Error::validation(format!(
                     "Numeric value for extension flag --{} is not finite: \"{}\"",
                     flag.name, raw
                 ))
@@ -881,7 +881,7 @@ fn coerce_extension_flag_value(
         }
         _ => {
             let Some(raw) = flag.value.as_deref() else {
-                return Err(kode::error::Error::validation(format!(
+                return Err(kesa::error::Error::validation(format!(
                     "Extension flag --{} requires a value.",
                     flag.name
                 ))
@@ -893,7 +893,7 @@ fn coerce_extension_flag_value(
 }
 
 async fn apply_extension_cli_flags(
-    manager: &kode::extensions::ExtensionManager,
+    manager: &kesa::extensions::ExtensionManager,
     extension_flags: &[cli::ExtensionCliFlag],
 ) -> Result<()> {
     if extension_flags.is_empty() {
@@ -938,21 +938,21 @@ async fn apply_extension_cli_flags(
 
         for spec in matches {
             let Some(extension_id) = spec.get("extension_id").and_then(Value::as_str) else {
-                return Err(kode::error::Error::validation(format!(
+                return Err(kesa::error::Error::validation(format!(
                     "Extension flag --{} cannot be set because extension metadata is missing extension_id.",
                     cli_flag.name
                 ))
                 .into());
             };
             if extension_id.trim().is_empty() {
-                return Err(kode::error::Error::validation(format!(
+                return Err(kesa::error::Error::validation(format!(
                     "Extension flag --{} cannot be set because extension_id is empty.",
                     cli_flag.name
                 ))
                 .into());
             }
             let registered_name = spec.get("name").and_then(Value::as_str).ok_or_else(|| {
-                kode::error::Error::validation(format!(
+                kesa::error::Error::validation(format!(
                     "Extension flag --{} is missing name metadata.",
                     cli_flag.name
                 ))
@@ -987,7 +987,7 @@ fn policy_default_toggle_example(default_permissive: bool) -> serde_json::Value 
 }
 
 fn extension_policy_migration_guardrails(
-    resolved: &kode::config::ResolvedExtensionPolicy,
+    resolved: &kesa::config::ResolvedExtensionPolicy,
 ) -> serde_json::Value {
     serde_json::json!({
         "default_profile": "permissive",
@@ -1013,7 +1013,7 @@ fn extension_policy_migration_guardrails(
 }
 
 const fn maybe_print_extension_policy_migration_notice(
-    _resolved: &kode::config::ResolvedExtensionPolicy,
+    _resolved: &kesa::config::ResolvedExtensionPolicy,
 ) {
 }
 
@@ -1118,7 +1118,7 @@ fn capability_remediation(capability: Capability, decision: PolicyDecision) -> s
     })
 }
 
-fn print_resolved_extension_policy(resolved: &kode::config::ResolvedExtensionPolicy) -> Result<()> {
+fn print_resolved_extension_policy(resolved: &kesa::config::ResolvedExtensionPolicy) -> Result<()> {
     let capability_decisions = ALL_CAPABILITIES
         .iter()
         .map(|capability| {
@@ -1194,7 +1194,7 @@ fn print_resolved_extension_policy(resolved: &kode::config::ResolvedExtensionPol
     Ok(())
 }
 
-fn print_resolved_repair_policy(resolved: &kode::config::ResolvedRepairPolicy) -> Result<()> {
+fn print_resolved_repair_policy(resolved: &kesa::config::ResolvedRepairPolicy) -> Result<()> {
     let payload = serde_json::json!({
         "requested_mode": resolved.requested_mode,
         "effective_mode": resolved.effective_mode,
@@ -1228,7 +1228,7 @@ async fn run(
     // or that env var. Config-file values are applied at the lowest precedence
     // before the first provider request. See pi_agent_rust#90.
     if let Some(secs) = cli.request_timeout {
-        kode::http::client::set_request_timeout_override(secs);
+        kesa::http::client::set_request_timeout_override(secs);
     }
 
     if let Some(command) = cli.command.take() {
@@ -1240,7 +1240,7 @@ async fn run(
         if cli.request_timeout.is_none()
             && let Some(secs) = Config::load()?.request_timeout_secs
         {
-            kode::http::client::set_request_timeout_override(secs);
+            kesa::http::client::set_request_timeout_override(secs);
         }
         handle_fetch_models(
             &provider,
@@ -1253,7 +1253,7 @@ async fn run(
     }
 
     if !cli.no_migrations {
-        let migration_report = kode::migrations::run_startup_migrations(&cwd);
+        let migration_report = kesa::migrations::run_startup_migrations(&cwd);
         for message in migration_report.messages() {
             eprintln!("{message}");
         }
@@ -1276,7 +1276,7 @@ async fn run(
     if cli.request_timeout.is_none()
         && let Some(secs) = config.request_timeout_secs
     {
-        kode::http::client::set_request_timeout_override(secs);
+        kesa::http::client::set_request_timeout_override(secs);
     }
 
     let startup_mode = cli.mode.clone().unwrap_or_else(|| {
@@ -1355,7 +1355,7 @@ async fn run(
     }
 
     if has_js_extensions && has_native_extensions {
-        return Err(kode::error::Error::validation(
+        return Err(kesa::error::Error::validation(
             "Mixed extension runtimes are not supported in one session yet. Use either JS/TS extensions (QuickJS) or native-rust descriptors (*.native.json), but not both at once."
                 .to_string(),
         )
@@ -1367,7 +1367,7 @@ async fn run(
         .policy;
     let prewarm_repair = config.resolve_repair_policy_with_metadata(cli.repair_policy.as_deref());
     let prewarm_repair_mode = if prewarm_repair.source.eq("default") {
-        kode::extensions::RepairPolicyMode::AutoStrict
+        kesa::extensions::RepairPolicyMode::AutoStrict
     } else {
         prewarm_repair.effective_mode
     };
@@ -1381,7 +1381,7 @@ async fn run(
             None
         } else {
             let pre_enabled_tools = cli.enabled_tools();
-            let pre_mgr = kode::extensions::ExtensionManager::new();
+            let pre_mgr = kesa::extensions::ExtensionManager::new();
             pre_mgr.set_cwd(cwd.display().to_string());
 
             let pre_tools = Arc::new(ToolRegistry::new(&pre_enabled_tools, &cwd, Some(&config)));
@@ -1429,7 +1429,7 @@ async fn run(
         }
     } else {
         let pre_enabled_tools = cli.enabled_tools();
-        let pre_mgr = kode::extensions::ExtensionManager::new();
+        let pre_mgr = kesa::extensions::ExtensionManager::new();
         pre_mgr.set_cwd(cwd.display().to_string());
         let pre_tools = Arc::new(ToolRegistry::new(&pre_enabled_tools, &cwd, Some(&config)));
 
@@ -1488,7 +1488,7 @@ async fn run(
     // so we skip the normal session/model selection pipeline.
     if cli.acp {
         let available_models = model_registry.get_available();
-        let acp_options = kode::acp::AcpOptions {
+        let acp_options = kesa::acp::AcpOptions {
             config: config.clone(),
             available_models,
             model_registry: model_registry.clone(),
@@ -1506,11 +1506,11 @@ async fn run(
         return Ok(());
     }
 
-    kode::app::validate_rpc_args(&cli)?;
+    kesa::app::validate_rpc_args(&cli)?;
 
     let mut messages: Vec<String> = cli.message_args().iter().map(ToString::to_string).collect();
     let file_args: Vec<String> = cli.file_args().iter().map(ToString::to_string).collect();
-    let initial = kode::app::prepare_initial_message(
+    let initial = kesa::app::prepare_initial_message(
         &cwd,
         &file_args,
         &mut messages,
@@ -1539,14 +1539,14 @@ async fn run(
     }
 
     let scoped_patterns = if let Some(models_arg) = &cli.models {
-        kode::app::parse_models_arg(models_arg)
+        kesa::app::parse_models_arg(models_arg)
     } else {
         config.enabled_models.clone().unwrap_or_default()
     };
     let scoped_models = if scoped_patterns.is_empty() {
         Vec::new()
     } else {
-        kode::app::resolve_model_scope(
+        kesa::app::resolve_model_scope(
             &scoped_patterns,
             &model_registry,
             has_cli_api_key_override(cli.api_key.as_deref()),
@@ -1602,7 +1602,7 @@ async fn run(
         String::new()
     };
     let test_mode = std::env::var_os("KODE_TEST_MODE").is_some();
-    let system_prompt = kode::app::build_system_prompt(
+    let system_prompt = kesa::app::build_system_prompt(
         &cli,
         &cwd,
         &enabled_tools,
@@ -1619,20 +1619,20 @@ async fn run(
     let provider =
         providers::create_provider(&selection.model_entry, None).map_err(anyhow::Error::new)?;
     let stream_options =
-        kode::app::build_stream_options(&config, resolved_key.clone(), &selection, &session);
+        kesa::app::build_stream_options(&config, resolved_key.clone(), &selection, &session);
     // CLI flag wins; fall back to KODE_MAX_TOOL_ITERATIONS env, then default.
     // `clamp_max_tool_iterations` keeps invalid values out of the loop and
     // emits a warning instead of failing the run.
     let max_tool_iterations = if cli.max_tool_iterations.is_some() {
-        kode::agent::clamp_max_tool_iterations(cli.max_tool_iterations)
+        kesa::agent::clamp_max_tool_iterations(cli.max_tool_iterations)
     } else {
-        kode::agent::resolved_max_tool_iterations_default()
+        kesa::agent::resolved_max_tool_iterations_default()
     };
     let tool_policy = build_tool_policy(&cli, &config)?;
     // Only the TUI can ask. A headless run leaves the handler unset, and the
     // agent turns `Ask` into a denial rather than a silent allow.
     let (tool_approval, tool_approvals) = if is_interactive {
-        let (handler, receiver) = kode::interactive::tool_approval_bridge();
+        let (handler, receiver) = kesa::interactive::tool_approval_bridge();
         (Some(handler), Some(receiver))
     } else {
         (None, None)
@@ -1703,7 +1703,7 @@ async fn run(
             // Compatibility-first default for extension-heavy workloads:
             // if the user did not choose a repair policy explicitly, prefer
             // aggressive deterministic repairs while capability policy stays enforced.
-            kode::extensions::RepairPolicyMode::AutoStrict
+            kesa::extensions::RepairPolicyMode::AutoStrict
         } else {
             resolved_repair_policy.effective_mode
         };
@@ -1732,7 +1732,7 @@ async fn run(
             if let Some(region) = &agent_session.extensions {
                 apply_extension_cli_flags(region.manager(), &extension_flags).await?;
             } else {
-                return Err(kode::error::Error::validation(
+                return Err(kesa::error::Error::validation(
                     "Extension flags were provided, but extensions are not active in this session.",
                 )
                 .into());
@@ -1746,7 +1746,7 @@ async fn run(
                 // Build OAuth configs map from model entries before merging.
                 let ext_oauth_configs: std::collections::HashMap<
                     String,
-                    kode::models::OAuthConfig,
+                    kesa::models::OAuthConfig,
                 > = extension_model_entries
                     .iter()
                     .filter_map(|entry| {
@@ -1761,7 +1761,7 @@ async fn run(
 
                 // Refresh expired OAuth tokens for extension-registered providers.
                 if !ext_oauth_configs.is_empty() {
-                    let client = kode::http::client::Client::new();
+                    let client = kesa::http::client::Client::new();
                     if let Err(e) = auth
                         .refresh_expired_extension_oauth_tokens(&client, &ext_oauth_configs)
                         .await
@@ -1789,7 +1789,7 @@ async fn run(
                     } else {
                         String::new()
                     };
-                    let system_prompt = kode::app::build_system_prompt(
+                    let system_prompt = kesa::app::build_system_prompt(
                         &cli,
                         &cwd,
                         &enabled_tools,
@@ -1810,7 +1810,7 @@ async fn run(
     } else if !extension_flags.is_empty() {
         let rendered = extension_flags
             .iter()
-            .map(kode::cli::ExtensionCliFlag::display_name)
+            .map(kesa::cli::ExtensionCliFlag::display_name)
             .collect::<Vec<_>>()
             .join(", ");
         tracing::debug!(
@@ -1822,7 +1822,7 @@ async fn run(
 
     if has_extensions {
         let session_snapshot = {
-            let cx = kode::agent_cx::AgentCx::for_request();
+            let cx = kesa::agent_cx::AgentCx::for_request();
             let session = agent_session
                 .session
                 .lock(cx.cx())
@@ -1873,13 +1873,13 @@ async fn run(
     }
 
     {
-        let cx = kode::agent_cx::AgentCx::for_request();
+        let cx = kesa::agent_cx::AgentCx::for_request();
         let mut session = agent_session
             .session
             .lock(cx.cx())
             .await
             .map_err(|e| anyhow::anyhow!(e.to_string()))?;
-        kode::app::update_session_for_selection(&mut session, &selection);
+        kesa::app::update_session_for_selection(&mut session, &selection);
     }
 
     if let Some(message) = &selection.fallback_message {
@@ -1890,7 +1890,7 @@ async fn run(
     agent_session.set_auth_storage(auth.clone());
 
     let history = {
-        let cx = kode::agent_cx::AgentCx::for_request();
+        let cx = kesa::agent_cx::AgentCx::for_request();
         let session = agent_session
             .session
             .lock(cx.cx())
@@ -1910,7 +1910,7 @@ async fn run(
         let rpc_scoped_models = selection
             .scoped_models
             .iter()
-            .map(|sm| kode::rpc::RpcScopedModel {
+            .map(|sm| kesa::rpc::RpcScopedModel {
                 model: sm.model.clone(),
                 thinking_level: sm.thinking_level,
             })
@@ -1978,7 +1978,7 @@ async fn run(
     // held across the flush await, and the borrowed MutexGuard is !Send
     // (clippy::future_not_send).
     if !cli.no_session {
-        let cx = kode::agent_cx::AgentCx::for_request();
+        let cx = kesa::agent_cx::AgentCx::for_request();
         if let Ok(mut guard) = OwnedMutexGuard::lock(Arc::clone(&session_handle), &cx).await
             && let Err(e) = guard.flush_autosave_on_shutdown().await
         {
@@ -2586,7 +2586,7 @@ fn validation_broker_latest_lease(
 }
 
 fn validation_broker_validation_error(message: impl Into<String>) -> anyhow::Error {
-    anyhow::Error::new(kode::error::Error::validation(message.into()))
+    anyhow::Error::new(kesa::error::Error::validation(message.into()))
 }
 
 fn emit_validation_broker_status(
@@ -3193,8 +3193,8 @@ fn build_swarm_replay_preview_report<'a>(
     output_writes: u8,
     output_paths: SwarmReplayPreviewOutputPaths,
     trace: &SwarmReplayTrace,
-    replay_report: &kode::swarm_replay::SwarmReplayReport,
-    policy_report: &'a kode::swarm_replay::SwarmReplayPolicyReport,
+    replay_report: &kesa::swarm_replay::SwarmReplayReport,
+    policy_report: &'a kesa::swarm_replay::SwarmReplayPolicyReport,
 ) -> SwarmReplayPreviewReport<'a> {
     let comparisons = policy_report
         .policy_comparisons
@@ -3572,8 +3572,8 @@ struct ContextPreviewReport<'a> {
     generated_at_utc: String,
     command: ContextPreviewCommandProvenance,
     graph: ContextPreviewGraphSummary,
-    request: &'a kode::semantic_workspace_graph::ContextBundleRequest,
-    bundle: &'a kode::semantic_workspace_graph::SemanticContextBundle,
+    request: &'a kesa::semantic_workspace_graph::ContextBundleRequest,
+    bundle: &'a kesa::semantic_workspace_graph::SemanticContextBundle,
 }
 
 #[derive(Debug, Serialize)]
@@ -3619,9 +3619,9 @@ fn handle_context_preview_blocking(
         );
     }
 
-    let graph = kode::semantic_workspace_graph::SemanticWorkspaceGraphBuilder::new(cwd).build()?;
+    let graph = kesa::semantic_workspace_graph::SemanticWorkspaceGraphBuilder::new(cwd).build()?;
     let generated_at_utc = chrono::Utc::now().to_rfc3339();
-    let request = kode::semantic_workspace_graph::ContextBundleRequest {
+    let request = kesa::semantic_workspace_graph::ContextBundleRequest {
         query,
         bead_id,
         changed_paths,
@@ -3631,12 +3631,12 @@ fn handle_context_preview_blocking(
         session_id: None,
         generated_at_utc: Some(generated_at_utc.clone()),
         cache_ttl_seconds: 15 * 60,
-        budget: kode::semantic_workspace_graph::ContextBundleBudget {
+        budget: kesa::semantic_workspace_graph::ContextBundleBudget {
             max_items,
             max_bytes,
         },
     };
-    let planner = kode::semantic_workspace_graph::SemanticContextBundlePlanner::new(&graph);
+    let planner = kesa::semantic_workspace_graph::SemanticContextBundlePlanner::new(&graph);
     let bundle = planner.plan(&request);
     let report = ContextPreviewReport {
         schema: "pi.context_bundle_preview.v1",
@@ -3811,7 +3811,7 @@ fn print_context_preview_text(report: &ContextPreviewReport<'_>) {
 }
 
 fn print_context_preview_stale_suppressions(
-    suppressions: &[kode::semantic_workspace_graph::ContextBundleExclusion],
+    suppressions: &[kesa::semantic_workspace_graph::ContextBundleExclusion],
 ) {
     println!();
     println!("Stale Evidence Suppressions");
@@ -3861,7 +3861,7 @@ fn spawn_session_index_maintenance() {
     // Cleanup can be slow if there are many temp files, so we don't want to block main.
     std::thread::spawn(move || {
         // Clean up old bash tool logs in background
-        kode::tools::cleanup_temp_files();
+        kesa::tools::cleanup_temp_files();
 
         if index.should_reindex(MAX_INDEX_AGE)
             && let Err(err) = index.reindex_all()
@@ -3951,7 +3951,7 @@ async fn handle_package_update(manager: &PackageManager, source: Option<String>)
     if let Some(source) = source {
         let source = source.trim();
         if source.is_empty() {
-            bail!(kode::error::Error::validation(
+            bail!(kesa::error::Error::validation(
                 "Package source must be non-empty"
             ));
         }
@@ -3967,7 +3967,7 @@ async fn handle_package_update(manager: &PackageManager, source: Option<String>)
             manager.update_source(&entry.source, entry.scope).await?;
         }
         if !matched {
-            bail!(kode::error::Error::validation(format!(
+            bail!(kesa::error::Error::validation(format!(
                 "Package source not found: {source}"
             )));
         }
@@ -4000,7 +4000,7 @@ fn handle_package_update_blocking(manager: &PackageManager, source: Option<&str>
     if let Some(source) = source {
         let source = source.trim();
         if source.is_empty() {
-            bail!(kode::error::Error::validation(
+            bail!(kesa::error::Error::validation(
                 "Package source must be non-empty"
             ));
         }
@@ -4016,7 +4016,7 @@ fn handle_package_update_blocking(manager: &PackageManager, source: Option<&str>
             manager.update_source_blocking(&entry.source, entry.scope)?;
         }
         if !matched {
-            bail!(kode::error::Error::validation(format!(
+            bail!(kesa::error::Error::validation(format!(
                 "Package source not found: {source}"
             )));
         }
@@ -4130,7 +4130,7 @@ where
 
 async fn handle_update_index() -> Result<()> {
     let store = ExtensionIndexStore::default_store();
-    let client = kode::http::client::Client::new();
+    let client = kesa::http::client::Client::new();
     let (_, stats) = store.refresh_best_effort(&client).await?;
 
     if !stats.refreshed {
@@ -4159,7 +4159,7 @@ async fn handle_search(query: &str, tag: Option<&str>, sort: &str, limit: usize)
     let has_cache = store.path().exists();
     if has_cache && index.is_stale(chrono::Utc::now(), DEFAULT_INDEX_MAX_AGE) {
         println!("Refreshing extension index...");
-        let client = kode::http::client::Client::new();
+        let client = kesa::http::client::Client::new();
         match store.refresh_best_effort(&client).await {
             Ok((refreshed, _)) => index = refreshed,
             Err(_) => {
@@ -4195,7 +4195,7 @@ fn handle_search_blocking(
 }
 
 fn render_search_results(
-    index: &kode::extension_index::ExtensionIndex,
+    index: &kesa::extension_index::ExtensionIndex,
     query: &str,
     tag: Option<&str>,
     sort: &str,
@@ -4211,12 +4211,12 @@ fn render_search_results(
 }
 
 fn collect_search_hits(
-    index: &kode::extension_index::ExtensionIndex,
+    index: &kesa::extension_index::ExtensionIndex,
     tag: Option<&str>,
     sort: &str,
     limit: usize,
     query: &str,
-) -> Vec<kode::extension_index::ExtensionSearchHit> {
+) -> Vec<kesa::extension_index::ExtensionSearchHit> {
     if limit.eq(&0) {
         return Vec::new();
     }
@@ -4259,7 +4259,7 @@ fn truncate_chars(value: &str, max_chars: usize) -> String {
 
 #[allow(clippy::uninlined_format_args)]
 fn print_search_results(
-    hits: &[kode::extension_index::ExtensionSearchHit],
+    hits: &[kesa::extension_index::ExtensionSearchHit],
     index: &ExtensionIndex,
 ) {
     // Column widths
@@ -4325,9 +4325,9 @@ fn print_search_results(
             tags_joined
         };
         let source_label = match &hit.entry.source {
-            Some(kode::extension_index::ExtensionIndexSource::Npm { .. }) => "npm",
-            Some(kode::extension_index::ExtensionIndexSource::Git { .. }) => "git",
-            Some(kode::extension_index::ExtensionIndexSource::Url { .. }) => "url",
+            Some(kesa::extension_index::ExtensionIndexSource::Npm { .. }) => "npm",
+            Some(kesa::extension_index::ExtensionIndexSource::Git { .. }) => "git",
+            Some(kesa::extension_index::ExtensionIndexSource::Url { .. }) => "url",
             None => "-",
         };
         let safety =
@@ -4367,13 +4367,13 @@ fn handle_info_blocking(name: &str) -> Result<()> {
 
 #[derive(Debug, Clone, Copy)]
 enum ExtensionInfoLookup<'a> {
-    Found(&'a kode::extension_index::ExtensionIndexEntry),
+    Found(&'a kesa::extension_index::ExtensionIndexEntry),
     NotFound,
     Ambiguous,
 }
 
 fn find_index_entry_by_name_or_id<'a>(
-    index: &'a kode::extension_index::ExtensionIndex,
+    index: &'a kesa::extension_index::ExtensionIndex,
     name: &str,
 ) -> ExtensionInfoLookup<'a> {
     // Look up by exact id, name, or fuzzy match when there is a single best hit.
@@ -4450,17 +4450,17 @@ fn print_extension_info(entry: &ExtensionIndexEntry, index: &ExtensionIndex) {
     // Source
     if let Some(source) = &entry.source {
         let source_line = match source {
-            kode::extension_index::ExtensionIndexSource::Npm {
+            kesa::extension_index::ExtensionIndexSource::Npm {
                 package, version, ..
             } => {
                 let ver = version.as_deref().unwrap_or("latest");
                 format!("Source: npm:{package}@{ver}")
             }
-            kode::extension_index::ExtensionIndexSource::Git { repo, path, .. } => {
+            kesa::extension_index::ExtensionIndexSource::Git { repo, path, .. } => {
                 let suffix = path.as_deref().map_or(String::new(), |p| format!(" ({p})"));
                 format!("Source: git:{repo}{suffix}")
             }
-            kode::extension_index::ExtensionIndexSource::Url { url } => {
+            kesa::extension_index::ExtensionIndexSource::Url { url } => {
                 format!("Source: {url}")
             }
         };
@@ -5498,7 +5498,7 @@ fn handle_session_migrate(path: &str, dry_run: bool) -> Result<()> {
 
     for jsonl_path in &jsonl_files {
         if dry_run {
-            match kode::session::migrate_dry_run(jsonl_path) {
+            match kesa::session::migrate_dry_run(jsonl_path) {
                 Ok(verification) => {
                     let status = if verification.entry_count_match
                         && verification.hash_chain_match
@@ -5525,7 +5525,7 @@ fn handle_session_migrate(path: &str, dry_run: bool) -> Result<()> {
             }
         } else {
             let correlation_id = uuid::Uuid::new_v4().to_string();
-            match kode::session::migrate_jsonl_to_v2(jsonl_path, &correlation_id) {
+            match kesa::session::migrate_jsonl_to_v2(jsonl_path, &correlation_id) {
                 Ok(event) => {
                     println!(
                         "[migrated] {}: migration_id={}, entries_match={}, hash_match={}, index_ok={}",
@@ -5562,7 +5562,7 @@ fn handle_doctor(
     fix: bool,
     only: Option<&str>,
 ) -> Result<()> {
-    use kode::doctor::{CheckCategory, DoctorOptions};
+    use kesa::doctor::{CheckCategory, DoctorOptions};
 
     let only_set = if let Some(raw) = only {
         let mut parsed = std::collections::HashSet::new();
@@ -5603,7 +5603,7 @@ fn handle_doctor(
         only: only_set,
     };
 
-    let report = kode::doctor::run_doctor(&opts)?;
+    let report = kesa::doctor::run_doctor(&opts)?;
 
     match format {
         "json" => {
@@ -5618,7 +5618,7 @@ fn handle_doctor(
     }
 
     // Exit with code 1 if any failures (useful for CI)
-    if matches!(report.overall, kode::doctor::Severity::Fail) {
+    if matches!(report.overall, kesa::doctor::Severity::Fail) {
         std::process::exit(1);
     }
 
@@ -5834,7 +5834,7 @@ fn append_file_fingerprint(hasher: &mut Sha256, path: &Path) -> bool {
 fn list_models_cache_path(models_path: &Path) -> Option<PathBuf> {
     let mut hasher = Sha256::new();
     hasher.update(env!("CARGO_PKG_VERSION").as_bytes());
-    hasher.update(kode::models::model_catalog_cache_fingerprint().to_le_bytes());
+    hasher.update(kesa::models::model_catalog_cache_fingerprint().to_le_bytes());
     if !append_file_fingerprint(&mut hasher, &Config::auth_path())
         || !append_file_fingerprint(&mut hasher, models_path)
         || !append_file_fingerprint(&mut hasher, &fetched_models_path(models_path))
@@ -5910,9 +5910,9 @@ async fn handle_fetch_models(
     // usable live-catalog route exists first so an unsupported native adapter
     // cannot trigger an unnecessary credential network request. Explicit
     // models.json SAP routes continue through the normal exchange path.
-    if kode::provider_metadata::canonical_provider_id(provider)
+    if kesa::provider_metadata::canonical_provider_id(provider)
         .is_some_and(|canonical| canonical == "sap-ai-core")
-        && !kode::providers::model_fetch::provider_model_catalog_route_is_configured(provider)?
+        && !kesa::providers::model_fetch::provider_model_catalog_route_is_configured(provider)?
     {
         bail!(
             "provider {provider:?} has no built-in or models.json routing configuration for live model discovery"
@@ -5923,7 +5923,7 @@ async fn handle_fetch_models(
     // complete custom Authorization header cannot be delayed or rejected by an
     // unrelated auth.json lock. The plan keeps configured fallback credentials
     // lazy and reuses the already-resolved route headers for the actual request.
-    let fetch_plan = kode::providers::prepare_provider_model_catalog_fetch(provider)?;
+    let fetch_plan = kesa::providers::prepare_provider_model_catalog_fetch(provider)?;
     let api_key = if fetch_plan.requires_runtime_api_key() {
         // Use the normal credential resolver: an explicit CLI override wins,
         // then stored OAuth/Bearer credentials, provider environment variables,
@@ -5939,7 +5939,7 @@ async fn handle_fetch_models(
 
     let used_static_fallback = matches!(
         catalog.source(),
-        kode::providers::ModelCatalogSource::StaticFallback
+        kesa::providers::ModelCatalogSource::StaticFallback
     );
 
     if persist {
@@ -5950,7 +5950,7 @@ async fn handle_fetch_models(
             );
         }
         let models_path = default_models_path(&Config::global_dir());
-        let fetched_path = kode::providers::persist_provider_model_catalog(&models_path, &catalog)?;
+        let fetched_path = kesa::providers::persist_provider_model_catalog(&models_path, &catalog)?;
         eprintln!(
             "Persisted {} models for {provider:?} to {}",
             catalog.models().len(),
@@ -5996,7 +5996,7 @@ where
     F: FnMut(&str) -> Option<String>,
 {
     let canonical_provider =
-        kode::provider_metadata::canonical_provider_id(provider).unwrap_or(provider);
+        kesa::provider_metadata::canonical_provider_id(provider).unwrap_or(provider);
     let env_keys: &[&str] = match canonical_provider {
         // The remaining AWS variables are structured credential-chain inputs,
         // not standalone bearer tokens. Preserve AuthStorage's normal rule.
@@ -6023,10 +6023,10 @@ where
     F: FnMut(&str) -> Option<String>,
 {
     if let Some(key) = override_key.map(str::trim).filter(|key| !key.is_empty()) {
-        if kode::provider_metadata::canonical_provider_id(provider)
+        if kesa::provider_metadata::canonical_provider_id(provider)
             .is_some_and(|canonical| canonical == "sap-ai-core")
         {
-            return Ok(kode::auth::resolve_sap_auth_candidate(key)
+            return Ok(kesa::auth::resolve_sap_auth_candidate(key)
                 .await?
                 .unwrap_or_default());
         }
@@ -6034,12 +6034,12 @@ where
     }
     match AuthStorage::load_with_lock_timeout_classified(
         auth_path,
-        kode::auth::AUTH_RESOLUTION_LOCK_TIMEOUT,
+        kesa::auth::AUTH_RESOLUTION_LOCK_TIMEOUT,
     ) {
         Ok(mut auth) => {
             let requested_oauth_expired = matches!(
                 auth.credential_status(provider),
-                kode::auth::CredentialStatus::OAuthExpired { .. }
+                kesa::auth::CredentialStatus::OAuthExpired { .. }
             );
             let refresh_error = if requested_oauth_expired {
                 auth.refresh_expired_oauth_tokens().await.err()
@@ -6063,19 +6063,19 @@ where
             }
             Ok(resolved)
         }
-        Err(failure @ kode::auth::AuthStorageLoadFailure::LockTimeout(_)) => {
+        Err(failure @ kesa::auth::AuthStorageLoadFailure::LockTimeout(_)) => {
             Err(anyhow::Error::new(failure.into_error()))
         }
-        Err(kode::auth::AuthStorageLoadFailure::Other(error)) => {
+        Err(kesa::auth::AuthStorageLoadFailure::Other(error)) => {
             tracing::warn!(
                 provider,
                 error = %error,
                 "stored provider credentials are unavailable; continuing model discovery without them"
             );
-            if kode::provider_metadata::canonical_provider_id(provider)
+            if kesa::provider_metadata::canonical_provider_id(provider)
                 .is_some_and(|canonical| canonical == "sap-ai-core")
             {
-                Ok(kode::auth::resolve_ambient_sap_auth_token()
+                Ok(kesa::auth::resolve_ambient_sap_auth_token()
                     .await?
                     .unwrap_or_default())
             } else {
@@ -6089,10 +6089,10 @@ where
 }
 
 async fn resolve_provider_api_key_from_auth(provider: &str, auth: &AuthStorage) -> Result<String> {
-    if kode::provider_metadata::canonical_provider_id(provider)
+    if kesa::provider_metadata::canonical_provider_id(provider)
         .is_some_and(|canonical| canonical == "sap-ai-core")
     {
-        return Ok(kode::auth::resolve_sap_auth_token(auth, None)
+        return Ok(kesa::auth::resolve_sap_auth_token(auth, None)
             .await?
             .unwrap_or_default());
     }
@@ -6466,10 +6466,10 @@ async fn run_first_time_setup(
         }
         SetupCredentialKind::OAuthPkce => {
             let start = match provider.provider {
-                "openai-codex" => kode::auth::start_openai_codex_oauth()?,
-                "anthropic" => kode::auth::start_anthropic_oauth()?,
-                "google-gemini-cli" => kode::auth::start_google_gemini_cli_oauth()?,
-                "google-antigravity" => kode::auth::start_google_antigravity_oauth()?,
+                "openai-codex" => kesa::auth::start_openai_codex_oauth()?,
+                "anthropic" => kesa::auth::start_anthropic_oauth()?,
+                "google-gemini-cli" => kesa::auth::start_google_gemini_cli_oauth()?,
+                "google-antigravity" => kesa::auth::start_google_antigravity_oauth()?,
                 _ => {
                     console.render_warning(&format!(
                         "OAuth login is not supported for {} in this setup flow. Start kode and run /login {} instead.",
@@ -6494,8 +6494,8 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
                 start
                     .redirect_uri
                     .as_deref()
-                    .filter(|uri| kode::auth::redirect_uri_needs_callback_server(uri))
-                    .and_then(|uri| match kode::auth::start_oauth_callback_server(uri) {
+                    .filter(|uri| kesa::auth::redirect_uri_needs_callback_server(uri))
+                    .and_then(|uri| match kesa::auth::start_oauth_callback_server(uri) {
                         Ok(server) => {
                             tracing::info!(port = server.port, "OAuth callback server listening");
                             Some(server)
@@ -6577,17 +6577,17 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
 
             match start.provider.as_str() {
                 "openai-codex" => {
-                    kode::auth::complete_openai_codex_oauth(code_input, &start.verifier).await?
+                    kesa::auth::complete_openai_codex_oauth(code_input, &start.verifier).await?
                 }
                 "anthropic" => {
-                    kode::auth::complete_anthropic_oauth(code_input, &start.verifier).await?
+                    kesa::auth::complete_anthropic_oauth(code_input, &start.verifier).await?
                 }
                 "google-gemini-cli" => {
-                    kode::auth::complete_google_gemini_cli_oauth(code_input, &start.verifier)
+                    kesa::auth::complete_google_gemini_cli_oauth(code_input, &start.verifier)
                         .await?
                 }
                 "google-antigravity" => {
-                    kode::auth::complete_google_antigravity_oauth(code_input, &start.verifier)
+                    kesa::auth::complete_google_antigravity_oauth(code_input, &start.verifier)
                         .await?
                 }
                 other => {
@@ -6607,7 +6607,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
                 return Ok(false);
             }
 
-            let device = kode::auth::start_kimi_code_device_flow().await?;
+            let device = kesa::auth::start_kimi_code_device_flow().await?;
             let verification_url = device
                 .verification_uri_complete
                 .clone()
@@ -6638,23 +6638,23 @@ Code expires in {} seconds.\n",
                     return Ok(false);
                 }
 
-                match kode::auth::poll_kimi_code_device_flow(&device.device_code).await {
-                    kode::auth::DeviceFlowPollResult::Success(cred) => break cred,
-                    kode::auth::DeviceFlowPollResult::Pending => {
+                match kesa::auth::poll_kimi_code_device_flow(&device.device_code).await {
+                    kesa::auth::DeviceFlowPollResult::Success(cred) => break cred,
+                    kesa::auth::DeviceFlowPollResult::Pending => {
                         console.render_info("Authorization still pending. Complete the browser step and poll again.");
                     }
-                    kode::auth::DeviceFlowPollResult::SlowDown => {
+                    kesa::auth::DeviceFlowPollResult::SlowDown => {
                         console.render_info("Authorization server asked to slow down. Wait a few seconds and poll again.");
                     }
-                    kode::auth::DeviceFlowPollResult::Expired => {
+                    kesa::auth::DeviceFlowPollResult::Expired => {
                         console.render_warning("Device code expired. Run setup again.");
                         return Ok(false);
                     }
-                    kode::auth::DeviceFlowPollResult::AccessDenied => {
+                    kesa::auth::DeviceFlowPollResult::AccessDenied => {
                         console.render_warning("Access denied. Run setup again.");
                         return Ok(false);
                     }
-                    kode::auth::DeviceFlowPollResult::Error(err) => {
+                    kesa::auth::DeviceFlowPollResult::Error(err) => {
                         console.render_warning(&format!("OAuth polling failed: {err}"));
                         return Ok(false);
                     }
@@ -6879,7 +6879,7 @@ async fn export_session(input_path: &str, output_path: Option<&str>) -> Result<P
     }
 
     let session = Session::open(input_path).await?;
-    let html = kode::app::render_session_html(&session);
+    let html = kesa::app::render_session_html(&session);
     let output_path = output_path.map_or_else(|| default_export_path(input), PathBuf::from);
 
     if let Some(parent) = output_path.parent()
@@ -6909,7 +6909,7 @@ async fn run_rpc_mode(
     resources: ResourceLoader,
     config: Config,
     available_models: Vec<ModelEntry>,
-    scoped_models: Vec<kode::rpc::RpcScopedModel>,
+    scoped_models: Vec<kesa::rpc::RpcScopedModel>,
     cli_api_key: Option<String>,
     auth: AuthStorage,
     runtime_handle: RuntimeHandle,
@@ -6923,9 +6923,9 @@ async fn run_rpc_mode(
     }) {
         eprintln!("Warning: Failed to install Ctrl+C handler for RPC mode: {err}");
     }
-    let rpc_task = kode::rpc::run_stdio(
+    let rpc_task = kesa::rpc::run_stdio(
         session,
-        kode::rpc::RpcOptions {
+        kesa::rpc::RpcOptions {
             config,
             resources,
             available_models,
@@ -6953,7 +6953,7 @@ async fn run_rpc_mode(
     }
 }
 
-async fn run_acp_mode(options: kode::acp::AcpOptions) -> Result<()> {
+async fn run_acp_mode(options: kesa::acp::AcpOptions) -> Result<()> {
     use futures::FutureExt;
 
     let (abort_handle, abort_signal) = AbortHandle::new();
@@ -6963,7 +6963,7 @@ async fn run_acp_mode(options: kode::acp::AcpOptions) -> Result<()> {
     }) {
         eprintln!("Warning: Failed to install Ctrl+C handler for ACP mode: {err}");
     }
-    let acp_task = kode::acp::run_stdio(options).fuse();
+    let acp_task = kesa::acp::run_stdio(options).fuse();
     let signal_task = abort_signal.wait().fuse();
 
     futures::pin_mut!(acp_task, signal_task);
@@ -6992,7 +6992,7 @@ async fn run_print_mode(
     }
 
     if mode.eq("json") {
-        let cx = kode::agent_cx::AgentCx::for_request();
+        let cx = kesa::agent_cx::AgentCx::for_request();
         let session = session
             .session
             .lock(cx.cx())
@@ -7020,7 +7020,7 @@ async fn run_print_mode(
         let text_stream_state = Arc::clone(&text_stream_state_for_events);
         let coalescer = extensions
             .as_ref()
-            .map(|m| kode::extensions::EventCoalescer::new(m.clone()));
+            .map(|m| kesa::extensions::EventCoalescer::new(m.clone()));
         move |event: AgentEvent| {
             if emit_json_events {
                 if let Ok(serialized) = serde_json::to_string(&event) {
@@ -7075,7 +7075,7 @@ async fn run_print_mode(
     let mut sent_prompts = 0usize;
 
     if let Some(initial) = initial {
-        let content = kode::app::build_initial_content(&initial);
+        let content = kesa::app::build_initial_content(&initial);
         reset_print_text_stream_state(&text_stream_state);
         let message = run_print_prompt_with_retry(
             session,
@@ -7166,7 +7166,7 @@ impl PrintTextStreamState {
 const fn streamed_text_delta(event: &AgentEvent) -> Option<&str> {
     match event {
         AgentEvent::MessageUpdate {
-            assistant_message_event: kode::model::AssistantMessageEvent::TextDelta { delta, .. },
+            assistant_message_event: kesa::model::AssistantMessageEvent::TextDelta { delta, .. },
             ..
         } => Some(delta.as_str()),
         _ => None,
@@ -7239,7 +7239,7 @@ fn finish_print_text_response(
                 console.render_markdown_with_indent(&markdown, code_block_indent);
             }
         } else {
-            kode::app::output_final_text(message);
+            kesa::app::output_final_text(message);
         }
         return Ok(());
     }
@@ -7284,7 +7284,7 @@ fn is_retryable_prompt_result(msg: &AssistantMessage) -> bool {
         return false;
     }
     let err_msg = msg.error_message.as_deref().unwrap_or("Request error");
-    kode::error::is_retryable_error(err_msg, Some(msg.usage.input), None)
+    kesa::error::is_retryable_error(err_msg, Some(msg.usage.input), None)
 }
 
 /// Flatten a prompt to the text a `UserPromptSubmit` hook is given.
@@ -7294,7 +7294,7 @@ fn prompt_hook_text(input: &PromptInput) -> String {
         PromptInput::Content(content) => content
             .iter()
             .filter_map(|block| match block {
-                kode::model::ContentBlock::Text(text) => Some(text.text.as_str()),
+                kesa::model::ContentBlock::Text(text) => Some(text.text.as_str()),
                 _ => None,
             })
             .collect::<Vec<_>>()
@@ -7308,7 +7308,7 @@ fn prompt_hook_text(input: &PromptInput) -> String {
 async fn run_print_prompt_with_retry<H, EH>(
     session: &mut AgentSession,
     config: &Config,
-    abort_signal: &kode::agent::AbortSignal,
+    abort_signal: &kesa::agent::AbortSignal,
     make_event_handler: &H,
     retry_enabled: bool,
     max_retries: u32,
@@ -7322,7 +7322,7 @@ where
 {
     let hooks = Arc::clone(session.agent.shell_hooks());
     if !hooks.is_empty()
-        && let kode::hooks::HookDecision::Block { reason } =
+        && let kesa::hooks::HookDecision::Block { reason } =
             hooks.user_prompt_submit(&prompt_hook_text(&input)).await
     {
         bail!("{reason}");
@@ -7343,7 +7343,7 @@ where
 
     let mut stop_hook_active = false;
     while !hooks.is_empty() {
-        let kode::hooks::HookDecision::Block { reason } = hooks.stop(stop_hook_active).await else {
+        let kesa::hooks::HookDecision::Block { reason } = hooks.stop(stop_hook_active).await else {
             break;
         };
         stop_hook_active = true;
@@ -7370,7 +7370,7 @@ where
 async fn run_print_prompt_attempt<H, EH>(
     session: &mut AgentSession,
     config: &Config,
-    abort_signal: &kode::agent::AbortSignal,
+    abort_signal: &kesa::agent::AbortSignal,
     make_event_handler: &H,
     retry_enabled: bool,
     max_retries: u32,
@@ -7481,7 +7481,7 @@ where
                 // via the source chain), then fall back to message-text matching
                 // for prose-only errors (pi_agent_rust#118).
                 if retry_count < max_retries
-                    && (err.is_transient() || kode::error::is_retryable_error(&err_str, None, None))
+                    && (err.is_transient() || kesa::error::is_retryable_error(&err_str, None, None))
                     && snapshot_print_text_stream_state(text_stream_state).can_retry(is_json)
                 {
                     retry_count += 1;
@@ -7538,16 +7538,16 @@ async fn run_interactive_mode(
     cwd: PathBuf,
     runtime_handle: RuntimeHandle,
     tool_policy: SharedToolPolicy,
-    tool_approvals: mpsc::Receiver<kode::interactive::ToolApprovalPrompt>,
+    tool_approvals: mpsc::Receiver<kesa::interactive::ToolApprovalPrompt>,
 ) -> Result<()> {
     let mut pending = Vec::new();
     if let Some(initial) = initial {
-        pending.push(kode::interactive::PendingInput::Content(
-            kode::app::build_initial_content(&initial),
+        pending.push(kesa::interactive::PendingInput::Content(
+            kesa::app::build_initial_content(&initial),
         ));
     }
     for message in messages {
-        pending.push(kode::interactive::PendingInput::Text(message));
+        pending.push(kesa::interactive::PendingInput::Text(message));
     }
 
     let AgentSession {
@@ -7559,7 +7559,7 @@ async fn run_interactive_mode(
     // Extract manager for the interactive loop; the region stays alive to
     // handle shutdown when this scope exits.
     let extensions = region.as_ref().map(|r| r.manager().clone());
-    let interactive_result = kode::interactive::run_interactive(
+    let interactive_result = kesa::interactive::run_interactive(
         agent,
         session,
         config,
@@ -7588,7 +7588,7 @@ async fn run_interactive_mode(
     Ok(())
 }
 
-type InitialMessage = kode::app::InitialMessage;
+type InitialMessage = kesa::app::InitialMessage;
 
 fn read_piped_stdin() -> Result<Option<String>> {
     if io::stdin().is_terminal() {
@@ -7709,13 +7709,13 @@ mod tests {
         let usage_err = anyhow!("Unknown --only categories: nope");
         assert_eq!(exit_code_for_error(&usage_err), EXIT_CODE_USAGE);
 
-        let validation_err = anyhow::Error::new(kode::error::Error::validation("bad input"));
+        let validation_err = anyhow::Error::new(kesa::error::Error::validation("bad input"));
         assert_eq!(exit_code_for_error(&validation_err), EXIT_CODE_USAGE);
     }
 
     #[test]
     fn exit_code_classifier_defaults_to_general_failure() {
-        let runtime_err = anyhow::Error::new(kode::error::Error::auth("missing key"));
+        let runtime_err = anyhow::Error::new(kesa::error::Error::auth("missing key"));
         assert_eq!(exit_code_for_error(&runtime_err), EXIT_CODE_FAILURE);
     }
 
@@ -8050,7 +8050,7 @@ mod tests {
 
     #[test]
     fn apply_extension_cli_flags_ignores_unknown_flags() {
-        let manager = kode::extensions::ExtensionManager::new();
+        let manager = kesa::extensions::ExtensionManager::new();
         let flags = vec![cli::ExtensionCliFlag {
             name: "plan".to_string(),
             value: Some("ship-it".to_string()),
@@ -8350,13 +8350,13 @@ mod tests {
 
     #[test]
     fn collect_search_hits_filters_by_tag_before_limit() {
-        let index = kode::extension_index::ExtensionIndex {
-            schema: kode::extension_index::EXTENSION_INDEX_SCHEMA.to_string(),
-            version: kode::extension_index::EXTENSION_INDEX_VERSION,
+        let index = kesa::extension_index::ExtensionIndex {
+            schema: kesa::extension_index::EXTENSION_INDEX_SCHEMA.to_string(),
+            version: kesa::extension_index::EXTENSION_INDEX_VERSION,
             generated_at: None,
             last_refreshed_at: None,
             entries: vec![
-                kode::extension_index::ExtensionIndexEntry {
+                kesa::extension_index::ExtensionIndexEntry {
                     id: "npm/aaa-foo".to_string(),
                     name: "aaa-foo".to_string(),
                     description: Some("general extension".to_string()),
@@ -8365,7 +8365,7 @@ mod tests {
                     source: None,
                     install_source: Some("npm:aaa-foo".to_string()),
                 },
-                kode::extension_index::ExtensionIndexEntry {
+                kesa::extension_index::ExtensionIndexEntry {
                     id: "npm/zzz-foo".to_string(),
                     name: "zzz-foo".to_string(),
                     description: Some("automation extension".to_string()),
@@ -8383,19 +8383,19 @@ mod tests {
     }
 
     fn test_extension_index(
-        entries: Vec<kode::extension_index::ExtensionIndexEntry>,
-    ) -> kode::extension_index::ExtensionIndex {
-        kode::extension_index::ExtensionIndex {
-            schema: kode::extension_index::EXTENSION_INDEX_SCHEMA.to_string(),
-            version: kode::extension_index::EXTENSION_INDEX_VERSION,
+        entries: Vec<kesa::extension_index::ExtensionIndexEntry>,
+    ) -> kesa::extension_index::ExtensionIndex {
+        kesa::extension_index::ExtensionIndex {
+            schema: kesa::extension_index::EXTENSION_INDEX_SCHEMA.to_string(),
+            version: kesa::extension_index::EXTENSION_INDEX_VERSION,
             generated_at: None,
             last_refreshed_at: None,
             entries,
         }
     }
 
-    fn test_extension_entry(id: &str, name: &str) -> kode::extension_index::ExtensionIndexEntry {
-        kode::extension_index::ExtensionIndexEntry {
+    fn test_extension_entry(id: &str, name: &str) -> kesa::extension_index::ExtensionIndexEntry {
+        kesa::extension_index::ExtensionIndexEntry {
             id: id.to_string(),
             name: name.to_string(),
             description: None,
@@ -8408,13 +8408,13 @@ mod tests {
 
     #[test]
     fn extension_safety_for_source_prefers_offline_index_metadata() {
-        let mut index = test_extension_index(vec![kode::extension_index::ExtensionIndexEntry {
+        let mut index = test_extension_index(vec![kesa::extension_index::ExtensionIndexEntry {
             id: "official/provider".to_string(),
             name: "provider".to_string(),
             description: None,
             tags: vec!["provider".to_string()],
             license: Some("MIT".to_string()),
-            source: Some(kode::extension_index::ExtensionIndexSource::Git {
+            source: Some(kesa::extension_index::ExtensionIndexSource::Git {
                 repo: "https://github.com/badlogic/pi-mono".to_string(),
                 path: Some("packages/coding-agent/examples/extensions/provider.ts".to_string()),
                 r#ref: None,
@@ -8438,8 +8438,8 @@ mod tests {
 
     #[test]
     fn extension_safety_lines_project_redacted_cli_provenance() {
-        let safety = kode::extension_index::ExtensionSafetyProvenance {
-            schema: kode::extension_index::EXTENSION_SAFETY_PROVENANCE_SCHEMA,
+        let safety = kesa::extension_index::ExtensionSafetyProvenance {
+            schema: kesa::extension_index::EXTENSION_SAFETY_PROVENANCE_SCHEMA,
             source_type: "npm".to_string(),
             license_status: "present".to_string(),
             registration_categories: vec!["tool".to_string()],
@@ -8921,7 +8921,7 @@ mod tests {
     #[test]
     fn print_mode_retry_delay_first_attempt_is_base() {
         let config = Config {
-            retry: Some(kode::config::RetrySettings {
+            retry: Some(kesa::config::RetrySettings {
                 enabled: Some(true),
                 max_retries: Some(3),
                 base_delay_ms: Some(2000),
@@ -8935,7 +8935,7 @@ mod tests {
     #[test]
     fn print_mode_retry_delay_doubles_each_attempt() {
         let config = Config {
-            retry: Some(kode::config::RetrySettings {
+            retry: Some(kesa::config::RetrySettings {
                 enabled: Some(true),
                 max_retries: Some(5),
                 base_delay_ms: Some(1000),
@@ -8950,7 +8950,7 @@ mod tests {
     #[test]
     fn print_mode_retry_delay_capped_at_max() {
         let config = Config {
-            retry: Some(kode::config::RetrySettings {
+            retry: Some(kesa::config::RetrySettings {
                 enabled: Some(true),
                 max_retries: Some(10),
                 base_delay_ms: Some(2000),
@@ -8964,7 +8964,7 @@ mod tests {
 
     #[test]
     fn is_retryable_prompt_result_identifies_retryable_errors() {
-        use kode::model::{AssistantMessage, Usage};
+        use kesa::model::{AssistantMessage, Usage};
 
         let retryable = AssistantMessage {
             content: vec![],
@@ -9006,7 +9006,7 @@ mod tests {
     /// typed kind is gone by the time the message string is in hand.
     #[test]
     fn transient_connection_drop_retried_end_to_end() {
-        use kode::model::{AssistantMessage, Usage};
+        use kesa::model::{AssistantMessage, Usage};
 
         let build_error_turn = |flattened: String| AssistantMessage {
             content: vec![],
@@ -9031,7 +9031,7 @@ mod tests {
             std::io::ErrorKind::TimedOut,
         ] {
             let io_err = std::io::Error::new(kind, "opaque transport failure");
-            let flattened = kode::error::Error::sse(&io_err).to_string();
+            let flattened = kesa::error::Error::sse(&io_err).to_string();
             let turn = build_error_turn(flattened.clone());
             assert!(
                 is_retryable_prompt_result(&turn),
@@ -9049,7 +9049,7 @@ mod tests {
 
         // A genuinely fatal stream error is NOT retried (no false positives).
         let fatal_io = std::io::Error::new(std::io::ErrorKind::InvalidData, "invalid utf-8");
-        let fatal = build_error_turn(kode::error::Error::sse(&fatal_io).to_string());
+        let fatal = build_error_turn(kesa::error::Error::sse(&fatal_io).to_string());
         assert!(!is_retryable_prompt_result(&fatal));
     }
 
@@ -9080,19 +9080,19 @@ mod tests {
     #[test]
     fn streamed_text_delta_only_matches_text_delta_updates() {
         let partial = Arc::new(AssistantMessage {
-            content: vec![ContentBlock::Text(kode::model::TextContent::new("hello"))],
+            content: vec![ContentBlock::Text(kesa::model::TextContent::new("hello"))],
             api: "test-api".to_string(),
             provider: "test-provider".to_string(),
             model: "test-model".to_string(),
-            usage: kode::model::Usage::default(),
+            usage: kesa::model::Usage::default(),
             stop_reason: StopReason::Stop,
             stop_details: None,
             error_message: None,
             timestamp: 0,
         });
         let delta_event = AgentEvent::MessageUpdate {
-            message: kode::model::Message::Assistant(Arc::clone(&partial)),
-            assistant_message_event: kode::model::AssistantMessageEvent::TextDelta {
+            message: kesa::model::Message::Assistant(Arc::clone(&partial)),
+            assistant_message_event: kesa::model::AssistantMessageEvent::TextDelta {
                 content_index: 0,
                 delta: " world".to_string(),
                 partial,
@@ -9101,12 +9101,12 @@ mod tests {
         assert_eq!(streamed_text_delta(&delta_event), Some(" world"));
 
         let start_event = AgentEvent::MessageStart {
-            message: kode::model::Message::assistant(AssistantMessage {
+            message: kesa::model::Message::assistant(AssistantMessage {
                 content: Vec::new(),
                 api: "test-api".to_string(),
                 provider: "test-provider".to_string(),
                 model: "test-model".to_string(),
-                usage: kode::model::Usage::default(),
+                usage: kesa::model::Usage::default(),
                 stop_reason: StopReason::Stop,
                 stop_details: None,
                 error_message: None,

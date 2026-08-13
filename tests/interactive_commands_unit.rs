@@ -1,19 +1,19 @@
 //! Unit tests for `SlashCommand::parse()`, scoped model resolution, and related
 //! utility functions in `src/interactive/commands.rs`.
 //!
-//! These tests cover the public API surface re-exported from `kode::interactive`:
+//! These tests cover the public API surface re-exported from `kesa::interactive`:
 //! - `SlashCommand::parse()` — slash command parsing with aliases
 //! - `strip_thinking_level_suffix()` — strip `:off`/`:medium` etc. from patterns
 //! - `parse_scoped_model_patterns()` — comma/whitespace-separated pattern splitting
 //! - `model_entry_matches()` — case-insensitive model entry comparison
 //! - `resolve_scoped_model_entries()` — glob + exact pattern resolution
 
-use kode::interactive::{
+use kesa::interactive::{
     SlashCommand, model_entry_matches, parse_scoped_model_patterns, resolve_scoped_model_entries,
     strip_thinking_level_suffix,
 };
-use kode::models::ModelEntry;
-use kode::provider::{InputType, Model, ModelCost};
+use kesa::models::ModelEntry;
+use kesa::provider::{InputType, Model, ModelCost};
 use std::collections::HashMap;
 
 // ============================================================================

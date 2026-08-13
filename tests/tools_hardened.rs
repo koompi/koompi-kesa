@@ -7,8 +7,8 @@
 mod common;
 
 use common::TestHarness;
-use kode::model::ContentBlock;
-use kode::tools::Tool;
+use kesa::model::ContentBlock;
+use kesa::tools::Tool;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
@@ -94,7 +94,7 @@ mod read_hardened {
             let link = h.temp_path("link.txt");
             std::os::unix::fs::symlink(&real, &link).unwrap();
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": link.to_string_lossy()});
             let result = tool.execute("h-read-1", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -115,7 +115,7 @@ mod read_hardened {
             let link = h.temp_path("link_to_dir");
             std::os::unix::fs::symlink(&dir, &link).unwrap();
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": link.to_string_lossy()});
             let err = tool
                 .execute("h-read-2", input, None)
@@ -138,7 +138,7 @@ mod read_hardened {
             let h = TestHarness::new("read_deeply_nested_path");
             let deep = h.create_file("a/b/c/d/e/f/g/deep.txt", b"deep content");
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": deep.to_string_lossy()});
             let result = tool.execute("h-read-3", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -152,7 +152,7 @@ mod read_hardened {
             let h = TestHarness::new("read_unicode_filename");
             let path = h.create_file("données_café.txt", b"unicode filename content");
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": path.to_string_lossy()});
             let result = tool.execute("h-read-4", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -167,7 +167,7 @@ mod read_hardened {
             let content = "日本語テスト\n中文测试\n한국어 테스트\nEmoji: 🦀🔥\n";
             let path = h.create_file("unicode.txt", content.as_bytes());
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": path.to_string_lossy()});
             let result = tool.execute("h-read-5", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -186,7 +186,7 @@ mod read_hardened {
             let content = "\n\n\n\n\n";
             let path = h.create_file("empty_lines.txt", content.as_bytes());
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": path.to_string_lossy()});
             let result = tool.execute("h-read-6", input, None).await.unwrap();
             // Should not error on a file that's all newlines
@@ -200,11 +200,11 @@ mod read_hardened {
             let h = TestHarness::new("read_max_bytes_boundary");
             // Create content exactly at the MAX_BYTES limit
             let line = "x".repeat(99) + "\n"; // 100 bytes per line
-            let line_count = kode::tools::DEFAULT_MAX_BYTES / 100;
+            let line_count = kesa::tools::DEFAULT_MAX_BYTES / 100;
             let content: String = (0..line_count).map(|_| line.as_str()).collect();
             let path = h.create_file("boundary.txt", content.as_bytes());
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": path.to_string_lossy()});
             let result = tool.execute("h-read-7", input, None).await.unwrap();
             // At or just below boundary should work without byte truncation
@@ -217,10 +217,10 @@ mod read_hardened {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("read_single_very_long_line");
             // One line that exceeds MAX_BYTES
-            let content = "a".repeat(kode::tools::DEFAULT_MAX_BYTES + 1000);
+            let content = "a".repeat(kesa::tools::DEFAULT_MAX_BYTES + 1000);
             let path = h.create_file("long_line.txt", content.as_bytes());
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": path.to_string_lossy()});
             let result = tool.execute("h-read-8", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -245,7 +245,7 @@ mod read_hardened {
             let h = TestHarness::new("read_offset_zero_is_first_line");
             let path = h.create_file("lines.txt", b"line1\nline2\nline3\n");
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             let input = serde_json::json!({"path": path.to_string_lossy(), "offset": 0});
             let result = tool.execute("h-read-9", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -264,7 +264,7 @@ mod read_hardened {
             }
             let path = h.create_file("ten.txt", content.as_bytes());
 
-            let tool = kode::tools::ReadTool::new(h.temp_dir());
+            let tool = kesa::tools::ReadTool::new(h.temp_dir());
             // Read exactly the last line
             let input =
                 serde_json::json!({"path": path.to_string_lossy(), "offset": 10, "limit": 1});
@@ -291,7 +291,7 @@ mod write_hardened {
             let link = h.temp_path("link.txt");
             std::os::unix::fs::symlink(&real, &link).unwrap();
 
-            let tool = kode::tools::WriteTool::new(h.temp_dir());
+            let tool = kesa::tools::WriteTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": link.to_string_lossy(),
                 "content": "overwritten via symlink"
@@ -321,7 +321,7 @@ mod write_hardened {
             let h = TestHarness::new("write_deeply_nested_auto_creation");
             let deep = h.temp_path("a/b/c/d/e/f/g/h/i/j/deep.txt");
 
-            let tool = kode::tools::WriteTool::new(h.temp_dir());
+            let tool = kesa::tools::WriteTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": deep.to_string_lossy(),
                 "content": "deep write"
@@ -339,7 +339,7 @@ mod write_hardened {
             let h = TestHarness::new("write_empty_content");
             let path = h.temp_path("empty.txt");
 
-            let tool = kode::tools::WriteTool::new(h.temp_dir());
+            let tool = kesa::tools::WriteTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": ""
@@ -358,7 +358,7 @@ mod write_hardened {
             let content = "Héllo Wörld! 日本語 🦀 Ñ ñ ü ö ä ß";
             let path = h.temp_path("unicode_write.txt");
 
-            let tool = kode::tools::WriteTool::new(h.temp_dir());
+            let tool = kesa::tools::WriteTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": content
@@ -376,7 +376,7 @@ mod write_hardened {
             let h = TestHarness::new("write_overwrite_clears_old_content");
             let path = h.create_file("big.txt", b"a]".repeat(10_000).as_slice());
 
-            let tool = kode::tools::WriteTool::new(h.temp_dir());
+            let tool = kesa::tools::WriteTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": "short"
@@ -397,7 +397,7 @@ mod write_hardened {
             let h = TestHarness::new("write_special_characters_in_path");
             let path = h.temp_path("spaces in name.txt");
 
-            let tool = kode::tools::WriteTool::new(h.temp_dir());
+            let tool = kesa::tools::WriteTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": "spaces work"
@@ -417,7 +417,7 @@ mod write_hardened {
             let expected_utf16_count = content.encode_utf16().count(); // 4
             let path = h.temp_path("utf16_count.txt");
 
-            let tool = kode::tools::WriteTool::new(h.temp_dir());
+            let tool = kesa::tools::WriteTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": content
@@ -443,7 +443,7 @@ mod write_hardened {
             let path = h.create_file("readonly-write.txt", b"old content");
             let _mode_guard = UnixModeGuard::set(&path, 0o444);
 
-            let tool = kode::tools::WriteTool::new(h.temp_dir());
+            let tool = kesa::tools::WriteTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": "new content"
@@ -480,7 +480,7 @@ mod edit_hardened {
             let content = "value = array[0].method(arg1, arg2);\n";
             let path = h.create_file("meta.txt", content.as_bytes());
 
-            let tool = kode::tools::EditTool::new(h.temp_dir());
+            let tool = kesa::tools::EditTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "array[0].method(arg1, arg2)",
@@ -500,7 +500,7 @@ mod edit_hardened {
             let h = TestHarness::new("edit_entire_file_content");
             let path = h.create_file("whole.txt", b"entire old content");
 
-            let tool = kode::tools::EditTool::new(h.temp_dir());
+            let tool = kesa::tools::EditTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "entire old content",
@@ -519,7 +519,7 @@ mod edit_hardened {
             let content = "fn main() {\n    println!(\"hello\");\n}\n";
             let path = h.create_file("multi.rs", content.as_bytes());
 
-            let tool = kode::tools::EditTool::new(h.temp_dir());
+            let tool = kesa::tools::EditTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "fn main() {\n    println!(\"hello\");\n}",
@@ -539,7 +539,7 @@ mod edit_hardened {
             let h = TestHarness::new("edit_sequential_edits_on_same_file");
             let path = h.create_file("seq.txt", b"alpha beta gamma delta\n");
 
-            let tool = kode::tools::EditTool::new(h.temp_dir());
+            let tool = kesa::tools::EditTool::new(h.temp_dir());
 
             // First edit
             let input = serde_json::json!({
@@ -573,7 +573,7 @@ mod edit_hardened {
             let content = "line1\r\nTARGET\r\nline3\r\n";
             let path = h.create_file("crlf.txt", content.as_bytes());
 
-            let tool = kode::tools::EditTool::new(h.temp_dir());
+            let tool = kesa::tools::EditTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "TARGET",
@@ -601,7 +601,7 @@ mod edit_hardened {
             let h = TestHarness::new("edit_unicode_content");
             let path = h.create_file("uni_edit.txt", "Hello 世界! 🌍".as_bytes());
 
-            let tool = kode::tools::EditTool::new(h.temp_dir());
+            let tool = kesa::tools::EditTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "世界",
@@ -623,7 +623,7 @@ mod edit_hardened {
             let path = h.create_file("readonly.txt", b"immutable content");
             let _mode_guard = UnixModeGuard::set(&path, 0o444);
 
-            let tool = kode::tools::EditTool::new(h.temp_dir());
+            let tool = kesa::tools::EditTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "immutable",
@@ -654,7 +654,7 @@ mod edit_hardened {
             let h = TestHarness::new("edit_diff_details_present");
             let path = h.create_file("diff.txt", b"before\n");
 
-            let tool = kode::tools::EditTool::new(h.temp_dir());
+            let tool = kesa::tools::EditTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "oldText": "before",
@@ -680,7 +680,7 @@ mod bash_hardened {
     fn bash_stderr_captured_in_output() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_stderr_captured_in_output");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "command": "echo 'stdout_line' && echo 'stderr_line' >&2"
             });
@@ -696,7 +696,7 @@ mod bash_hardened {
     fn bash_exit_code_boundary_values() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_exit_code_boundary_values");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
 
             // Exit 0 should succeed
             let input = serde_json::json!({"command": "exit 0"});
@@ -731,7 +731,7 @@ mod bash_hardened {
     fn bash_shell_syntax_error() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_shell_syntax_error");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             let input = serde_json::json!({"command": "if then else fi"});
             let output = tool
                 .execute("h-bash-3", input, None)
@@ -751,7 +751,7 @@ mod bash_hardened {
     fn bash_multiline_command() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_multiline_command");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "command": "echo line1\necho line2\necho line3"
             });
@@ -768,7 +768,7 @@ mod bash_hardened {
     fn bash_working_directory_is_correct() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_working_directory_is_correct");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             let input = serde_json::json!({"command": "pwd"});
             let result = tool.execute("h-bash-5", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -786,7 +786,7 @@ mod bash_hardened {
     fn bash_large_stderr_output() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_large_stderr_output");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "command": "for i in $(seq 1 500); do echo \"stderr line $i\" >&2; done"
             });
@@ -802,7 +802,7 @@ mod bash_hardened {
     fn bash_timeout_kills_process_tree() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_timeout_kills_process_tree");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             // Use a marker file to detect if process survived
             let marker = h.temp_path("survived.txt");
             let marker_str = marker.to_string_lossy().to_string();
@@ -832,7 +832,7 @@ mod bash_hardened {
     fn bash_empty_command() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_empty_command");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             let input = serde_json::json!({"command": ""});
             // Empty command should either succeed with empty output or fail gracefully
             let result = tool.execute("h-bash-8", input, None).await;
@@ -846,7 +846,7 @@ mod bash_hardened {
     fn bash_env_variable_not_leaked() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_env_variable_not_leaked");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             // Check that a random env var we set is accessible (bash inherits env)
             let input = serde_json::json!({"command": "echo $HOME"});
             let result = tool.execute("h-bash-9", input, None).await.unwrap();
@@ -861,7 +861,7 @@ mod bash_hardened {
     fn bash_pipe_commands() {
         asupersync::test_utils::run_test(|| async {
             let h = TestHarness::new("bash_pipe_commands");
-            let tool = kode::tools::BashTool::new(h.temp_dir());
+            let tool = kesa::tools::BashTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "command": "echo 'hello world' | wc -w"
             });
@@ -892,7 +892,7 @@ mod grep_hardened {
                 b"fn foo() -> Result<i32, Error> {\n    Ok(42)\n}\n",
             );
 
-            let tool = kode::tools::GrepTool::new(h.temp_dir());
+            let tool = kesa::tools::GrepTool::new(h.temp_dir());
             // Literal search for "Result<i32"
             let input = serde_json::json!({"pattern": "Result<i32"});
             let result = tool.execute("h-grep-1", input, None).await.unwrap();
@@ -918,7 +918,7 @@ mod grep_hardened {
                 "Hello 世界\nGoodbye 世界\nHello world\n".as_bytes(),
             );
 
-            let tool = kode::tools::GrepTool::new(h.temp_dir());
+            let tool = kesa::tools::GrepTool::new(h.temp_dir());
             let input = serde_json::json!({"pattern": "世界"});
             let result = tool.execute("h-grep-2", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -946,7 +946,7 @@ mod grep_hardened {
             h.create_file("src/main.rs", b"fn main() { target_match }\n");
             h.create_file("tests/test.rs", b"fn test() { target_match }\n");
 
-            let tool = kode::tools::GrepTool::new(h.temp_dir());
+            let tool = kesa::tools::GrepTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "pattern": "target_match",
                 "path": "src"
@@ -969,7 +969,7 @@ mod grep_hardened {
             let h = TestHarness::new("grep_empty_file");
             h.create_file("empty.txt", b"");
 
-            let tool = kode::tools::GrepTool::new(h.temp_dir());
+            let tool = kesa::tools::GrepTool::new(h.temp_dir());
             let input = serde_json::json!({"pattern": "anything"});
             let result = tool.execute("h-grep-4", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -995,7 +995,7 @@ mod grep_hardened {
             }
             h.create_file("ctx.txt", content.as_bytes());
 
-            let tool = kode::tools::GrepTool::new(h.temp_dir());
+            let tool = kesa::tools::GrepTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "pattern": "line10",
                 "context": 2
@@ -1021,7 +1021,7 @@ mod grep_hardened {
             h.create_file("b.txt", b"needle in b");
             h.create_file("c.txt", b"no match here");
 
-            let tool = kode::tools::GrepTool::new(h.temp_dir());
+            let tool = kesa::tools::GrepTool::new(h.temp_dir());
             let input = serde_json::json!({"pattern": "needle"});
             let result = tool.execute("h-grep-6", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1051,7 +1051,7 @@ mod find_hardened {
             h.create_file("tests/test.rs", b"");
             h.create_file("docs/readme.md", b"");
 
-            let tool = kode::tools::FindTool::new(h.temp_dir());
+            let tool = kesa::tools::FindTool::new(h.temp_dir());
             let input = serde_json::json!({"pattern": "*.rs"});
             let result = tool.execute("h-find-1", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1074,7 +1074,7 @@ mod find_hardened {
             h.create_file("src/main.rs", b"");
             h.create_file("tests/test.rs", b"");
 
-            let tool = kode::tools::FindTool::new(h.temp_dir());
+            let tool = kesa::tools::FindTool::new(h.temp_dir());
             let input = serde_json::json!({
                 "pattern": "*.rs",
                 "path": "src"
@@ -1096,7 +1096,7 @@ mod find_hardened {
             let h = TestHarness::new("find_empty_directory_tree");
             h.create_dir("empty_tree/sub1/sub2");
 
-            let tool = kode::tools::FindTool::new(h.temp_dir());
+            let tool = kesa::tools::FindTool::new(h.temp_dir());
             let input = serde_json::json!({"pattern": "*.rs"});
             let result = tool.execute("h-find-3", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1118,7 +1118,7 @@ mod find_hardened {
             h.create_file("café.txt", b"");
             h.create_file("normal.txt", b"");
 
-            let tool = kode::tools::FindTool::new(h.temp_dir());
+            let tool = kesa::tools::FindTool::new(h.temp_dir());
             let input = serde_json::json!({"pattern": "*.txt"});
             let result = tool.execute("h-find-4", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1140,7 +1140,7 @@ mod find_hardened {
                 h.create_file(format!("file_{i:02}.txt"), b"");
             }
 
-            let tool = kode::tools::FindTool::new(h.temp_dir());
+            let tool = kesa::tools::FindTool::new(h.temp_dir());
             let input = serde_json::json!({"pattern": "*.txt", "limit": 5});
             let result = tool.execute("h-find-5", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1173,7 +1173,7 @@ mod ls_hardened {
             let link = h.temp_path("link.txt");
             std::os::unix::fs::symlink(h.temp_path("real.txt"), &link).unwrap();
 
-            let tool = kode::tools::LsTool::new(h.temp_dir());
+            let tool = kesa::tools::LsTool::new(h.temp_dir());
             let input = serde_json::json!({});
             let result = tool.execute("h-ls-1", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1191,7 +1191,7 @@ mod ls_hardened {
                 h.create_file(format!("file_{i:03}.txt"), b"");
             }
 
-            let tool = kode::tools::LsTool::new(h.temp_dir());
+            let tool = kesa::tools::LsTool::new(h.temp_dir());
             let input = serde_json::json!({});
             let result = tool.execute("h-ls-2", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1212,7 +1212,7 @@ mod ls_hardened {
             h.create_file("apple.txt", b"");
             h.create_file("banana.txt", b"");
 
-            let tool = kode::tools::LsTool::new(h.temp_dir());
+            let tool = kesa::tools::LsTool::new(h.temp_dir());
             let input = serde_json::json!({});
             let result = tool.execute("h-ls-3", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1238,7 +1238,7 @@ mod ls_hardened {
             h.create_dir("subdir_b");
             h.create_file("file.txt", b"");
 
-            let tool = kode::tools::LsTool::new(h.temp_dir());
+            let tool = kesa::tools::LsTool::new(h.temp_dir());
             let input = serde_json::json!({});
             let result = tool.execute("h-ls-4", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1264,7 +1264,7 @@ mod ls_hardened {
                 h.create_file(format!("f{i}.txt"), b"");
             }
 
-            let tool = kode::tools::LsTool::new(h.temp_dir());
+            let tool = kesa::tools::LsTool::new(h.temp_dir());
             let input = serde_json::json!({"limit": 3});
             let result = tool.execute("h-ls-5", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1287,7 +1287,7 @@ mod ls_hardened {
             h.create_file("日本語.txt", b"");
             h.create_file("normal.txt", b"");
 
-            let tool = kode::tools::LsTool::new(h.temp_dir());
+            let tool = kesa::tools::LsTool::new(h.temp_dir());
             let input = serde_json::json!({});
             let result = tool.execute("h-ls-6", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1305,7 +1305,7 @@ mod ls_hardened {
             h.create_file("sub/b.txt", b"");
             h.create_dir("sub/inner");
 
-            let tool = kode::tools::LsTool::new(h.temp_dir());
+            let tool = kesa::tools::LsTool::new(h.temp_dir());
             let input = serde_json::json!({"path": h.temp_path("sub").to_string_lossy()});
             let result = tool.execute("h-ls-7", input, None).await.unwrap();
             let text = get_text(&result.content);
@@ -1332,7 +1332,7 @@ mod cross_tool_hardened {
             let h = TestHarness::new("write_then_grep_finds_content");
             let path = h.temp_path("searchable.txt");
 
-            let write_tool = kode::tools::WriteTool::new(h.temp_dir());
+            let write_tool = kesa::tools::WriteTool::new(h.temp_dir());
             let write_input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": "unique_marker_string_for_grep_test\n"
@@ -1342,7 +1342,7 @@ mod cross_tool_hardened {
                 .await
                 .unwrap();
 
-            let grep_tool = kode::tools::GrepTool::new(h.temp_dir());
+            let grep_tool = kesa::tools::GrepTool::new(h.temp_dir());
             let grep_input = serde_json::json!({"pattern": "unique_marker_string_for_grep_test"});
             let result = grep_tool
                 .execute("cross-1b", grep_input, None)
@@ -1366,7 +1366,7 @@ mod cross_tool_hardened {
             let h = TestHarness::new("write_then_find_discovers_file");
             let path = h.temp_path("discoverable.rs");
 
-            let write_tool = kode::tools::WriteTool::new(h.temp_dir());
+            let write_tool = kesa::tools::WriteTool::new(h.temp_dir());
             let write_input = serde_json::json!({
                 "path": path.to_string_lossy(),
                 "content": "fn discover() {}\n"
@@ -1376,7 +1376,7 @@ mod cross_tool_hardened {
                 .await
                 .unwrap();
 
-            let find_tool = kode::tools::FindTool::new(h.temp_dir());
+            let find_tool = kesa::tools::FindTool::new(h.temp_dir());
             let find_input = serde_json::json!({"pattern": "*.rs"});
             let result = find_tool
                 .execute("cross-2b", find_input, None)
@@ -1397,7 +1397,7 @@ mod cross_tool_hardened {
             let file_path = h.temp_path("bash_created.txt");
             let file_str = file_path.to_string_lossy().to_string();
 
-            let bash_tool = kode::tools::BashTool::new(h.temp_dir());
+            let bash_tool = kesa::tools::BashTool::new(h.temp_dir());
             let bash_input = serde_json::json!({
                 "command": format!("echo 'bash wrote this' > '{file_str}'")
             });
@@ -1406,7 +1406,7 @@ mod cross_tool_hardened {
                 .await
                 .unwrap();
 
-            let read_tool = kode::tools::ReadTool::new(h.temp_dir());
+            let read_tool = kesa::tools::ReadTool::new(h.temp_dir());
             let read_input = serde_json::json!({"path": file_str});
             let result = read_tool
                 .execute("cross-3b", read_input, None)
@@ -1427,7 +1427,7 @@ mod cross_tool_hardened {
             h.create_file("target.txt", b"old content");
             h.create_file("other.txt", b"untouched");
 
-            let edit_tool = kode::tools::EditTool::new(h.temp_dir());
+            let edit_tool = kesa::tools::EditTool::new(h.temp_dir());
             let edit_input = serde_json::json!({
                 "path": h.temp_path("target.txt").to_string_lossy(),
                 "oldText": "old content",
@@ -1438,7 +1438,7 @@ mod cross_tool_hardened {
                 .await
                 .unwrap();
 
-            let ls_tool = kode::tools::LsTool::new(h.temp_dir());
+            let ls_tool = kesa::tools::LsTool::new(h.temp_dir());
             let ls_input = serde_json::json!({});
             let result = ls_tool.execute("cross-4b", ls_input, None).await.unwrap();
             let text = get_text(&result.content);

@@ -16,7 +16,7 @@ wasmtime::component::bindgen!({
     exports: { default: async },
 });
 
-use self::kode::extension::host;
+use self::kesa::extension::host;
 
 pub(super) struct HostState {
     policy: ExtensionPolicy,

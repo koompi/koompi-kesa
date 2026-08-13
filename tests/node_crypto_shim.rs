@@ -7,11 +7,11 @@
 
 mod common;
 
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use std::sync::Arc;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ fn eval_crypto_without_hostcalls(js_expr: &str) -> String {
             let (module, evaluation) = rquickjs::Module::declare(
                 ctx.clone(),
                 "node:crypto",
-                kode::crypto_shim::NODE_CRYPTO_JS,
+                kesa::crypto_shim::NODE_CRYPTO_JS,
             )?
             .eval()?;
             evaluation.finish::<()>()?;

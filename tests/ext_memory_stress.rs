@@ -26,11 +26,11 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use serde::Serialize;
 use serde_json::Value;
 use std::fmt::Write as _;

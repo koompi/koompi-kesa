@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use chrono::{DateTime, SecondsFormat, Utc};
 use clap::{Parser, ValueEnum};
-use kode::conformance::report::{
+use kesa::conformance::report::{
     ConformanceRegression, ConformanceReport, ExtensionConformanceResult, compute_regression,
     generate_report,
 };

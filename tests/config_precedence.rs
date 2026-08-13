@@ -3,7 +3,7 @@
 mod common;
 
 use common::{TestHarness, validate_jsonl};
-use kode::config::{Config, SettingsScope, TerminalSettings};
+use kesa::config::{Config, SettingsScope, TerminalSettings};
 use serde_json::json;
 use std::env;
 use std::path::{Path, PathBuf};

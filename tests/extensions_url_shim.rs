@@ -6,8 +6,8 @@
 
 use std::sync::Arc;
 
-use kode::extensions_js::{PiJsRuntime, PiJsRuntimeConfig};
-use kode::scheduler::DeterministicClock;
+use kesa::extensions_js::{PiJsRuntime, PiJsRuntimeConfig};
+use kesa::scheduler::DeterministicClock;
 
 fn default_config() -> PiJsRuntimeConfig {
     PiJsRuntimeConfig {

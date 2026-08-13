@@ -17,9 +17,9 @@
 //! - Trace log correlation for debugging persistence failures
 
 use asupersync::runtime::RuntimeBuilder;
-use kode::model::UserContent;
-use kode::session::{AutosaveDurabilityMode, AutosaveFlushTrigger, Session, SessionMessage};
-use kode::session_store_v2::SessionStoreV2;
+use kesa::model::UserContent;
+use kesa::session::{AutosaveDurabilityMode, AutosaveFlushTrigger, Session, SessionMessage};
+use kesa::session_store_v2::SessionStoreV2;
 use serde_json::json;
 use std::future::Future;
 use std::io::Write as _;
@@ -79,9 +79,9 @@ impl Drop for UnixModeGuard {
 }
 
 #[cfg(unix)]
-fn assert_permission_denied(error: &kode::Error) {
+fn assert_permission_denied(error: &kesa::Error) {
     let kind = match error {
-        kode::Error::Io(io_error) => Some(io_error.kind()),
+        kesa::Error::Io(io_error) => Some(io_error.kind()),
         _ => None,
     };
     assert_eq!(

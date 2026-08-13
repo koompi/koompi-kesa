@@ -14,7 +14,7 @@
     dead_code
 )]
 
-use kode::perf_build::{
+use kesa::perf_build::{
     BUILD_FINGERPRINT_CONTRACT, BenchmarkBuildVerification, BenchmarkProvenance,
     CANONICAL_PIJS_PERF_FEATURES, benchmark_provenance_config_hash,
     matches_canonical_perf_build_fingerprint, profile_from_target_path, sha256_file,
@@ -4364,15 +4364,15 @@ fn schema_registry_is_complete() {
 
 #[test]
 fn resource_governor_admission_schema_accepts_live_decision_payload() {
-    let budgets = kode::resource_governor::HostResourceBudgets::fixed(10.0, 1_000, 100, 100, 1_000);
-    let governor = kode::resource_governor::ResourceGovernor::with_budgets(budgets);
-    let request = kode::resource_governor::ResourceRequest::new(
-        kode::resource_governor::ResourceOperationKind::Tool,
+    let budgets = kesa::resource_governor::HostResourceBudgets::fixed(10.0, 1_000, 100, 100, 1_000);
+    let governor = kesa::resource_governor::ResourceGovernor::with_budgets(budgets);
+    let request = kesa::resource_governor::ResourceRequest::new(
+        kesa::resource_governor::ResourceOperationKind::Tool,
         "read",
     )
     .with_queue_depth(4)
     .with_estimated_tool_output_bytes(900);
-    let sample = kode::resource_governor::HostResourceSample {
+    let sample = kesa::resource_governor::HostResourceSample {
         load_avg_1m: Some(2.0),
         rss_bytes: Some(200),
         process_count: Some(20),

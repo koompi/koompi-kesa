@@ -8,7 +8,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
-use kode::validation_broker::{
+use kesa::validation_broker::{
     VALIDATION_BROKER_CLI_PLAN_SCHEMA, VALIDATION_BROKER_CLI_STATUS_SCHEMA,
     ValidationAdmissionPolicy, ValidationAdmissionRequestContext, ValidationBrokerInputParts,
     ValidationBrokerInputSnapshot, ValidationSlotArtifact, ValidationSlotLease,
@@ -147,7 +147,7 @@ fn repo_root() -> PathBuf {
 }
 
 fn binary_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_kode"))
+    PathBuf::from(env!("CARGO_BIN_EXE_kesa"))
 }
 
 fn test_temp_dir() -> Result<TempDir, io::Error> {
@@ -607,7 +607,7 @@ fn build_input_snapshot(
         scratch_headroom,
         agent_mail,
     })
-    .map_err(|err: kode::error::Error| {
+    .map_err(|err: kesa::error::Error| {
         test_error(format!(
             "input snapshot failed for {}: {err}",
             scenario_dir.display()

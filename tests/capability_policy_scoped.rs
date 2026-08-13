@@ -14,14 +14,14 @@
 use std::future::Future;
 
 use asupersync::runtime::RuntimeBuilder;
-use kode::config::{Config, ExtensionPolicyConfig};
-use kode::connectors::http::HttpConnector;
-use kode::extensions::{
+use kesa::config::{Config, ExtensionPolicyConfig};
+use kesa::connectors::http::HttpConnector;
+use kesa::extensions::{
     Capability, ExtensionManager, ExtensionOverride, ExtensionPolicy, ExtensionPolicyMode,
     HostCallContext, HostCallErrorCode, HostCallPayload, PolicyDecision, PolicyProfile,
     dispatch_host_call_shared, required_capability_for_host_call,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use tempfile::tempdir;
 

@@ -1,4 +1,4 @@
-use kode::config::Config;
+use kesa::config::Config;
 use std::path::{Path, PathBuf};
 
 struct CwdGuard {

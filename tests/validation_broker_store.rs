@@ -7,7 +7,7 @@ use std::io::{Error as IoError, ErrorKind};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use kode::validation_broker::{
+use kesa::validation_broker::{
     VALIDATION_BROKER_DECISION_SCHEMA, VALIDATION_BROKER_INPUT_SCHEMA,
     VALIDATION_BROKER_SLOT_RECORD_SCHEMA, VALIDATION_BROKER_SLOT_SCHEMA,
     VALIDATION_BROKER_SLOT_STORE_SCHEMA, VALIDATION_BROKER_STRESS_EVIDENCE_SCHEMA,
@@ -682,7 +682,7 @@ const fn source_state_key(state: &ValidationSourceState) -> &'static str {
 }
 
 fn assert_expected_policy(
-    decision: &kode::validation_broker::ValidationAdmissionDecisionRecord,
+    decision: &kesa::validation_broker::ValidationAdmissionDecisionRecord,
     expected: &BTreeMap<String, Value>,
 ) -> TestResult {
     for (field, expected_value) in expected {
@@ -705,7 +705,7 @@ fn policy_field_mismatch(field: &str) -> String {
 }
 
 fn policy_field_value(
-    decision: &kode::validation_broker::ValidationAdmissionDecisionRecord,
+    decision: &kesa::validation_broker::ValidationAdmissionDecisionRecord,
     field: &str,
 ) -> Option<Value> {
     match field {

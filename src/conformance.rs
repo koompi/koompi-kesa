@@ -1395,7 +1395,7 @@ pub mod snapshot {
 /// # Usage
 ///
 /// ```rust,ignore
-/// use kode::conformance::normalization::*;
+/// use kesa::conformance::normalization::*;
 ///
 /// let contract = NormalizationContract::default();
 /// let ctx = NormalizationContext::from_cwd(std::path::Path::new("/tmp"));

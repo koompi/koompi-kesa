@@ -4,18 +4,18 @@ mod common;
 
 use common::{MockHttpResponse, TestHarness};
 use futures::StreamExt;
-use kode::Error;
-use kode::auth::{AuthCredential, AuthStorage};
-use kode::model::{Message, UserContent, UserMessage};
-use kode::models::{ModelEntry, ModelRegistry};
-use kode::provider::{
+use kesa::Error;
+use kesa::auth::{AuthCredential, AuthStorage};
+use kesa::model::{Message, UserContent, UserMessage};
+use kesa::models::{ModelEntry, ModelRegistry};
+use kesa::provider::{
     Api, CacheRetention, Context, InputType, KnownProvider, Model, ModelCost, StreamEvent,
     StreamOptions, ToolDef,
 };
-use kode::provider_metadata::{
+use kesa::provider_metadata::{
     canonical_provider_id, provider_auth_env_keys, provider_routing_defaults,
 };
-use kode::providers::{
+use kesa::providers::{
     create_provider, normalize_cohere_base, normalize_openai_base, normalize_openai_responses_base,
 };
 use proptest::prelude::*;
@@ -118,7 +118,7 @@ fn request_header(headers: &[(String, String)], key: &str) -> Option<String> {
 }
 
 fn drive_provider_stream_to_done(
-    provider: Arc<dyn kode::provider::Provider>,
+    provider: Arc<dyn kesa::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) {
@@ -137,7 +137,7 @@ fn drive_provider_stream_to_done(
 }
 
 fn expect_provider_stream_start_error(
-    provider: Arc<dyn kode::provider::Provider>,
+    provider: Arc<dyn kesa::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) -> Error {

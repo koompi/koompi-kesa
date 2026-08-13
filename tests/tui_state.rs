@@ -9,23 +9,23 @@ use asupersync::sync::Mutex;
 use bubbletea::{Cmd, KeyMsg, KeyType, Message, Model as BubbleteaModel, QuitMsg};
 use common::TestHarness;
 use futures::stream;
-use kode::agent::{Agent, AgentConfig};
-use kode::config::{Config, TerminalSettings};
-use kode::extensions::{
+use kesa::agent::{Agent, AgentConfig};
+use kesa::config::{Config, TerminalSettings};
+use kesa::extensions::{
     ExtensionManager, ExtensionUiRequest, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::interactive::{ConversationMessage, MessageRole, PendingInput, PiApp, PiMsg};
-use kode::keybindings::KeyBindings;
-use kode::model::{
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::interactive::{ConversationMessage, MessageRole, PendingInput, PiApp, PiMsg};
+use kesa::keybindings::KeyBindings;
+use kesa::model::{
     AssistantMessage, ContentBlock, Cost, ImageContent, StopReason, StreamEvent, TextContent,
     Usage, UserContent,
 };
-use kode::models::ModelEntry;
-use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
-use kode::resources::{ResourceCliOptions, ResourceLoader};
-use kode::session::{Session, SessionEntry, SessionMessage, encode_cwd};
-use kode::tools::ToolRegistry;
+use kesa::models::ModelEntry;
+use kesa::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
+use kesa::resources::{ResourceCliOptions, ResourceLoader};
+use kesa::session::{Session, SessionEntry, SessionMessage, encode_cwd};
+use kesa::tools::ToolRegistry;
 use regex::Regex;
 use serde_json::json;
 use std::collections::HashMap;
@@ -87,8 +87,8 @@ impl Provider for DummyProvider {
         &self,
         _context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> kode::error::Result<
-        Pin<Box<dyn futures::Stream<Item = kode::error::Result<StreamEvent>> + Send>>,
+    ) -> kesa::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kesa::error::Result<StreamEvent>> + Send>>,
     > {
         Ok(Box::pin(stream::empty()))
     }

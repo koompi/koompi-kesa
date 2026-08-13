@@ -11,10 +11,10 @@ mod common;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 use futures::StreamExt;
-use kode::http::client::Client;
-use kode::model::{Message, UserContent, UserMessage};
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
+use kesa::http::client::Client;
+use kesa::model::{Message, UserContent, UserMessage};
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
 use serde_json::json;
 
 fn context_for(prompt: &str) -> Context<'static> {
@@ -186,7 +186,7 @@ fn openai_http_500_is_reported() {
         vec!["boom".to_string()],
     );
     common::run_async(async move {
-        let provider = kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+        let provider = kesa::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
         let err = provider
             .stream(
                 &context_for("Trigger server error."),
@@ -213,7 +213,7 @@ fn openai_http_200_with_wrong_content_type_is_protocol_error() {
     );
 
     common::run_async(async move {
-        let provider = kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+        let provider = kesa::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
         let err = provider
             .stream(
                 &context_for("Trigger protocol mismatch."),
@@ -250,7 +250,7 @@ fn openai_http_200_missing_content_type_is_protocol_error() {
     );
 
     common::run_async(async move {
-        let provider = kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+        let provider = kesa::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
         let err = provider
             .stream(
                 &context_for("Trigger missing content type."),
@@ -283,7 +283,7 @@ fn anthropic_http_500_is_reported() {
     );
     common::run_async(async move {
         let provider =
-            kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            kesa::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
         let err = provider
             .stream(
                 &context_for("Trigger server error."),
@@ -314,7 +314,7 @@ fn gemini_http_500_is_reported() {
         vec!["boom".to_string()],
     );
     common::run_async(async move {
-        let provider = kode::providers::gemini::GeminiProvider::new(model).with_client(client);
+        let provider = kesa::providers::gemini::GeminiProvider::new(model).with_client(client);
         let err = provider
             .stream(
                 &context_for("Trigger server error."),
@@ -345,7 +345,7 @@ fn azure_http_500_is_reported() {
         vec!["boom".to_string()],
     );
     common::run_async(async move {
-        let provider = kode::providers::azure::AzureOpenAIProvider::new("unused", deployment)
+        let provider = kesa::providers::azure::AzureOpenAIProvider::new("unused", deployment)
             .with_client(client)
             .with_endpoint_url(endpoint);
         let err = provider
@@ -377,7 +377,7 @@ fn openai_invalid_json_event_fails_stream() {
         vec!["data: {not json}\n\n".to_string()],
     );
     common::run_async(async move {
-        let provider = kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+        let provider = kesa::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
         let mut stream = provider
             .stream(
                 &context_for("Trigger invalid json."),
@@ -410,7 +410,7 @@ fn azure_invalid_json_event_fails_stream() {
         vec!["data: {not json}\n\n".to_string()],
     );
     common::run_async(async move {
-        let provider = kode::providers::azure::AzureOpenAIProvider::new("unused", deployment)
+        let provider = kesa::providers::azure::AzureOpenAIProvider::new("unused", deployment)
             .with_client(client)
             .with_endpoint_url(endpoint);
         let mut stream = provider
@@ -445,7 +445,7 @@ fn anthropic_invalid_json_event_fails_stream() {
     );
     common::run_async(async move {
         let provider =
-            kode::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
+            kesa::providers::anthropic::AnthropicProvider::new("claude-test").with_client(client);
         let mut stream = provider
             .stream(
                 &context_for("Trigger invalid json."),
@@ -485,7 +485,7 @@ fn gemini_invalid_json_event_fails_stream() {
         vec!["data: {broken json\n\n".to_string()],
     );
     common::run_async(async move {
-        let provider = kode::providers::gemini::GeminiProvider::new(model).with_client(client);
+        let provider = kesa::providers::gemini::GeminiProvider::new(model).with_client(client);
         let mut stream = provider
             .stream(
                 &context_for("Trigger invalid json."),
@@ -525,7 +525,7 @@ fn openai_invalid_utf8_in_sse_is_reported() {
     );
 
     common::run_async(async move {
-        let provider = kode::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
+        let provider = kesa::providers::openai::OpenAIProvider::new("gpt-test").with_client(client);
         let context = context_for("Trigger invalid utf8.");
         let options = options_with_key("test-key");
 

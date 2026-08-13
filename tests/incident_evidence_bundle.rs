@@ -3,7 +3,7 @@
 //! Tests cover: bundle construction, filtering, redaction, deterministic
 //! generation, verification, forensic replay, and JSON round-trip stability.
 
-use kode::extensions::{
+use kesa::extensions::{
     ExecMediationArtifact, ExecMediationLedgerEntry, INCIDENT_EVIDENCE_BUNDLE_SCHEMA_VERSION,
     IncidentBundleFilter, IncidentBundleRedactionPolicy, IncidentEvidenceBundle, QuotaBreachEvent,
     RUNTIME_HOSTCALL_TELEMETRY_SCHEMA_VERSION, RUNTIME_RISK_LEDGER_SCHEMA_VERSION,
@@ -19,7 +19,7 @@ use kode::extensions::{
 // Test helpers
 // ---------------------------------------------------------------------------
 
-use kode::extensions::{
+use kesa::extensions::{
     RUNTIME_RISK_EXPLANATION_SCHEMA_VERSION, RuntimeRiskExpectedLossEvidence,
     RuntimeRiskExplanationBudgetState, RuntimeRiskExplanationLevelValue,
     RuntimeRiskPosteriorEvidence,

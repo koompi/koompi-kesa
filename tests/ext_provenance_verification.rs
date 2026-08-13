@@ -17,7 +17,7 @@
 //! for auditability. Maintainers can regenerate that file explicitly with
 //! `KODE_GENERATE_PROVENANCE_VERIFICATION=1`.
 
-use kode::conformance::snapshot::{
+use kesa::conformance::snapshot::{
     SourceTier, digest_artifact_dir, validate_directory, validate_id,
 };
 use serde::{Deserialize, Serialize};

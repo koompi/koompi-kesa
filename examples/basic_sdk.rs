@@ -27,7 +27,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use kode::sdk::{
+use kesa::sdk::{
     AgentEvent, AgentSessionHandle, ContentBlock, SessionOptions, create_agent_session,
 };
 
@@ -111,7 +111,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
                     ..
                 } => {
                     // Print streaming text deltas to stderr as they arrive.
-                    use kode::model::AssistantMessageEvent;
+                    use kesa::model::AssistantMessageEvent;
                     if let AssistantMessageEvent::TextDelta { delta, .. } = assistant_message_event
                     {
                         eprint!("{delta}");

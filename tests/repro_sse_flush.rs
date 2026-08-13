@@ -1,4 +1,4 @@
-use kode::sse::SseParser;
+use kesa::sse::SseParser;
 
 #[test]
 fn sse_flush_processes_data_field_without_colon() {

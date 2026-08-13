@@ -6,7 +6,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use kode::validation_broker::{
+use kesa::validation_broker::{
     VALIDATION_BROKER_CLI_PLAN_SCHEMA, VALIDATION_BROKER_CLI_STATUS_SCHEMA,
     VALIDATION_BROKER_DECISION_SCHEMA, ValidationAdmissionPolicy,
     ValidationAdmissionRequestContext, ValidationBrokerInputParts, ValidationBrokerInputSnapshot,
@@ -33,7 +33,7 @@ fn repo_root() -> PathBuf {
 }
 
 fn binary_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_kode"))
+    PathBuf::from(env!("CARGO_BIN_EXE_kesa"))
 }
 
 fn test_temp_dir() -> Result<TempDir, std::io::Error> {
@@ -227,7 +227,7 @@ fn admission_context(slot_id: &str) -> ValidationAdmissionRequestContext {
     }
 }
 
-fn provenance(source: &str) -> Result<ValidationSourceProvenance, kode::error::Error> {
+fn provenance(source: &str) -> Result<ValidationSourceProvenance, kesa::error::Error> {
     ValidationSourceProvenance::new(
         source,
         vec![source.to_string(), "--json".to_string()],
@@ -237,7 +237,7 @@ fn provenance(source: &str) -> Result<ValidationSourceProvenance, kode::error::E
     )
 }
 
-fn healthy_inputs() -> Result<ValidationBrokerInputSnapshot, kode::error::Error> {
+fn healthy_inputs() -> Result<ValidationBrokerInputSnapshot, kesa::error::Error> {
     let rch = normalize_rch_queue_text(
         provenance("rch")?,
         "Build Queue\n  - 1 Active Build(s)\n  - 0 Queued Build(s)\nWorker Availability\n  -> 4 / 18 slots free\n",

@@ -11,10 +11,10 @@ mod common;
 
 use common::{MockHttpResponse, TestHarness};
 use futures::StreamExt;
-use kode::model::{Message, UserContent, UserMessage};
-use kode::models::ModelEntry;
-use kode::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions, ToolDef};
-use kode::providers::create_provider;
+use kesa::model::{Message, UserContent, UserMessage};
+use kesa::models::ModelEntry;
+use kesa::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions, ToolDef};
+use kesa::providers::create_provider;
 use serde::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
@@ -622,7 +622,7 @@ fn validate_event_sequence(events: &[StreamEvent]) -> Result<(), String> {
 
 /// Collect stream events from a provider, returning collected events or an error string.
 fn collect_events(
-    provider: Arc<dyn kode::provider::Provider>,
+    provider: Arc<dyn kesa::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) -> Result<Vec<StreamEvent>, String> {

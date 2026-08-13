@@ -12,12 +12,12 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionBudgetControllerConfig, ExtensionEventName, ExtensionManager, ExtensionPolicy,
     HostcallReactorConfig, JsExtensionLoadSpec,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::BTreeSet;
@@ -168,7 +168,7 @@ fn load_extensions_with_oco_mode(
         let manager = manager.clone();
         let tools = Arc::clone(&tools);
         async move {
-            kode::extensions::JsExtensionRuntimeHandle::start_with_policy(
+            kesa::extensions::JsExtensionRuntimeHandle::start_with_policy(
                 js_config,
                 tools,
                 manager,

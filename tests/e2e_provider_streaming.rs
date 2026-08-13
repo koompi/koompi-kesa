@@ -15,11 +15,11 @@ mod common;
 
 use common::TestHarness;
 use futures::StreamExt;
-use kode::http::client::Client;
-use kode::model::{Message, StopReason, StreamEvent, ThinkingLevel, UserContent, UserMessage};
-use kode::provider::{CacheRetention, Context, Provider, StreamOptions, ThinkingBudgets, ToolDef};
-use kode::providers::anthropic::AnthropicProvider;
-use kode::vcr::{VcrMode, VcrRecorder};
+use kesa::http::client::Client;
+use kesa::model::{Message, StopReason, StreamEvent, ThinkingLevel, UserContent, UserMessage};
+use kesa::provider::{CacheRetention, Context, Provider, StreamOptions, ThinkingBudgets, ToolDef};
+use kesa::providers::anthropic::AnthropicProvider;
+use kesa::vcr::{VcrMode, VcrRecorder};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::fmt::Write as _;

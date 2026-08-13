@@ -1,5 +1,5 @@
-use kode::Error;
-use kode::extensions::{
+use kesa::Error;
+use kesa::extensions::{
     ExtensionMessage, ExtensionPolicy, ExtensionPolicyMode, HostCallPayload, PolicyDecision,
     required_capability_for_host_call,
 };
@@ -8,7 +8,7 @@ use serde_json::json;
 fn register_message_json(overrides: serde_json::Value) -> String {
     let mut base = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "register",
         "payload": {
             "name": "demo",
@@ -48,7 +48,7 @@ fn host_call(method: &str, params: serde_json::Value) -> HostCallPayload {
 fn parse_and_validate_register_ok() {
     let json = register_message_json(json!({}));
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
-    assert_eq!(parsed.version, kode::extensions::PROTOCOL_VERSION);
+    assert_eq!(parsed.version, kesa::extensions::PROTOCOL_VERSION);
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn parse_and_validate_allows_unknown_fields() {
 fn parse_and_validate_rejects_missing_type_field() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "payload": {
             "name": "demo",
             "version": "0.1.0",
@@ -126,7 +126,7 @@ fn parse_and_validate_rejects_empty_message_id() {
 fn parse_and_validate_rejects_empty_register_name() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "register",
         "payload": {
             "name": " ",
@@ -197,7 +197,7 @@ fn policy_evaluate_covers_modes_and_deny_list() {
 fn parse_tool_call_message_ok() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "tool_call",
         "payload": {
             "call_id": "call-1",
@@ -209,7 +209,7 @@ fn parse_tool_call_message_ok() {
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     assert!(matches!(
         parsed.body,
-        kode::extensions::ExtensionBody::ToolCall(_)
+        kesa::extensions::ExtensionBody::ToolCall(_)
     ));
 }
 
@@ -217,7 +217,7 @@ fn parse_tool_call_message_ok() {
 fn parse_tool_call_rejects_missing_call_id() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "tool_call",
         "payload": {
             "name": "read",
@@ -237,7 +237,7 @@ fn parse_tool_call_rejects_missing_call_id() {
 fn parse_tool_result_message_ok() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "tool_result",
         "payload": {
             "call_id": "call-1",
@@ -249,7 +249,7 @@ fn parse_tool_result_message_ok() {
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     assert!(matches!(
         parsed.body,
-        kode::extensions::ExtensionBody::ToolResult(_)
+        kesa::extensions::ExtensionBody::ToolResult(_)
     ));
 }
 
@@ -257,7 +257,7 @@ fn parse_tool_result_message_ok() {
 fn parse_tool_result_error_flag_true() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "tool_result",
         "payload": {
             "call_id": "call-1",
@@ -268,7 +268,7 @@ fn parse_tool_result_error_flag_true() {
     .to_string();
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     match parsed.body {
-        kode::extensions::ExtensionBody::ToolResult(payload) => assert!(payload.is_error),
+        kesa::extensions::ExtensionBody::ToolResult(payload) => assert!(payload.is_error),
         _ => unreachable!("expected ToolResult"),
     }
 }
@@ -277,7 +277,7 @@ fn parse_tool_result_error_flag_true() {
 fn parse_slash_command_message_ok() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "slash_command",
         "payload": {
             "name": "/hello",
@@ -288,7 +288,7 @@ fn parse_slash_command_message_ok() {
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     assert!(matches!(
         parsed.body,
-        kode::extensions::ExtensionBody::SlashCommand(_)
+        kesa::extensions::ExtensionBody::SlashCommand(_)
     ));
 }
 
@@ -296,7 +296,7 @@ fn parse_slash_command_message_ok() {
 fn parse_slash_command_with_empty_args() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "slash_command",
         "payload": {
             "name": "/help",
@@ -306,7 +306,7 @@ fn parse_slash_command_with_empty_args() {
     .to_string();
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     match parsed.body {
-        kode::extensions::ExtensionBody::SlashCommand(payload) => assert!(payload.args.is_empty()),
+        kesa::extensions::ExtensionBody::SlashCommand(payload) => assert!(payload.args.is_empty()),
         _ => unreachable!("expected SlashCommand"),
     }
 }
@@ -315,7 +315,7 @@ fn parse_slash_command_with_empty_args() {
 fn parse_slash_result_message_ok() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "slash_result",
         "payload": {
             "output": { "text": "command executed" },
@@ -326,7 +326,7 @@ fn parse_slash_result_message_ok() {
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     assert!(matches!(
         parsed.body,
-        kode::extensions::ExtensionBody::SlashResult(_)
+        kesa::extensions::ExtensionBody::SlashResult(_)
     ));
 }
 
@@ -334,7 +334,7 @@ fn parse_slash_result_message_ok() {
 fn parse_event_hook_message_ok() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "event_hook",
         "payload": {
             "event": "agent_start",
@@ -345,7 +345,7 @@ fn parse_event_hook_message_ok() {
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     assert!(matches!(
         parsed.body,
-        kode::extensions::ExtensionBody::EventHook(_)
+        kesa::extensions::ExtensionBody::EventHook(_)
     ));
 }
 
@@ -353,7 +353,7 @@ fn parse_event_hook_message_ok() {
 fn parse_event_hook_with_null_data() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "event_hook",
         "payload": {
             "event": "agent_end"
@@ -362,7 +362,7 @@ fn parse_event_hook_with_null_data() {
     .to_string();
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     match parsed.body {
-        kode::extensions::ExtensionBody::EventHook(payload) => assert!(payload.data.is_none()),
+        kesa::extensions::ExtensionBody::EventHook(payload) => assert!(payload.data.is_none()),
         _ => unreachable!("expected EventHook"),
     }
 }
@@ -371,7 +371,7 @@ fn parse_event_hook_with_null_data() {
 fn parse_host_result_message_ok() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "host_result",
         "payload": {
             "call_id": "host-1",
@@ -383,7 +383,7 @@ fn parse_host_result_message_ok() {
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     assert!(matches!(
         parsed.body,
-        kode::extensions::ExtensionBody::HostResult(_)
+        kesa::extensions::ExtensionBody::HostResult(_)
     ));
 }
 
@@ -391,7 +391,7 @@ fn parse_host_result_message_ok() {
 fn parse_host_result_with_error_details() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "host_result",
         "payload": {
             "call_id": "host-1",
@@ -408,12 +408,12 @@ fn parse_host_result_with_error_details() {
     .to_string();
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     match parsed.body {
-        kode::extensions::ExtensionBody::HostResult(payload) => {
+        kesa::extensions::ExtensionBody::HostResult(payload) => {
             assert!(payload.is_error);
             let error = payload.error.expect("error should be present");
             assert!(matches!(
                 error.code,
-                kode::extensions::HostCallErrorCode::Denied
+                kesa::extensions::HostCallErrorCode::Denied
             ));
         }
         _ => unreachable!("expected HostResult"),
@@ -424,7 +424,7 @@ fn parse_host_result_with_error_details() {
 fn parse_error_message_ok() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "error",
         "payload": {
             "code": "E_DEMO",
@@ -435,7 +435,7 @@ fn parse_error_message_ok() {
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     assert!(matches!(
         parsed.body,
-        kode::extensions::ExtensionBody::Error(_)
+        kesa::extensions::ExtensionBody::Error(_)
     ));
 }
 
@@ -443,7 +443,7 @@ fn parse_error_message_ok() {
 fn parse_error_message_with_details() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "error",
         "payload": {
             "code": "E_CONFIG",
@@ -454,7 +454,7 @@ fn parse_error_message_with_details() {
     .to_string();
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     match parsed.body {
-        kode::extensions::ExtensionBody::Error(payload) => {
+        kesa::extensions::ExtensionBody::Error(payload) => {
             assert_eq!(payload.code, "E_CONFIG");
             assert!(payload.details.is_some());
         }
@@ -466,7 +466,7 @@ fn parse_error_message_with_details() {
 fn parse_log_message_all_correlation_fields() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "log",
         "payload": {
             "schema": "pi.ext.log.v1",
@@ -495,8 +495,8 @@ fn parse_log_message_all_correlation_fields() {
     .to_string();
     let parsed = ExtensionMessage::parse_and_validate(&json).expect("parse");
     match parsed.body {
-        kode::extensions::ExtensionBody::Log(payload) => {
-            assert!(matches!(payload.level, kode::extensions::LogLevel::Debug));
+        kesa::extensions::ExtensionBody::Log(payload) => {
+            assert!(matches!(payload.level, kesa::extensions::LogLevel::Debug));
             assert_eq!(payload.correlation.session_id.as_deref(), Some("sess-123"));
             assert!(payload.source.is_some());
         }
@@ -512,7 +512,7 @@ fn parse_log_message_all_correlation_fields() {
 fn parse_message_with_unicode_content() {
     let json = json!({
         "id": "msg-unicode-😀",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "tool_call",
         "payload": {
             "call_id": "call-中文",
@@ -559,7 +559,7 @@ fn parse_json_array_fails() {
 fn parse_null_payload_fails() {
     let json = json!({
         "id": "msg-1",
-        "version": kode::extensions::PROTOCOL_VERSION,
+        "version": kesa::extensions::PROTOCOL_VERSION,
         "type": "register",
         "payload": null
     })

@@ -25,7 +25,7 @@ mod common;
 
 use chrono::{SecondsFormat, Utc};
 use common::harness::TestHarness;
-use kode::perf_build;
+use kesa::perf_build;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -156,7 +156,7 @@ fn build_pi_binary_candidates(
 
 fn pi_binary_candidates() -> Vec<PathBuf> {
     let target_dir = target_dir();
-    let cargo_bin_override = std::env::var_os("CARGO_BIN_EXE_kode").map(PathBuf::from);
+    let cargo_bin_override = std::env::var_os("CARGO_BIN_EXE_kesa").map(PathBuf::from);
     let detected_profile = perf_build::detect_build_profile();
     build_pi_binary_candidates(&target_dir, cargo_bin_override, &detected_profile)
 }

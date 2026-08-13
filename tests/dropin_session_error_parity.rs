@@ -1,5 +1,5 @@
-use kode::error::Error;
-use kode::session::{SessionEntry, SessionHeader};
+use kesa::error::Error;
+use kesa::session::{SessionEntry, SessionHeader};
 use serde_json::json;
 
 #[test]

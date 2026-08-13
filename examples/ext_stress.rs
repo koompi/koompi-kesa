@@ -12,11 +12,11 @@ use asupersync::runtime::reactor::create_reactor;
 use asupersync::time::{timeout, wall_now};
 use chrono::{SecondsFormat, Utc};
 use clap::{ArgAction, Parser};
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, HostcallReactorConfig, JsExtensionLoadSpec,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use serde_json::Value;
 
 #[derive(Parser, Debug)]
@@ -183,7 +183,7 @@ async fn run(args: Args) -> Result<()> {
         cwd: cwd.clone(),
         ..Default::default()
     };
-    let runtime = kode::extensions::JsExtensionRuntimeHandle::start(
+    let runtime = kesa::extensions::JsExtensionRuntimeHandle::start(
         js_config,
         Arc::clone(&tools),
         manager.clone(),

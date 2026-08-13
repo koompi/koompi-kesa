@@ -1,8 +1,8 @@
-use kode::compaction::{ResolvedCompactionSettings, prepare_compaction};
-use kode::model::{
+use kesa::compaction::{ResolvedCompactionSettings, prepare_compaction};
+use kesa::model::{
     AssistantMessage, ContentBlock, Cost, StopReason, TextContent, Usage, UserContent,
 };
-use kode::session::{EntryBase, MessageEntry, SessionEntry, SessionMessage};
+use kesa::session::{EntryBase, MessageEntry, SessionEntry, SessionMessage};
 
 #[test]
 fn test_compaction_usage_double_counting_bug() {

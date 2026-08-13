@@ -9,15 +9,15 @@ mod common;
 #[cfg(unix)]
 use asupersync::runtime::RuntimeBuilder;
 use common::TestHarness;
-use kode::config::Config;
+use kesa::config::Config;
 #[cfg(unix)]
-use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kesa::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
 #[cfg(unix)]
-use kode::extensions_js::PiJsRuntimeConfig;
+use kesa::extensions_js::PiJsRuntimeConfig;
 #[cfg(unix)]
-use kode::package_manager::{PackageManager, PackageScope, ResolveRoots};
-use kode::session::encode_cwd;
-use kode::tools::ToolRegistry;
+use kesa::package_manager::{PackageManager, PackageScope, ResolveRoots};
+use kesa::session::encode_cwd;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::cell::Cell;
 use std::collections::BTreeMap;
@@ -138,7 +138,7 @@ struct CliTestHarness {
 impl CliTestHarness {
     fn new(name: &str) -> Self {
         let harness = TestHarness::new(name);
-        let binary_path = PathBuf::from(env!("CARGO_BIN_EXE_kode"));
+        let binary_path = PathBuf::from(env!("CARGO_BIN_EXE_kesa"));
 
         let mut env = BTreeMap::new();
 
@@ -403,7 +403,7 @@ impl CliTestHarness {
 /// Canonicalize a path and strip the Windows `\\?\` prefix if present.
 fn canon(p: &Path) -> PathBuf {
     let c = fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
-    kode::extensions::strip_unc_prefix(c)
+    kesa::extensions::strip_unc_prefix(c)
 }
 
 #[cfg(unix)]
@@ -1333,7 +1333,7 @@ fn e2e_cli_fetch_models_custom_authorization_skips_held_auth_lock() {
     );
     fs::create_dir_all(&agent_dir).expect("create isolated agent dir");
     let auth_path = agent_dir.join("auth.json");
-    let _held_auth_lock = kode::file_lock::DirLock::acquire_for(&auth_path, Duration::from_secs(1))
+    let _held_auth_lock = kesa::file_lock::DirLock::acquire_for(&auth_path, Duration::from_secs(1))
         .expect("hold auth lock while custom-authorization catalog fetch runs");
     fs::write(
         agent_dir.join("models.json"),
@@ -1482,7 +1482,7 @@ fn e2e_cli_fetch_models_keyless_persist_updates_list_models_despite_held_auth_lo
     );
     fs::create_dir_all(&agent_dir).expect("create isolated agent dir");
     let auth_path = agent_dir.join("auth.json");
-    let held_auth_lock = kode::file_lock::DirLock::acquire_for(&auth_path, Duration::from_secs(1))
+    let held_auth_lock = kesa::file_lock::DirLock::acquire_for(&auth_path, Duration::from_secs(1))
         .expect("hold auth lock while keyless catalog fetch runs");
     fs::write(
         agent_dir.join("models.json"),
@@ -2209,7 +2209,7 @@ fn e2e_cli_config_paths_honor_env_overrides() {
 
     let env_root = harness.harness.temp_path("env-overrides");
     // Strip \\?\ prefix so env vars and expected paths match CLI output.
-    let env_root = kode::extensions::strip_unc_prefix(env_root);
+    let env_root = kesa::extensions::strip_unc_prefix(env_root);
     let agent_dir = env_root.join("agent-root");
     let config_path = env_root.join("settings-override.json");
     let sessions_dir = env_root.join("sessions-root");
@@ -2276,7 +2276,7 @@ fn e2e_cli_config_paths_fallback_to_agent_dir() {
     let agent_dir = env_root.join("agent-root");
     std::fs::create_dir_all(&agent_dir).expect("create agent dir");
     // Strip \\?\ prefix so env var and expected paths match CLI output.
-    let agent_dir = kode::extensions::strip_unc_prefix(agent_dir);
+    let agent_dir = kesa::extensions::strip_unc_prefix(agent_dir);
 
     harness.env.insert(
         "KODE_CODING_AGENT_DIR".to_string(),

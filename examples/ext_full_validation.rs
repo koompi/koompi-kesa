@@ -16,7 +16,7 @@ use std::time::Instant;
 use anyhow::{Context, Result, bail};
 use chrono::{SecondsFormat, Utc};
 use clap::Parser;
-use kode::extension_popularity::CandidatePool;
+use kesa::extension_popularity::CandidatePool;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Parser)]
@@ -975,7 +975,7 @@ struct ClassificationContext<'a> {
 }
 
 fn classify_item(
-    item: &kode::extension_popularity::CandidateItem,
+    item: &kesa::extension_popularity::CandidateItem,
     ctx: &ClassificationContext<'_>,
 ) -> ExtensionAssessment {
     let manifest_entry = lookup_by_id_or_alias(ctx.manifest_map, item);
@@ -1076,7 +1076,7 @@ fn classify_item(
 }
 
 fn classify_unvendored(
-    item: &kode::extension_popularity::CandidateItem,
+    item: &kesa::extension_popularity::CandidateItem,
     queue: Option<&OnboardingQueueEntry>,
 ) -> Classification {
     let notes_lower = item
@@ -1761,7 +1761,7 @@ fn stage_passed(stages: &[StageResult], name: &str) -> bool {
 
 fn lookup_by_id_or_alias<'a, T>(
     map: &'a HashMap<String, T>,
-    item: &kode::extension_popularity::CandidateItem,
+    item: &kesa::extension_popularity::CandidateItem,
 ) -> Option<&'a T> {
     if let Some(value) = map.get(&item.id) {
         return Some(value);
@@ -1780,7 +1780,7 @@ fn lookup_by_id_or_alias<'a, T>(
         .find_map(|candidate| map.get(&candidate))
 }
 
-fn derive_candidate_id_variants(item: &kode::extension_popularity::CandidateItem) -> Vec<String> {
+fn derive_candidate_id_variants(item: &kesa::extension_popularity::CandidateItem) -> Vec<String> {
     let mut out = Vec::new();
     push_candidate_id_variants(&item.id, &mut out);
     for alias in &item.aliases {

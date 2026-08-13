@@ -4,7 +4,7 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use kode::compaction::{
+use kesa::compaction::{
     CompactionPreparation, CompactionResult, SEMANTIC_COMPACTION_QUALITY_SCHEMA,
     SemanticCompactionLossClass, SemanticCompactionMarker, SemanticCompactionMarkerKind,
     SemanticCompactionMarkerObservation, SemanticCompactionMarkerSeverity,
@@ -12,12 +12,12 @@ use kode::compaction::{
     evaluate_semantic_compaction_quality, prepare_compaction,
     semantic_compaction_quality_report_to_jsonl, semantic_compaction_quality_report_to_value,
 };
-use kode::model::{
+use kesa::model::{
     AssistantMessage, ContentBlock, ImageContent, Message, StopReason, TextContent,
     ThinkingContent, ToolCall, Usage, UserContent, UserMessage,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::session::{
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::session::{
     BranchSummaryEntry, CompactionEntry, EntryBase, MessageEntry, ModelChangeEntry, Session,
     SessionEntry, SessionMessage,
 };
@@ -68,8 +68,8 @@ impl Provider for ScriptedProvider {
         &self,
         context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> kode::error::Result<
-        Pin<Box<dyn futures::Stream<Item = kode::error::Result<kode::model::StreamEvent>> + Send>>,
+    ) -> kesa::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kesa::error::Result<kesa::model::StreamEvent>> + Send>>,
     > {
         let prompt_text = extract_prompt_text(context);
         self.prompts.lock().expect("lock prompts").push(prompt_text);
@@ -94,7 +94,7 @@ impl Provider for ScriptedProvider {
         };
 
         Ok(Box::pin(futures::stream::iter(vec![Ok(
-            kode::model::StreamEvent::Done {
+            kesa::model::StreamEvent::Done {
                 reason: StopReason::Stop,
                 message,
             },
@@ -825,8 +825,8 @@ fn semantic_compaction_quality_false_positive_controls_do_not_satisfy_missing_ma
     }));
 }
 
-const fn make_settings(keep_recent_tokens: u32) -> kode::compaction::ResolvedCompactionSettings {
-    kode::compaction::ResolvedCompactionSettings {
+const fn make_settings(keep_recent_tokens: u32) -> kesa::compaction::ResolvedCompactionSettings {
+    kesa::compaction::ResolvedCompactionSettings {
         enabled: true,
         // Use a tiny window so compaction triggers for the small test entries.
         // Tests focus on cut-point and formatting logic, not the threshold.
@@ -1463,7 +1463,7 @@ fn compaction_pipeline_save_and_open_round_trip_rehydrates_compaction_context() 
         ctx.push(("sha256".into(), summary_hash));
     });
 
-    let details = kode::compaction::compaction_details_to_value(&result.details).expect("details");
+    let details = kesa::compaction::compaction_details_to_value(&result.details).expect("details");
     session.entries.push(compaction_entry(
         "c1",
         Some("u2"),
@@ -1548,7 +1548,7 @@ fn compaction_pipeline_second_pass_seeds_previous_details_and_updates_summary() 
         .expect("compact1");
 
     let details1 =
-        kode::compaction::compaction_details_to_value(&result1.details).expect("details1");
+        kesa::compaction::compaction_details_to_value(&result1.details).expect("details1");
 
     let mut entries2 = entries;
     entries2.push(compaction_entry(
@@ -1629,7 +1629,7 @@ fn compaction_pipeline_second_pass_seeds_previous_details_and_updates_summary() 
     session.entries = entries2;
 
     let details2 =
-        kode::compaction::compaction_details_to_value(&result2.details).expect("details2");
+        kesa::compaction::compaction_details_to_value(&result2.details).expect("details2");
     session.entries.push(compaction_entry(
         "c2",
         Some("u4"),
@@ -1731,10 +1731,10 @@ fn compact_returns_error_when_provider_stops_with_error() {
             &self,
             _context: &Context<'_>,
             _options: &StreamOptions,
-        ) -> kode::error::Result<
+        ) -> kesa::error::Result<
             Pin<
                 Box<
-                    dyn futures::Stream<Item = kode::error::Result<kode::model::StreamEvent>>
+                    dyn futures::Stream<Item = kesa::error::Result<kesa::model::StreamEvent>>
                         + Send,
                 >,
             >,
@@ -1752,7 +1752,7 @@ fn compact_returns_error_when_provider_stops_with_error() {
             };
 
             Ok(Box::pin(futures::stream::iter(vec![Ok(
-                kode::model::StreamEvent::Done {
+                kesa::model::StreamEvent::Done {
                     reason: StopReason::Error,
                     message,
                 },

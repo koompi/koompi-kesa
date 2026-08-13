@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use kode::scheduler::{Clock, Scheduler};
+    use kesa::scheduler::{Clock, Scheduler};
     use std::sync::Arc;
     use std::sync::atomic::AtomicU64;
 

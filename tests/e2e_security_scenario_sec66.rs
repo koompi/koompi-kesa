@@ -16,12 +16,12 @@
 mod common;
 
 use common::TestHarness;
-use kode::connectors::http::HttpConnector;
-use kode::extension_preflight::{
+use kesa::connectors::http::HttpConnector;
+use kesa::extension_preflight::{
     ExtensionTrustState, ExtensionTrustTracker, InstallRecommendation,
     is_hostcall_allowed_for_trust,
 };
-use kode::extensions::{
+use kesa::extensions::{
     ExecMediationLedgerEntry, ExtensionManager, ExtensionPolicy, ExtensionPolicyMode,
     HostCallContext, HostCallPayload, IncidentBundleFilter, IncidentBundleRedactionPolicy,
     IncidentEvidenceBundle, RuntimeRiskConfig, SecretBrokerLedgerEntry, SecurityAlert,
@@ -29,7 +29,7 @@ use kode::extensions::{
     build_incident_evidence_bundle, dispatch_host_call_shared, query_security_alerts,
     verify_incident_evidence_bundle,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 
 // ============================================================================

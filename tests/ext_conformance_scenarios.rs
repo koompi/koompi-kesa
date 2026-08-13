@@ -11,20 +11,20 @@ mod common;
 
 use async_trait::async_trait;
 use chrono::{SecondsFormat, Utc};
-use kode::conformance::normalization::{is_path_key, path_suffix_match};
-use kode::extensions::{
+use kesa::conformance::normalization::{is_path_key, path_suffix_match};
+use kesa::extensions::{
     ExtensionAiCompletionRequest, ExtensionHostActions, ExtensionManager, ExtensionPolicy,
     ExtensionPolicyMode, ExtensionSendMessage, ExtensionSendUserMessage, ExtensionSession,
     HostcallInterceptor, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::{HostcallKind, HostcallRequest, PiJsRuntimeConfig};
-use kode::resources::{
+use kesa::extensions_js::{HostcallKind, HostcallRequest, PiJsRuntimeConfig};
+use kesa::resources::{
     LoadPromptTemplatesOptions, LoadSkillsOptions, LoadThemesOptions, load_prompt_templates,
     load_skills, load_themes,
 };
-use kode::scheduler::HostcallOutcome;
-use kode::session::SessionMessage;
-use kode::tools::ToolRegistry;
+use kesa::scheduler::HostcallOutcome;
+use kesa::session::SessionMessage;
+use kesa::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::borrow::Cow;
@@ -1952,12 +1952,12 @@ impl ExtensionSession for ConformanceSession {
         self.branch.lock().unwrap().clone()
     }
 
-    async fn set_name(&self, name: String) -> kode::error::Result<()> {
+    async fn set_name(&self, name: String) -> kesa::error::Result<()> {
         *self.name.lock().unwrap() = Some(name);
         Ok(())
     }
 
-    async fn append_message(&self, message: SessionMessage) -> kode::error::Result<()> {
+    async fn append_message(&self, message: SessionMessage) -> kesa::error::Result<()> {
         self.messages.lock().unwrap().push(message);
         Ok(())
     }
@@ -1966,7 +1966,7 @@ impl ExtensionSession for ConformanceSession {
         &self,
         custom_type: String,
         data: Option<Value>,
-    ) -> kode::error::Result<()> {
+    ) -> kesa::error::Result<()> {
         self.entries.lock().unwrap().push(serde_json::json!({
             "type": custom_type,
             "data": data,
@@ -1974,7 +1974,7 @@ impl ExtensionSession for ConformanceSession {
         Ok(())
     }
 
-    async fn set_model(&self, provider: String, model_id: String) -> kode::error::Result<()> {
+    async fn set_model(&self, provider: String, model_id: String) -> kesa::error::Result<()> {
         *self.model.lock().unwrap() = (Some(provider), Some(model_id));
         Ok(())
     }
@@ -1983,7 +1983,7 @@ impl ExtensionSession for ConformanceSession {
         self.model.lock().unwrap().clone()
     }
 
-    async fn set_thinking_level(&self, level: String) -> kode::error::Result<()> {
+    async fn set_thinking_level(&self, level: String) -> kesa::error::Result<()> {
         *self.thinking_level.lock().unwrap() = Some(level);
         Ok(())
     }
@@ -1992,7 +1992,7 @@ impl ExtensionSession for ConformanceSession {
         self.thinking_level.lock().unwrap().clone()
     }
 
-    async fn set_label(&self, target_id: String, label: Option<String>) -> kode::error::Result<()> {
+    async fn set_label(&self, target_id: String, label: Option<String>) -> kesa::error::Result<()> {
         self.labels.lock().unwrap().push((target_id, label));
         Ok(())
     }
@@ -3766,21 +3766,21 @@ impl PiAiProviderBridgeHostActions {
 
 #[async_trait]
 impl ExtensionHostActions for PiAiProviderBridgeHostActions {
-    async fn send_message(&self, _message: ExtensionSendMessage) -> kode::error::Result<()> {
+    async fn send_message(&self, _message: ExtensionSendMessage) -> kesa::error::Result<()> {
         Ok(())
     }
 
     async fn send_user_message(
         &self,
         _message: ExtensionSendUserMessage,
-    ) -> kode::error::Result<()> {
+    ) -> kesa::error::Result<()> {
         Ok(())
     }
 
     async fn complete_ai(
         &self,
         request: ExtensionAiCompletionRequest,
-    ) -> kode::error::Result<Value> {
+    ) -> kesa::error::Result<Value> {
         let simple = request.simple;
         self.completions
             .lock()
@@ -3797,7 +3797,7 @@ impl ExtensionHostActions for PiAiProviderBridgeHostActions {
         }
     }
 
-    async fn list_ai_models(&self) -> kode::error::Result<Value> {
+    async fn list_ai_models(&self) -> kesa::error::Result<Value> {
         Ok(serde_json::json!([
             {
                 "id": "mock-model",

@@ -2,8 +2,8 @@
 //!
 //! Tests the end-to-end flow: validated candidates + license report + pool → scored + tiered corpus.
 
-use kode::extension_license::{ScreeningInput, VerdictStatus, screen_extensions};
-use kode::extension_scoring::{
+use kesa::extension_license::{ScreeningInput, VerdictStatus, screen_extensions};
+use kesa::extension_scoring::{
     CandidateInput, CompatStatus, Compatibility, Gates, LicenseInfo, MarketplaceSignals, Recency,
     Redistribution, RiskInfo, Signals, Tags, score_candidates,
 };
@@ -242,7 +242,7 @@ fn golden_tiered_corpus() {
     }
 
     let text = std::fs::read_to_string(corpus_path).unwrap();
-    let report: kode::extension_scoring::ScoringReport = serde_json::from_str(&text).unwrap();
+    let report: kesa::extension_scoring::ScoringReport = serde_json::from_str(&text).unwrap();
 
     // Basic sanity.
     assert!(

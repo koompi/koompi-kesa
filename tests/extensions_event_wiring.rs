@@ -12,13 +12,13 @@
 
 mod common;
 
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
     PROTOCOL_VERSION, RegisterPayload,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::model::ToolCall;
-use kode::tools::{ToolOutput, ToolRegistry};
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::model::ToolCall;
+use kesa::tools::{ToolOutput, ToolRegistry};
 use serde_json::{Value, json};
 use std::sync::Arc;
 
@@ -89,7 +89,7 @@ fn make_tool_call(name: &str, args: Value) -> ToolCall {
 
 fn make_tool_output(text: &str) -> ToolOutput {
     ToolOutput {
-        content: vec![kode::model::ContentBlock::Text(kode::model::TextContent {
+        content: vec![kesa::model::ContentBlock::Text(kesa::model::TextContent {
             text: text.to_string(),
             text_signature: None,
         })],
@@ -991,7 +991,7 @@ fn event_ordering_startup_then_tool_call_then_agent_end() {
                 .expect("dispatch tool_call");
 
             let output = ToolOutput {
-                content: vec![kode::model::ContentBlock::Text(kode::model::TextContent {
+                content: vec![kesa::model::ContentBlock::Text(kesa::model::TextContent {
                     text: "ok".to_string(),
                     text_signature: None,
                 })],

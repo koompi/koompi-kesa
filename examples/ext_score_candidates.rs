@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use anyhow::{Context, Result, bail};
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use kode::extension_popularity::{CandidateItem as PopularityCandidateItem, CandidatePool};
-use kode::extension_scoring::{
+use kesa::extension_popularity::{CandidateItem as PopularityCandidateItem, CandidatePool};
+use kesa::extension_scoring::{
     CandidateInput, CompatStatus, Compatibility, Gates, LicenseInfo, MarketplaceSignals, Recency,
     Redistribution, RiskInfo, Signals, Tags, score_candidates,
 };

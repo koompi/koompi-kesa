@@ -12,13 +12,13 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use kode::auth::{
+use kesa::auth::{
     AuthCredential, AuthStorage, complete_extension_oauth, complete_extension_oauth_with_client,
     start_extension_oauth,
 };
-use kode::http::client::Client;
-use kode::models::OAuthConfig;
-use kode::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
+use kesa::http::client::Client;
+use kesa::models::OAuthConfig;
+use kesa::vcr::{Cassette, Interaction, RecordedRequest, RecordedResponse, VcrMode, VcrRecorder};
 use serde_json::json;
 use std::collections::HashMap;
 
@@ -100,7 +100,7 @@ fn empty_oauth_vcr_client(harness: &TestHarness, cassette_name: &str) -> Client 
 
 #[test]
 fn oauth_config_extracted_from_extension_provider_spec() {
-    use kode::extensions::ExtensionManager;
+    use kesa::extensions::ExtensionManager;
 
     let manager = ExtensionManager::new();
     manager.register_provider(json!({
@@ -141,7 +141,7 @@ fn oauth_config_extracted_from_extension_provider_spec() {
 
 #[test]
 fn oauth_config_none_when_not_specified() {
-    use kode::extensions::ExtensionManager;
+    use kesa::extensions::ExtensionManager;
 
     let manager = ExtensionManager::new();
     manager.register_provider(json!({
@@ -162,7 +162,7 @@ fn oauth_config_none_when_not_specified() {
 
 #[test]
 fn oauth_config_none_when_missing_required_fields() {
-    use kode::extensions::ExtensionManager;
+    use kesa::extensions::ExtensionManager;
 
     let manager = ExtensionManager::new();
     // OAuth object missing clientId — should return None.
@@ -191,7 +191,7 @@ fn oauth_config_none_when_missing_required_fields() {
 
 #[test]
 fn oauth_config_optional_redirect_uri_omitted() {
-    use kode::extensions::ExtensionManager;
+    use kesa::extensions::ExtensionManager;
 
     let manager = ExtensionManager::new();
     manager.register_provider(json!({
@@ -222,7 +222,7 @@ fn oauth_config_optional_redirect_uri_omitted() {
 
 #[test]
 fn oauth_config_shared_across_multiple_models() {
-    use kode::extensions::ExtensionManager;
+    use kesa::extensions::ExtensionManager;
 
     let manager = ExtensionManager::new();
     manager.register_provider(json!({
@@ -799,7 +799,7 @@ fn resolve_api_key_override_takes_precedence_over_oauth() {
 
 /// Mirrors the config-extraction logic in main.rs.
 fn oauth_configs_from_entries(
-    entries: &[kode::models::ModelEntry],
+    entries: &[kesa::models::ModelEntry],
 ) -> HashMap<String, OAuthConfig> {
     entries
         .iter()
@@ -812,17 +812,17 @@ fn oauth_configs_from_entries(
         .collect()
 }
 
-fn make_model_entry(provider: &str, oauth: Option<OAuthConfig>) -> kode::models::ModelEntry {
-    kode::models::ModelEntry {
-        model: kode::provider::Model {
+fn make_model_entry(provider: &str, oauth: Option<OAuthConfig>) -> kesa::models::ModelEntry {
+    kesa::models::ModelEntry {
+        model: kesa::provider::Model {
             id: format!("{provider}-model-1"),
             name: format!("{provider} Model"),
             api: "anthropic".to_string(),
             provider: provider.to_string(),
             base_url: String::new(),
             reasoning: false,
-            input: vec![kode::provider::InputType::Text],
-            cost: kode::provider::ModelCost {
+            input: vec![kesa::provider::InputType::Text],
+            cost: kesa::provider::ModelCost {
                 input: 0.0,
                 output: 0.0,
                 cache_read: 0.0,

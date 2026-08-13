@@ -55,9 +55,9 @@ pub use logging::{
 /// `Config::default()` do not want to mutate the real user config, so we mark the current version
 /// as already seen unless a test intentionally overrides it.
 #[allow(dead_code)]
-pub fn hermetic_interactive_config(mut config: kode::config::Config) -> kode::config::Config {
+pub fn hermetic_interactive_config(mut config: kesa::config::Config) -> kesa::config::Config {
     if config.last_changelog_version.is_none() {
-        config.last_changelog_version = Some(kode::platform::VERSION.to_string());
+        config.last_changelog_version = Some(kesa::platform::VERSION.to_string());
     }
     config
 }

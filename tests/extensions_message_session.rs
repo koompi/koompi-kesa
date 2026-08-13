@@ -6,8 +6,8 @@
 //! integration. Session-dependent tests use real `SessionHandle` backed by an
 //! in-memory `Session`, exercising the full session persistence plumbing.
 
-use kode::extensions::{ExtensionManager, ExtensionSession, PROTOCOL_VERSION, RegisterPayload};
-use kode::session::{Session, SessionHandle};
+use kesa::extensions::{ExtensionManager, ExtensionSession, PROTOCOL_VERSION, RegisterPayload};
+use kesa::session::{Session, SessionHandle};
 use serde_json::{Value, json};
 use std::sync::Arc;
 

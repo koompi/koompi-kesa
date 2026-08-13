@@ -9,12 +9,12 @@
 use std::future::Future;
 
 use asupersync::runtime::RuntimeBuilder;
-use kode::connectors::http::HttpConnector;
-use kode::extensions::{
+use kesa::connectors::http::HttpConnector;
+use kesa::extensions::{
     ExtensionPolicy, ExtensionPolicyMode, HostCallContext, HostCallErrorCode, HostCallPayload,
     PolicyDecision, dispatch_host_call_shared,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use tempfile::tempdir;
 

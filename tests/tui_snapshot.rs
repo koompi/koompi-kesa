@@ -6,16 +6,16 @@ use asupersync::channel::mpsc;
 use bubbletea::{KeyMsg, KeyType, Message, Model as BubbleteaModel};
 use common::TestHarness;
 use futures::stream;
-use kode::agent::{Agent, AgentConfig};
-use kode::config::Config;
-use kode::interactive::{ConversationMessage, MessageRole, PiApp, PiMsg};
-use kode::keybindings::KeyBindings;
-use kode::model::{ContentBlock, Cost, StopReason, StreamEvent, TextContent, ToolCall, Usage};
-use kode::models::ModelEntry;
-use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
-use kode::resources::{ResourceCliOptions, ResourceLoader};
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::agent::{Agent, AgentConfig};
+use kesa::config::Config;
+use kesa::interactive::{ConversationMessage, MessageRole, PiApp, PiMsg};
+use kesa::keybindings::KeyBindings;
+use kesa::model::{ContentBlock, Cost, StopReason, StreamEvent, TextContent, ToolCall, Usage};
+use kesa::models::ModelEntry;
+use kesa::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
+use kesa::resources::{ResourceCliOptions, ResourceLoader};
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
@@ -55,8 +55,8 @@ impl Provider for DummyProvider {
         &self,
         _context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> kode::error::Result<
-        Pin<Box<dyn futures::Stream<Item = kode::error::Result<StreamEvent>> + Send>>,
+    ) -> kesa::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kesa::error::Result<StreamEvent>> + Send>>,
     > {
         Ok(Box::pin(stream::empty()))
     }

@@ -1,4 +1,4 @@
-use kode::hostcall_queue::{
+use kesa::hostcall_queue::{
     BravoBiasMode, ContentionSample, ContentionSignature, HostcallQueueEnqueueResult,
     HostcallQueueMode, HostcallRequestQueue, QueueTenant, S3FifoFallbackReason, S3FifoMode,
 };

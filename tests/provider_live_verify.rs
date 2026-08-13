@@ -34,15 +34,15 @@ mod common;
 
 use common::TestHarness;
 use futures::StreamExt;
-use kode::model::{Message, StopReason, StreamEvent, UserContent, UserMessage};
-use kode::provider::{Context, Provider, StreamOptions, ToolDef};
-use kode::provider_metadata::{PROVIDER_METADATA, ProviderMetadata, provider_auth_env_keys};
-use kode::providers::anthropic::AnthropicProvider;
-use kode::providers::cohere::CohereProvider;
-use kode::providers::gemini::GeminiProvider;
-use kode::providers::openai::OpenAIProvider;
-use kode::providers::openai_responses::OpenAIResponsesProvider;
-use kode::providers::{normalize_openai_base, normalize_openai_responses_base};
+use kesa::model::{Message, StopReason, StreamEvent, UserContent, UserMessage};
+use kesa::provider::{Context, Provider, StreamOptions, ToolDef};
+use kesa::provider_metadata::{PROVIDER_METADATA, ProviderMetadata, provider_auth_env_keys};
+use kesa::providers::anthropic::AnthropicProvider;
+use kesa::providers::cohere::CohereProvider;
+use kesa::providers::gemini::GeminiProvider;
+use kesa::providers::openai::OpenAIProvider;
+use kesa::providers::openai_responses::OpenAIResponsesProvider;
+use kesa::providers::{normalize_openai_base, normalize_openai_responses_base};
 use serde::Serialize;
 use std::env;
 use std::path::PathBuf;
@@ -201,7 +201,7 @@ async fn collect_stream_events(
                         // Fall back to Done message text if no deltas were received.
                         if text.is_empty() {
                             for block in &message.content {
-                                if let kode::model::ContentBlock::Text(tc) = block
+                                if let kesa::model::ContentBlock::Text(tc) = block
                                     && !tc.text.is_empty()
                                 {
                                     text.clone_from(&tc.text);
@@ -240,7 +240,7 @@ async fn collect_stream_events(
 struct StreamResult {
     events: Vec<StreamEvent>,
     text: String,
-    tool_calls: Vec<kode::model::ToolCall>,
+    tool_calls: Vec<kesa::model::ToolCall>,
     has_start: bool,
     has_done: bool,
     stop_reason: Option<StopReason>,
@@ -899,84 +899,84 @@ mod oai_compat {
 
     #[test]
     fn groq_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("groq").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("groq").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("groq", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn deepseek_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("deepseek").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("deepseek").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("deepseek", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn openrouter_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("openrouter").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("openrouter").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("openrouter", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn xai_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("xai").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("xai").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("xai", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn mistral_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("mistral").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("mistral").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("mistral", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn fireworks_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("fireworks").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("fireworks").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("fireworks", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn togetherai_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("togetherai").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("togetherai").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("togetherai", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn perplexity_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("perplexity").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("perplexity").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("perplexity", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn deepinfra_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("deepinfra").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("deepinfra").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("deepinfra", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn cerebras_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("cerebras").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("cerebras").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("cerebras", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn nvidia_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("nvidia").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("nvidia").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("nvidia", defaults.api, defaults.base_url);
     }
 
     #[test]
     fn nebius_simple_text() {
-        let meta = kode::provider_metadata::provider_metadata("nebius").unwrap();
+        let meta = kesa::provider_metadata::provider_metadata("nebius").unwrap();
         let defaults = meta.routing_defaults.unwrap();
         verify_oai_compat_simple_text("nebius", defaults.api, defaults.base_url);
     }
@@ -1008,7 +1008,7 @@ fn streaming_event_timeline_is_well_ordered() {
     eprintln!("  Using {provider_id} (via {source}) for timeline ordering test");
 
     common::run_async(async move {
-        let meta = kode::provider_metadata::provider_metadata(provider_id).unwrap();
+        let meta = kesa::provider_metadata::provider_metadata(provider_id).unwrap();
         let provider = build_provider_from_metadata(meta)
             .unwrap_or_else(|| panic!("failed to build provider for {provider_id}"));
         let context = simple_context("Say just the word hello");
@@ -1069,7 +1069,7 @@ fn usage_tokens_are_populated_in_done_event() {
     };
 
     common::run_async(async move {
-        let meta = kode::provider_metadata::provider_metadata(provider_id).unwrap();
+        let meta = kesa::provider_metadata::provider_metadata(provider_id).unwrap();
         let provider = build_provider_from_metadata(meta).unwrap();
         let context = simple_context("Say just the word hello");
         let options = simple_options(&api_key);

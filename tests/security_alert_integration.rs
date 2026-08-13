@@ -4,7 +4,7 @@
 //! Verifies the `SecurityAlert` types, alert stream recording, artifact
 //! export, and category/severity classification.
 
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionManager, RuntimeRiskStateLabelValue, SECURITY_ALERT_SCHEMA_VERSION, SecurityAlert,
     SecurityAlertAction, SecurityAlertArtifact, SecurityAlertCategory, SecurityAlertCategoryCounts,
     SecurityAlertSeverity, SecurityAlertSeverityCounts,

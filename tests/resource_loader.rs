@@ -3,10 +3,10 @@
 mod common;
 
 use common::{TestHarness, run_async};
-use kode::package_manager::{
+use kesa::package_manager::{
     PackageManager, PackageScope, ResolveRoots, ResolvedResource, ResourceOrigin,
 };
-use kode::resources::{
+use kesa::resources::{
     DiagnosticKind, LoadPromptTemplatesOptions, LoadSkillsOptions, LoadThemesOptions,
     dedupe_prompts, dedupe_themes, load_prompt_templates, load_skills, load_themes,
 };

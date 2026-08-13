@@ -12,12 +12,12 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionManager, ExtensionPolicy, ExtensionPolicyMode, HostCallPayload, JsExtensionLoadSpec,
     JsExtensionRuntimeHandle, PolicyDecision,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::HashMap;
@@ -347,21 +347,21 @@ fn empty_default_caps_list() {
 #[test]
 fn hostcall_exec_maps_to_exec_capability() {
     let payload = make_hostcall_payload("exec", "exec", json!({"cmd": "ls", "args": ["-la"]}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("exec"));
 }
 
 #[test]
 fn hostcall_env_maps_to_env_capability() {
     let payload = make_hostcall_payload("env", "env", json!({"op": "get", "key": "HOME"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("env"));
 }
 
 #[test]
 fn hostcall_tool_bash_maps_to_exec_capability() {
     let payload = make_hostcall_payload("tool", "exec", json!({"name": "bash", "input": {}}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("exec"));
 }
 
@@ -372,7 +372,7 @@ fn hostcall_tool_read_maps_to_read_capability() {
         "read",
         json!({"name": "read", "input": {"path": "file.txt"}}),
     );
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("read"));
 }
 
@@ -383,42 +383,42 @@ fn hostcall_tool_write_maps_to_write_capability() {
         "write",
         json!({"name": "write", "input": {"path": "file.txt", "content": "hello"}}),
     );
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("write"));
 }
 
 #[test]
 fn hostcall_http_maps_to_http_capability() {
     let payload = make_hostcall_payload("http", "http", json!({"url": "https://example.com"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("http"));
 }
 
 #[test]
 fn hostcall_session_maps_to_session_capability() {
     let payload = make_hostcall_payload("session", "session", json!({"op": "getSessionName"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("session"));
 }
 
 #[test]
 fn hostcall_events_maps_to_events_capability() {
     let payload = make_hostcall_payload("events", "events", json!({"op": "emit", "event": "test"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("events"));
 }
 
 #[test]
 fn hostcall_ui_maps_to_ui_capability() {
     let payload = make_hostcall_payload("ui", "ui", json!({"op": "notify", "message": "hi"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("ui"));
 }
 
 #[test]
 fn hostcall_fs_read_maps_to_read_capability() {
     let payload = make_hostcall_payload("fs", "read", json!({"op": "read", "path": "/tmp/x"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("read"));
 }
 
@@ -429,28 +429,28 @@ fn hostcall_fs_write_maps_to_write_capability() {
         "write",
         json!({"op": "write", "path": "/tmp/x", "data": "hello"}),
     );
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("write"));
 }
 
 #[test]
 fn hostcall_fs_delete_maps_to_write_capability() {
     let payload = make_hostcall_payload("fs", "write", json!({"op": "delete", "path": "/tmp/x"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("write"));
 }
 
 #[test]
 fn hostcall_fs_stat_maps_to_read_capability() {
     let payload = make_hostcall_payload("fs", "read", json!({"op": "stat", "path": "/tmp/x"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("read"));
 }
 
 #[test]
 fn hostcall_fs_list_maps_to_read_capability() {
     let payload = make_hostcall_payload("fs", "read", json!({"op": "list", "path": "/tmp"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("read"));
 }
 
@@ -458,35 +458,35 @@ fn hostcall_fs_list_maps_to_read_capability() {
 fn hostcall_fs_mkdir_maps_to_write_capability() {
     let payload =
         make_hostcall_payload("fs", "write", json!({"op": "mkdir", "path": "/tmp/newdir"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("write"));
 }
 
 #[test]
 fn hostcall_unknown_method_returns_none() {
     let payload = make_hostcall_payload("nonsense", "nonsense", json!({}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert!(cap.is_none(), "unknown method should return None");
 }
 
 #[test]
 fn hostcall_empty_method_returns_none() {
     let payload = make_hostcall_payload("", "", json!({}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert!(cap.is_none(), "empty method should return None");
 }
 
 #[test]
 fn hostcall_log_maps_to_log_capability() {
     let payload = make_hostcall_payload("log", "log", json!({"level": "info", "msg": "test"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(cap.as_deref(), Some("log"));
 }
 
 #[test]
 fn hostcall_unknown_method_with_recognized_event_alias_still_fails_closed() {
     let payload = make_hostcall_payload("mystery", "mystery", json!({"op": "get_active_tools"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(
         cap, None,
         "unknown method must not derive events capability"
@@ -496,7 +496,7 @@ fn hostcall_unknown_method_with_recognized_event_alias_still_fails_closed() {
 #[test]
 fn hostcall_unknown_method_with_recognized_session_alias_still_fails_closed() {
     let payload = make_hostcall_payload("mystery", "mystery", json!({"method": "get_model"}));
-    let cap = kode::extensions::required_capability_for_host_call(&payload);
+    let cap = kesa::extensions::required_capability_for_host_call(&payload);
     assert_eq!(
         cap, None,
         "unknown method must not derive session capability"
@@ -510,7 +510,7 @@ fn hostcall_unsupported_events_and_session_ops_do_not_escalate() {
         "events",
         json!({"op": "launch_shell", "method": "exec"}),
     );
-    let events_cap = kode::extensions::required_capability_for_host_call(&events_payload);
+    let events_cap = kesa::extensions::required_capability_for_host_call(&events_payload);
     assert_eq!(
         events_cap.as_deref(),
         Some("events"),
@@ -519,7 +519,7 @@ fn hostcall_unsupported_events_and_session_ops_do_not_escalate() {
 
     let session_payload =
         make_hostcall_payload("session", "session", json!({"op": "exec", "name": "bash"}));
-    let session_cap = kode::extensions::required_capability_for_host_call(&session_payload);
+    let session_cap = kesa::extensions::required_capability_for_host_call(&session_payload);
     assert_eq!(
         session_cap.as_deref(),
         Some("session"),
@@ -538,7 +538,7 @@ fn hostcall_malformed_alias_fields_do_not_promote_privileged_capabilities() {
             "name": "bash"
         }),
     );
-    let events_cap = kode::extensions::required_capability_for_host_call(&events_payload);
+    let events_cap = kesa::extensions::required_capability_for_host_call(&events_payload);
     assert_eq!(
         events_cap.as_deref(),
         Some("events"),
@@ -554,7 +554,7 @@ fn hostcall_malformed_alias_fields_do_not_promote_privileged_capabilities() {
             "name": "bash"
         }),
     );
-    let session_cap = kode::extensions::required_capability_for_host_call(&session_payload);
+    let session_cap = kesa::extensions::required_capability_for_host_call(&session_payload);
     assert_eq!(
         session_cap.as_deref(),
         Some("session"),

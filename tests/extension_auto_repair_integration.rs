@@ -8,11 +8,11 @@
 
 mod common;
 
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::{PiJsRuntimeConfig, RepairMode};
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::{PiJsRuntimeConfig, RepairMode};
+use kesa::tools::ToolRegistry;
 use std::sync::Arc;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

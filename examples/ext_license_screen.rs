@@ -17,9 +17,9 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use kode::extension_license::{ScreeningInput, screen_extensions};
-use kode::extension_popularity::CandidatePool;
-use kode::extension_validation::ValidationReport;
+use kesa::extension_license::{ScreeningInput, screen_extensions};
+use kesa::extension_popularity::CandidatePool;
+use kesa::extension_validation::ValidationReport;
 
 #[derive(Debug, Parser)]
 #[command(name = "ext_license_screen")]
@@ -81,7 +81,7 @@ fn main() -> Result<()> {
     let inputs: Vec<ScreeningInput> = validated
         .candidates
         .iter()
-        .filter(|c| c.status == kode::extension_validation::ValidationStatus::TrueExtension)
+        .filter(|c| c.status == kesa::extension_validation::ValidationStatus::TrueExtension)
         .map(|c| {
             // Try to find license: first by canonical_id, then by name.
             let known_license = license_map

@@ -18,11 +18,11 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use kode::extensions::{
+use kesa::extensions::{
     ExtensionEventName, ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle,
 };
-use kode::extensions_js::PiJsRuntimeConfig;
-use kode::tools::ToolRegistry;
+use kesa::extensions_js::PiJsRuntimeConfig;
+use kesa::tools::ToolRegistry;
 use serde_json::{Value, json};
 use std::fmt::Write as _;
 use std::path::PathBuf;

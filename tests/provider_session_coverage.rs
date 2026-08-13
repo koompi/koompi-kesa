@@ -16,12 +16,12 @@
 mod common;
 
 use common::TestHarness;
-use kode::models::ModelEntry;
-use kode::provider::{Api, CacheRetention, KnownProvider, Model, ModelCost, StreamOptions};
-use kode::providers::{
+use kesa::models::ModelEntry;
+use kesa::provider::{Api, CacheRetention, KnownProvider, Model, ModelCost, StreamOptions};
+use kesa::providers::{
     create_provider, normalize_cohere_base, normalize_openai_base, normalize_openai_responses_base,
 };
-use kode::session::{Session, SessionEntry, SessionMessage, SessionOpenDiagnostics};
+use kesa::session::{Session, SessionEntry, SessionMessage, SessionOpenDiagnostics};
 use serde_json::json;
 use std::collections::HashMap;
 use std::io::Write;
@@ -87,7 +87,7 @@ fn make_message_entry(id: &str, msg_type: &str, text: &str) -> serde_json::Value
 
 fn user_msg(text: &str) -> SessionMessage {
     SessionMessage::User {
-        content: kode::model::UserContent::Text(text.to_string()),
+        content: kesa::model::UserContent::Text(text.to_string()),
         timestamp: None,
     }
 }
@@ -304,7 +304,7 @@ fn normalize_cohere_base_appends_endpoint() {
 /// Non-reasoning model always clamps to Off.
 #[test]
 fn model_entry_clamp_thinking_non_reasoning() {
-    use kode::model::ThinkingLevel;
+    use kesa::model::ThinkingLevel;
 
     let entry = ModelEntry {
         model: Model {
@@ -339,7 +339,7 @@ fn model_entry_clamp_thinking_non_reasoning() {
 /// Reasoning model without xhigh support clamps XHigh to High.
 #[test]
 fn model_entry_clamp_thinking_xhigh_downgrade() {
-    use kode::model::ThinkingLevel;
+    use kesa::model::ThinkingLevel;
 
     let entry = ModelEntry {
         model: Model {
@@ -377,7 +377,7 @@ fn model_entry_clamp_thinking_xhigh_downgrade() {
 /// Model with xhigh support passes XHigh through.
 #[test]
 fn model_entry_clamp_thinking_xhigh_supported() {
-    use kode::model::ThinkingLevel;
+    use kesa::model::ThinkingLevel;
 
     let entry = ModelEntry {
         model: Model {
@@ -933,7 +933,7 @@ fn create_provider_no_extensions() {
 /// encode_cwd produces a safe directory name.
 #[test]
 fn encode_cwd_basic() {
-    let encoded = kode::session::encode_cwd(std::path::Path::new("/home/user/projects/test"));
+    let encoded = kesa::session::encode_cwd(std::path::Path::new("/home/user/projects/test"));
     assert!(!encoded.is_empty(), "encoded cwd should not be empty");
     // Should not contain path separators
     assert!(
@@ -945,7 +945,7 @@ fn encode_cwd_basic() {
 /// encode_cwd handles root path.
 #[test]
 fn encode_cwd_root() {
-    let encoded = kode::session::encode_cwd(std::path::Path::new("/"));
+    let encoded = kesa::session::encode_cwd(std::path::Path::new("/"));
     assert!(!encoded.is_empty(), "encoded root should not be empty");
 }
 
@@ -953,7 +953,7 @@ fn encode_cwd_root() {
 #[test]
 fn encode_cwd_special_chars() {
     let encoded =
-        kode::session::encode_cwd(std::path::Path::new("/home/user/my project (v2.0)/src"));
+        kesa::session::encode_cwd(std::path::Path::new("/home/user/my project (v2.0)/src"));
     assert!(!encoded.is_empty());
     assert!(!encoded.contains('/'));
 }

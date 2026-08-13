@@ -21,15 +21,15 @@ mod common;
 use async_trait::async_trait;
 use common::run_async;
 use futures::Stream;
-use kode::agent::{Agent, AgentConfig, AgentEvent, AgentSession};
-use kode::compaction::ResolvedCompactionSettings;
-use kode::error::{Error, Result};
-use kode::model::{
+use kesa::agent::{Agent, AgentConfig, AgentEvent, AgentSession};
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::error::{Error, Result};
+use kesa::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall, Usage,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::path::Path;
 use std::pin::Pin;
@@ -220,12 +220,12 @@ async fn run_with_retry_driver(
             Err(err) => {
                 let s = err.to_string();
                 retries < max_retries
-                    && (err.is_transient() || kode::error::is_retryable_error(&s, None, None))
+                    && (err.is_transient() || kesa::error::is_retryable_error(&s, None, None))
             }
             Ok(msg) => {
                 matches!(msg.stop_reason, StopReason::Error)
                     && retries < max_retries
-                    && kode::error::is_retryable_error(
+                    && kesa::error::is_retryable_error(
                         msg.error_message.as_deref().unwrap_or(""),
                         Some(msg.usage.input),
                         None,

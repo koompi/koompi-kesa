@@ -8,7 +8,7 @@
 
 use futures::executor::block_on;
 use libfuzzer_sys::fuzz_target;
-use kode::fuzz_exports::Session;
+use kesa::fuzz_exports::Session;
 use std::path::Path;
 use tempfile::tempdir;
 

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use futures::{StreamExt, stream};
-    use kode::sse::SseStream;
+    use kesa::sse::SseStream;
 
     #[test]
     fn fragmented_utf8_bom_is_stripped_once() {

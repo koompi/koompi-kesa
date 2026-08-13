@@ -1,11 +1,11 @@
-use kode::connectors::http::HttpConnector;
-use kode::extensions::{
+use kesa::connectors::http::HttpConnector;
+use kesa::extensions::{
     ExtensionBudgetControllerConfig, ExtensionBudgetTier, ExtensionManager, ExtensionPolicy,
     ExtensionPolicyMode, ExtensionQuotaConfig, HostCallContext, HostCallPayload, OcoTunerConfig,
     OcoTunerSnapshot, RegimeShiftConfig, RuntimeRiskConfig, SafetyEnvelopeConfig,
     dispatch_host_call_shared,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::path::Path;
 

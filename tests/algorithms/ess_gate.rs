@@ -1,4 +1,4 @@
-use kode::extension_scoring::{
+use kesa::extension_scoring::{
     OpeEvaluatorConfig, OpeGateReason, OpeTraceSample, evaluate_off_policy,
 };
 

@@ -12,8 +12,8 @@
 mod common;
 
 use common::harness::TestHarness;
-use kode::auth::AuthStorage;
-use kode::models::{ModelRegistry, default_models_path};
+use kesa::auth::AuthStorage;
+use kesa::models::{ModelRegistry, default_models_path};
 
 // ============================================================================
 // Built-in Models Tests

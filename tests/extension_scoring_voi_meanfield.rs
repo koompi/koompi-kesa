@@ -6,7 +6,7 @@
 //! candidate ordering, empty inputs, and mean-field convergence/oscillation/clipping.
 
 use chrono::{TimeZone, Utc};
-use kode::extension_scoring::{
+use kesa::extension_scoring::{
     MeanFieldControllerConfig, MeanFieldControllerReport, MeanFieldShardObservation,
     MeanFieldShardState, VoiCandidate, VoiPlan, VoiPlannerConfig, VoiSkipReason,
     compute_mean_field_controls, plan_voi_candidates,

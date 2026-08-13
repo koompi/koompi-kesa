@@ -15,18 +15,18 @@
 mod common;
 
 use common::TestHarness;
-use kode::agent::{Agent, AgentConfig, AgentSession};
-use kode::auth::AuthStorage;
-use kode::config::Config;
-use kode::model::{
+use kesa::agent::{Agent, AgentConfig, AgentSession};
+use kesa::auth::AuthStorage;
+use kesa::config::Config;
+use kesa::model::{
     AssistantMessage, ContentBlock, StopReason, TextContent, ToolCall, Usage, UserContent,
 };
-use kode::provider::Provider;
-use kode::providers::openai::OpenAIProvider;
-use kode::resources::ResourceLoader;
-use kode::rpc::{RpcOptions, run};
-use kode::session::{AutosaveDurabilityMode, Session, SessionEntry, SessionMessage};
-use kode::tools::ToolRegistry;
+use kesa::provider::Provider;
+use kesa::providers::openai::OpenAIProvider;
+use kesa::resources::ResourceLoader;
+use kesa::rpc::{RpcOptions, run};
+use kesa::session::{AutosaveDurabilityMode, Session, SessionEntry, SessionMessage};
+use kesa::tools::ToolRegistry;
 use serde_json::Value;
 use std::path::Path;
 use std::sync::mpsc::{Receiver, TryRecvError};
@@ -94,14 +94,14 @@ fn setup_rpc(
 ) -> (
     asupersync::channel::mpsc::Sender<String>,
     Arc<Mutex<Receiver<String>>>,
-    asupersync::runtime::JoinHandle<kode::error::Result<()>>,
+    asupersync::runtime::JoinHandle<kesa::error::Result<()>>,
 ) {
     let session = Arc::new(asupersync::sync::Mutex::new(session));
     let agent_session = AgentSession::new(
         dummy_agent(),
         session,
         false,
-        kode::compaction::ResolvedCompactionSettings::default(),
+        kesa::compaction::ResolvedCompactionSettings::default(),
     );
 
     let auth_dir = tempfile::tempdir().unwrap();

@@ -520,7 +520,7 @@ fn no_vcr_imports_in_unit_suite_files() {
     let unit_section = &classification[unit_start..unit_end];
 
     let vcr_imports = [
-        "use kode::vcr",
+        "use kesa::vcr",
         "VcrRecorder",
         "VcrMode",
         "cassette_root",

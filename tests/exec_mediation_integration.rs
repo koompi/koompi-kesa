@@ -5,7 +5,7 @@
 //! classification, exec mediation evaluation, secret broker detection and
 //! redaction, ledger entry accumulation, and artifact export.
 
-use kode::extensions::{
+use kesa::extensions::{
     DangerousCommandClass, ExecMediationArtifact, ExecMediationLedgerEntry, ExecMediationPolicy,
     ExecMediationResult, ExecRiskTier, ExtensionManager, ExtensionPolicy, PolicyProfile,
     SecretBrokerArtifact, SecretBrokerLedgerEntry, SecretBrokerPolicy, classify_dangerous_command,

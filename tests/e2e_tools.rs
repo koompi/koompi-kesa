@@ -8,9 +8,9 @@
 mod common;
 
 use common::TestHarness;
-use kode::error::Error;
-use kode::model::ContentBlock;
-use kode::tools::ToolRegistry;
+use kesa::error::Error;
+use kesa::model::ContentBlock;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::fmt::Write as _;
 #[cfg(unix)]

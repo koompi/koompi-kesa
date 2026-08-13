@@ -19,25 +19,25 @@ use std::time::Instant;
 
 use async_trait::async_trait;
 use futures::{Stream, StreamExt};
-use kode::agent::{AbortHandle, Agent, AgentConfig, AgentEvent, AgentSession, InputSource};
-use kode::compaction::ResolvedCompactionSettings;
-use kode::error::{Error, Result};
-use kode::model::{
+use kesa::agent::{AbortHandle, Agent, AgentConfig, AgentEvent, AgentSession, InputSource};
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::error::{Error, Result};
+use kesa::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent,
     ToolResultMessage, Usage,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::resource_governor::{
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::resource_governor::{
     AdmissionAction, HostResourceBudgets, HostResourceSample, ResourceDimension, ResourceGovernor,
     ResourceOperationKind, ResourceRequest,
 };
-use kode::session::Session;
-use kode::session_index::SessionIndex;
-use kode::swarm_flight_recorder::{
+use kesa::session::Session;
+use kesa::session_index::SessionIndex;
+use kesa::swarm_flight_recorder::{
     SWARM_FLIGHT_RECORDER_EVENT_SCHEMA, SWARM_FLIGHT_RECORDER_REPORT_SCHEMA, SwarmFlightRecorder,
     SwarmFlightRecorderEvent, validate_swarm_flight_recorder_jsonl,
 };
-use kode::tools::ToolRegistry;
+use kesa::tools::ToolRegistry;
 use serde_json::{Value, json};
 use url::Url;
 
@@ -181,7 +181,7 @@ impl Provider for FlightProvider {
         if call_index == 0 {
             return Ok(self.stream_done(self.assistant_message(
                 StopReason::ToolUse,
-                vec![ContentBlock::ToolCall(kode::model::ToolCall {
+                vec![ContentBlock::ToolCall(kesa::model::ToolCall {
                     id: "flight-read-1".to_string(),
                     name: "read".to_string(),
                     arguments: json!({ "path": self.read_path }),
@@ -583,7 +583,7 @@ async fn run_flight_session(
 
     let sessions_dir = workspace.join("sessions");
     let (session_entries, session_path, indexed_sessions) = {
-        let cx = kode::agent_cx::AgentCx::for_current_or_request();
+        let cx = kesa::agent_cx::AgentCx::for_current_or_request();
         let guard = session.lock(cx.cx()).await?;
         let session_path = guard
             .path
@@ -711,7 +711,7 @@ async fn run_cancelled_pressure_session(
     assert_eq!(message.error_message.as_deref(), Some("Aborted"));
 
     let session_entries = {
-        let cx = kode::agent_cx::AgentCx::for_current_or_request();
+        let cx = kesa::agent_cx::AgentCx::for_current_or_request();
         let guard = session.lock(cx.cx()).await?;
         guard.entries_for_current_path().len()
     };
@@ -758,7 +758,7 @@ fn pressure_lab_memory(sample: HostResourceSample) -> Value {
 }
 
 fn pressure_lab_governor_decisions()
--> Vec<(ResourceRequest, kode::resource_governor::AdmissionDecision)> {
+-> Vec<(ResourceRequest, kesa::resource_governor::AdmissionDecision)> {
     let sample = pressure_lab_sample();
     let governor = ResourceGovernor::with_budgets(HostResourceBudgets::fixed_with_queue_depth(
         4.0,

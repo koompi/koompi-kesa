@@ -15,7 +15,7 @@ mod common;
 
 use chrono::{SecondsFormat, Utc};
 use common::harness::TestHarness;
-use kode::provider_metadata::{
+use kesa::provider_metadata::{
     PROVIDER_METADATA, canonical_provider_id, provider_auth_env_keys, provider_metadata,
     provider_routing_defaults,
 };

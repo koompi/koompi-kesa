@@ -9,20 +9,20 @@ mod common;
 use async_trait::async_trait;
 use common::{TestHarness, run_async};
 use futures::Stream;
-use kode::agent::{Agent, AgentConfig, AgentEvent, AgentSession, SemanticContextBundleInjection};
-use kode::compaction::ResolvedCompactionSettings;
-use kode::error::{Error, Result};
-use kode::model::{
+use kesa::agent::{Agent, AgentConfig, AgentEvent, AgentSession, SemanticContextBundleInjection};
+use kesa::compaction::ResolvedCompactionSettings;
+use kesa::error::{Error, Result};
+use kesa::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ToolCall,
     ToolResultMessage, Usage,
 };
-use kode::provider::{Context, Provider, StreamOptions};
-use kode::semantic_workspace_graph::{
+use kesa::provider::{Context, Provider, StreamOptions};
+use kesa::semantic_workspace_graph::{
     ContextArtifactCacheScope, ContextBundleBudget, ContextBundleRequest, SemanticContextBundle,
     SemanticContextBundlePlanner, SemanticWorkspaceGraphBuilder,
 };
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::BTreeMap;
 use std::fs;

@@ -10,8 +10,8 @@ use common::{
     parse_http_status,
 };
 use futures::{FutureExt, StreamExt, pin_mut};
-use kode::model::StreamEvent;
-use kode::provider::{Context, StreamOptions, ToolDef};
+use kesa::model::StreamEvent;
+use kesa::provider::{Context, StreamOptions, ToolDef};
 use serde::Serialize;
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -346,7 +346,7 @@ fn write_markdown_report(path: &Path, records: &[ParityRecord]) -> std::io::Resu
 }
 
 async fn collect_stream_events(
-    provider: std::sync::Arc<dyn kode::provider::Provider>,
+    provider: std::sync::Arc<dyn kesa::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) -> Result<Vec<StreamEvent>, String> {
@@ -456,7 +456,7 @@ async fn run_parity_case(
         };
     };
 
-    let client = kode::http::client::Client::new();
+    let client = kesa::http::client::Client::new();
     let provider = match create_live_provider(&entry, client) {
         Ok(provider) => provider,
         Err(err) => {

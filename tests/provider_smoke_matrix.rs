@@ -16,11 +16,11 @@ mod common;
 
 use common::{MockHttpResponse, TestHarness};
 use futures::StreamExt;
-use kode::model::{Message, UserContent, UserMessage};
-use kode::models::ModelEntry;
-use kode::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions};
-use kode::provider_metadata::{PROVIDER_METADATA, ProviderOnboardingMode, canonical_provider_id};
-use kode::providers::create_provider;
+use kesa::model::{Message, UserContent, UserMessage};
+use kesa::models::ModelEntry;
+use kesa::provider::{Context, InputType, Model, ModelCost, StreamEvent, StreamOptions};
+use kesa::provider_metadata::{PROVIDER_METADATA, ProviderOnboardingMode, canonical_provider_id};
+use kesa::providers::create_provider;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -65,7 +65,7 @@ fn request_header(headers: &[(String, String)], key: &str) -> Option<String> {
 }
 
 fn drive_to_done(
-    provider: Arc<dyn kode::provider::Provider>,
+    provider: Arc<dyn kesa::provider::Provider>,
     context: Context<'static>,
     options: StreamOptions,
 ) {
@@ -1065,7 +1065,7 @@ fn smoke_report_artifact() {
 fn run_smoke_stream(
     harness: &TestHarness,
     provider_id: &str,
-    defaults: kode::provider_metadata::ProviderRoutingDefaults,
+    defaults: kesa::provider_metadata::ProviderRoutingDefaults,
 ) -> bool {
     let server = harness.start_mock_http_server();
     let safe_id = provider_id.replace('-', "_");

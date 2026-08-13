@@ -4,7 +4,7 @@
 //! slash commands, keyboard shortcuts, CLI flags, and custom LLM providers. No mocks
 //! are used; all tests operate directly on the real `ExtensionManager` and `RegisterPayload`.
 
-use kode::extensions::{ExtensionManager, PROTOCOL_VERSION, RegisterPayload};
+use kesa::extensions::{ExtensionManager, PROTOCOL_VERSION, RegisterPayload};
 use serde_json::{Value, json};
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

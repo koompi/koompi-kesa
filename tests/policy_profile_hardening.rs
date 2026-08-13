@@ -5,7 +5,7 @@
 //! capability opt-in auditing, effective policy explanation, and profile
 //! transition validation.
 
-use kode::extensions::{
+use kesa::extensions::{
     DangerousOptInAuditEntry, ExtensionOverride, ExtensionPolicy, ExtensionPolicyMode,
     PolicyDecision, PolicyExplanation, PolicyProfile, ProfileTransitionCheck,
 };
@@ -153,7 +153,7 @@ fn allow_dangerous_with_standard_mode_enables_prompt() {
 
 #[test]
 fn dangerous_capabilities_identified_correctly() {
-    use kode::extensions::Capability;
+    use kesa::extensions::Capability;
 
     assert!(Capability::Exec.is_dangerous());
     assert!(Capability::Env.is_dangerous());
@@ -388,7 +388,7 @@ fn safe_profile_uses_strict_exec_mediation() {
     assert!(policy.exec_mediation.enabled);
     assert_eq!(
         policy.exec_mediation.deny_threshold,
-        kode::extensions::ExecRiskTier::High
+        kesa::extensions::ExecRiskTier::High
     );
     assert!(policy.exec_mediation.audit_all_classified);
 }
@@ -399,7 +399,7 @@ fn permissive_profile_uses_permissive_exec_mediation() {
     assert!(policy.exec_mediation.enabled);
     assert_eq!(
         policy.exec_mediation.deny_threshold,
-        kode::extensions::ExecRiskTier::Critical
+        kesa::extensions::ExecRiskTier::Critical
     );
     assert!(!policy.exec_mediation.audit_all_classified);
 }

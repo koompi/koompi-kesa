@@ -17,17 +17,17 @@ use asupersync::sync::Mutex;
 use bubbletea::{KeyMsg, KeyType, Message, Model as BubbleteaModel};
 use common::TestHarness;
 use futures::stream;
-use kode::agent::{Agent, AgentConfig};
-use kode::config::Config;
-use kode::extensions::{ExtensionManager, ExtensionUiRequest, ExtensionUiResponse};
-use kode::interactive::{PiApp, PiMsg};
-use kode::keybindings::KeyBindings;
-use kode::model::{StreamEvent, Usage};
-use kode::models::ModelEntry;
-use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
-use kode::resources::{ResourceCliOptions, ResourceLoader};
-use kode::session::Session;
-use kode::tools::ToolRegistry;
+use kesa::agent::{Agent, AgentConfig};
+use kesa::config::Config;
+use kesa::extensions::{ExtensionManager, ExtensionUiRequest, ExtensionUiResponse};
+use kesa::interactive::{PiApp, PiMsg};
+use kesa::keybindings::KeyBindings;
+use kesa::model::{StreamEvent, Usage};
+use kesa::models::ModelEntry;
+use kesa::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
+use kesa::resources::{ResourceCliOptions, ResourceLoader};
+use kesa::session::Session;
+use kesa::tools::ToolRegistry;
 use serde_json::json;
 use std::collections::HashMap;
 use std::pin::Pin;
@@ -67,8 +67,8 @@ impl Provider for DummyProvider {
         &self,
         _context: &Context<'_>,
         _options: &StreamOptions,
-    ) -> kode::error::Result<
-        Pin<Box<dyn futures::Stream<Item = kode::error::Result<StreamEvent>> + Send>>,
+    ) -> kesa::error::Result<
+        Pin<Box<dyn futures::Stream<Item = kesa::error::Result<StreamEvent>> + Send>>,
     > {
         Ok(Box::pin(stream::empty()))
     }
@@ -217,7 +217,7 @@ fn cap_prompt_request(
 // ===========================================================================
 
 mod permission_store {
-    use kode::permissions::PermissionStore;
+    use kesa::permissions::PermissionStore;
 
     #[test]
     fn corrupt_json_returns_error() {
@@ -341,7 +341,7 @@ mod permission_store {
 // ===========================================================================
 
 mod policy_evaluation {
-    use kode::extensions::{ExtensionPolicy, ExtensionPolicyMode, PolicyDecision};
+    use kesa::extensions::{ExtensionPolicy, ExtensionPolicyMode, PolicyDecision};
 
     fn default_policy(mode: ExtensionPolicyMode) -> ExtensionPolicy {
         ExtensionPolicy {
@@ -888,7 +888,7 @@ mod tui_prompt {
 
 mod prompt_persistence_integration {
     use super::*;
-    use kode::permissions::PermissionStore;
+    use kesa::permissions::PermissionStore;
 
     #[test]
     fn allow_always_persists_to_disk() {

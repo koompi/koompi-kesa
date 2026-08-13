@@ -6,12 +6,12 @@
 //! structs used by JS<->host protocol boundaries.
 
 use libfuzzer_sys::fuzz_target;
-use kode::extensions::{
+use kesa::extensions::{
     ErrorPayload, EventHookPayload, ExtensionMessage, HostCallPayload, HostResultPayload,
     LogPayload, RegisterPayload, SlashCommandPayload, SlashResultPayload, ToolCallPayload,
     ToolResultPayload,
 };
-use kode::extensions_js::ExtensionToolDef;
+use kesa::extensions_js::ExtensionToolDef;
 
 const MAX_INPUT_BYTES: usize = 128 * 1024;
 

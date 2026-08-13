@@ -13,7 +13,7 @@
 mod common;
 
 use common::TestHarness;
-use kode::resources::{
+use kesa::resources::{
     DiagnosticKind, LoadPromptTemplatesOptions, LoadSkillsOptions, LoadThemesOptions,
     dedupe_prompts, dedupe_themes, load_prompt_templates, load_skills, load_themes,
 };

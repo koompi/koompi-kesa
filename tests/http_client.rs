@@ -7,8 +7,8 @@
 mod common;
 
 use common::TestHarness;
-use kode::http::client::Client;
-use kode::vcr::{VcrMode, VcrRecorder};
+use kesa::http::client::Client;
+use kesa::vcr::{VcrMode, VcrRecorder};
 use std::io::{Read as _, Write as _};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Mutex, mpsc};

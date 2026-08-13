@@ -1,4 +1,4 @@
-use kode::validation_broker::{
+use kesa::validation_broker::{
     ValidationSlotArtifact, ValidationSlotLease, ValidationSlotRequest, ValidationSlotStore,
 };
 use serde_json::Value;
@@ -86,7 +86,7 @@ fn field_u64(value: &Value, key: &str) -> TestResult<u64> {
 
 fn run_doctor_json(env_overrides: &[(&str, Option<&str>)]) -> TestResult<Value> {
     let cwd = create_swarm_temp_test_dir(Path::new("/tmp"), "cwd")?;
-    let mut command = Command::new(env!("CARGO_BIN_EXE_kode")); // ubs:ignore false positive: Cargo provides the compiled test binary path.
+    let mut command = Command::new(env!("CARGO_BIN_EXE_kesa")); // ubs:ignore false positive: Cargo provides the compiled test binary path.
     command
         .args(["doctor", "--only", "swarm", "--format", "json"])
         .current_dir(cwd)
@@ -132,7 +132,7 @@ fn run_doctor_json(env_overrides: &[(&str, Option<&str>)]) -> TestResult<Value> 
 
 fn run_doctor_text(env_overrides: &[(&str, Option<&str>)]) -> TestResult<String> {
     let cwd = create_swarm_temp_test_dir(Path::new("/tmp"), "text-cwd")?;
-    let mut command = Command::new(env!("CARGO_BIN_EXE_kode")); // ubs:ignore false positive: Cargo provides the compiled test binary path.
+    let mut command = Command::new(env!("CARGO_BIN_EXE_kesa")); // ubs:ignore false positive: Cargo provides the compiled test binary path.
     command
         .args(["doctor", "--only", "swarm", "--format", "text"])
         .current_dir(cwd)

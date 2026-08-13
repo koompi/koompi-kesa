@@ -4,8 +4,8 @@
 //! We validate streaming semantics by having JS report observed chunks back
 //! to the host via `pi.tool("__report", ...)` hostcalls.
 
-use kode::extensions_js::{HostcallKind, HostcallRequest, PiJsRuntime};
-use kode::scheduler::{DeterministicClock, HostcallOutcome};
+use kesa::extensions_js::{HostcallKind, HostcallRequest, PiJsRuntime};
+use kesa::scheduler::{DeterministicClock, HostcallOutcome};
 use serde_json::{Value, json};
 use std::collections::VecDeque;
 

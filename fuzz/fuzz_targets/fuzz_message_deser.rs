@@ -10,7 +10,7 @@
 //! - `ToolCall`
 
 use libfuzzer_sys::fuzz_target;
-use kode::fuzz_exports::{AssistantMessage, ContentBlock, Message, ToolCall, UserContent};
+use kesa::fuzz_exports::{AssistantMessage, ContentBlock, Message, ToolCall, UserContent};
 
 fn fuzz_json(input: &str) {
     let _ = serde_json::from_str::<Message>(input);

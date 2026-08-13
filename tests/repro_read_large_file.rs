@@ -1,4 +1,4 @@
-use kode::tools::{ReadTool, Tool};
+use kesa::tools::{ReadTool, Tool};
 use serde_json::json;
 use std::io::Write;
 
@@ -32,7 +32,7 @@ fn test_read_large_file_offset() {
             .unwrap();
 
         let content = match &result.content[0] {
-            kode::model::ContentBlock::Text(t) => t.text.clone(),
+            kesa::model::ContentBlock::Text(t) => t.text.clone(),
             _ => panic!("Expected text content"),
         };
 

@@ -1,8 +1,8 @@
 #![forbid(unsafe_code)]
 
-use kode::PiResult;
-use kode::session::{CustomEntry, EntryBase, MigrationState, Session, SessionEntry, SessionHeader};
-use kode::session_store_v2::{
+use kesa::PiResult;
+use kesa::session::{CustomEntry, EntryBase, MigrationState, Session, SessionEntry, SessionHeader};
+use kesa::session_store_v2::{
     Manifest, MigrationEvent, MigrationVerification, SessionStoreV2, frame_to_session_entry,
     session_entry_to_frame_args,
 };
@@ -43,7 +43,7 @@ fn append_linear_entries(store: &mut SessionStoreV2, count: usize) -> PiResult<V
     Ok(ids)
 }
 
-fn frame_ids(frames: &[kode::session_store_v2::SegmentFrame]) -> Vec<String> {
+fn frame_ids(frames: &[kesa::session_store_v2::SegmentFrame]) -> Vec<String> {
     frames.iter().map(|frame| frame.entry_id.clone()).collect()
 }
 
@@ -71,7 +71,7 @@ fn write_index_json_rows(path: &Path, rows: &[Value]) -> PiResult<()> {
 
 fn rewrite_single_segment_frames_and_index(
     store: &SessionStoreV2,
-    frames: &[kode::session_store_v2::SegmentFrame],
+    frames: &[kesa::session_store_v2::SegmentFrame],
 ) -> PiResult<()> {
     let mut index_rows = read_index_json_rows(&store.index_file_path())?;
     assert_eq!(index_rows.len(), frames.len());
@@ -484,7 +484,7 @@ fn make_custom_entry(id: &str, parent_id: Option<&str>) -> SessionEntry {
 fn append_session_entry(
     store: &mut SessionStoreV2,
     entry: &SessionEntry,
-) -> PiResult<kode::session_store_v2::OffsetIndexEntry> {
+) -> PiResult<kesa::session_store_v2::OffsetIndexEntry> {
     let (entry_id, parent_id, entry_type, payload) = session_entry_to_frame_args(entry)?;
     store.append_entry(entry_id, parent_id, entry_type, payload)
 }
@@ -1976,11 +1976,11 @@ fn v2_sidecar_path_derivation() {
     use std::path::PathBuf;
 
     let p = PathBuf::from("/home/user/sessions/my-session.jsonl");
-    let sidecar = kode::session_store_v2::v2_sidecar_path(&p);
+    let sidecar = kesa::session_store_v2::v2_sidecar_path(&p);
     assert_eq!(sidecar, PathBuf::from("/home/user/sessions/my-session.v2"));
 
     let p2 = PathBuf::from("relative/path.jsonl");
-    let sidecar2 = kode::session_store_v2::v2_sidecar_path(&p2);
+    let sidecar2 = kesa::session_store_v2::v2_sidecar_path(&p2);
     assert_eq!(sidecar2, PathBuf::from("relative/path.v2"));
 }
 
@@ -1990,13 +1990,13 @@ fn has_v2_sidecar_detection() -> PiResult<()> {
     let jsonl_path = dir.path().join("test-session.jsonl");
     fs::write(&jsonl_path, "{}\n")?;
 
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl_path));
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl_path));
 
-    let sidecar_root = kode::session_store_v2::v2_sidecar_path(&jsonl_path);
+    let sidecar_root = kesa::session_store_v2::v2_sidecar_path(&jsonl_path);
     let mut store = SessionStoreV2::create(&sidecar_root, 4 * 1024)?;
     store.append_entry("e1", None, "message", json!({"text":"a"}))?;
 
-    assert!(kode::session_store_v2::has_v2_sidecar(&jsonl_path));
+    assert!(kesa::session_store_v2::has_v2_sidecar(&jsonl_path));
     Ok(())
 }
 
@@ -2015,14 +2015,14 @@ proptest! {
         }
         jsonl.push(format!("{stem}{ext}"));
 
-        let sidecar = kode::session_store_v2::v2_sidecar_path(&jsonl);
+        let sidecar = kesa::session_store_v2::v2_sidecar_path(&jsonl);
         let expected_name = format!("{stem}.v2");
         prop_assert_eq!(sidecar.parent(), jsonl.parent());
         prop_assert_eq!(
             sidecar.file_name().and_then(|name| name.to_str()),
             Some(expected_name.as_str())
         );
-        prop_assert_eq!(kode::session_store_v2::v2_sidecar_path(&jsonl), sidecar);
+        prop_assert_eq!(kesa::session_store_v2::v2_sidecar_path(&jsonl), sidecar);
     }
 
     #[test]
@@ -2040,8 +2040,8 @@ proptest! {
         let path_a = base.join(format!("{stem}{ext1}"));
         let path_b = base.join(format!("{stem}{ext2}"));
         prop_assert_eq!(
-            kode::session_store_v2::v2_sidecar_path(&path_a),
-            kode::session_store_v2::v2_sidecar_path(&path_b)
+            kesa::session_store_v2::v2_sidecar_path(&path_a),
+            kesa::session_store_v2::v2_sidecar_path(&path_b)
         );
     }
 
@@ -2054,7 +2054,7 @@ proptest! {
         let jsonl = dir.path().join("session.jsonl");
         fs::write(&jsonl, "{}\n").expect("write jsonl");
 
-        let sidecar_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+        let sidecar_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
         if create_manifest {
             fs::create_dir_all(&sidecar_root).expect("create sidecar root");
             fs::write(sidecar_root.join("manifest.json"), "{}\n").expect("write manifest");
@@ -2066,7 +2066,7 @@ proptest! {
         }
 
         prop_assert_eq!(
-            kode::session_store_v2::has_v2_sidecar(&jsonl),
+            kesa::session_store_v2::has_v2_sidecar(&jsonl),
             create_manifest || create_index
         );
     }
@@ -2206,14 +2206,14 @@ fn v2_append_has_no_rewrite_amplification() -> PiResult<()> {
 // ─── V2 Resume Integration Tests ─────────────────────────────────────────────
 
 /// Build a minimal JSONL session file with the given entries.
-fn build_test_jsonl(dir: &Path, entries: &[kode::session::SessionEntry]) -> std::path::PathBuf {
+fn build_test_jsonl(dir: &Path, entries: &[kesa::session::SessionEntry]) -> std::path::PathBuf {
     use std::io::Write;
 
     let path = dir.join("test_session.jsonl");
     let mut file = fs::File::create(&path).unwrap();
 
     // Write header (first line).
-    let header = kode::session::SessionHeader::new();
+    let header = kesa::session::SessionHeader::new();
     serde_json::to_writer(&mut file, &header).unwrap();
     file.write_all(b"\n").unwrap();
 
@@ -2230,11 +2230,11 @@ fn make_message_entry(
     id: &str,
     parent_id: Option<&str>,
     text: &str,
-) -> kode::session::SessionEntry {
-    kode::session::SessionEntry::Message(kode::session::MessageEntry {
-        base: kode::session::EntryBase::new(parent_id.map(String::from), id.to_string()),
-        message: kode::session::SessionMessage::User {
-            content: kode::model::UserContent::Text(text.to_string()),
+) -> kesa::session::SessionEntry {
+    kesa::session::SessionEntry::Message(kesa::session::MessageEntry {
+        base: kesa::session::EntryBase::new(parent_id.map(String::from), id.to_string()),
+        message: kesa::session::SessionMessage::User {
+            content: kesa::model::UserContent::Text(text.to_string()),
             timestamp: None,
         },
     })
@@ -2243,9 +2243,9 @@ fn make_message_entry(
 fn make_user_session_message(
     text: impl Into<String>,
     timestamp: i64,
-) -> kode::session::SessionMessage {
-    kode::session::SessionMessage::User {
-        content: kode::model::UserContent::Text(text.into()),
+) -> kesa::session::SessionMessage {
+    kesa::session::SessionMessage::User {
+        content: kesa::model::UserContent::Text(text.into()),
         timestamp: Some(timestamp),
     }
 }
@@ -2270,7 +2270,7 @@ fn test_timing_start() -> Instant {
 }
 
 fn usize_to_u64(value: usize, label: &str) -> PiResult<u64> {
-    u64::try_from(value).map_err(|_| kode::Error::session(format!("{label} does not fit in u64")))
+    u64::try_from(value).map_err(|_| kesa::Error::session(format!("{label} does not fit in u64")))
 }
 
 fn build_large_history_entries(count: usize, payload_bytes: usize) -> Vec<SessionEntry> {
@@ -2324,7 +2324,7 @@ fn emit_session_store_v2_recovery_evidence(report: &Value) -> PiResult<std::path
 }
 
 fn index_concurrent_session_snapshots(root: &Path) -> PiResult<usize> {
-    let index = kode::session_index::SessionIndex::for_sessions_root(root);
+    let index = kesa::session_index::SessionIndex::for_sessions_root(root);
     let writer_threads = 4usize;
     let sessions_per_thread = 8usize;
     let mut handles = Vec::with_capacity(writer_threads);
@@ -2374,7 +2374,7 @@ fn index_concurrent_session_snapshots(root: &Path) -> PiResult<usize> {
     for handle in handles {
         handle
             .join()
-            .map_err(|_| kode::Error::session("SessionIndex stress worker panicked"))??;
+            .map_err(|_| kesa::Error::session("SessionIndex stress worker panicked"))??;
     }
 
     let listed = index.list_sessions(None)?;
@@ -2393,7 +2393,7 @@ fn concurrent_save_resume_index_chaos(root: &Path) -> PiResult<usize> {
     const MESSAGES_PER_SESSION: usize = 6;
 
     fs::create_dir_all(root)?;
-    let index = kode::session_index::SessionIndex::for_sessions_root(root);
+    let index = kesa::session_index::SessionIndex::for_sessions_root(root);
     let start = Arc::new(Barrier::new(WORKERS));
     let mut handles = Vec::with_capacity(WORKERS);
 
@@ -2415,10 +2415,10 @@ fn concurrent_save_resume_index_chaos(root: &Path) -> PiResult<usize> {
             let path = session
                 .path
                 .clone()
-                .ok_or_else(|| kode::Error::session("chaos worker saved session without path"))?;
+                .ok_or_else(|| kesa::Error::session("chaos worker saved session without path"))?;
             let path_string = path.display().to_string();
 
-            kode::session::create_v2_sidecar_from_jsonl(&path)?;
+            kesa::session::create_v2_sidecar_from_jsonl(&path)?;
             let resumed = run_async(async { Session::open(&path_string).await })?;
             assert_eq!(
                 resumed.entries.len(),
@@ -2448,7 +2448,7 @@ fn concurrent_save_resume_index_chaos(root: &Path) -> PiResult<usize> {
     for handle in handles {
         handle
             .join()
-            .map_err(|_| kode::Error::session("concurrent save/resume worker panicked"))??;
+            .map_err(|_| kesa::Error::session("concurrent save/resume worker panicked"))??;
     }
 
     let refresh = index.refresh_incremental()?;
@@ -2477,7 +2477,7 @@ fn assert_crash_resilient_session_save(root: &Path) -> PiResult<std::path::PathB
     let path = session
         .path
         .clone()
-        .ok_or_else(|| kode::Error::session("saved session did not record a path"))?;
+        .ok_or_else(|| kesa::Error::session("saved session did not record a path"))?;
     let path_string = path.display().to_string();
     let (reopened, diagnostics) =
         run_async(async { Session::open_with_diagnostics(&path_string).await })?;
@@ -2560,17 +2560,17 @@ fn migrate_large_history_and_rebuild_checkpoint(
     max_segment_bytes: u64,
 ) -> PiResult<LargeMigrationOutcome> {
     let migration_start = test_timing_start();
-    let dry_run = kode::session::migrate_dry_run(jsonl)?;
+    let dry_run = kesa::session::migrate_dry_run(jsonl)?;
     assert!(dry_run.entry_count_match);
     assert!(dry_run.hash_chain_match);
     assert!(dry_run.index_consistent);
 
-    let migration = kode::session::migrate_jsonl_to_v2(jsonl, "bd-07cku.6-large-stress")?;
+    let migration = kesa::session::migrate_jsonl_to_v2(jsonl, "bd-07cku.6-large-stress")?;
     assert_eq!(migration.outcome, "ok");
     assert!(migration.verification.entry_count_match);
     let migration_elapsed_us = elapsed_test_us(migration_start);
 
-    let v2_root = kode::session_store_v2::v2_sidecar_path(jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(jsonl);
     let mut store = SessionStoreV2::create(&v2_root, max_segment_bytes)?;
     let base_entries_u64 = usize_to_u64(base_entries, "base_entries")?;
     assert_eq!(store.entry_count(), base_entries_u64);
@@ -2592,7 +2592,7 @@ fn migrate_large_history_and_rebuild_checkpoint(
     );
     let rebuilt_checkpoint = rebuilt
         .read_checkpoint(1)?
-        .ok_or_else(|| kode::Error::session("checkpoint missing after index rebuild"))?;
+        .ok_or_else(|| kesa::Error::session("checkpoint missing after index rebuild"))?;
     assert_eq!(rebuilt_checkpoint.head_entry_id, checkpoint.head_entry_id);
 
     Ok(LargeMigrationOutcome {
@@ -2764,9 +2764,9 @@ fn assert_v2_resume_parity(
     jsonl_root: &Path,
     baseline: &JsonlResumeBaseline,
 ) -> PiResult<V2ResumeParity> {
-    let store = kode::session::create_v2_sidecar_from_jsonl(&baseline.jsonl)?;
+    let store = kesa::session::create_v2_sidecar_from_jsonl(&baseline.jsonl)?;
     store.validate_integrity()?;
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&baseline.jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&baseline.jsonl);
     let v2_trace =
         run_async(async { Session::cold_start_trace_bundle(&baseline.jsonl, jsonl_root).await })?;
     assert_eq!(
@@ -2839,7 +2839,7 @@ fn corrupt_sidecar_segment(segment_path: &Path) -> PiResult<()> {
         segment_path.display()
     );
     let frame = lines.get_mut(1).ok_or_else(|| {
-        kode::Error::session("sidecar segment frame disappeared after length check")
+        kesa::Error::session("sidecar segment frame disappeared after length check")
     })?;
     *frame = "{malformed-sidecar-frame".to_string();
     fs::write(segment_path, format!("{}\n", lines.join("\n")))?;
@@ -2873,7 +2873,7 @@ fn assert_corrupt_sidecar_verified_repair(
         segment_path.display()
     );
     assert_eq!(
-        kode::session::migration_status(&baseline.jsonl),
+        kesa::session::migration_status(&baseline.jsonl),
         MigrationState::Migrated,
         "verified V2 repair did not leave a healthy migrated store"
     );
@@ -2887,7 +2887,7 @@ fn assert_corrupt_sidecar_verified_repair(
 #[test]
 fn v2_sidecar_path_derives_from_jsonl_stem() {
     let jsonl = Path::new("/tmp/sessions/my_session.jsonl");
-    let sidecar = kode::session_store_v2::v2_sidecar_path(jsonl);
+    let sidecar = kesa::session_store_v2::v2_sidecar_path(jsonl);
     assert_eq!(sidecar, Path::new("/tmp/sessions/my_session.v2"));
 }
 
@@ -2896,7 +2896,7 @@ fn has_v2_sidecar_returns_false_for_bare_jsonl() {
     let dir = tempdir().unwrap();
     let jsonl = dir.path().join("session.jsonl");
     fs::write(&jsonl, "{}").unwrap();
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl));
 }
 
 #[test]
@@ -2910,10 +2910,10 @@ fn create_v2_sidecar_round_trips_entries() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Create sidecar.
-    let store = kode::session::create_v2_sidecar_from_jsonl(&jsonl)?;
+    let store = kesa::session::create_v2_sidecar_from_jsonl(&jsonl)?;
 
     // Verify sidecar was created.
-    assert!(kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     // Verify entry count.
     assert_eq!(store.entry_count(), 3);
@@ -2928,7 +2928,7 @@ fn create_v2_sidecar_round_trips_entries() -> PiResult<()> {
 
     // Convert back to SessionEntry and verify content.
     for (frame, original) in frames.iter().zip(entries.iter()) {
-        let recovered = kode::session_store_v2::frame_to_session_entry(frame)?;
+        let recovered = kesa::session_store_v2::frame_to_session_entry(frame)?;
         let recovered_id = recovered.base_id().unwrap();
         let original_id = original.base_id().unwrap();
         assert_eq!(recovered_id, original_id);
@@ -2950,7 +2950,7 @@ fn v2_resume_loads_same_entries_as_jsonl() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Create V2 sidecar.
-    kode::session::create_v2_sidecar_from_jsonl(&jsonl)?;
+    kesa::session::create_v2_sidecar_from_jsonl(&jsonl)?;
 
     // Open via Session (will use V2 sidecar if detected) and assert inside
     // runtime harness, since run_test futures return ().
@@ -2959,7 +2959,7 @@ fn v2_resume_loads_same_entries_as_jsonl() -> PiResult<()> {
         .expect("temporary jsonl path must be valid UTF-8")
         .to_string();
     asupersync::test_utils::run_test(|| async move {
-        let (session, diag) = kode::session::Session::open_with_diagnostics(&jsonl_str)
+        let (session, diag) = kesa::session::Session::open_with_diagnostics(&jsonl_str)
             .await
             .expect("session open should succeed");
 
@@ -2975,7 +2975,7 @@ fn v2_resume_loads_same_entries_as_jsonl() -> PiResult<()> {
     });
 
     // Verify the V2 sidecar path was used (the has_v2_sidecar check).
-    assert!(kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     Ok(())
 }
@@ -2983,15 +2983,15 @@ fn v2_resume_loads_same_entries_as_jsonl() -> PiResult<()> {
 #[test]
 fn v2_sidecar_with_empty_entries_produces_empty_session() -> PiResult<()> {
     let dir = tempdir()?;
-    let entries: Vec<kode::session::SessionEntry> = vec![];
+    let entries: Vec<kesa::session::SessionEntry> = vec![];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Create sidecar (empty).
-    let store = kode::session::create_v2_sidecar_from_jsonl(&jsonl)?;
+    let store = kesa::session::create_v2_sidecar_from_jsonl(&jsonl)?;
     assert_eq!(store.entry_count(), 0);
 
     // Verify sidecar directory exists.
-    let sidecar_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let sidecar_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     assert!(sidecar_root.join("index").exists());
 
     Ok(())
@@ -3006,7 +3006,7 @@ fn v2_sidecar_preserves_entry_parent_chain() -> PiResult<()> {
         make_message_entry("child2", Some("child1"), "step 2"),
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
-    let store = kode::session::create_v2_sidecar_from_jsonl(&jsonl)?;
+    let store = kesa::session::create_v2_sidecar_from_jsonl(&jsonl)?;
 
     // Read active path from leaf to root.
     let path_frames = store.read_active_path("child2")?;
@@ -3028,7 +3028,7 @@ fn v2_sidecar_integrity_valid_after_migration() -> PiResult<()> {
         make_message_entry("d", Some("c"), "delta"),
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
-    let store = kode::session::create_v2_sidecar_from_jsonl(&jsonl)?;
+    let store = kesa::session::create_v2_sidecar_from_jsonl(&jsonl)?;
 
     // Validate integrity — should not error.
     store.validate_integrity()?;
@@ -3048,7 +3048,7 @@ fn migrate_jsonl_to_v2_creates_verified_sidecar() -> PiResult<()> {
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "test-corr-001")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "test-corr-001")?;
 
     assert_eq!(event.outcome, "ok");
     assert_eq!(event.source_format, "jsonl_v3");
@@ -3059,7 +3059,7 @@ fn migrate_jsonl_to_v2_creates_verified_sidecar() -> PiResult<()> {
     assert_eq!(event.correlation_id, "test-corr-001");
 
     // Verify ledger was written.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     let ledger = store.read_migration_events()?;
     assert_eq!(ledger.len(), 1);
@@ -3077,15 +3077,15 @@ fn migrate_jsonl_to_v2_preserves_existing_sidecar_on_rebuild_failure() -> PiResu
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    let initial_event = kode::session::migrate_jsonl_to_v2(&jsonl, "initial-corr")?;
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let initial_event = kesa::session::migrate_jsonl_to_v2(&jsonl, "initial-corr")?;
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let baseline_store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     let baseline_ids = frame_ids(&baseline_store.read_all_entries()?);
 
     let mut file = fs::OpenOptions::new().append(true).open(&jsonl)?;
     file.write_all(b"{ definitely-not-json }\n")?;
 
-    let err = kode::session::migrate_jsonl_to_v2(&jsonl, "retry-corr")
+    let err = kesa::session::migrate_jsonl_to_v2(&jsonl, "retry-corr")
         .expect_err("invalid JSONL should abort remigration");
     assert!(
         err.to_string().contains("Bad JSONL entry"),
@@ -3114,15 +3114,15 @@ fn create_v2_sidecar_from_jsonl_preserves_existing_sidecar_on_rebuild_failure() 
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    kode::session::create_v2_sidecar_from_jsonl(&jsonl)?;
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    kesa::session::create_v2_sidecar_from_jsonl(&jsonl)?;
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let baseline_store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     let baseline_ids = frame_ids(&baseline_store.read_all_entries()?);
 
     let mut file = fs::OpenOptions::new().append(true).open(&jsonl)?;
     file.write_all(b"{ definitely-not-json }\n")?;
 
-    let err = kode::session::create_v2_sidecar_from_jsonl(&jsonl)
+    let err = kesa::session::create_v2_sidecar_from_jsonl(&jsonl)
         .expect_err("invalid JSONL should abort sidecar rebuild");
     assert!(
         err.to_string().contains("Bad JSONL entry"),
@@ -3143,7 +3143,7 @@ fn migrate_jsonl_to_v2_failure_does_not_leave_partial_sidecars() -> PiResult<()>
     let dir = tempdir()?;
     let entries = vec![make_message_entry("bad1", None, "first")];
     let jsonl = build_test_jsonl(dir.path(), &entries);
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let file_name = v2_root
         .file_name()
         .expect("sidecar path must have a file name")
@@ -3153,14 +3153,14 @@ fn migrate_jsonl_to_v2_failure_does_not_leave_partial_sidecars() -> PiResult<()>
     let mut file = fs::OpenOptions::new().append(true).open(&jsonl)?;
     file.write_all(b"{ invalid-json }\n")?;
 
-    let err = kode::session::migrate_jsonl_to_v2(&jsonl, "bad-corr")
+    let err = kesa::session::migrate_jsonl_to_v2(&jsonl, "bad-corr")
         .expect_err("invalid JSONL should fail first migration");
     assert!(
         err.to_string().contains("Bad JSONL entry"),
         "unexpected error: {err}"
     );
     assert!(
-        !kode::session_store_v2::has_v2_sidecar(&jsonl),
+        !kesa::session_store_v2::has_v2_sidecar(&jsonl),
         "failed migration must not leave a live sidecar"
     );
     assert!(
@@ -3192,9 +3192,9 @@ fn verify_v2_against_jsonl_detects_matching_entries() -> PiResult<()> {
         make_message_entry("v2", Some("v1"), "world"),
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
-    let store = kode::session::create_v2_sidecar_from_jsonl(&jsonl)?;
+    let store = kesa::session::create_v2_sidecar_from_jsonl(&jsonl)?;
 
-    let verification = kode::session::verify_v2_against_jsonl(&jsonl, &store)?;
+    let verification = kesa::session::verify_v2_against_jsonl(&jsonl, &store)?;
 
     assert!(verification.entry_count_match);
     assert!(verification.hash_chain_match);
@@ -3210,12 +3210,12 @@ fn rollback_v2_sidecar_removes_sidecar_directory() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Migrate forward.
-    kode::session::migrate_jsonl_to_v2(&jsonl, "rollback-test")?;
-    assert!(kode::session_store_v2::has_v2_sidecar(&jsonl));
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "rollback-test")?;
+    assert!(kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     // Rollback.
-    kode::session::rollback_v2_sidecar(&jsonl, "rollback-test")?;
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl));
+    kesa::session::rollback_v2_sidecar(&jsonl, "rollback-test")?;
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     // Original JSONL still intact.
     assert!(jsonl.exists());
@@ -3229,8 +3229,8 @@ fn rollback_v2_sidecar_is_idempotent() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &[make_message_entry("x", None, "data")]);
 
     // Rollback when no sidecar exists — should succeed silently.
-    kode::session::rollback_v2_sidecar(&jsonl, "noop")?;
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl));
+    kesa::session::rollback_v2_sidecar(&jsonl, "noop")?;
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     Ok(())
 }
@@ -3240,7 +3240,7 @@ fn migration_status_unmigrated_when_no_sidecar() {
     let dir = tempdir().unwrap();
     let jsonl = build_test_jsonl(dir.path(), &[make_message_entry("s1", None, "data")]);
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
 }
@@ -3249,10 +3249,10 @@ fn migration_status_unmigrated_when_no_sidecar() {
 fn migration_status_migrated_after_successful_migration() -> PiResult<()> {
     let dir = tempdir()?;
     let jsonl = build_test_jsonl(dir.path(), &[make_message_entry("s1", None, "data")]);
-    kode::session::migrate_jsonl_to_v2(&jsonl, "status-test")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "status-test")?;
 
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Migrated
     );
 
@@ -3265,11 +3265,11 @@ fn migration_status_partial_when_sidecar_incomplete() {
     let jsonl = build_test_jsonl(dir.path(), &[make_message_entry("s1", None, "data")]);
 
     // Create a bare sidecar directory without proper structure.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     fs::create_dir_all(&v2_root).unwrap();
 
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Partial
     );
 }
@@ -3282,15 +3282,15 @@ fn migration_status_is_read_only_and_recovery_heals_damaged_index() -> PiResult<
         make_message_entry("c2", Some("c1"), "two"),
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
-    kode::session::migrate_jsonl_to_v2(&jsonl, "corrupt-test")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "corrupt-test")?;
 
     // Corrupt the index file.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let index_path = v2_root.join("index").join("offsets.jsonl");
     fs::write(&index_path, "not valid json\n")?;
 
     // Status inspection reports corruption without mutating the sidecar.
-    match kode::session::migration_status(&jsonl) {
+    match kesa::session::migration_status(&jsonl) {
         MigrationState::Corrupt { .. } => {}
         other => panic!("expected corrupt migration state, got {other:?}"),
     }
@@ -3298,7 +3298,7 @@ fn migration_status_is_read_only_and_recovery_heals_damaged_index() -> PiResult<
 
     // Explicit recovery owns the mutation and returns the store to a verified state.
     assert_eq!(
-        kode::session::recover_partial_migration(&jsonl, "corrupt-status-recovery", true)?,
+        kesa::session::recover_partial_migration(&jsonl, "corrupt-status-recovery", true)?,
         MigrationState::Migrated
     );
 
@@ -3322,7 +3322,7 @@ fn migrate_dry_run_validates_without_persisting() -> PiResult<()> {
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    let verification = kode::session::migrate_dry_run(&jsonl)?;
+    let verification = kesa::session::migrate_dry_run(&jsonl)?;
 
     // Dry run should report success.
     assert!(verification.entry_count_match);
@@ -3330,9 +3330,9 @@ fn migrate_dry_run_validates_without_persisting() -> PiResult<()> {
     assert!(verification.index_consistent);
 
     // No sidecar should have been created.
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl));
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
 
@@ -3346,12 +3346,12 @@ fn migrate_dry_run_matches_real_migration_for_legacy_idless_entries() -> PiResul
     legacy_entry.base_mut().id = None;
     let jsonl = build_test_jsonl(dir.path(), &[legacy_entry]);
 
-    let verification = kode::session::migrate_dry_run(&jsonl)?;
+    let verification = kesa::session::migrate_dry_run(&jsonl)?;
     assert!(verification.entry_count_match);
     assert!(verification.hash_chain_match);
     assert!(verification.index_consistent);
     assert!(
-        !kode::session_store_v2::has_v2_sidecar(&jsonl),
+        !kesa::session_store_v2::has_v2_sidecar(&jsonl),
         "dry-run normalization must not persist a sidecar"
     );
     Ok(())
@@ -3368,7 +3368,7 @@ fn migration_validates_graph_without_reordering_authoritative_jsonl() -> PiResul
         ],
     );
 
-    let store = kode::session::create_v2_sidecar_from_jsonl(&jsonl)?;
+    let store = kesa::session::create_v2_sidecar_from_jsonl(&jsonl)?;
     assert_eq!(
         frame_ids(&store.read_all_entries()?),
         vec!["child-first".to_string(), "parent-second".to_string()],
@@ -3387,19 +3387,19 @@ fn recover_partial_migration_cleans_up_and_optionally_re_migrates() -> PiResult<
     let jsonl = build_test_jsonl(dir.path(), &[make_message_entry("r1", None, "data")]);
 
     // Create a partial sidecar.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     fs::create_dir_all(&v2_root)?;
 
     // Recover without re-migration.
-    let state = kode::session::recover_partial_migration(&jsonl, "recover-test", false)?;
+    let state = kesa::session::recover_partial_migration(&jsonl, "recover-test", false)?;
     assert_eq!(state, MigrationState::Unmigrated);
     assert!(!v2_root.exists());
 
     // Create partial again, recover WITH re-migration.
     fs::create_dir_all(&v2_root)?;
-    let state = kode::session::recover_partial_migration(&jsonl, "recover-test-2", true)?;
+    let state = kesa::session::recover_partial_migration(&jsonl, "recover-test-2", true)?;
     assert_eq!(state, MigrationState::Migrated);
-    assert!(kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     Ok(())
 }
@@ -3414,9 +3414,9 @@ fn failed_remigration_preserves_the_prior_v2_tree_byte_for_byte() -> PiResult<()
             make_message_entry("preserve-2", Some("preserve-1"), "second"),
         ],
     );
-    kode::session::migrate_jsonl_to_v2(&jsonl, "preserve-before-failure")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "preserve-before-failure")?;
 
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let source_state = v2_root.join("source-state.json");
     fs::write(&source_state, b"invalid source state\n")?;
     let preserved_paths = [
@@ -3438,11 +3438,11 @@ fn failed_remigration_preserves_the_prior_v2_tree_byte_for_byte() -> PiResult<()
         .to_string();
     fs::write(&jsonl, format!("{header}\nnot valid JSON\n"))?;
     assert!(matches!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Corrupt { .. }
     ));
 
-    kode::session::recover_partial_migration(&jsonl, "preserve-failed-remigration", true)
+    kesa::session::recover_partial_migration(&jsonl, "preserve-failed-remigration", true)
         .expect_err("an unreadable authoritative JSONL must reject re-migration");
 
     assert!(
@@ -3505,8 +3505,8 @@ fn ambiguous_jsonl_graph_repair_fails_closed_and_preserves_prior_v2_tree() -> Pi
                 make_message_entry("prior-2", Some("prior-1"), "second"),
             ],
         );
-        kode::session::migrate_jsonl_to_v2(&jsonl, &format!("seed-{case_name}"))?;
-        let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+        kesa::session::migrate_jsonl_to_v2(&jsonl, &format!("seed-{case_name}"))?;
+        let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
         let preserved_paths = [
             v2_root.join("source-state.json"),
             v2_root.join("manifest.json"),
@@ -3534,7 +3534,7 @@ fn ambiguous_jsonl_graph_repair_fails_closed_and_preserves_prior_v2_tree() -> Pi
         fs::write(&jsonl, replacement)?;
 
         let error =
-            kode::session::recover_partial_migration(&jsonl, &format!("reject-{case_name}"), true)
+            kesa::session::recover_partial_migration(&jsonl, &format!("reject-{case_name}"), true)
                 .expect_err("ambiguous authoritative JSONL must not replace a prior V2 store");
         assert!(
             error.to_string().contains(expected_error),
@@ -3563,20 +3563,20 @@ fn forged_manifest_repair_rebuilds_a_valid_counter_from_authoritative_jsonl() ->
             make_message_entry("repair-manifest-2", Some("repair-manifest-1"), "second"),
         ],
     );
-    kode::session::migrate_jsonl_to_v2(&jsonl, "manifest-repair-seed")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "manifest-repair-seed")?;
 
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let inspector = SessionStoreV2::open_for_inspection(&v2_root, 64 * 1024 * 1024)?;
     let mut manifest = inspector.read_manifest()?.expect("migrated manifest");
     manifest.counters.messages_total = 8_888;
     write_rehashed_manifest(&v2_root.join("manifest.json"), manifest)?;
     assert!(matches!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Corrupt { .. }
     ));
 
     assert_eq!(
-        kode::session::recover_partial_migration(&jsonl, "manifest-repair", true)?,
+        kesa::session::recover_partial_migration(&jsonl, "manifest-repair", true)?,
         MigrationState::Migrated
     );
     let repaired = SessionStoreV2::open_for_inspection(&v2_root, 64 * 1024 * 1024)?;
@@ -3597,8 +3597,8 @@ fn jsonl_v2_manifest_identity_and_source_format_are_semantically_bound() -> PiRe
             make_message_entry("identity-2", Some("identity-1"), "second"),
         ],
     );
-    kode::session::migrate_jsonl_to_v2(&jsonl, "manifest-identity-seed")?;
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "manifest-identity-seed")?;
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let manifest_path = v2_root.join("manifest.json");
     let header: SessionHeader = serde_json::from_str(
         fs::read_to_string(&jsonl)?
@@ -3616,27 +3616,27 @@ fn jsonl_v2_manifest_identity_and_source_format_are_semantically_bound() -> PiRe
     };
     manifest.session_id = forged_session_id.to_string();
     write_rehashed_manifest(&manifest_path, manifest)?;
-    let MigrationState::Corrupt { error } = kode::session::migration_status(&jsonl) else {
+    let MigrationState::Corrupt { error } = kesa::session::migration_status(&jsonl) else {
         panic!("a valid but different manifest UUID must be rejected semantically");
     };
     assert!(
         error.contains("V2 manifest sessionId mismatch"),
         "unexpected semantic identity error: {error}"
     );
-    kode::session::recover_partial_migration(&jsonl, "repair-manifest-session-id", true)?;
+    kesa::session::recover_partial_migration(&jsonl, "repair-manifest-session-id", true)?;
 
     let inspector = SessionStoreV2::open_for_inspection(&v2_root, 64 * 1024 * 1024)?;
     let mut manifest = inspector.read_manifest()?.expect("repaired manifest");
     manifest.source_format = "native_v2".to_string();
     write_rehashed_manifest(&manifest_path, manifest)?;
-    let MigrationState::Corrupt { error } = kode::session::migration_status(&jsonl) else {
+    let MigrationState::Corrupt { error } = kesa::session::migration_status(&jsonl) else {
         panic!("a valid but wrong source format must be rejected semantically");
     };
     assert!(
         error.contains("V2 manifest sourceFormat mismatch"),
         "unexpected semantic source-format error: {error}"
     );
-    kode::session::recover_partial_migration(&jsonl, "repair-manifest-source-format", true)?;
+    kesa::session::recover_partial_migration(&jsonl, "repair-manifest-source-format", true)?;
 
     let repaired = SessionStoreV2::open_for_inspection(&v2_root, 64 * 1024 * 1024)?;
     let manifest = repaired
@@ -3657,9 +3657,9 @@ fn failed_forged_manifest_repair_preserves_prior_v2_tree_byte_for_byte() -> PiRe
             make_message_entry("failed-manifest-2", Some("failed-manifest-1"), "second"),
         ],
     );
-    kode::session::migrate_jsonl_to_v2(&jsonl, "failed-manifest-seed")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "failed-manifest-seed")?;
 
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let inspector = SessionStoreV2::open_for_inspection(&v2_root, 64 * 1024 * 1024)?;
     let mut manifest = inspector.read_manifest()?.expect("migrated manifest");
     manifest.counters.messages_total = 7_777;
@@ -3684,10 +3684,10 @@ fn failed_forged_manifest_repair_preserves_prior_v2_tree_byte_for_byte() -> PiRe
         .to_string();
     fs::write(&jsonl, format!("{header}\nnot valid JSON\n"))?;
     assert!(matches!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Corrupt { .. }
     ));
-    kode::session::recover_partial_migration(&jsonl, "failed-manifest-repair", true)
+    kesa::session::recover_partial_migration(&jsonl, "failed-manifest-repair", true)
         .expect_err("invalid authoritative JSONL must reject manifest repair");
 
     for (path, expected) in before {
@@ -3712,26 +3712,26 @@ fn migrate_then_rollback_then_re_migrate_round_trip() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Step 1: Migrate.
-    let event1 = kode::session::migrate_jsonl_to_v2(&jsonl, "round-trip")?;
+    let event1 = kesa::session::migrate_jsonl_to_v2(&jsonl, "round-trip")?;
     assert_eq!(event1.outcome, "ok");
 
     // Step 2: Rollback.
-    kode::session::rollback_v2_sidecar(&jsonl, "round-trip")?;
+    kesa::session::rollback_v2_sidecar(&jsonl, "round-trip")?;
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
 
     // Step 3: Re-migrate.
-    let event2 = kode::session::migrate_jsonl_to_v2(&jsonl, "round-trip-2")?;
+    let event2 = kesa::session::migrate_jsonl_to_v2(&jsonl, "round-trip-2")?;
     assert_eq!(event2.outcome, "ok");
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Migrated
     );
 
     // Verify the re-migrated store has correct entry count.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     assert_eq!(store.entry_count(), 3);
 
@@ -3744,11 +3744,11 @@ fn migrate_empty_session_succeeds() -> PiResult<()> {
     let entries: Vec<SessionEntry> = vec![];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "empty-test")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "empty-test")?;
     assert_eq!(event.outcome, "ok");
     assert!(event.verification.entry_count_match);
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Migrated
     );
 
@@ -3773,12 +3773,12 @@ fn migrate_large_session_preserves_all_entries() -> PiResult<()> {
     }
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "large-test")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "large-test")?;
     assert_eq!(event.outcome, "ok");
     assert!(event.verification.entry_count_match);
 
     // Verify all entries round-trip.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     assert_eq!(store.entry_count(), 100);
 
@@ -3804,12 +3804,12 @@ fn migrate_branching_session_preserves_all_branches() -> PiResult<()> {
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "branch-test")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "branch-test")?;
     assert_eq!(event.outcome, "ok");
     assert!(event.verification.entry_count_match);
 
     // All 4 entries should be in the store.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     assert_eq!(store.entry_count(), 4);
 
@@ -3832,10 +3832,10 @@ fn migration_ledger_accumulates_events() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &[make_message_entry("l1", None, "data")]);
 
     // Migrate.
-    kode::session::migrate_jsonl_to_v2(&jsonl, "ledger-1")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "ledger-1")?;
 
     // Check ledger has 1 event.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     let events = store.read_migration_events()?;
     assert_eq!(events.len(), 1);
@@ -3864,12 +3864,12 @@ fn e2e_full_migration_rollback_round_trip_with_forensic_log() -> PiResult<()> {
 
     // Phase 0: Confirm unmigrated state.
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
 
     // Phase 1: Forward migration.
-    let fwd_event = kode::session::migrate_jsonl_to_v2(&jsonl, "e2e-round-trip")?;
+    let fwd_event = kesa::session::migrate_jsonl_to_v2(&jsonl, "e2e-round-trip")?;
     assert_eq!(fwd_event.phase, "completed");
     assert_eq!(fwd_event.outcome, "ok");
     assert_eq!(fwd_event.source_format, "jsonl_v3");
@@ -3884,12 +3884,12 @@ fn e2e_full_migration_rollback_round_trip_with_forensic_log() -> PiResult<()> {
 
     // Verify migrated state.
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Migrated
     );
 
     // Verify V2 store contents are correct.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     assert_eq!(store.entry_count(), 5);
     let frames = store.read_all_entries()?;
@@ -3913,12 +3913,12 @@ fn e2e_full_migration_rollback_round_trip_with_forensic_log() -> PiResult<()> {
     assert_eq!(jsonl_entry_count, 5);
 
     // Phase 2: Rollback to JSONL-only.
-    kode::session::rollback_v2_sidecar(&jsonl, "e2e-round-trip")?;
+    kesa::session::rollback_v2_sidecar(&jsonl, "e2e-round-trip")?;
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     // JSONL is still intact after rollback.
     assert!(jsonl.exists());
@@ -3940,24 +3940,24 @@ fn e2e_migrate_rollback_remigrate_ledger_accumulates() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // First migration.
-    let event1 = kode::session::migrate_jsonl_to_v2(&jsonl, "cycle-01")?;
+    let event1 = kesa::session::migrate_jsonl_to_v2(&jsonl, "cycle-01")?;
     assert_eq!(event1.phase, "completed");
 
     // Check ledger before rollback.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     assert_eq!(store.read_migration_events()?.len(), 1);
     drop(store);
 
     // Rollback (note: rollback removes the V2 sidecar, so the ledger is lost).
-    kode::session::rollback_v2_sidecar(&jsonl, "cycle-1-rollback")?;
+    kesa::session::rollback_v2_sidecar(&jsonl, "cycle-1-rollback")?;
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
 
     // Re-migrate — fresh sidecar, fresh ledger.
-    let event2 = kode::session::migrate_jsonl_to_v2(&jsonl, "cycle-02")?;
+    let event2 = kesa::session::migrate_jsonl_to_v2(&jsonl, "cycle-02")?;
     assert_eq!(event2.phase, "completed");
     assert_eq!(event2.correlation_id, "cycle-02");
 
@@ -3987,21 +3987,21 @@ fn e2e_dry_run_then_real_migration() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Dry run — no sidecar should exist.
-    let dry_verification = kode::session::migrate_dry_run(&jsonl)?;
+    let dry_verification = kesa::session::migrate_dry_run(&jsonl)?;
     assert!(dry_verification.entry_count_match);
     assert!(dry_verification.hash_chain_match);
     assert!(dry_verification.index_consistent);
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     // Real migration.
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "dry-then-real")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "dry-then-real")?;
     assert_eq!(event.outcome, "ok");
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Migrated
     );
 
@@ -4033,7 +4033,7 @@ fn e2e_partial_migration_recovery_with_forensic_check() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Simulate a partial migration: create V2 dir with segments but no index.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     fs::create_dir_all(v2_root.join("segments"))?;
     fs::write(
         v2_root.join("segments").join("0000000000000001.seg"),
@@ -4042,12 +4042,12 @@ fn e2e_partial_migration_recovery_with_forensic_check() -> PiResult<()> {
 
     // Status should be Partial.
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Partial
     );
 
     // Recover with re-migration.
-    let state = kode::session::recover_partial_migration(&jsonl, "partial-recovery-e2e", true)?;
+    let state = kesa::session::recover_partial_migration(&jsonl, "partial-recovery-e2e", true)?;
     assert_eq!(state, MigrationState::Migrated);
 
     // Verify data integrity after recovery.
@@ -4072,8 +4072,8 @@ fn e2e_corrupt_migration_recovery_cleanup_only() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Create a valid V2 sidecar then corrupt a segment (not recoverable by index rebuild).
-    kode::session::migrate_jsonl_to_v2(&jsonl, "pre-corrupt")?;
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "pre-corrupt")?;
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let seg_path = v2_root.join("segments").join("0000000000000001.seg");
     assert!(
         seg_path.exists(),
@@ -4082,13 +4082,13 @@ fn e2e_corrupt_migration_recovery_cleanup_only() -> PiResult<()> {
     fs::write(&seg_path, "corrupted segment data\n")?;
 
     // Status should be Corrupt.
-    match kode::session::migration_status(&jsonl) {
+    match kesa::session::migration_status(&jsonl) {
         MigrationState::Corrupt { .. } => {}
         other => panic!("Expected Corrupt, got {other:?}"),
     }
 
     // Recover WITHOUT re-migration.
-    let state = kode::session::recover_partial_migration(&jsonl, "corrupt-cleanup", false)?;
+    let state = kesa::session::recover_partial_migration(&jsonl, "corrupt-cleanup", false)?;
     assert_eq!(state, MigrationState::Unmigrated);
     assert!(!v2_root.exists());
 
@@ -4109,7 +4109,7 @@ fn e2e_forensic_event_field_completeness() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
     let jsonl_display = jsonl.display().to_string();
 
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "forensic-check-001")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "forensic-check-001")?;
 
     // Check every field of the forensic event.
     assert_eq!(event.schema, "pi.session_store_v2.migration_event.v1");
@@ -4123,7 +4123,7 @@ fn e2e_forensic_event_field_completeness() -> PiResult<()> {
         event.at
     );
     assert_eq!(event.source_path, jsonl_display);
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     assert_eq!(event.target_path, v2_root.display().to_string());
     assert_eq!(event.source_format, "jsonl_v3");
     assert_eq!(event.target_format, "native_v2");
@@ -4150,7 +4150,7 @@ fn e2e_migration_ids_are_unique_across_cycles() -> PiResult<()> {
 
     for cycle in 0..3 {
         let corr = format!("uniqueness-cycle-{cycle}");
-        let event = kode::session::migrate_jsonl_to_v2(&jsonl, &corr)?;
+        let event = kesa::session::migrate_jsonl_to_v2(&jsonl, &corr)?;
         assert!(
             !seen_ids.contains(&event.migration_id),
             "migration_id collision at cycle {cycle}: {}",
@@ -4159,7 +4159,7 @@ fn e2e_migration_ids_are_unique_across_cycles() -> PiResult<()> {
         seen_ids.push(event.migration_id);
 
         // Rollback for next cycle.
-        kode::session::rollback_v2_sidecar(&jsonl, &corr)?;
+        kesa::session::rollback_v2_sidecar(&jsonl, &corr)?;
     }
 
     assert_eq!(seen_ids.len(), 3);
@@ -4179,24 +4179,24 @@ fn e2e_migration_state_machine_transitions() -> PiResult<()> {
 
     // State 1: Unmigrated.
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
 
     // State 2: Migrated.
-    kode::session::migrate_jsonl_to_v2(&jsonl, "sm-forward")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "sm-forward")?;
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Migrated
     );
 
     // State 3: Corrupt (tamper with segment data).
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let seg_path = v2_root.join("segments").join("0000000000000001.seg");
     if seg_path.exists() {
         fs::write(&seg_path, "corrupted segment data\n")?;
     }
-    match kode::session::migration_status(&jsonl) {
+    match kesa::session::migration_status(&jsonl) {
         MigrationState::Corrupt { error } => {
             assert!(!error.is_empty(), "corrupt error message must be non-empty");
         }
@@ -4204,7 +4204,7 @@ fn e2e_migration_state_machine_transitions() -> PiResult<()> {
     }
 
     // State 4: Recovered via recover_partial_migration (with re-migration).
-    let state = kode::session::recover_partial_migration(&jsonl, "sm-recovery", true)?;
+    let state = kesa::session::recover_partial_migration(&jsonl, "sm-recovery", true)?;
     assert_eq!(state, MigrationState::Migrated);
 
     // Verify integrity post-recovery.
@@ -4238,17 +4238,17 @@ fn e2e_large_session_migration_integrity_and_chain() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Dry-run first.
-    let dry = kode::session::migrate_dry_run(&jsonl)?;
+    let dry = kesa::session::migrate_dry_run(&jsonl)?;
     assert!(dry.entry_count_match);
     assert!(dry.hash_chain_match);
     assert!(dry.index_consistent);
 
     // Real migration.
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "large-e2e")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "large-e2e")?;
     assert_eq!(event.outcome, "ok");
 
     // Verify V2 store fully.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     assert_eq!(store.entry_count(), 200);
     store.validate_integrity()?;
@@ -4442,11 +4442,11 @@ fn e2e_branching_migration_preserves_all_paths() -> PiResult<()> {
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "branch-e2e")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "branch-e2e")?;
     assert_eq!(event.outcome, "ok");
     assert!(event.verification.entry_count_match);
 
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     assert_eq!(store.entry_count(), 7);
 
@@ -4464,9 +4464,9 @@ fn e2e_branching_migration_preserves_all_paths() -> PiResult<()> {
     assert_eq!(side2_ids, vec!["root", "a", "f"]);
 
     // Rollback preserves JSONL intact.
-    kode::session::rollback_v2_sidecar(&jsonl, "branch-e2e-rollback")?;
+    kesa::session::rollback_v2_sidecar(&jsonl, "branch-e2e-rollback")?;
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
     assert!(jsonl.exists());
@@ -4482,11 +4482,11 @@ fn e2e_correlation_id_propagation() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     let corr_id = "CORR-2026-0215-001";
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, corr_id)?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, corr_id)?;
     assert_eq!(event.correlation_id, corr_id);
 
     // Verify it's in the ledger.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     let ledger = store.read_migration_events()?;
     assert_eq!(ledger[0].correlation_id, corr_id);
@@ -4502,12 +4502,12 @@ fn e2e_recover_unmigrated_is_noop() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Already unmigrated — recover should be a noop.
-    let state = kode::session::recover_partial_migration(&jsonl, "noop-test", true)?;
+    let state = kesa::session::recover_partial_migration(&jsonl, "noop-test", true)?;
     assert_eq!(state, MigrationState::Unmigrated);
 
     // Still unmigrated (recover doesn't migrate an unmigrated session).
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
 
@@ -4521,14 +4521,14 @@ fn e2e_recover_migrated_is_noop() -> PiResult<()> {
     let entries = vec![make_message_entry("m1", None, "already")];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    kode::session::migrate_jsonl_to_v2(&jsonl, "pre-migrate")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "pre-migrate")?;
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Migrated
     );
 
     // Recover on already-migrated — should be a noop.
-    let state = kode::session::recover_partial_migration(&jsonl, "noop-migrated", false)?;
+    let state = kesa::session::recover_partial_migration(&jsonl, "noop-migrated", false)?;
     assert_eq!(state, MigrationState::Migrated);
 
     Ok(())
@@ -4546,12 +4546,12 @@ fn e2e_migration_mixed_entry_types() -> PiResult<()> {
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    let event = kode::session::migrate_jsonl_to_v2(&jsonl, "mixed-types")?;
+    let event = kesa::session::migrate_jsonl_to_v2(&jsonl, "mixed-types")?;
     assert_eq!(event.outcome, "ok");
     assert!(event.verification.entry_count_match);
 
     // Verify all entry types round-trip.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
     let frames = store.read_all_entries()?;
     assert_eq!(frames.len(), 4);
@@ -4562,7 +4562,7 @@ fn e2e_migration_mixed_entry_types() -> PiResult<()> {
 
     // Verify conversion back to SessionEntry works for all types.
     for frame in &frames {
-        let recovered = kode::session_store_v2::frame_to_session_entry(frame)?;
+        let recovered = kesa::session_store_v2::frame_to_session_entry(frame)?;
         assert!(recovered.base_id().is_some());
     }
 
@@ -4576,13 +4576,13 @@ fn e2e_rollback_nonexistent_sidecar_is_safe() -> PiResult<()> {
     let jsonl = build_test_jsonl(dir.path(), &[make_message_entry("x", None, "data")]);
 
     // No sidecar exists.
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl));
 
     // Rollback should succeed silently.
-    kode::session::rollback_v2_sidecar(&jsonl, "phantom-rollback")?;
+    kesa::session::rollback_v2_sidecar(&jsonl, "phantom-rollback")?;
 
     // Still no sidecar, JSONL intact.
-    assert!(!kode::session_store_v2::has_v2_sidecar(&jsonl));
+    assert!(!kesa::session_store_v2::has_v2_sidecar(&jsonl));
     assert!(jsonl.exists());
 
     Ok(())
@@ -4599,9 +4599,9 @@ fn e2e_migration_manifest_consistency() -> PiResult<()> {
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    kode::session::migrate_jsonl_to_v2(&jsonl, "manifest-e2e")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "manifest-e2e")?;
 
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::open_for_inspection(&v2_root, 64 * 1024 * 1024)?;
     let header: SessionHeader = serde_json::from_str(
         fs::read_to_string(&jsonl)?
@@ -4644,7 +4644,7 @@ fn e2e_migration_manifest_consistency() -> PiResult<()> {
         manifest.integrity.manifest_hash
     );
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Migrated
     );
 
@@ -4661,10 +4661,10 @@ fn e2e_forensic_ledger_is_valid_jsonl() -> PiResult<()> {
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
-    kode::session::migrate_jsonl_to_v2(&jsonl, "jsonl-ledger-test")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "jsonl-ledger-test")?;
 
     // Read the raw ledger file and verify each line is valid JSON.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let ledger_path = v2_root.join("migrations").join("ledger.jsonl");
     assert!(
         ledger_path.exists(),
@@ -4700,16 +4700,16 @@ fn e2e_rapid_migrate_rollback_cycles_clean() -> PiResult<()> {
         make_message_entry("rc2", Some("rc1"), "cycle"),
     ];
     let jsonl = build_test_jsonl(dir.path(), &entries);
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
 
     for cycle in 0..5 {
         let corr = format!("rapid-cycle-{cycle}");
 
         // Migrate.
-        let event = kode::session::migrate_jsonl_to_v2(&jsonl, &corr)?;
+        let event = kesa::session::migrate_jsonl_to_v2(&jsonl, &corr)?;
         assert_eq!(event.outcome, "ok", "cycle {cycle} migration failed");
         assert_eq!(
-            kode::session::migration_status(&jsonl),
+            kesa::session::migration_status(&jsonl),
             MigrationState::Migrated
         );
 
@@ -4720,7 +4720,7 @@ fn e2e_rapid_migrate_rollback_cycles_clean() -> PiResult<()> {
         drop(store);
 
         // Rollback.
-        kode::session::rollback_v2_sidecar(&jsonl, &corr)?;
+        kesa::session::rollback_v2_sidecar(&jsonl, &corr)?;
         assert!(
             !v2_root.exists(),
             "V2 root should not exist after rollback at cycle {cycle}"
@@ -4729,7 +4729,7 @@ fn e2e_rapid_migrate_rollback_cycles_clean() -> PiResult<()> {
 
     // Final state is unmigrated, JSONL intact.
     assert_eq!(
-        kode::session::migration_status(&jsonl),
+        kesa::session::migration_status(&jsonl),
         MigrationState::Unmigrated
     );
     assert!(jsonl.exists());
@@ -4748,7 +4748,7 @@ fn e2e_verification_detects_post_migration_jsonl_modification() -> PiResult<()> 
     let jsonl = build_test_jsonl(dir.path(), &entries);
 
     // Migrate.
-    kode::session::migrate_jsonl_to_v2(&jsonl, "verify-mod")?;
+    kesa::session::migrate_jsonl_to_v2(&jsonl, "verify-mod")?;
 
     // Append an extra entry to the JSONL (simulating a post-migration write).
     let extra = make_message_entry("vm3", Some("vm2"), "sneaky");
@@ -4757,9 +4757,9 @@ fn e2e_verification_detects_post_migration_jsonl_modification() -> PiResult<()> 
     file.write_all(b"\n")?;
 
     // Re-verify — should detect mismatch because V2 has 2 entries but JSONL now has 3.
-    let v2_root = kode::session_store_v2::v2_sidecar_path(&jsonl);
+    let v2_root = kesa::session_store_v2::v2_sidecar_path(&jsonl);
     let store = SessionStoreV2::create(&v2_root, 64 * 1024 * 1024)?;
-    let verification = kode::session::verify_v2_against_jsonl(&jsonl, &store)?;
+    let verification = kesa::session::verify_v2_against_jsonl(&jsonl, &store)?;
 
     assert!(
         !verification.entry_count_match,

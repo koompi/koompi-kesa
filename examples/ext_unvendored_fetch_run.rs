@@ -9,11 +9,11 @@
 use anyhow::{Context, Result, bail};
 use clap::{Args, Parser, Subcommand};
 use futures::executor::block_on;
-use kode::extension_popularity::{CandidateItem, CandidatePool, CandidateSource};
-use kode::extension_validation::{ValidationStatus, classify_source_content};
-use kode::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
-use kode::extensions_js::{PiJsRuntimeConfig, RepairMode};
-use kode::tools::ToolRegistry;
+use kesa::extension_popularity::{CandidateItem, CandidatePool, CandidateSource};
+use kesa::extension_validation::{ValidationStatus, classify_source_content};
+use kesa::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kesa::extensions_js::{PiJsRuntimeConfig, RepairMode};
+use kesa::tools::ToolRegistry;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;

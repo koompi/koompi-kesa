@@ -17240,7 +17240,7 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
         Ok(())
     }
 
-    /// Run a closure inside the JS context and map QuickJS errors into `kode::Error`.
+    /// Run a closure inside the JS context and map QuickJS errors into `kesa::Error`.
     ///
     /// This is intentionally `pub(crate)` so the extensions runtime can call JS helper
     /// functions without exposing raw rquickjs types as part of the public API.
