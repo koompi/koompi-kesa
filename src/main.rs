@@ -31,7 +31,7 @@ use kode::agent::{
 use kode::app::StartupError;
 use kode::auth::{AuthCredential, AuthStorage};
 use kode::cli;
-use kode::compaction::ResolvedCompactionSettings;
+use kode::compaction::{ResolvedCompactionSettings, context_window_tokens_for_entry};
 use kode::config::Config;
 use kode::config::SettingsScope;
 use kode::extension_index::{
@@ -404,18 +404,6 @@ fn build_extension_bootstrap_selection(
         scoped_models: Vec::new(),
         fallback_message: None,
     })
-}
-
-fn context_window_tokens_for_entry(entry: &ModelEntry) -> u32 {
-    if entry.model.context_window.eq(&0) {
-        tracing::warn!(
-            "Model {} reported context_window=0; falling back to default compaction window",
-            entry.model.id
-        );
-        ResolvedCompactionSettings::default().context_window_tokens
-    } else {
-        entry.model.context_window
-    }
 }
 
 #[allow(clippy::too_many_lines)]

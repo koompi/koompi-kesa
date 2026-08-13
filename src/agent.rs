@@ -1178,12 +1178,9 @@ const TOOL_RESULT_BUDGET_PERCENT: usize = 15;
 /// model something usable to read.
 const TOOL_RESULT_BUDGET_MIN_BYTES: usize = 16 * 1024;
 
-/// Matches `compaction::CHARS_PER_TOKEN_ESTIMATE`, which is private to that module.
-const TOOL_RESULT_CHARS_PER_TOKEN: usize = 3;
-
 fn tool_result_budget_bytes(context_window_tokens: u32) -> usize {
     let budget = (context_window_tokens as usize)
-        .saturating_mul(TOOL_RESULT_CHARS_PER_TOKEN)
+        .saturating_mul(crate::compaction::CHARS_PER_TOKEN_ESTIMATE)
         .saturating_mul(TOOL_RESULT_BUDGET_PERCENT)
         / 100;
     budget.max(TOOL_RESULT_BUDGET_MIN_BYTES)
@@ -8829,8 +8826,9 @@ impl AgentSession {
             Ok(provider) => {
                 tracing::info!("Updating agent provider to {provider_id}/{model_id}");
                 self.agent.set_provider(provider);
-                self.agent
-                    .set_context_window_tokens(entry.model.context_window);
+                self.set_compaction_context_window(
+                    crate::compaction::context_window_tokens_for_entry(&entry),
+                );
 
                 let stream_options = self.agent.stream_options_mut();
                 stream_options.api_key.clone_from(&resolved_key);
@@ -13086,6 +13084,49 @@ mod tests {
                 Some("claude-sonnet-4-5")
             );
             assert_eq!(session.header.thinking_level.as_deref(), Some("high"));
+        });
+    }
+
+    #[test]
+    fn set_provider_model_moves_the_compaction_window_too() {
+        let runtime = asupersync::runtime::RuntimeBuilder::current_thread()
+            .build()
+            .expect("build runtime");
+
+        runtime.block_on(async {
+            let dir = tempfile::tempdir().expect("tempdir");
+            let auth_path = dir.path().join("auth.json");
+            let mut auth = AuthStorage::load(auth_path).expect("load auth");
+            auth.set(
+                "openai",
+                AuthCredential::ApiKey {
+                    key: "openai-key".to_string(),
+                },
+            );
+
+            let mut agent_session = build_switch_test_session(&auth);
+            let target = agent_session
+                .model_registry
+                .as_ref()
+                .and_then(|registry| registry.find("openai", "gpt-4o"))
+                .expect("openai model in registry");
+            let expected = target.model.context_window;
+            agent_session.set_compaction_context_window(32_000);
+            assert_ne!(
+                expected, 32_000,
+                "fixture must switch to a model with a different window"
+            );
+
+            agent_session
+                .set_provider_model("openai", "gpt-4o")
+                .await
+                .expect("switch model");
+
+            assert_eq!(
+                agent_session.compaction_settings.context_window_tokens, expected,
+                "compaction must follow the model, not stay on the launch window"
+            );
+            assert_eq!(agent_session.agent.context_window_tokens, expected);
         });
     }
 

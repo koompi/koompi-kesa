@@ -159,22 +159,12 @@ pub fn create_web_search_tool() -> Box<dyn Tool> {
 }
 
 /// Create the default non-delegating built-in tools configured for `cwd`.
+///
+/// Built through [`ToolRegistry`], so `edit` and `write` carry the
+/// read-before-edit guard. The single-tool constructors above do not: they have
+/// no shared read ledger to consult.
 pub fn create_all_tools(cwd: &Path) -> Vec<Box<dyn Tool>> {
-    vec![
-        create_read_tool(cwd),
-        create_bash_tool(cwd),
-        create_bash_output_tool(),
-        create_kill_shell_tool(),
-        create_edit_tool(cwd),
-        create_write_tool(cwd),
-        create_grep_tool(cwd),
-        create_find_tool(cwd),
-        create_ls_tool(cwd),
-        create_hashline_edit_tool(cwd),
-        create_todo_tool(),
-        create_web_fetch_tool(),
-        create_web_search_tool(),
-    ]
+    crate::tools::ToolRegistry::new(BUILTIN_TOOL_NAMES, cwd, None).into_tools()
 }
 
 /// Convert a [`Tool`] into its [`ToolDefinition`] schema.
@@ -2712,6 +2702,40 @@ mod tests {
         for expected in BUILTIN_TOOL_NAMES {
             assert!(names.contains(expected), "missing tool: {expected}");
         }
+    }
+
+    #[test]
+    fn create_all_tools_carries_the_read_before_edit_guard() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempdir().expect("tempdir");
+            let path = tmp.path().join("code.rs");
+            std::fs::write(&path, "fn foo() { bar() }").expect("write fixture");
+
+            let tools = super::create_all_tools(tmp.path());
+            let edit = tools
+                .iter()
+                .find(|tool| tool.name() == "edit")
+                .expect("edit tool");
+            let err = edit
+                .execute(
+                    "t",
+                    serde_json::json!({
+                        "path": path.to_string_lossy(),
+                        "oldText": "bar()",
+                        "newText": "baz()"
+                    }),
+                    None,
+                )
+                .await
+                .expect_err("an SDK edit must not touch a file the session never read")
+                .to_string();
+
+            assert!(err.contains("has not read it"), "{err}");
+            assert_eq!(
+                std::fs::read_to_string(&path).expect("read back"),
+                "fn foo() { bar() }"
+            );
+        });
     }
 
     #[test]

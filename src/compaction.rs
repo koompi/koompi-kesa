@@ -25,7 +25,7 @@ use std::sync::Arc;
 /// Approximate characters per token for English text with GPT-family tokenizers.
 /// Intentionally conservative (overestimates tokens) to avoid exceeding context windows.
 /// Set to 3 to safely account for code/symbol-heavy content which is denser than prose.
-const CHARS_PER_TOKEN_ESTIMATE: usize = 3;
+pub(crate) const CHARS_PER_TOKEN_ESTIMATE: usize = 3;
 
 /// Estimated tokens for an image content block (~1200 tokens).
 const IMAGE_TOKEN_ESTIMATE: usize = 1200;
@@ -72,7 +72,7 @@ impl Default for ResolvedCompactionSettings {
     ///
     /// Production code paths should always override `context_window_tokens`
     /// with the actual model's context window via
-    /// [`context_window_tokens_for_entry`](crate::main) or equivalent.
+    /// [`context_window_tokens_for_entry`] or equivalent.
     /// This default is deliberately conservative so that if a code path
     /// forgets to override, compaction triggers too early (safe) rather
     /// than too late (could exceed the real context window).
@@ -86,6 +86,21 @@ impl Default for ResolvedCompactionSettings {
             // 10% of context window
             keep_recent_tokens: 12_800,
         }
+    }
+}
+
+/// Resolve the compaction window for a model, falling back when the registry
+/// declares no window.
+#[must_use]
+pub fn context_window_tokens_for_entry(entry: &crate::models::ModelEntry) -> u32 {
+    if entry.model.context_window == 0 {
+        tracing::warn!(
+            "Model {} reported context_window=0; falling back to default compaction window",
+            entry.model.id
+        );
+        ResolvedCompactionSettings::default().context_window_tokens
+    } else {
+        entry.model.context_window
     }
 }
 
