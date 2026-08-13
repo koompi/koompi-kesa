@@ -6,6 +6,42 @@ use std::collections::HashSet;
 use std::ffi::OsString;
 use std::path::PathBuf;
 
+/// Tools enabled when `--tools` is not given. Kept character-identical to the
+/// list in the `--tools` help so the two cannot drift.
+pub const DEFAULT_TOOLS: &str =
+    "read,bash,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search";
+
+/// Every name `ToolRegistry::new` knows how to construct. `subagent` is opt-in,
+/// so it is accepted here but absent from [`DEFAULT_TOOLS`].
+pub const REGISTERED_TOOLS: &[&str] = &[
+    "read",
+    "bash",
+    "edit",
+    "write",
+    "grep",
+    "find",
+    "ls",
+    "hashline_edit",
+    "todo",
+    "web_fetch",
+    "web_search",
+    "subagent",
+];
+
+/// Reject an unknown `--tools` entry at parse time rather than dropping it and
+/// starting the agent a tool short.
+pub fn parse_tools_list(raw: &str) -> Result<String, String> {
+    for name in raw.split(',').map(str::trim).filter(|n| !n.is_empty()) {
+        if !REGISTERED_TOOLS.contains(&name) {
+            return Err(format!(
+                "unknown tool `{name}`; valid tools are: {}",
+                REGISTERED_TOOLS.join(", ")
+            ));
+        }
+    }
+    Ok(raw.to_string())
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExtensionCliFlag {
     pub name: String,
@@ -443,11 +479,8 @@ pub struct Cli {
     #[arg(long)]
     pub no_tools: bool,
 
-    /// Specific tools to enable (comma-separated: read,write,edit,bash,grep,find,ls,hashline_edit,todo,subagent)
-    #[arg(
-        long,
-        default_value = "read,bash,edit,write,grep,find,ls,hashline_edit,todo"
-    )]
+    /// Specific tools to enable (comma-separated: read,bash,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search)
+    #[arg(long, default_value = DEFAULT_TOOLS, value_parser = parse_tools_list)]
     pub tools: String,
 
     // === Extensions ===
@@ -574,7 +607,10 @@ pub struct Cli {
 
 #[cfg(test)]
 mod tests {
-    use super::{Cli, Commands, ROOT_SUBCOMMANDS, parse_with_extension_flags};
+    use super::{
+        Cli, Commands, DEFAULT_TOOLS, REGISTERED_TOOLS, ROOT_SUBCOMMANDS,
+        parse_with_extension_flags,
+    };
     use clap::{CommandFactory, Parser, error::ErrorKind};
 
     // ── 1. Basic flag parsing ────────────────────────────────────────
@@ -1109,8 +1145,37 @@ mod tests {
                 "ls",
                 "hashline_edit",
                 "todo",
+                "web_fetch",
+                "web_search",
             ]
         );
+    }
+
+    #[test]
+    fn tools_help_advertises_exactly_the_default() {
+        let command = Cli::command();
+        let arg = command
+            .get_arguments()
+            .find(|arg| arg.get_id() == "tools")
+            .expect("--tools arg");
+        let help = arg.get_help().expect("--tools help").to_string();
+        let advertised = help
+            .split_once("comma-separated: ")
+            .expect("help lists the tools")
+            .1
+            .trim_end_matches(')');
+        assert_eq!(advertised, DEFAULT_TOOLS);
+    }
+
+    #[test]
+    fn unknown_tool_name_is_rejected_by_name() {
+        let err = Cli::try_parse_from(["pi", "--tools", "read,bogus"])
+            .expect_err("bogus tool must not parse")
+            .to_string();
+        assert!(err.contains("bogus"), "{err}");
+        for name in REGISTERED_TOOLS {
+            assert!(err.contains(name), "missing `{name}` in: {err}");
+        }
     }
 
     #[test]
@@ -1456,10 +1521,7 @@ mod tests {
         assert!(cli.list_models.is_none());
         assert!(cli.command.is_none());
         assert!(cli.args.is_empty());
-        assert_eq!(
-            cli.tools,
-            "read,bash,edit,write,grep,find,ls,hashline_edit,todo"
-        );
+        assert_eq!(cli.tools, DEFAULT_TOOLS);
     }
 
     // ── 11. Combined flags ───────────────────────────────────────────
@@ -2236,7 +2298,11 @@ impl Cli {
             .collect()
     }
 
-    /// Get enabled tools as a list
+    /// Get enabled tools as a list.
+    ///
+    /// Every entry is already known to [`REGISTERED_TOOLS`]: `--tools` is
+    /// validated by [`parse_tools_list`] at parse time, and the SDK path
+    /// runs the same check before assigning.
     pub fn enabled_tools(&self) -> Vec<&str> {
         if self.no_tools {
             vec![]

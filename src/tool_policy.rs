@@ -97,6 +97,8 @@ impl TargetKind {
 
 const COMMAND_KEYS: &[&str] = &["command"];
 const PATH_KEYS: &[&str] = &["path", "file_path"];
+const URL_KEYS: &[&str] = &["url"];
+const QUERY_KEYS: &[&str] = &["query"];
 
 fn string_field(input: &Value, keys: &[&str]) -> Option<String> {
     keys.iter()
@@ -118,7 +120,11 @@ fn match_target(tool_name: &str, input: &Value) -> Option<(TargetKind, String)> 
     match tool_name {
         "bash" => command(input),
         "read" | "edit" | "write" | "grep" | "find" | "ls" | "hashline_edit" => path(input),
-        "subagent" => None,
+        // A URL globs like a path: `web_fetch(https://docs.rs/**)` should stop at `/`.
+        "web_fetch" => string_field(input, URL_KEYS).map(|url| (TargetKind::Path, url)),
+        "web_search" => string_field(input, QUERY_KEYS)
+            .map(|query| (TargetKind::Command, query.to_ascii_lowercase())),
+        "subagent" | "todo" => None,
         // Extension tools register arbitrary names at runtime, so fall back to
         // the shape of their input rather than a name table.
         _ => command(input).or_else(|| path(input)),

@@ -81,6 +81,8 @@ pub const BUILTIN_TOOL_NAMES: &[&str] = &[
     "ls",
     "hashline_edit",
     "todo",
+    "web_fetch",
+    "web_search",
 ];
 
 /// Create a read tool configured for `cwd`.
@@ -129,6 +131,18 @@ pub fn create_todo_tool() -> Box<dyn Tool> {
     Box::new(crate::todo::TodoTool)
 }
 
+/// Create the web fetch tool. It takes its target from the call, so `cwd` plays no part.
+#[must_use]
+pub fn create_web_fetch_tool() -> Box<dyn Tool> {
+    Box::new(crate::web_tools::WebFetchTool)
+}
+
+/// Create the web search tool. It takes its query from the call, so `cwd` plays no part.
+#[must_use]
+pub fn create_web_search_tool() -> Box<dyn Tool> {
+    Box::new(crate::web_tools::WebSearchTool)
+}
+
 /// Create the default non-delegating built-in tools configured for `cwd`.
 pub fn create_all_tools(cwd: &Path) -> Vec<Box<dyn Tool>> {
     vec![
@@ -141,6 +155,8 @@ pub fn create_all_tools(cwd: &Path) -> Vec<Box<dyn Tool>> {
         create_ls_tool(cwd),
         create_hashline_edit_tool(cwd),
         create_todo_tool(),
+        create_web_fetch_tool(),
+        create_web_search_tool(),
     ]
 }
 
@@ -1691,7 +1707,9 @@ pub async fn create_agent_session(options: SessionOptions) -> Result<AgentSessio
             cli.no_tools = true;
         } else {
             cli.no_tools = false;
-            cli.tools = enabled_tools.join(",");
+            // Clap validates `--tools`; this path skips clap entirely.
+            cli.tools = crate::cli::parse_tools_list(&enabled_tools.join(","))
+                .map_err(Error::validation)?;
         }
     }
 

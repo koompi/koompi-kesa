@@ -249,6 +249,14 @@ fn default_system_prompt(enabled_tools: &[&str], package_dir: &Path) -> String {
             "todo",
             "Track the plan for a multi-step task; send the whole list each call, exactly one item in_progress",
         ),
+        (
+            "web_fetch",
+            "Fetch an http(s) URL and read it as text; follows redirects and reports the final URL",
+        ),
+        (
+            "web_search",
+            "Search the web for ranked title/url/snippet results; follow up with web_fetch to read one",
+        ),
     ];
 
     let mut tools = Vec::new();

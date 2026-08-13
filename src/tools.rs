@@ -5031,6 +5031,8 @@ impl ToolRegistry {
                 "hashline_edit" => tools.push(Box::new(HashlineEditTool::new(cwd))),
                 "subagent" => tools.push(Box::new(crate::subagents::SubagentTool::new(cwd))),
                 "todo" => tools.push(Box::new(crate::todo::TodoTool)),
+                "web_fetch" => tools.push(Box::new(crate::web_tools::WebFetchTool)),
+                "web_search" => tools.push(Box::new(crate::web_tools::WebSearchTool)),
                 _ => {}
             }
         }
