@@ -1,5 +1,5 @@
 use super::*;
-use unicode_width::UnicodeWidthChar;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 /// Transcript gutter glyphs. One column each, so every speaker's text starts in
 /// the same place and the transcript reads as a single column.
@@ -443,6 +443,85 @@ fn format_path_label(path: &std::path::Path) -> String {
             },
         );
     truncate(&display, 32)
+}
+
+const FOOTER_SEPARATOR: &str = "  |  ";
+
+// Drop order at narrow widths, lowest first. Same whole-segment rule the header
+// uses for its hint line: lose a field outright rather than truncate the tail
+// and leave the reader half a word.
+const FOOTER_PRIORITY_MODE_HINT: u8 = 0;
+const FOOTER_PRIORITY_HELP: u8 = 1;
+const FOOTER_PRIORITY_PERSISTENCE: u8 = 2;
+const FOOTER_PRIORITY_BRANCH: u8 = 3;
+const FOOTER_PRIORITY_TOKENS: u8 = 4;
+const FOOTER_PRIORITY_QUIT: u8 = 5;
+const FOOTER_PRIORITY_CWD: u8 = 6;
+/// Context outranks everything: it is the only field that warns the session is
+/// about to run out of room, so it is never dropped.
+const FOOTER_PRIORITY_CONTEXT: u8 = 7;
+
+struct FooterSegment {
+    long: String,
+    /// Empty means the segment is absent from the compact form.
+    short: String,
+    priority: u8,
+}
+
+impl FooterSegment {
+    fn pair(text: String, priority: u8) -> Self {
+        Self {
+            long: text.clone(),
+            short: text,
+            priority,
+        }
+    }
+}
+
+fn fit_footer(segments: &[FooterSegment], max_width: usize) -> String {
+    let join = |live: &[&FooterSegment], compact: bool| {
+        live.iter()
+            .map(|seg| if compact { &seg.short } else { &seg.long })
+            .filter(|text| !text.is_empty())
+            .map(String::as_str)
+            .collect::<Vec<_>>()
+            .join(FOOTER_SEPARATOR)
+    };
+
+    // The long form only ever gives up a segment the compact form does not
+    // carry at all, so full labels survive as long as they fit.
+    let mut live: Vec<&FooterSegment> = segments.iter().collect();
+    loop {
+        let candidate = join(&live, false);
+        if candidate.width() <= max_width {
+            return candidate;
+        }
+        let Some(pos) = live.iter().position(|seg| seg.short.is_empty()) else {
+            break;
+        };
+        live.remove(pos);
+    }
+
+    let mut live: Vec<&FooterSegment> = segments
+        .iter()
+        .filter(|seg| !seg.short.is_empty())
+        .collect();
+    loop {
+        let candidate = join(&live, true);
+        if candidate.width() <= max_width {
+            return candidate;
+        }
+        let Some(pos) = live
+            .iter()
+            .enumerate()
+            .filter(|(_, seg)| seg.priority < FOOTER_PRIORITY_CONTEXT)
+            .min_by_key(|(_, seg)| seg.priority)
+            .map(|(pos, _)| pos)
+        else {
+            return truncate(&candidate, max_width);
+        };
+        live.remove(pos);
+    }
 }
 
 fn format_persistence_footer_segment(
@@ -1024,39 +1103,49 @@ impl PiApp {
                 )
             },
         );
-        let branch_str = self
-            .vcs_info
-            .as_ref()
-            .map_or_else(String::new, |b| format!("  |  {b}"));
+        let branch_str = self.vcs_info.clone();
         let cwd_str = format_path_label(&self.cwd);
         let mode_hint = match self.input_mode {
             InputMode::SingleLine => "Shift+Enter: newline  |  Alt+Enter: multi-line",
             InputMode::MultiLine => "Enter: newline  |  Alt+Enter: send  |  Esc: single-line",
         };
-        // Context sits next to the token counts in both forms: it is the field
-        // that says whether the session is about to run out of room, so it has
-        // to survive the width squeeze that truncates the footer's tail.
         let percent = self.context_left_percent();
-        let context_long = percent.map_or_else(String::new, |percent| {
-            format!("  |  Context: {percent}% left")
-        });
-        let context_short =
-            percent.map_or_else(String::new, |percent| format!("  |  {percent}% ctx"));
-        let footer_long = format!(
-            "{cwd_str}{branch_str}  |  Tokens: {input} in / {output_tokens} out{cost_str}{context_long}  |  {persistence_str}  |  {mode_hint}  |  /help  |  Ctrl+C quit"
-        );
-        let footer_short = format!(
-            "{cwd_str}{branch_str}  |  {input}/{output_tokens} tokens{cost_str}{context_short}  |  {persistence_str}  |  /help  |  Ctrl+C quit"
-        );
-        let max_width = self.term_width.saturating_sub(2);
-        let mut footer = if footer_long.chars().count() <= max_width {
-            footer_long
-        } else {
-            footer_short
-        };
-        if footer.chars().count() > max_width {
-            footer = truncate(&footer, max_width);
+
+        let mut segments = vec![FooterSegment::pair(cwd_str, FOOTER_PRIORITY_CWD)];
+        if let Some(branch) = branch_str {
+            segments.push(FooterSegment::pair(branch, FOOTER_PRIORITY_BRANCH));
         }
+        segments.push(FooterSegment {
+            long: format!("Tokens: {input} in / {output_tokens} out{cost_str}"),
+            short: format!("{input}/{output_tokens} tokens{cost_str}"),
+            priority: FOOTER_PRIORITY_TOKENS,
+        });
+        if let Some(percent) = percent {
+            segments.push(FooterSegment {
+                long: format!("Context: {percent}% left"),
+                short: format!("{percent}% ctx"),
+                priority: FOOTER_PRIORITY_CONTEXT,
+            });
+        }
+        segments.push(FooterSegment::pair(
+            persistence_str,
+            FOOTER_PRIORITY_PERSISTENCE,
+        ));
+        segments.push(FooterSegment {
+            long: mode_hint.to_string(),
+            short: String::new(),
+            priority: FOOTER_PRIORITY_MODE_HINT,
+        });
+        segments.push(FooterSegment::pair(
+            "/help".to_string(),
+            FOOTER_PRIORITY_HELP,
+        ));
+        segments.push(FooterSegment::pair(
+            "Ctrl+C quit".to_string(),
+            FOOTER_PRIORITY_QUIT,
+        ));
+
+        let footer = fit_footer(&segments, self.term_width.saturating_sub(2));
         let _ = write!(output, "\n  {}\n", self.styles.muted.render(&footer));
     }
 
@@ -1931,6 +2020,77 @@ mod tests {
     fn context_left_percent_omits_unknown_window_or_unused_context() {
         assert_eq!(context_left_percent(0, 45_500), None);
         assert_eq!(context_left_percent(200_000, 0), None);
+    }
+
+    fn demo_footer_segments() -> Vec<FooterSegment> {
+        vec![
+            FooterSegment::pair(
+                "~/workspace/koompi-code-cli".to_string(),
+                FOOTER_PRIORITY_CWD,
+            ),
+            FooterSegment::pair("main".to_string(), FOOTER_PRIORITY_BRANCH),
+            FooterSegment {
+                long: "Tokens: 45000 in / 500 out ($1.2345)".to_string(),
+                short: "45000/500 tokens ($1.2345)".to_string(),
+                priority: FOOTER_PRIORITY_TOKENS,
+            },
+            FooterSegment {
+                long: "Context: 77% left".to_string(),
+                short: "77% ctx".to_string(),
+                priority: FOOTER_PRIORITY_CONTEXT,
+            },
+            FooterSegment::pair("Persist: balanced".to_string(), FOOTER_PRIORITY_PERSISTENCE),
+            FooterSegment {
+                long: "Shift+Enter: newline  |  Alt+Enter: multi-line".to_string(),
+                short: String::new(),
+                priority: FOOTER_PRIORITY_MODE_HINT,
+            },
+            FooterSegment::pair("/help".to_string(), FOOTER_PRIORITY_HELP),
+            FooterSegment::pair("Ctrl+C quit".to_string(), FOOTER_PRIORITY_QUIT),
+        ]
+    }
+
+    #[test]
+    fn footer_keeps_context_at_every_width() {
+        let segments = demo_footer_segments();
+        for width in 20..=200_usize {
+            let footer = fit_footer(&segments, width);
+            assert!(
+                footer.width() <= width,
+                "footer overflows {width} columns: {footer:?}"
+            );
+            assert!(
+                footer.contains("77%"),
+                "context must survive at {width} columns: {footer:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn footer_drops_whole_segments_by_priority() {
+        let segments = demo_footer_segments();
+
+        assert_eq!(
+            fit_footer(&segments, 198),
+            "~/workspace/koompi-code-cli  |  main  |  Tokens: 45000 in / 500 out ($1.2345)  |  \
+             Context: 77% left  |  Persist: balanced  |  \
+             Shift+Enter: newline  |  Alt+Enter: multi-line  |  /help  |  Ctrl+C quit"
+        );
+        // 167 columns: the mode hint is the first whole segment to go.
+        assert_eq!(
+            fit_footer(&segments, 167 - 2),
+            "~/workspace/koompi-code-cli  |  main  |  Tokens: 45000 in / 500 out ($1.2345)  |  \
+             Context: 77% left  |  Persist: balanced  |  /help  |  Ctrl+C quit"
+        );
+        assert_eq!(
+            fit_footer(&segments, 100 - 2),
+            "~/workspace/koompi-code-cli  |  main  |  45000/500 tokens ($1.2345)  |  77% ctx  |  \
+             Ctrl+C quit"
+        );
+        assert_eq!(
+            fit_footer(&segments, 60 - 2),
+            "~/workspace/koompi-code-cli  |  77% ctx  |  Ctrl+C quit"
+        );
     }
 
     #[test]

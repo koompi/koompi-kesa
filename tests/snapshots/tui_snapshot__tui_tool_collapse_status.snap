@@ -14,4 +14,4 @@ expression: view
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
 
-  <cwd>  |  0/0 tokens  |  Persist: balanced  |  /help  |  Ctrl+C...
+  <cwd>  |  0/0 tokens  |  Persist: balanced  |  Ctrl+C quit

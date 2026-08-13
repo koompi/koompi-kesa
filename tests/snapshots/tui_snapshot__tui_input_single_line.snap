@@ -15,4 +15,4 @@ expression: view
   │ > hello world                                                            │
   ╰──────────────────────────────────────────────────────────────────────────╯
 
-  <cwd>  |  0/0 tokens  |  Persist: balanced  |  /help  |  Ctrl+C...
+  <cwd>  |  0/0 tokens  |  Persist: balanced  |  Ctrl+C quit
