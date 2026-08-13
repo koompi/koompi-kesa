@@ -157,7 +157,7 @@ impl Tool for SubagentTool {
     }
 
     fn description(&self) -> &'static str {
-        "Delegate an isolated task to a named KOOMPI Code child agent. Supports one task, bounded parallel tasks, or a sequential chain whose tasks may reference {previous}. Agent definitions live in $KESA_CODING_AGENT_DIR/agents/*.md or .kesa/agents/*.md."
+        "Delegate an isolated task to a named KESA child agent. Supports one task, bounded parallel tasks, or a sequential chain whose tasks may reference {previous}. Agent definitions live in $KESA_CODING_AGENT_DIR/agents/*.md or .kesa/agents/*.md."
     }
 
     fn parameters(&self) -> Value {

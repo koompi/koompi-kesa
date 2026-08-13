@@ -72,7 +72,10 @@ fn format_tool_result_body(
 /// A todo write carries the whole list in `details`; show it as checkboxes rather
 /// than the raw payload.
 fn todo_checkbox_block(details: &Value) -> Option<String> {
-    if details.get("schema").and_then(Value::as_str)? != crate::todo::TODO_LIST_SCHEMA {
+    if !matches!(
+        details.get("schema").and_then(Value::as_str)?,
+        crate::todo::TODO_LIST_SCHEMA | crate::todo::LEGACY_TODO_LIST_SCHEMA
+    ) {
         return None;
     }
     let todos: Vec<crate::todo::TodoItem> =
@@ -516,6 +519,22 @@ mod tests {
         let result = format_tool_output(&blocks, Some(&details), true).unwrap();
         assert!(result.contains("status"));
         assert!(result.contains("ok"));
+    }
+
+    #[test]
+    fn format_tool_output_renders_a_pre_rename_todo_list() {
+        let details = serde_json::json!({
+            "schema": "kode.todo.list.v1",
+            "todos": [
+                {"content": "Read the file", "status": "completed", "active_form": "Reading the file"},
+            ],
+        });
+        let blocks = vec![ContentBlock::Text(TextContent::new("ignored".to_string()))];
+        assert_eq!(
+            format_tool_output(&blocks, Some(&details), true),
+            Some("\u{2611} Read the file".to_string()),
+            "a session recorded before the rename should still render as checkboxes"
+        );
     }
 
     #[test]

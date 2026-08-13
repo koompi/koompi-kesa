@@ -350,18 +350,18 @@ fn adopt_legacy_env(cli: &mut Cli) {
 
 const PERMISSION_MODES: &[&str] = &["default", "accept-edits", "plan", "read-only"];
 
-/// KOOMPI Code - AI coding agent CLI
+/// KESA - AI coding agent CLI
 #[derive(Parser, Debug)]
 #[allow(clippy::struct_excessive_bools)] // CLI flags are naturally boolean
 #[command(name = "pi")]
 #[command(version, about, long_about = None, disable_version_flag = true)]
 #[command(after_help = "Examples:
-  kode \"explain this code\"            Start new session with message
-  kode @file.rs \"review this\"         Include file in context
-  kode -c                              Continue previous session
-  kode -r                              Resume from session picker
-  kode -p \"what is 2+2\"               Print mode (non-interactive)
-  kode --model claude-opus-4 \"help\"   Use specific model
+  kesa \"explain this code\"            Start new session with message
+  kesa @file.rs \"review this\"         Include file in context
+  kesa -c                              Continue previous session
+  kesa -r                              Resume from session picker
+  kesa -p \"what is 2+2\"               Print mode (non-interactive)
+  kesa --model claude-opus-4 \"help\"   Use specific model
 ")]
 pub struct Cli {
     // === Help & Version ===
@@ -449,7 +449,7 @@ pub struct Cli {
 
     /// Disable terminal mouse capture in the interactive TUI.
     ///
-    /// KOOMPI Code normally captures all mouse motion to enable in-app wheel scrolling.
+    /// KESA normally captures all mouse motion to enable in-app wheel scrolling.
     /// On Windows / CMD.exe / Windows Terminal that capture blocks the
     /// terminal-native click-to-select / right-click-paste / Shift-Insert
     /// behaviour, making it effectively impossible to copy out the OAuth
@@ -2153,7 +2153,7 @@ pub enum Commands {
     #[command(name = "update-index")]
     UpdateIndex,
 
-    /// Preview the semantic context bundle KOOMPI Code would use for a task
+    /// Preview the semantic context bundle KESA would use for a task
     #[command(name = "context-preview")]
     ContextPreview {
         /// Output format: text (default) or json

@@ -1,4 +1,4 @@
-<h1 align="center">KOOMPI Code</h1>
+<h1 align="center">KOOMPI KESA</h1>
 
 <p align="center">
   <strong>A coding agent that lives in your terminal, written in Rust, built for KOOMPI OS.</strong>
@@ -15,13 +15,13 @@
 curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/install.sh | bash
 ```
 
-Then run `kode` in any project directory.
+Then run `kesa` in any project directory.
 
 ---
 
 ## What it is
 
-`kode` is a terminal coding agent: you describe what you want, it reads your
+`kesa` is a terminal coding agent: you describe what you want, it reads your
 files, edits them, runs commands, and shows its work as it goes. One static
 binary, no runtime to install, no Electron.
 
@@ -31,7 +31,7 @@ licence rider, which travels with every copy.
 
 ## Permissions
 
-`kode` never runs a tool the policy has not cleared. The mode sets the
+`kesa` never runs a tool the policy has not cleared. The mode sets the
 baseline; shift+tab cycles it mid-session.
 
 | Mode | Reads | Edits | Shell |
@@ -72,7 +72,7 @@ a command the model wrote.
 
 `--sandbox-write <dir>` grants an extra writable directory. `--no-sandbox`
 turns it off, and is required rather than assumed: on a kernel without
-landlock, `kode` refuses to run commands instead of quietly running them
+landlock, `kesa` refuses to run commands instead of quietly running them
 unconfined.
 
 Landlock is Linux-only. On other platforms the sandbox reports itself
@@ -108,12 +108,12 @@ curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/uninsta
 ## Use
 
 ```bash
-kode                                  # interactive session in the current directory
-kode "explain the retry logic in src/http"
-kode -p "what does this error mean?" < error.log   # print mode, no session
-kode --continue                       # pick up the last session
-kode --resume                         # choose a session from the picker
-kode --permission-mode plan "how would you restructure the parser?"
+kesa                                  # interactive session in the current directory
+kesa "explain the retry logic in src/http"
+kesa -p "what does this error mean?" < error.log   # print mode, no session
+kesa --continue                       # pick up the last session
+kesa --resume                         # choose a session from the picker
+kesa --permission-mode plan "how would you restructure the parser?"
 ```
 
 Point it at a provider with `--provider` and `--model`, or set `KESA_PROVIDER`
@@ -131,15 +131,15 @@ Settings live in `~/.kesa/settings.json`, and a project can override them from
 replacing them.
 
 Skills, prompts, themes and extensions load from `~/.kesa/` and from `.kesa/`
-in the project. `kode config` opens the settings UI, `kode doctor` reports on
-the environment, and `kode list` shows what is installed.
+in the project. `kesa config` opens the settings UI, `kesa doctor` reports on
+the environment, and `kesa list` shows what is installed.
 
 ## Building
 
 ```bash
 cargo check --all-targets
 cargo test --lib
-cargo build --release --bin kode
+cargo build --release --bin kesa
 ```
 
 Two library tests fail on this fork and are inherited from upstream, not

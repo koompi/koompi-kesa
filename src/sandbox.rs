@@ -2,7 +2,7 @@
 //!
 //! `Cargo.toml` sets `unsafe_code = "forbid"`, so `Command::pre_exec` is not
 //! available to apply landlock between fork and exec. Instead the child is
-//! launched through a re-exec: `kode __sandbox-exec ... -- <argv>` restricts
+//! launched through a re-exec: `kesa __sandbox-exec ... -- <argv>` restricts
 //! itself with landlock and then calls
 //! [`std::os::unix::process::CommandExt::exec`], which is a safe fn. The pid
 //! and process group survive `exec`, so the caller's process-group isolation

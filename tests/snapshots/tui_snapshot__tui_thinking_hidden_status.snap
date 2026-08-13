@@ -2,7 +2,7 @@
 source: tests/tui_snapshot.rs
 expression: view
 ---
-  Kode (dummy/dummy-model)  <cwd>  mode: default
+  KESA (dummy/dummy-model)  <cwd>  mode: default
   ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
   0 skills  0 prompts  0 themes  0 extensions  (0 resources ready)
 

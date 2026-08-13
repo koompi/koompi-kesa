@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# KOOMPI Code installer.
+# KOOMPI KESA installer.
 #
 #   curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/install.sh | bash
 #
 # Downloads the release binary for this machine, checks it against the
-# release's SHA256SUMS, and drops `kode` in ~/.local/bin.
+# release's SHA256SUMS, and drops `kesa` in ~/.local/bin.
 #
 # Environment overrides: OWNER, REPO, VERSION, DEST, KESA_NO_VERIFY.
 
@@ -16,7 +16,7 @@ REPO="${REPO:-koompi-code-cli}"
 VERSION="${VERSION:-}"
 DEST="${DEST:-$HOME/.local/bin}"
 NO_VERIFY="${KESA_NO_VERIFY:-0}"
-BIN="kode"
+BIN="kesa"
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   C_DIM=$'\033[2m'; C_RED=$'\033[31m'; C_GREEN=$'\033[32m'; C_BOLD=$'\033[1m'; C_OFF=$'\033[0m'
@@ -31,7 +31,7 @@ die()  { printf '%s✗%s %s\n' "$C_RED" "$C_OFF" "$*" >&2; exit 1; }
 
 usage() {
   cat <<EOF
-KOOMPI Code installer
+KOOMPI KESA installer
 
   --version <tag>   Install a specific release, e.g. v0.2.0 (default: latest)
   --dest <dir>      Install directory (default: \$HOME/.local/bin)
@@ -100,7 +100,7 @@ TMP="$(mktemp -d)"
 cleanup() { rm -rf "$TMP"; }
 trap cleanup EXIT
 
-say "${C_BOLD}KOOMPI Code${C_OFF} ${VERSION} (${PLATFORM})"
+say "${C_BOLD}KOOMPI KESA${C_OFF} ${VERSION} (${PLATFORM})"
 info "Downloading ${ASSET}..."
 FETCH "${BASE}/${ASSET}" "${TMP}/${ASSET}" \
   || die "no release asset ${ASSET} at ${VERSION}"
@@ -128,7 +128,7 @@ tar -xzf "${TMP}/${ASSET}" -C "$TMP"
 [ -f "${TMP}/${BIN}" ] || die "${ASSET} does not contain a ${BIN} binary"
 
 mkdir -p "$DEST"
-# Install through a temp name and rename, so a running kode is not clobbered
+# Install through a temp name and rename, so a running kesa is not clobbered
 # mid-write and an interrupted install cannot leave a truncated binary.
 install -m 0755 "${TMP}/${BIN}" "${DEST}/.${BIN}.new"
 mv -f "${DEST}/.${BIN}.new" "${DEST}/${BIN}"
@@ -146,5 +146,5 @@ esac
 say ""
 "${DEST}/${BIN}" --version || true
 say ""
-say "Get started:  ${C_BOLD}kode${C_OFF}"
+say "Get started:  ${C_BOLD}kesa${C_OFF}"
 say "Uninstall:    ${C_DIM}curl -fsSL https://raw.githubusercontent.com/${OWNER}/${REPO}/main/uninstall.sh | bash${C_OFF}"

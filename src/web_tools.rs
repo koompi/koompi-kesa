@@ -16,9 +16,9 @@ use serde_json::{Value, json};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 /// Marks a `details` payload as a fetched page.
-pub const WEB_FETCH_SCHEMA: &str = "kode.web_fetch.page.v1";
+pub const WEB_FETCH_SCHEMA: &str = "kesa.web_fetch.page.v1";
 /// Marks a `details` payload as a search result list.
-pub const WEB_SEARCH_SCHEMA: &str = "kode.web_search.results.v1";
+pub const WEB_SEARCH_SCHEMA: &str = "kesa.web_search.results.v1";
 
 /// Opt-in for loopback / private / link-local targets.
 pub const ALLOW_PRIVATE_ENV: &str = "WEB_ALLOW_PRIVATE_HOSTS";

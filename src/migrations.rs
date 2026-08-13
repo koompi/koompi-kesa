@@ -726,7 +726,7 @@ mod tests {
     #[test]
     fn adopts_legacy_auth_when_this_install_has_none() {
         let temp = TempDir::new().expect("tempdir");
-        let agent_dir = temp.path().join("kode/agent");
+        let agent_dir = temp.path().join("kesa/agent");
         let legacy = temp.path().join("pi/agent/auth.json");
         write(&legacy, r#"{"openai-codex":{"refresh_token":"r"}}"#);
 
@@ -755,7 +755,7 @@ mod tests {
     #[test]
     fn adoption_never_overwrites_existing_credentials() {
         let temp = TempDir::new().expect("tempdir");
-        let agent_dir = temp.path().join("kode/agent");
+        let agent_dir = temp.path().join("kesa/agent");
         let legacy = temp.path().join("pi/agent/auth.json");
         write(&agent_dir.join("auth.json"), r#"{"anthropic":{"api_key":"mine"}}"#);
         write(&legacy, r#"{"openai-codex":{"refresh_token":"r"}}"#);

@@ -276,7 +276,7 @@ pi --provider mistralrs --model default        -p "hi"
 ```
 
 To point at any other OpenAI-compatible server (a custom host/port, vLLM, etc.),
-add it to `~/.kode/agent/models.json`:
+add it to `~/.kesa/agent/models.json`:
 
 ```json
 {
@@ -317,7 +317,7 @@ Each standalone CLI invocation starts a new process, so its in-memory cache is
 fresh. The five-minute cache only avoids repeat discovery calls made within one
 long-lived process by SDK/library users; `--refresh-models` bypasses that cache.
 
-Persistence is opt-in. The v2 `~/.kode/agent/models.fetched.json` schema stores
+Persistence is opt-in. The v2 `~/.kesa/agent/models.fetched.json` schema stores
 provider/model IDs, the fetch timestamp, and a non-secret SHA-256 identity
 binding membership to the provider, API, query-free endpoint, auth-header
 mode, recognized credential-query ordered name/presence shape, and
@@ -335,7 +335,7 @@ endpoint/transport shape can retain the prior account's saved model list until
 you rerun `--fetch-models <provider> --refresh-models --persist-models`.
 Inference still resolves and sends the current account's credential; only the
 opt-in model-membership list can be stale across that switch. The generated
-catalog is loaded first; your hand-written `~/.kode/agent/models.json` is loaded
+catalog is loaded first; your hand-written `~/.kesa/agent/models.json` is loaded
 afterward and remains authoritative. Pi does not rewrite or merge that
 user-authored file.
 Legacy `pi.models.fetched.v1` files cannot be rebound safely because they lack
@@ -393,8 +393,8 @@ extension and never resolves a child executable by assuming a `pi` binary on
 override is needed.
 
 Agent definitions are Markdown files in `$KODE_CODING_AGENT_DIR/agents/*.md`
-(normally `~/.kode/agent/agents/*.md`) or the nearest
-`.kode/agents/*.md`. Project definitions take precedence over same-named user
+(normally `~/.kesa/agent/agents/*.md`) or the nearest
+`.kesa/agents/*.md`. Project definitions take precedence over same-named user
 definitions. The process inherits the parent's provider, router, authentication,
 and model-registry environment, including `KODE_CODING_AGENT_DIR`.
 
@@ -429,7 +429,7 @@ Sessions persist as JSONL files with full conversation history:
 pi --continue
 
 # Open specific session
-pi --session ~/.kode/agent/sessions/--home-user-project--/2024-01-15T10-30-00.jsonl
+pi --session ~/.kesa/agent/sessions/--home-user-project--/2024-01-15T10-30-00.jsonl
 
 # Ephemeral (no persistence)
 pi --no-session
@@ -452,8 +452,8 @@ Thinking levels: `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`
 
 ### Customization (Skills & Prompt Templates)
 
-- **Skills**: Drop `SKILL.md` under `~/.kode/agent/skills/` or `.kode/skills/` and invoke with `/skill:name`.
-- **Prompt templates**: Markdown files under `~/.kode/agent/prompts/` or `.kode/prompts/`; invoke via `/<template> [args]`.
+- **Skills**: Drop `SKILL.md` under `~/.kesa/agent/skills/` or `.kesa/skills/` and invoke with `/skill:name`.
+- **Prompt templates**: Markdown files under `~/.kesa/agent/prompts/` or `.kesa/prompts/`; invoke via `/<template> [args]`.
 - **Packages**: Share bundles with `pi install npm:@org/pi-packages` (skills, prompts, themes, extensions).
 
 ### Autocomplete
@@ -844,8 +844,8 @@ pi swarm-progress --input progress-slo-input.json --format json
 pi swarm-progress --input progress-slo-input.json --since HEAD~1 --out-json progress-slo.json
 
 # Session storage migration (JSONL -> v2 sidecar store)
-pi migrate ~/.kode/agent/sessions --dry-run
-pi migrate ~/.kode/agent/sessions
+pi migrate ~/.kesa/agent/sessions --dry-run
+pi migrate ~/.kesa/agent/sessions
 ```
 
 - `update-index` refreshes extension index metadata used by `search` and `info`.
@@ -858,7 +858,7 @@ pi migrate ~/.kode/agent/sessions
 
 ## Configuration
 
-Pi reads configuration from `~/.kode/agent/settings.json`:
+Pi reads configuration from `~/.kesa/agent/settings.json`:
 
 ```json
 {
@@ -900,8 +900,8 @@ Settings are resolved in priority order (first match wins):
 
 1. **CLI flags** (`--model`, `--thinking`, `--provider`, etc.)
 2. **Environment variables** (`ANTHROPIC_API_KEY`, `KODE_CONFIG_PATH`, etc.)
-3. **Project settings** (`.kode/settings.json` in the working directory)
-4. **Global settings** (`~/.kode/agent/settings.json`)
+3. **Project settings** (`.kesa/settings.json` in the working directory)
+4. **Global settings** (`~/.kesa/agent/settings.json`)
 5. **Built-in defaults**
 
 This means a CLI flag always overrides a `settings.json` value, and a project-level setting overrides the global one.
@@ -911,9 +911,9 @@ This means a CLI flag always overrides a `settings.json` value, and a project-le
 Skills, prompt templates, themes, and extensions follow the same resolution order:
 
 1. CLI-specified paths (`--skill`, `--prompt-template`, `--theme`, `-e`)
-2. Project directory (`.kode/skills/`, `.kode/prompts/`, `.kode/themes/`, `.kode/extensions/`)
-3. Global directory (`~/.kode/agent/skills/`, `~/.kode/agent/prompts/`, etc.)
-4. Installed packages (`~/.kode/agent/packages/`)
+2. Project directory (`.kesa/skills/`, `.kesa/prompts/`, `.kesa/themes/`, `.kesa/extensions/`)
+3. Global directory (`~/.kesa/agent/skills/`, `~/.kesa/agent/prompts/`, etc.)
+4. Installed packages (`~/.kesa/agent/packages/`)
 
 When multiple resources share the same name, the first occurrence wins. Collisions are logged as diagnostics.
 
@@ -1488,7 +1488,7 @@ User specifies --provider openai --model gpt-4o
   └───────────────────────────┘
 ```
 
-**`models.json` overrides**: Users can define custom providers in `~/.kode/agent/models.json` or `.kode/models.json`. Each entry specifies a model ID, base URL, API type, and optional compat flags, letting you route to self-hosted models, proxies, or providers that Pi does not natively support.
+**`models.json` overrides**: Users can define custom providers in `~/.kesa/agent/models.json` or `.kesa/models.json`. Each entry specifies a model ID, base URL, API type, and optional compat flags, letting you route to self-hosted models, proxies, or providers that Pi does not natively support.
 
 **Compat config** handles the differences between OpenAI-compatible APIs:
 
@@ -1778,7 +1778,7 @@ Pi also supports a v2 sidecar store next to JSONL sessions for faster resume and
 
 ### Authentication & Credential Management
 
-Beyond simple API keys, Pi supports OAuth, AWS credential chains, service key exchange, and bearer-token auth. Credentials are stored in `~/.kode/agent/auth.json` with file-locked access to prevent corruption from concurrent instances. Stored API keys can be literal strings, `$ENV:VAR_NAME` references, or `$CMD:shell command` / `$COMMAND:shell command` sources that resolve trimmed stdout at request time.
+Beyond simple API keys, Pi supports OAuth, AWS credential chains, service key exchange, and bearer-token auth. Credentials are stored in `~/.kesa/agent/auth.json` with file-locked access to prevent corruption from concurrent instances. Stored API keys can be literal strings, `$ENV:VAR_NAME` references, or `$CMD:shell command` / `$COMMAND:shell command` sources that resolve trimmed stdout at request time.
 
 | Mechanism | Providers | Details |
 |-----------|-----------|---------|
@@ -2488,7 +2488,7 @@ Sessions are append-only JSONL. If corruption occurs:
 pi --no-session
 
 # Or delete the problematic session
-rm ~/.kode/agent/sessions/--home-user-project--/corrupted-session.jsonl
+rm ~/.kesa/agent/sessions/--home-user-project--/corrupted-session.jsonl
 ```
 
 ### "Streaming hangs"
@@ -2706,7 +2706,7 @@ A: Pi focuses on core coding assistance. Features like web browsing, image gener
 A: When a conversation exceeds the model's context window, Pi summarizes older messages using the LLM itself, storing the summary as a session entry. Recent messages are kept verbatim. The cut point is chosen at a turn boundary, and the summary includes a record of which files were read or modified so the model retains that awareness. Compaction runs automatically after each agent turn when needed, or manually via `/compact`.
 
 **Q: Can I add a custom provider that Pi doesn't support natively?**
-A: Yes. Create a `models.json` file in `~/.kode/agent/` or `.kode/` with entries specifying the model ID, base URL, and API type (usually `openai-completions` for OpenAI-compatible endpoints). Pi's compat config system handles field name differences and feature flag overrides. Extensions can also register entirely custom providers.
+A: Yes. Create a `models.json` file in `~/.kesa/agent/` or `.kesa/` with entries specifying the model ID, base URL, and API type (usually `openai-completions` for OpenAI-compatible endpoints). Pi's compat config system handles field name differences and feature flag overrides. Extensions can also register entirely custom providers.
 
 **Q: How does Pi decide which session to resume?**
 A: Pi maintains a SQLite session metadata index sidecar with WAL/lock handling and stale-index reindexing. When you run `pi -c`, it queries that index for the most recently modified session whose working directory matches your current project, including JSONL sessions and configured SQLite-backed sessions. This avoids scanning the filesystem on every resume.

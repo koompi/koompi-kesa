@@ -41,7 +41,7 @@ jobs:
           toolchain: nightly-2026-07-05
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --release --bin kode
+        run: cargo build --release --bin kesa
       - name: Package
         id: package
         env:
@@ -49,8 +49,8 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
         run: |
           set -euo pipefail
-          asset="kode-${TAG}-${PLATFORM}.tar.gz"
-          tar -czf "$asset" -C target/release kode
+          asset="kesa-${TAG}-${PLATFORM}.tar.gz"
+          tar -czf "$asset" -C target/release kesa
           sha256sum "$asset" > "$asset.sha256"
           echo "asset=$asset" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
@@ -84,6 +84,6 @@ jobs:
         run: |
           set -euo pipefail
           gh release create "$TAG" dist/* \
-            --title "KOOMPI Code $TAG" \
+            --title "KOOMPI KESA $TAG" \
             --generate-notes \
             || gh release upload "$TAG" dist/* --clobber

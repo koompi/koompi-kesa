@@ -105,7 +105,7 @@ fn session_hints(error: &Error) -> ErrorHint {
         },
         Error::Session(msg) if msg.contains("locked") => ErrorHint {
             summary: "Session file is locked by another process",
-            hints: &["Close other kode instances using this session"],
+            hints: &["Close other KESA instances using this session"],
             context_fields: &["path"],
         },
         _ => ErrorHint {
@@ -160,7 +160,7 @@ fn auth_hints(msg: &str) -> ErrorHint {
     if msg.contains("lock") {
         return ErrorHint {
             summary: "Auth file locked by another process",
-            hints: &["Close other kode instances that may be using auth.json"],
+            hints: &["Close other KESA instances that may be using auth.json"],
             context_fields: &["path"],
         };
     }
@@ -222,7 +222,7 @@ fn provider_hints(message: &str) -> ErrorHint {
             summary: "Model not found or unavailable",
             hints: &[
                 "Check that the model ID is correct",
-                "Use 'kode --list-models' to see available models",
+                "Use 'kesa --list-models' to see available models",
             ],
             context_fields: &["provider", "model_id"],
         };
@@ -236,7 +236,7 @@ fn provider_hints(message: &str) -> ErrorHint {
             summary: "Provider rejected the credentials",
             hints: &[
                 "Run /login to sign in again",
-                "A token read from another agent's install (~/.codex/auth.json, ~/.claude/.credentials.json) is used as-is and never refreshed; /login stores one kode can refresh",
+                "A token read from another agent's install (~/.codex/auth.json, ~/.claude/.credentials.json) is used as-is and never refreshed; /login stores one KESA can refresh",
             ],
             context_fields: &["provider", "status_code"],
         };
@@ -471,7 +471,7 @@ fn sqlite_hints(err: &sqlmodel_core::Error) -> ErrorHint {
     if message.contains("locked") {
         return ErrorHint {
             summary: "Database locked",
-            hints: &["Close other kode instances using this database"],
+            hints: &["Close other KESA instances using this database"],
             context_fields: &["db_path"],
         };
     }

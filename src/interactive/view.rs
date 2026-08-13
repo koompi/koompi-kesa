@@ -7,7 +7,7 @@ const USER_PROMPT_GLYPH: &str = "\u{203a}";
 const ASSISTANT_GLYPH: &str = "\u{25cf}";
 const TOOL_RESULT_GLYPH: &str = "\u{23bf}";
 
-const APP_LABEL: &str = "Kode";
+const APP_LABEL: &str = "KESA";
 
 /// Prompt shown on the first row inside the input box.
 const INPUT_PROMPT_GLYPH: &str = ">";
@@ -1866,7 +1866,7 @@ impl PiApp {
 
     pub(super) fn render_tool_approval(&self, prompt: &ToolApprovalOverlay) -> String {
         let width = box_width(self.term_width);
-        let title = format!("{} wants to run", self.styles.accent_bold.render("kode"));
+        let title = format!("{} wants to run", self.styles.accent_bold.render("KESA"));
         let summary = self.styles.warning_bold.render(&prompt.summary);
         let tool = self.styles.muted.render(&format!("{}:", prompt.tool_name));
 

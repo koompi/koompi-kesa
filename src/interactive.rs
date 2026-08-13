@@ -2186,7 +2186,7 @@ fn build_startup_welcome_message(config: &Config, available_models: &[ModelEntry
         return String::new();
     }
 
-    let mut message = String::from("  Welcome to KOOMPI Code!\n");
+    let mut message = String::from("  Welcome to KESA!\n");
 
     if available_models
         .iter()

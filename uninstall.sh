@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 #
-# KOOMPI Code uninstaller.
+# KOOMPI KESA uninstaller.
 #
 #   curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/uninstall.sh | bash
 #
-# Removes the `kode` binary. Config, sessions and credentials under ~/.kesa are
+# Removes the `kesa` binary. Config, sessions and credentials under ~/.kesa are
 # left alone unless you pass --purge.
 
 set -euo pipefail
 
 DEST="${DEST:-$HOME/.local/bin}"
 PURGE=0
-BIN="kode"
+BIN="kesa"
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   C_DIM=$'\033[2m'; C_GREEN=$'\033[32m'; C_OFF=$'\033[0m'
@@ -27,9 +27,9 @@ while [ $# -gt 0 ]; do
     --purge) PURGE=1; shift ;;
     --help|-h)
       cat <<EOF
-KOOMPI Code uninstaller
+KOOMPI KESA uninstaller
 
-  --dest <dir>   Where kode was installed (default: \$HOME/.local/bin)
+  --dest <dir>   Where kesa was installed (default: \$HOME/.local/bin)
   --purge        Also delete ~/.kesa (config, sessions, credentials)
 EOF
       exit 0 ;;

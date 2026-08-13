@@ -12,7 +12,11 @@ use serde_json::{Value, json};
 use std::sync::{Mutex, OnceLock};
 
 /// Marks a `details` payload as a todo list so the TUI can render checkboxes.
-pub const TODO_LIST_SCHEMA: &str = "kode.todo.list.v1";
+pub const TODO_LIST_SCHEMA: &str = "kesa.todo.list.v1";
+
+/// Pre-rename identifier. A session recorded before the rename still carries
+/// it, and so does any extension not yet rebuilt.
+pub const LEGACY_TODO_LIST_SCHEMA: &str = "kode.todo.list.v1";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

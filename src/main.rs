@@ -4875,7 +4875,7 @@ impl ConfigUiApp {
 
     fn view(&self) -> String {
         let mut out = String::new();
-        out.push_str("KOOMPI Code Config UI\n");
+        out.push_str("KESA Config UI\n");
         let _ = writeln!(out, "{}", self.settings_summary);
         out.push_str("Keys: ↑/↓ (or j/k) move, Space toggle, Enter save, q cancel\n\n");
 
@@ -5646,7 +5646,7 @@ fn handle_doctor(
 
 fn print_version() {
     println!(
-        "kode {} ({} {})",
+        "kesa {} ({} {})",
         env!("CARGO_PKG_VERSION"),
         option_env!("VERGEN_GIT_SHA").unwrap_or("unknown"),
         option_env!("VERGEN_BUILD_TIMESTAMP").unwrap_or(""),
@@ -5879,7 +5879,7 @@ fn list_models_cache_path(models_path: &Path) -> Option<PathBuf> {
 
     let key = format!("{:x}", hasher.finalize());
     dirs::cache_dir().map(|dir| {
-        dir.join("kode")
+        dir.join("kesa")
             .join("list-models-cache")
             .join(format!("{key}.json"))
     })
@@ -6367,7 +6367,7 @@ async fn run_first_time_setup(
 ) -> Result<bool> {
     let console = PiConsole::new();
 
-    console.render_rule(Some("Welcome to KOOMPI Code"));
+    console.render_rule(Some("Welcome to KESA"));
     match startup_error {
         StartupError::NoModelsAvailable { .. } => {
             console.print_markup("[bold]No authenticated models are available yet.[/]\n");
@@ -6447,7 +6447,7 @@ async fn run_first_time_setup(
         }
         if normalized.eq(&custom_num) || normalized.eq("custom") || normalized.eq("models") {
             console.render_info(&format!(
-                "Create models.json at {} and restart kode.",
+                "Create models.json at {} and restart kesa.",
                 models_path.display()
             ));
             return Ok(false);
@@ -6491,7 +6491,7 @@ async fn run_first_time_setup(
                 "google-antigravity" => kesa::auth::start_google_antigravity_oauth()?,
                 _ => {
                     console.render_warning(&format!(
-                        "OAuth login is not supported for {} in this setup flow. Start kode and run /login {} instead.",
+                        "OAuth login is not supported for {} in this setup flow. Start kesa and run /login {} instead.",
                         provider.provider, provider.provider
                     ));
                     return Ok(false);
@@ -6620,7 +6620,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         SetupCredentialKind::OAuthDeviceFlow => {
             if provider.provider.ne("kimi-for-coding") {
                 console.render_warning(&format!(
-                    "Device-flow login not supported for {} in this setup flow. Start kode and run /login {} instead.",
+                    "Device-flow login not supported for {} in this setup flow. Start kesa and run /login {} instead.",
                     provider.provider, provider.provider
                 ));
                 return Ok(false);
