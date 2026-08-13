@@ -10,5 +10,8 @@ expression: view
   Assistant:
   Thinking: Considering options...
   Partial answer.
+  ╭ think off ───────────────────────────────────────────────────────────────╮
+  │ > Type a message... (/help, /exit)                                       │
+  ╰──────────────────────────────────────────────────────────────────────────╯
 
   <cwd>  |  0/0 tokens  |  Persist: balanced  |  /help  |  Ctrl+C...

@@ -109,9 +109,10 @@ pub use self::state::{AgentState, InputMode, PendingInput};
 use self::state::{
     ApprovalAction, AutocompleteState, BranchPickerOverlay, CapabilityAction,
     CapabilityPromptOverlay, ExtensionCustomOverlay, HistoryList, InjectedMessageQueue,
-    InteractiveMessageQueue, PendingLoginKind, PendingOAuth, QueuedMessageKind,
-    SessionPickerOverlay, SettingsUiEntry, SettingsUiState, TOOL_COLLAPSE_PREVIEW_LINES,
-    ThemePickerItem, ThemePickerOverlay, ToolApprovalOverlay, ToolProgress, format_count,
+    InteractiveMessageQueue, PASTE_COLLAPSE_MIN_LINES, PendingLoginKind, PendingOAuth,
+    QueuedMessageKind, SessionPickerOverlay, SettingsUiEntry, SettingsUiState,
+    THINKING_COLLAPSED_MAX_LINES, TOOL_COLLAPSE_PREVIEW_LINES, ThemePickerItem, ThemePickerOverlay,
+    ToolApprovalOverlay, ToolProgress, format_count,
 };
 pub use self::state::{ConversationMessage, MessageRole};
 use self::text_utils::{queued_message_preview, truncate};
@@ -1145,8 +1146,11 @@ impl PiApp {
     ///
     /// Keeping this in one place prevents overlay/input drift between
     /// rendering, viewport sizing, and keyboard dispatch.
+    ///
+    /// The agent state is deliberately not consulted: the editor stays live
+    /// through a turn so typing queues steering instead of being dropped.
     const fn editor_input_is_available(&self) -> bool {
-        matches!(self.agent_state, AgentState::Idle)
+        self.tool_approval.is_none()
             && self.tree_ui.is_none()
             && self.session_picker.is_none()
             && self.settings_ui.is_none()
@@ -1271,7 +1275,13 @@ impl PiApp {
             chrome += 2;
         }
 
-        // Input area vs processing spinner.
+        // Input area and processing spinner can be on screen together: the
+        // editor stays live while the agent works.
+        if self.show_processing_status_spinner() {
+            // Processing spinner: "\n  spinner Processing...\n" = 2 rows.
+            chrome += 2;
+        }
+
         if self.editor_input_is_available() {
             // render_input: compact labeled border (2 rows) + input.height() rows.
             chrome += 2 + self.input.height();
@@ -1289,9 +1299,6 @@ impl PiApp {
                 //     + bottom border + help line
                 chrome += visible + 5;
             }
-        } else if self.show_processing_status_spinner() {
-            // Processing spinner: "\n  spinner Processing...\n" = 2 rows.
-            chrome += 2;
         }
 
         self.term_height.saturating_sub(chrome)
@@ -2402,6 +2409,13 @@ pub struct PiApp {
 
     // Token tracking
     total_usage: Usage,
+    /// Large pastes collapsed to a `[pasted N lines]` placeholder in the
+    /// editor, paired with the real text to send. Expanded on submit/queue.
+    pasted_blocks: Vec<(String, String)>,
+    /// Context tokens occupied by the session, keyed by
+    /// `(messages.len(), total_usage.total_tokens)` so the footer does not walk
+    /// the session tree on every frame.
+    context_tokens_cache: std::cell::Cell<Option<((usize, u64), u64)>>,
 
     // Async channel for agent events
     event_tx: mpsc::Sender<PiMsg>,
@@ -2748,6 +2762,8 @@ impl PiApp {
             model,
             agent: Arc::new(Mutex::new(agent)),
             total_usage,
+            pasted_blocks: Vec::new(),
+            context_tokens_cache: std::cell::Cell::new(None),
             event_tx,
             runtime_handle,
             stop_hook_active: Arc::new(AtomicBool::new(false)),
@@ -3402,8 +3418,13 @@ impl PiApp {
             // (e.g., text input handled by TextArea)
         }
 
+        // Spinner ticks drive the spinner even while the editor holds focus.
+        if msg.downcast_ref::<SpinnerTickMsg>().is_some() {
+            return self.spinner.update(msg);
+        }
+
         // Forward to appropriate component based on state
-        if matches!(self.agent_state, AgentState::Idle) {
+        if matches!(self.agent_state, AgentState::Idle) || self.editor_input_is_available() {
             let old_height = self.input.height();
 
             if let Some(key) = msg.downcast_ref::<KeyMsg>()

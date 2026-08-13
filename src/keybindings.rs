@@ -215,6 +215,7 @@ pub enum AppAction {
     JumpBackward,
     PageUp,
     PageDown,
+    ScrollToBottom,
 
     // Deletion
     DeleteCharBackward,
@@ -307,6 +308,7 @@ impl AppAction {
             Self::JumpBackward => "Jump backward to character",
             Self::PageUp => "Scroll up by page",
             Self::PageDown => "Scroll down by page",
+            Self::ScrollToBottom => "Jump to latest output",
 
             // Deletion
             Self::DeleteCharBackward => "Delete character backward",
@@ -397,7 +399,8 @@ impl AppAction {
             | Self::JumpForward
             | Self::JumpBackward
             | Self::PageUp
-            | Self::PageDown => ActionCategory::CursorMovement,
+            | Self::PageDown
+            | Self::ScrollToBottom => ActionCategory::CursorMovement,
 
             Self::DeleteCharBackward
             | Self::DeleteCharForward
@@ -481,6 +484,7 @@ impl AppAction {
             Self::JumpBackward,
             Self::PageUp,
             Self::PageDown,
+            Self::ScrollToBottom,
             // Deletion
             Self::DeleteCharBackward,
             Self::DeleteCharForward,
@@ -1417,6 +1421,9 @@ impl KeyBindings {
             AppAction::PageDown,
             vec![KeyBinding::plain("pagedown"), KeyBinding::shift("down")],
         );
+        // alt+down mirrors alt+up (Dequeue); `end`/`home` stay with the editor,
+        // which is live during a turn now.
+        m.insert(AppAction::ScrollToBottom, vec![KeyBinding::alt("down")]);
 
         // Deletion
         m.insert(

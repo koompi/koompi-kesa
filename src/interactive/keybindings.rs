@@ -220,9 +220,16 @@ impl PiApp {
             return false;
         }
 
-        let pasted: String = key.runes.iter().collect();
+        // Terminals send pasted line breaks as CR (tmux rewrites LF to CR
+        // outright), so count and store lines on \n or nothing matches.
+        let pasted = key
+            .runes
+            .iter()
+            .collect::<String>()
+            .replace("\r\n", "\n")
+            .replace('\r', "\n");
         let Some((insert, count)) = self.normalize_pasted_paths(&pasted) else {
-            return false;
+            return self.collapse_large_paste(&pasted);
         };
 
         self.input.insert_string(&insert);
@@ -234,6 +241,44 @@ impl PiApp {
             ));
         }
         true
+    }
+
+    /// Insert a `[pasted N lines]` placeholder for a paste too big to read in
+    /// the box, keeping the real text for submission.
+    fn collapse_large_paste(&mut self, pasted: &str) -> bool {
+        let lines = pasted.lines().count();
+        if lines < PASTE_COLLAPSE_MIN_LINES {
+            return false;
+        }
+
+        let placeholder = format!("[pasted {lines} lines]");
+        self.input.insert_string(&placeholder);
+        self.pasted_blocks
+            .push((placeholder, pasted.trim_end_matches('\n').to_string()));
+        self.status_message = Some(format!("Collapsed paste of {lines} lines"));
+        true
+    }
+
+    /// Swap every collapsed-paste placeholder back for its real text.
+    ///
+    /// Each block is consumed on first match, so a placeholder the user deleted
+    /// is simply dropped.
+    fn expand_pasted_blocks(&mut self, text: &str) -> String {
+        let mut expanded = text.to_string();
+        for (placeholder, body) in self.pasted_blocks.drain(..) {
+            expanded = expanded.replacen(&placeholder, &body, 1);
+        }
+        expanded
+    }
+
+    /// Expand collapsed pastes in place, for paths that read the editor
+    /// themselves instead of taking the submitted text.
+    fn expand_pasted_blocks_in_editor(&mut self) {
+        if self.pasted_blocks.is_empty() {
+            return;
+        }
+        let expanded = self.expand_pasted_blocks(&self.input.value());
+        self.input.set_value(&expanded);
     }
 
     fn normalize_pasted_paths(&self, pasted: &str) -> Option<(String, usize)> {
@@ -685,6 +730,7 @@ impl PiApp {
                 let editor_text = self.input.value();
                 if !editor_text.is_empty() {
                     self.input.reset();
+                    self.pasted_blocks.clear();
                     self.last_ctrlc_time = Some(std::time::Instant::now());
                     self.status_message = Some("Input cleared".to_string());
                     return None;
@@ -792,6 +838,7 @@ impl PiApp {
             AppAction::Submit => {
                 // Enter: Submit when idle, queue steering when busy
                 if self.agent_state != AgentState::Idle {
+                    self.expand_pasted_blocks_in_editor();
                     self.queue_input(QueuedMessageKind::Steering);
                     return None;
                 }
@@ -802,7 +849,8 @@ impl PiApp {
                 }
                 let value = self.input.value();
                 if !value.trim().is_empty() {
-                    return self.submit_message(value.trim());
+                    let message = self.expand_pasted_blocks(value.trim());
+                    return self.submit_message(&message);
                 }
                 // Don't consume - let TextArea handle Enter if needed
                 None
@@ -811,6 +859,7 @@ impl PiApp {
                 // Alt+Enter: queue follow-up when busy. When idle, toggles multi-line mode if the
                 // editor is empty; otherwise it submits like Enter.
                 if self.agent_state != AgentState::Idle {
+                    self.expand_pasted_blocks_in_editor();
                     self.queue_input(QueuedMessageKind::FollowUp);
                     return None;
                 }
@@ -822,7 +871,8 @@ impl PiApp {
                     return None;
                 }
                 if !value.trim().is_empty() {
-                    return self.submit_message(value.trim());
+                    let message = self.expand_pasted_blocks(value.trim());
+                    return self.submit_message(&message);
                 }
                 None
             }
@@ -884,6 +934,11 @@ impl PiApp {
                 if self.is_at_bottom() {
                     self.follow_stream_tail = true;
                 }
+                None
+            }
+            AppAction::ScrollToBottom => {
+                self.follow_stream_tail = true;
+                self.scroll_to_bottom();
                 None
             }
 
@@ -1031,6 +1086,7 @@ impl PiApp {
             // Tab is consumed (autocomplete).
             AppAction::PageUp
             | AppAction::PageDown
+            | AppAction::ScrollToBottom
             | AppAction::CycleModelForward
             | AppAction::CycleModelBackward
             | AppAction::CycleThinkingLevel
@@ -1754,5 +1810,168 @@ mod tests {
 
         assert!(matches!(first, PiMsg::System(text) if text == "busy"));
         assert!(matches!(second, PiMsg::UiShutdown));
+    }
+
+    fn busy_app() -> PiApp {
+        let current = model_entry("openai", "gpt-4o-mini", Some("key"), HashMap::new());
+        let mut app = build_test_app(current.clone(), vec![current]);
+        app.set_terminal_size(80, 24);
+        app.agent_state = AgentState::Processing;
+        app
+    }
+
+    #[test]
+    fn typing_during_a_turn_reaches_the_editor_and_enter_queues_steering() {
+        let mut app = busy_app();
+
+        for key in "steer me".chars() {
+            let _ = BubbleteaModel::update(&mut app, Message::new(KeyMsg::from_char(key)));
+        }
+        assert_eq!(app.input.value(), "steer me");
+        assert!(
+            BubbleteaModel::view(&app).contains("steer me"),
+            "the input box must stay drawn while the agent works"
+        );
+
+        let _ = BubbleteaModel::update(&mut app, Message::new(KeyMsg::from_type(KeyType::Enter)));
+        let queue = app.message_queue.lock().expect("queue lock");
+        assert_eq!(queue.steering_len(), 1);
+        assert_eq!(queue.steering_front().map(String::as_str), Some("steer me"));
+        drop(queue);
+        assert_eq!(app.input.value(), "");
+    }
+
+    #[test]
+    fn interrupt_returns_queued_text_and_keeps_half_typed_input() {
+        let mut app = busy_app();
+        app.input.set_value("queued");
+        app.handle_action(AppAction::Submit, &KeyMsg::from_type(KeyType::Enter));
+        app.input.set_value("half typed");
+
+        app.handle_action(AppAction::Interrupt, &KeyMsg::from_type(KeyType::Esc));
+
+        assert_eq!(app.input.value(), "queued\n\nhalf typed");
+        assert_eq!(
+            app.message_queue.lock().expect("queue lock").steering_len(),
+            0
+        );
+    }
+
+    #[test]
+    fn large_paste_collapses_to_a_placeholder_and_submits_in_full() {
+        let mut app = busy_app();
+        app.agent_state = AgentState::Idle;
+        let pasted = (0..200)
+            .map(|i| format!("line {i}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        let handled = app.handle_paste_event(
+            &KeyMsg::from_runes(pasted.chars().collect::<Vec<_>>()).with_paste(),
+        );
+
+        assert!(handled);
+        assert_eq!(app.input.value(), "[pasted 200 lines]");
+        let submitted = app.expand_pasted_blocks(&app.input.value());
+        assert_eq!(submitted, pasted);
+        assert!(app.pasted_blocks.is_empty());
+    }
+
+    #[test]
+    fn carriage_return_pastes_still_collapse() {
+        let mut app = busy_app();
+        app.agent_state = AgentState::Idle;
+        let pasted = (0..200)
+            .map(|i| format!("line {i}"))
+            .collect::<Vec<_>>()
+            .join("\r");
+
+        assert!(app.handle_paste_event(
+            &KeyMsg::from_runes(pasted.chars().collect::<Vec<_>>()).with_paste()
+        ));
+
+        assert_eq!(app.input.value(), "[pasted 200 lines]");
+        assert_eq!(
+            app.expand_pasted_blocks(&app.input.value()),
+            pasted.replace('\r', "\n")
+        );
+    }
+
+    #[test]
+    fn small_paste_is_left_alone() {
+        let mut app = busy_app();
+        app.agent_state = AgentState::Idle;
+        let pasted = "not a path\nsecond line";
+
+        assert!(
+            !app.handle_paste_event(
+                &KeyMsg::from_runes(pasted.chars().collect::<Vec<_>>()).with_paste()
+            ),
+            "short pastes must fall through to the textarea"
+        );
+        assert!(app.pasted_blocks.is_empty());
+    }
+
+    #[test]
+    fn scroll_to_bottom_rearms_stream_follow() {
+        let mut app = busy_app();
+        app.handle_action(AppAction::PageUp, &KeyMsg::from_type(KeyType::PgUp));
+        assert!(!app.follow_stream_tail);
+
+        app.handle_action(
+            AppAction::ScrollToBottom,
+            &KeyMsg::from_type(KeyType::Down).with_alt(),
+        );
+
+        assert!(app.follow_stream_tail);
+        assert!(app.is_at_bottom());
+    }
+
+    #[test]
+    fn long_thinking_wraps_instead_of_cutting_at_one_hundred_characters() {
+        let mut app = busy_app();
+        let thinking = "reasoning ".repeat(40);
+        app.messages.push(ConversationMessage {
+            role: MessageRole::Assistant,
+            content: "answer".to_string(),
+            thinking: Some(thinking.clone()),
+            collapsed: false,
+        });
+
+        let frame = strip_ansi(&BubbleteaModel::view(&app));
+        let rendered: String = frame
+            .lines()
+            .filter(|line| line.contains("reasoning"))
+            .map(str::trim)
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        assert!(rendered.len() > 100, "thinking must not be cut to a clause");
+        assert!(rendered.starts_with("Thinking: reasoning"));
+        for line in frame.lines() {
+            assert!(
+                line.chars().count() <= app.term_width,
+                "thinking must wrap to the viewport: {line:?}"
+            );
+        }
+    }
+
+    fn strip_ansi(input: &str) -> String {
+        let mut out = String::with_capacity(input.len());
+        let mut chars = input.chars();
+        while let Some(ch) = chars.next() {
+            if ch != '\u{1b}' {
+                if ch != '\r' {
+                    out.push(ch);
+                }
+                continue;
+            }
+            for escape in chars.by_ref() {
+                if escape.is_ascii_alphabetic() {
+                    break;
+                }
+            }
+        }
+        out
     }
 }

@@ -44,6 +44,10 @@ pub(super) struct PendingOAuth {
 pub(super) const TOOL_AUTO_COLLAPSE_THRESHOLD: usize = 20;
 /// Number of preview lines to show when a tool block is collapsed.
 pub(super) const TOOL_COLLAPSE_PREVIEW_LINES: usize = 5;
+/// Wrapped thinking lines shown before the block collapses behind ctrl+o.
+pub(super) const THINKING_COLLAPSED_MAX_LINES: usize = 12;
+/// Pasted line count at which the editor shows a placeholder instead of the text.
+pub(super) const PASTE_COLLAPSE_MIN_LINES: usize = 20;
 
 /// A message in the conversation history.
 #[derive(Debug, Clone)]

@@ -178,6 +178,18 @@ pub(super) fn progress_suffix(elapsed: Option<std::time::Duration>, tokens: u64)
 ///
 /// We do explicit wrapping here instead of relying on terminal auto-wrap so the
 /// renderer's logical rows stay aligned with physical rows in alt-screen mode.
+/// Percent of a context window still free.
+///
+/// `None` when the registry has no window for the model, or when no turn has
+/// reported usage yet: no number beats a guessed one.
+fn context_left_percent(window: u32, used: u64) -> Option<u64> {
+    let window = u64::from(window);
+    if window == 0 || used == 0 {
+        return None;
+    }
+    Some(window.saturating_sub(used.min(window)) * 100 / window)
+}
+
 fn wrapped_line_segments(line: &str, max_width: usize) -> Vec<&str> {
     if max_width == 0 || line.is_empty() {
         return vec![line];
@@ -708,15 +720,8 @@ impl PiApp {
             output.push_str(&self.render_model_selector(selector));
         }
 
-        // Input area (only when idle and no overlay open)
-        if self.editor_input_is_available() {
-            output.push_str(&self.render_input());
-
-            // Autocomplete dropdown (if open)
-            if self.autocomplete.open && !self.autocomplete.items.is_empty() {
-                output.push_str(&self.render_autocomplete_dropdown());
-            }
-        } else if self.agent_state != AgentState::Idle {
+        // Progress rows sit above the editor, which stays live through a turn.
+        if self.agent_state != AgentState::Idle {
             if self.show_processing_status_spinner() {
                 // Show spinner while waiting on provider/tool activity, before
                 // we have visible streaming deltas.
@@ -731,6 +736,16 @@ impl PiApp {
 
             if let Some(pending_queue) = self.render_pending_message_queue() {
                 output.push_str(&pending_queue);
+            }
+        }
+
+        // Input area (hidden only while an overlay owns the keyboard)
+        if self.editor_input_is_available() {
+            output.push_str(&self.render_input());
+
+            // Autocomplete dropdown (if open)
+            if self.autocomplete.open && !self.autocomplete.items.is_empty() {
+                output.push_str(&self.render_autocomplete_dropdown());
             }
         }
 
@@ -943,6 +958,51 @@ impl PiApp {
         output
     }
 
+    /// Percent of the active model's context window still free.
+    fn context_left_percent(&self) -> Option<u64> {
+        context_left_percent(
+            self.model_entry.model.context_window,
+            self.session_context_tokens(),
+        )
+    }
+
+    /// Tokens the session currently occupies, from the newest assistant turn
+    /// that reported usage. `0` means no turn has reported any yet.
+    fn session_context_tokens(&self) -> u64 {
+        let key = (self.messages.len(), self.total_usage.total_tokens);
+        if let Some((cached_key, tokens)) = self.context_tokens_cache.get()
+            && cached_key == key
+        {
+            return tokens;
+        }
+
+        let Ok(session) = self.session.try_lock() else {
+            return 0;
+        };
+        let tokens = session
+            .entries_for_current_path()
+            .iter()
+            .rev()
+            .find_map(|entry| {
+                let SessionEntry::Message(entry) = entry else {
+                    return None;
+                };
+                let SessionMessage::Assistant { message } = &entry.message else {
+                    return None;
+                };
+                let usage = &message.usage;
+                let tokens = if usage.total_tokens > 0 {
+                    usage.total_tokens
+                } else {
+                    usage.input.saturating_add(usage.output)
+                };
+                (tokens > 0).then_some(tokens)
+            })
+            .unwrap_or(0);
+        self.context_tokens_cache.set(Some((key, tokens)));
+        tokens
+    }
+
     /// PERF-7: Render the footer directly into `output`, avoiding an
     /// intermediate `String` allocation on the hot path.
     fn render_footer_into(&self, output: &mut String) {
@@ -973,11 +1033,20 @@ impl PiApp {
             InputMode::SingleLine => "Shift+Enter: newline  |  Alt+Enter: multi-line",
             InputMode::MultiLine => "Enter: newline  |  Alt+Enter: send  |  Esc: single-line",
         };
+        // Context sits next to the token counts in both forms: it is the field
+        // that says whether the session is about to run out of room, so it has
+        // to survive the width squeeze that truncates the footer's tail.
+        let percent = self.context_left_percent();
+        let context_long = percent.map_or_else(String::new, |percent| {
+            format!("  |  Context: {percent}% left")
+        });
+        let context_short =
+            percent.map_or_else(String::new, |percent| format!("  |  {percent}% ctx"));
         let footer_long = format!(
-            "{cwd_str}{branch_str}  |  Tokens: {input} in / {output_tokens} out{cost_str}  |  {persistence_str}  |  {mode_hint}  |  /help  |  Ctrl+C quit"
+            "{cwd_str}{branch_str}  |  Tokens: {input} in / {output_tokens} out{cost_str}{context_long}  |  {persistence_str}  |  {mode_hint}  |  /help  |  Ctrl+C quit"
         );
         let footer_short = format!(
-            "{cwd_str}{branch_str}  |  {input}/{output_tokens} tokens{cost_str}  |  {persistence_str}  |  /help  |  Ctrl+C quit"
+            "{cwd_str}{branch_str}  |  {input}/{output_tokens} tokens{cost_str}{context_short}  |  {persistence_str}  |  /help  |  Ctrl+C quit"
         );
         let max_width = self.term_width.saturating_sub(2);
         let mut footer = if footer_long.chars().count() <= max_width {
@@ -1012,14 +1081,7 @@ impl PiApp {
                 if self.thinking_visible
                     && let Some(thinking) = &msg.thinking
                 {
-                    let truncated = truncate(thinking, 100);
-                    let _ = writeln!(
-                        output,
-                        "  {}",
-                        self.styles
-                            .muted_italic
-                            .render(&format!("Thinking: {truncated}"))
-                    );
+                    self.render_thinking_into(thinking, &mut output);
                 }
 
                 // Render markdown content
@@ -1153,6 +1215,44 @@ impl PiApp {
         output
     }
 
+    /// Render a thinking block in full, word-wrapped to the viewport.
+    ///
+    /// Long blocks collapse to [`THINKING_COLLAPSED_MAX_LINES`] rows behind the
+    /// same `ctrl+o to expand` affordance tool output uses, so a verbose model
+    /// cannot swamp the transcript.
+    fn render_thinking_into(&self, thinking: &str, output: &mut String) {
+        let content_width = self.term_width.saturating_sub(4).max(20);
+        let labelled = format!("Thinking: {}", thinking.trim_end());
+        let mut lines = Vec::new();
+        for line in labelled.lines() {
+            if line.trim().is_empty() {
+                lines.push(String::new());
+                continue;
+            }
+            for segment in textwrap::wrap(line, content_width) {
+                lines.push(segment.into_owned());
+            }
+        }
+
+        let hidden = if self.tools_expanded {
+            0
+        } else {
+            lines.len().saturating_sub(THINKING_COLLAPSED_MAX_LINES)
+        };
+        for line in lines.iter().take(lines.len() - hidden) {
+            let _ = writeln!(output, "  {}", self.styles.muted_italic.render(line));
+        }
+        if hidden > 0 {
+            let _ = writeln!(
+                output,
+                "  {}",
+                self.styles.muted_italic.render(&format!(
+                    "{TOOL_RESULT_GLYPH} ... (+{hidden} lines, ctrl+o to expand)"
+                ))
+            );
+        }
+    }
+
     /// Render the current streaming response / thinking into `output`.
     /// Always renders fresh — never cached.
     fn append_streaming_tail(&self, output: &mut String) {
@@ -1162,15 +1262,9 @@ impl PiApp {
             self.styles.success_bold.render("Assistant:")
         );
 
-        let content_width = self.term_width.saturating_sub(4).max(1);
-
         // Show thinking if present
         if self.thinking_visible && !self.current_thinking.is_empty() {
-            let truncated = truncate(&self.current_thinking, 100);
-            let thinking_line = format!("Thinking: {truncated}");
-            for segment in wrapped_line_segments(&thinking_line, content_width) {
-                let _ = writeln!(output, "  {}", self.styles.muted_italic.render(segment));
-            }
+            self.render_thinking_into(&self.current_thinking, output);
         }
 
         // Render partial markdown on every stream update so headings/lists/code
@@ -1825,6 +1919,19 @@ impl PiApp {
 mod tests {
     use super::*;
     use crate::session::{AutosaveDurabilityMode, AutosaveQueueMetrics};
+
+    #[test]
+    fn context_left_percent_reports_remaining_window() {
+        assert_eq!(context_left_percent(200_000, 45_500), Some(77));
+        assert_eq!(context_left_percent(4_096, 4_096), Some(0));
+        assert_eq!(context_left_percent(4_096, 9_999), Some(0));
+    }
+
+    #[test]
+    fn context_left_percent_omits_unknown_window_or_unused_context() {
+        assert_eq!(context_left_percent(0, 45_500), None);
+        assert_eq!(context_left_percent(200_000, 0), None);
+    }
 
     #[test]
     fn progress_suffix_shows_elapsed_tokens_and_interrupt_hint() {

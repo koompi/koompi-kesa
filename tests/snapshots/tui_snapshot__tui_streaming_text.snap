@@ -9,5 +9,8 @@ expression: view
 
   Assistant:
   Streaming response...
+  ╭ think off ───────────────────────────────────────────────────────────────╮
+  │ > Type a message... (/help, /exit)                                       │
+  ╰──────────────────────────────────────────────────────────────────────────╯
 
   <cwd>  |  0/0 tokens  |  Persist: balanced  |  /help  |  Ctrl+C...
