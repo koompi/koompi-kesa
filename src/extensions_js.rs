@@ -22144,8 +22144,10 @@ pi.time = {
 };
 
 // Make the host API available globally. `pi` stays bound so extensions
-// published against the upstream API keep working unchanged.
+// published against the upstream API keep working unchanged, and `kode` so
+// extensions written against the pre-rename name do too.
 globalThis.kesa = pi;
+globalThis.kode = pi;
 globalThis.pi = pi;
 
 const __pi_det_time_raw = __pi_env_get('KESA_DETERMINISTIC_TIME_MS');
@@ -24384,10 +24386,10 @@ mod tests {
                 sha256_hex(source.as_bytes())
             );
         }
-        assert_eq!(bridge.len(), 193_288);
+        assert_eq!(bridge.len(), 193_382);
         assert_eq!(
             sha256_hex(bridge.as_bytes()),
-            "0f7b344844433f7d14bb8e558349ab41325cd580e73b43a9dc681e68a9785814"
+            "760efaf8eebb760c8ceb38f78c6f6356ac4beb5f0eb6a3fbf1a5eee1bd1aac24"
         );
 
         for (name, expected_len, expected_sha256) in [
@@ -24414,7 +24416,7 @@ mod tests {
             (
                 "@mariozechner/pi-coding-agent",
                 14_970,
-                "19715eefcb7cf4199da1db4a5d4bb500a3e3ff1455a6e6f6f81fca1e565dfdf9",
+                "fe70e1fb3fceb55ebf8d09e37a12673f105987d367d0e33f0ba0270b806ad267",
             ),
             (
                 "@mariozechner/pi-tui",

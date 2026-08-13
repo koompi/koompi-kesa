@@ -1844,11 +1844,11 @@ mod tests {
     #[test]
     fn directory_helpers_honor_environment_overrides() {
         let env = HashMap::from([
-            ("KESA_CODING_AGENT_DIR".to_string(), "env-root".to_string()),
-            ("KESA_SESSIONS_DIR".to_string(), "env-sessions".to_string()),
-            ("KESA_PACKAGE_DIR".to_string(), "env-packages".to_string()),
+            ("CODING_AGENT_DIR".to_string(), "env-root".to_string()),
+            ("SESSIONS_DIR".to_string(), "env-sessions".to_string()),
+            ("PACKAGE_DIR".to_string(), "env-packages".to_string()),
             (
-                "KESA_EXTENSION_INDEX_PATH".to_string(),
+                "EXTENSION_INDEX_PATH".to_string(),
                 "env-extension-index.json".to_string(),
             ),
         ]);
@@ -1866,7 +1866,7 @@ mod tests {
 
     #[test]
     fn directory_helpers_fall_back_to_global_subdirs_when_unset() {
-        let env = HashMap::from([("KESA_CODING_AGENT_DIR".to_string(), "root-dir".to_string())]);
+        let env = HashMap::from([("CODING_AGENT_DIR".to_string(), "root-dir".to_string())]);
         let global = global_dir_from_env(|key| env.get(key).cloned());
         let sessions = sessions_dir_from_env(|key| env.get(key).cloned(), &global);
         let package = package_dir_from_env(|key| env.get(key).cloned(), &global);
@@ -2332,7 +2332,7 @@ mod tests {
     fn terminal_clear_on_shrink_uses_env_when_unset() {
         let config = Config::default();
         assert!(config.terminal_clear_on_shrink_with_lookup(|name| {
-            if name == "KESA_CLEAR_ON_SHRINK" {
+            if name == "CLEAR_ON_SHRINK" {
                 Some("1".to_string())
             } else {
                 None
@@ -2351,7 +2351,7 @@ mod tests {
             ..Config::default()
         };
         assert!(!config.terminal_clear_on_shrink_with_lookup(|name| {
-            if name == "KESA_CLEAR_ON_SHRINK" {
+            if name == "CLEAR_ON_SHRINK" {
                 Some("1".to_string())
             } else {
                 None

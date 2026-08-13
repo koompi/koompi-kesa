@@ -10748,7 +10748,7 @@ sso_region = us-east-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("dev".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "KESA_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             "HOME" => Some(dir.path().to_string_lossy().to_string()),
             _ => None,
         };
@@ -10785,7 +10785,7 @@ region = eu-west-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("legacy".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "KESA_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let detected = detect_aws_sso_profile_with_env("legacy", None, "us-east-1", &mut env)
@@ -10844,7 +10844,7 @@ sso_region = us-east-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("dev".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "KESA_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let err = detect_aws_sso_profile_with_env("dev", None, "us-east-1", &mut env)
@@ -10887,7 +10887,7 @@ sso_region = us-east-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("dev".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "KESA_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let err = detect_aws_sso_profile_with_env("dev", None, "us-east-1", &mut env)
@@ -10926,7 +10926,7 @@ sso_region = us-east-1
 
         let mut env = |name: &str| match name {
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "KESA_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let error = detect_aws_sso_profile_with_env("dev", None, "us-east-1", &mut env)
@@ -11051,7 +11051,7 @@ sso_region = us-east-1
                 config_path.to_string_lossy().to_string(),
             );
             env_map.insert(
-                "KESA_AWS_SSO_CACHE_DIR",
+                "AWS_SSO_CACHE_DIR",
                 cache_dir.to_string_lossy().to_string(),
             );
 
@@ -11131,7 +11131,7 @@ sso_region = us-east-1
             env_map.insert("AWS_PROFILE", "dev".to_string());
             env_map.insert("AWS_CONFIG_FILE", config_path.to_string_lossy().to_string());
             env_map.insert(
-                "KESA_AWS_SSO_CACHE_DIR",
+                "AWS_SSO_CACHE_DIR",
                 cache_dir.to_string_lossy().to_string(),
             );
 
@@ -11192,7 +11192,7 @@ sso_start_url = https://example.awsapps.com/start
             env_map.insert("AWS_PROFILE", "dev".to_string());
             env_map.insert("AWS_CONFIG_FILE", config_path.to_string_lossy().to_string());
             env_map.insert(
-                "KESA_AWS_SSO_CACHE_DIR",
+                "AWS_SSO_CACHE_DIR",
                 cache_dir.to_string_lossy().to_string(),
             );
 
@@ -11298,7 +11298,7 @@ sso_region = us-east-1
         let mut env = |var: &str| match var {
             "AWS_PROFILE" => Some("dev".to_string()),
             "AWS_CONFIG_FILE" => Some(config_path.to_string_lossy().to_string()),
-            "KESA_AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
+            "AWS_SSO_CACHE_DIR" => Some(cache_dir.to_string_lossy().to_string()),
             _ => None,
         };
         let detected =

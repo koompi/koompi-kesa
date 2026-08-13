@@ -397,9 +397,9 @@ mod tests {
     #[test]
     fn retry_policy_bounds_environment_variables() {
         let policy = RetryPolicy::from_env(|key| match key {
-            "KESA_CONFORMANCE_MAX_RETRIES"
-            | "KESA_CONFORMANCE_RETRY_DELAY"
-            | "KESA_CONFORMANCE_FLAKE_BUDGET" => Ok("999999999".to_string()),
+            "CONFORMANCE_MAX_RETRIES"
+            | "CONFORMANCE_RETRY_DELAY"
+            | "CONFORMANCE_FLAKE_BUDGET" => Ok("999999999".to_string()),
             _ => Err(std::env::VarError::NotPresent),
         });
 
