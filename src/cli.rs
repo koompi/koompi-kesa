@@ -354,7 +354,14 @@ const PERMISSION_MODES: &[&str] = &["default", "accept-edits", "plan", "read-onl
 #[derive(Parser, Debug)]
 #[allow(clippy::struct_excessive_bools)] // CLI flags are naturally boolean
 #[command(name = "pi")]
-#[command(version, about, long_about = None, disable_version_flag = true)]
+// the package description carries the full product name for crates.io; the
+// interface says KESA alone
+#[command(
+    version,
+    about = "KESA - native AI coding agent CLI for KOOMPI OS",
+    long_about = None,
+    disable_version_flag = true
+)]
 #[command(after_help = "Examples:
   kesa \"explain this code\"            Start new session with message
   kesa @file.rs \"review this\"         Include file in context

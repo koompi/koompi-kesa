@@ -389,14 +389,14 @@ pi --tools read,bash,edit,write,grep,find,ls,hashline_edit,subagent \
 Rust Pi includes a native `subagent` tool; it does not depend on a QuickJS
 extension and never resolves a child executable by assuming a `pi` binary on
 `PATH`. By default it starts the current Rust Pi executable. Set
-`KODE_SUBAGENT_PI_BINARY=/absolute/path/to/rpi` only when an explicit binary
+`KESA_SUBAGENT_PI_BINARY=/absolute/path/to/rpi` only when an explicit binary
 override is needed.
 
-Agent definitions are Markdown files in `$KODE_CODING_AGENT_DIR/agents/*.md`
+Agent definitions are Markdown files in `$KESA_CODING_AGENT_DIR/agents/*.md`
 (normally `~/.kesa/agent/agents/*.md`) or the nearest
 `.kesa/agents/*.md`. Project definitions take precedence over same-named user
 definitions. The process inherits the parent's provider, router, authentication,
-and model-registry environment, including `KODE_CODING_AGENT_DIR`.
+and model-registry environment, including `KESA_CODING_AGENT_DIR`.
 
 ```markdown
 ---
@@ -562,7 +562,7 @@ This project validates extension compatibility with a three-track pipeline:
    - Binary: `ext_release_binary_e2e`
    - Typical command:
      - `cargo build --bin pi --bin ext_release_binary_e2e`
-     - `KODE_HTTP_REQUEST_TIMEOUT_SECS=0 target/debug/ext_release_binary_e2e --pi-bin target/debug/pi --provider ollama --model qwen2.5:0.5b --jobs 10 --timeout-secs 600 --max-cases 20 --extension-policy balanced --out-json tests/ext_conformance/reports/release_binary_e2e/ollama_firstset_dev_20260219_jobs10_timeout600.json --out-md tests/ext_conformance/reports/release_binary_e2e/ollama_firstset_dev_20260219_jobs10_timeout600.md`
+     - `KESA_HTTP_REQUEST_TIMEOUT_SECS=0 target/debug/ext_release_binary_e2e --pi-bin target/debug/pi --provider ollama --model qwen2.5:0.5b --jobs 10 --timeout-secs 600 --max-cases 20 --extension-policy balanced --out-json tests/ext_conformance/reports/release_binary_e2e/ollama_firstset_dev_20260219_jobs10_timeout600.json --out-md tests/ext_conformance/reports/release_binary_e2e/ollama_firstset_dev_20260219_jobs10_timeout600.md`
    - Purpose:
      - Proves the current codepath works end-to-end on a representative first-set before paying release-build cost.
      - Serves as the promotion gate to full release-binary validation.
@@ -576,7 +576,7 @@ This project validates extension compatibility with a three-track pipeline:
    - Binary: `ext_release_binary_e2e`
    - Typical command:
      - `cargo build --release --bin pi --bin ext_release_binary_e2e`
-     - `KODE_HTTP_REQUEST_TIMEOUT_SECS=0 target/release/ext_release_binary_e2e --pi-bin target/release/pi --provider ollama --model qwen2.5:0.5b --jobs 10 --timeout-secs 600 --extension-policy balanced --out-json tests/ext_conformance/reports/release_binary_e2e/ollama_full_release_20260219_jobs10_timeout600.json --out-md tests/ext_conformance/reports/release_binary_e2e/ollama_full_release_20260219_jobs10_timeout600.md`
+     - `KESA_HTTP_REQUEST_TIMEOUT_SECS=0 target/release/ext_release_binary_e2e --pi-bin target/release/pi --provider ollama --model qwen2.5:0.5b --jobs 10 --timeout-secs 600 --extension-policy balanced --out-json tests/ext_conformance/reports/release_binary_e2e/ollama_full_release_20260219_jobs10_timeout600.json --out-md tests/ext_conformance/reports/release_binary_e2e/ollama_full_release_20260219_jobs10_timeout600.md`
    - Purpose:
      - Executes `target/release/pi` directly for each selected extension case.
      - Uses a live provider/model path (default `ollama` + `qwen2.5:0.5b`) to exercise non-mocked end-to-end behavior.
@@ -899,7 +899,7 @@ Pi reads configuration from `~/.kesa/agent/settings.json`:
 Settings are resolved in priority order (first match wins):
 
 1. **CLI flags** (`--model`, `--thinking`, `--provider`, etc.)
-2. **Environment variables** (`ANTHROPIC_API_KEY`, `KODE_CONFIG_PATH`, etc.)
+2. **Environment variables** (`ANTHROPIC_API_KEY`, `KESA_CONFIG_PATH`, etc.)
 3. **Project settings** (`.kesa/settings.json` in the working directory)
 4. **Global settings** (`~/.kesa/agent/settings.json`)
 5. **Built-in defaults**
@@ -940,11 +940,11 @@ When multiple resources share the same name, the first occurrence wins. Collisio
 | `TOGETHER_API_KEY` | Together API key (OpenAI-compatible) |
 | `PERPLEXITY_API_KEY` | Perplexity API key (OpenAI-compatible) |
 | `XAI_API_KEY` | xAI API key (OpenAI-compatible) |
-| `KODE_CONFIG_PATH` | Custom config file path |
-| `KODE_CODING_AGENT_DIR` | Override the global config directory |
-| `KODE_SUBAGENT_PI_BINARY` | Explicit Rust Pi executable for native child agents; defaults to the current executable |
-| `KODE_PACKAGE_DIR` | Override the packages directory |
-| `KODE_SESSIONS_DIR` | Custom sessions directory |
+| `KESA_CONFIG_PATH` | Custom config file path |
+| `KESA_CODING_AGENT_DIR` | Override the global config directory |
+| `KESA_SUBAGENT_PI_BINARY` | Explicit Rust Pi executable for native child agents; defaults to the current executable |
+| `KESA_PACKAGE_DIR` | Override the packages directory |
+| `KESA_SESSIONS_DIR` | Custom sessions directory |
 
 ---
 
@@ -2018,7 +2018,7 @@ Current checked-in performance evidence state:
   ID/correlation ID, host/toolchain provenance, checksum, and TTL validate; reused
   artifacts are labeled `source_kind=cache`/`evidence_source=cache` in the JSON
   outputs. Override the cache lifetime with
-  `KODE_PERF_EVIDENCE_CACHE_TTL_HOURS`.
+  `KESA_PERF_EVIDENCE_CACHE_TTL_HOURS`.
 - `env_fingerprint.json` records cgroup-aware host topology with schema
   `pi.perf.host_topology_fingerprint.v1`: cgroup v2 CPU quota, cpuset size,
   memory limits, NUMA node count, caveats, and a constrained `budget_profile`
@@ -2398,7 +2398,7 @@ BENCH_ALLOCATORS_CSV=system,jemalloc \
 
 The benchmark harness records both requested and effective allocator metadata in
 its JSONL output (`allocator_requested`, `allocator_effective`,
-`allocator_fallback_reason`) via `KODE_BENCH_ALLOCATOR`.
+`allocator_fallback_reason`) via `KESA_BENCH_ALLOCATOR`.
 
 - `system`: build with the explicit benchmark feature set except `jemalloc`
 - `jemalloc`: build with `--features jemalloc` where supported by the target
@@ -2603,7 +2603,7 @@ pi --extension-policy balanced --explain-extension-policy
 pi --extension-policy standard --explain-extension-policy
 
 # Narrow dangerous-capability opt-in (preferred over permissive)
-KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 ```
 
 Operator rollout playbook (compatibility-first local defaults + explicit lock-down):
@@ -2619,7 +2619,7 @@ pi --extension-policy balanced --explain-extension-policy
 pi --extension-policy safe --explain-extension-policy
 
 # 4) Narrow opt-in for dangerous capabilities (preferred path)
-KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 
 # 5) Explicit permissive mode when you want to be unambiguous
 pi --extension-policy permissive --explain-extension-policy
@@ -2654,10 +2654,10 @@ CI guidance:
 pi --extension-policy safe --explain-extension-policy
 
 # CI opt-in job (only where required), keep explicit and auditable
-KODE_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
+KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced --explain-extension-policy
 ```
 
-Rollback rule: remove `KODE_EXTENSION_ALLOW_DANGEROUS`, set `extensionPolicy.profile`
+Rollback rule: remove `KESA_EXTENSION_ALLOW_DANGEROUS`, set `extensionPolicy.profile`
 back to `safe` or set `extensionPolicy.defaultPermissive` to `false`, and re-run
 `pi --explain-extension-policy` to confirm deny decisions.
 
@@ -2712,7 +2712,7 @@ A: Yes. Create a `models.json` file in `~/.kesa/agent/` or `.kesa/` with entries
 A: Pi maintains a SQLite session metadata index sidecar with WAL/lock handling and stale-index reindexing. When you run `pi -c`, it queries that index for the most recently modified session whose working directory matches your current project, including JSONL sessions and configured SQLite-backed sessions. This avoids scanning the filesystem on every resume.
 
 **Q: What happens if an extension tries to access something dangerous?**
-A: Every hostcall from an extension is checked against the active capability policy before execution. Dangerous capabilities (`exec`, `env`) are denied by default under `safe` and `balanced` unless explicitly opted in (for example via `KODE_EXTENSION_ALLOW_DANGEROUS=1`), and are available under `permissive`. For `exec`, Pi then applies command mediation before spawn: it classifies command+arg signatures and blocks critical classes by default (for example recursive delete, disk/device write, reverse shell), with strict/safe policy able to block high-tier classes as well (for example shutdown, process-kill, credential-file modification). Denied calls return errors to the extension Promise path, and denial events are recorded in redacted security-alert and exec-mediation audit artifacts. Sensitive env keys (API keys/tokens/secrets) remain filtered. If behavior escalates, you can kill-switch that extension into quarantined `killed` state immediately or force compatibility-lane routing as a containment step while investigating.
+A: Every hostcall from an extension is checked against the active capability policy before execution. Dangerous capabilities (`exec`, `env`) are denied by default under `safe` and `balanced` unless explicitly opted in (for example via `KESA_EXTENSION_ALLOW_DANGEROUS=1`), and are available under `permissive`. For `exec`, Pi then applies command mediation before spawn: it classifies command+arg signatures and blocks critical classes by default (for example recursive delete, disk/device write, reverse shell), with strict/safe policy able to block high-tier classes as well (for example shutdown, process-kill, credential-file modification). Denied calls return errors to the extension Promise path, and denial events are recorded in redacted security-alert and exec-mediation audit artifacts. Sensitive env keys (API keys/tokens/secrets) remain filtered. If behavior escalates, you can kill-switch that extension into quarantined `killed` state immediately or force compatibility-lane routing as a containment step while investigating.
 
 **Q: Does Pi work with self-hosted or proxied LLMs?**
 A: Yes. Point any provider at a custom base URL via `models.json`. Pi normalizes URL paths per API type and applies compatibility overrides for field-name and feature differences. This works with vLLM, Ollama, LiteLLM, and similar OpenAI-compatible servers.
@@ -2752,9 +2752,9 @@ When those variables are unset, `cargo_headroom.sh` defaults `CARGO_TARGET_DIR`
 and `TMPDIR` to a per-agent directory under `/data/tmp/koompi_code_cli_cargo/...`,
 writes a `CACHEDIR.TAG`, rejects accidental repo-root target directories, and
 fails before compilation if the target or temp mount has insufficient free
-space. Set `KODE_CARGO_RUNNER=local` for a local-only run,
-`KODE_CARGO_BUILD_ROOT=<dir>` for a different large volume, or
-`KODE_CARGO_HEADROOM_MIN_FREE_MB=<mb>` for smaller focused checks.
+space. Set `KESA_CARGO_RUNNER=local` for a local-only run,
+`KESA_CARGO_BUILD_ROOT=<dir>` for a different large volume, or
+`KESA_CARGO_HEADROOM_MIN_FREE_MB=<mb>` for smaller focused checks.
 
 Before launching swarms or heavyweight all-target gates, run
 `pi doctor --only swarm --format json`. The
@@ -2764,8 +2764,8 @@ Before launching swarms or heavyweight all-target gates, run
 RCH fanout, queue-depth, and RSS budgets derived from the effective cgroup CPU,
 cpuset, NUMA, and memory limits. The same object includes budget explanations,
 local cargo/rustc pressure, and replayable RCH queue posture. For deterministic
-replays, provide `KODE_DOCTOR_LOCAL_BUILD_PROCESS_COUNT`,
-`KODE_DOCTOR_RCH_QUEUE_JSON`, or `KODE_DOCTOR_RCH_QUEUE_JSON_PATH`; these inputs are
+replays, provide `KESA_DOCTOR_LOCAL_BUILD_PROCESS_COUNT`,
+`KESA_DOCTOR_RCH_QUEUE_JSON`, or `KESA_DOCTOR_RCH_QUEUE_JSON_PATH`; these inputs are
 advisory budget controls, not release-facing performance claims. The same
 finding also includes `lane_placement` (`pi.doctor.swarm_lane_placement.v1`),
 which groups the current cpuset/NUMA topology into read-only operator lanes with
@@ -2775,7 +2775,7 @@ recommendations. Doctor reports caveats such as unknown NUMA data, partial
 cpusets, tight memory limits, or RCH queue pressure, but it never pins processes
 or mutates OS/RCH state.
 
-When `KODE_VALIDATION_BROKER_STORE` points at a validation-broker slot JSONL
+When `KESA_VALIDATION_BROKER_STORE` points at a validation-broker slot JSONL
 store, Doctor also emits `pi.doctor.validation_broker_posture.v1` with advisory
 slot posture for runpacks and operator handoff. Missing broker configuration is
 reported as optional and non-blocking; stale or degraded broker stores remain
@@ -2833,7 +2833,7 @@ Focused validation tools:
 ```bash
 # Dev-firstset gate before release build
 rch exec -- cargo build --bin pi --bin ext_release_binary_e2e
-KODE_HTTP_REQUEST_TIMEOUT_SECS=0 rch exec -- \
+KESA_HTTP_REQUEST_TIMEOUT_SECS=0 rch exec -- \
   cargo run --example ext_release_binary_e2e -- \
   --pi-bin target/debug/pi \
   --provider ollama --model qwen2.5:0.5b \
@@ -2841,7 +2841,7 @@ KODE_HTTP_REQUEST_TIMEOUT_SECS=0 rch exec -- \
 
 # Full optimized release-binary run after gate passes
 rch exec -- cargo build --release --bin pi --bin ext_release_binary_e2e
-KODE_HTTP_REQUEST_TIMEOUT_SECS=0 target/release/ext_release_binary_e2e \
+KESA_HTTP_REQUEST_TIMEOUT_SECS=0 target/release/ext_release_binary_e2e \
   --pi-bin target/release/pi \
   --provider ollama --model qwen2.5:0.5b \
   --jobs 10 --timeout-secs 600 --extension-policy balanced

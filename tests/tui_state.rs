@@ -1684,7 +1684,7 @@ fn tui_state_second_todo_write_replaces_the_first_block() {
                 tool_id: tool_id.to_string(),
                 content: vec![ContentBlock::Text(TextContent::new("ignored"))],
                 details: Some(serde_json::json!({
-                    "schema": "kode.todo.list.v1",
+                    "schema": "kesa.todo.list.v1",
                     "todos": [
                         {
                             "content": "Run the tests",

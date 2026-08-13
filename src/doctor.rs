@@ -483,14 +483,16 @@ fn check_config(cwd: &Path, findings: &mut Vec<Finding>) {
     check_settings_file(cat, &global_path, "Global settings", findings);
 
     // Project settings
-    let project_path = Config::project_dir_in(&cwd).join("settings.json");
+    let project_dir = Config::project_dir_in(&cwd);
+    let project_path = project_dir.join("settings.json");
     if project_path.exists() {
-        check_settings_file(
-            cat,
-            &project_path,
-            "Project settings (.kesa/settings.json)",
-            findings,
+        let label = format!(
+            "Project settings ({}/settings.json)",
+            project_dir
+                .file_name()
+                .map_or_else(|| crate::config::DIR_NAME.into(), |name| name.to_string_lossy())
         );
+        check_settings_file(cat, &project_path, &label, findings);
     } else {
         findings.push(Finding::pass(cat, "No project settings (OK)"));
     }
