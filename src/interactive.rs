@@ -1642,6 +1642,9 @@ impl PiApp {
     }
 }
 
+/// Rows the input box occupies when it holds nothing. It grows to `max_height`.
+const INPUT_DEFAULT_HEIGHT: usize = 1;
+
 const fn bool_label(value: bool) -> &'static str {
     if value { "on" } else { "off" }
 }
@@ -2589,7 +2592,7 @@ impl PiApp {
         input.prompt = String::new();
         input.focused_style.placeholder = styles.muted.clone();
         input.blurred_style.placeholder = styles.muted.clone();
-        input.set_height(1); // Start compact like Claude/Codex; grow as needed.
+        input.set_height(INPUT_DEFAULT_HEIGHT);
         input.set_width(view::editor_width(term_width, editor_padding_x));
         input.max_height = 8; // Allow expansion without taking over the screen.
         input.focus();

@@ -1175,7 +1175,7 @@ impl PiApp {
         // Do not store OAuth codes in history or session.
         self.input.reset();
         self.input_mode = InputMode::SingleLine;
-        self.set_input_height(3);
+        self.set_input_height(INPUT_DEFAULT_HEIGHT);
 
         self.agent_state = AgentState::Processing;
         self.scroll_to_bottom();
@@ -1406,7 +1406,7 @@ impl PiApp {
 
         self.input.reset();
         self.input_mode = InputMode::SingleLine;
-        self.set_input_height(3);
+        self.set_input_height(INPUT_DEFAULT_HEIGHT);
 
         let event_tx = self.event_tx.clone();
         let session = Arc::clone(&self.session);
@@ -2377,7 +2377,7 @@ impl PiApp {
                 redirect_uri: None,
             });
             self.input_mode = InputMode::SingleLine;
-            self.set_input_height(3);
+            self.set_input_height(INPUT_DEFAULT_HEIGHT);
             self.input.focus();
             return None;
         }
@@ -2499,7 +2499,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
                     redirect_uri: info.redirect_uri,
                 });
                 self.input_mode = InputMode::SingleLine;
-                self.set_input_height(3);
+                self.set_input_height(INPUT_DEFAULT_HEIGHT);
                 self.input.focus();
                 None
             }

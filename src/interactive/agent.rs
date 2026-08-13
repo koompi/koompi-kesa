@@ -713,7 +713,7 @@ After approving access in the browser, press Enter in Pi to complete login."
                     redirect_uri: None,
                 });
                 self.input_mode = InputMode::SingleLine;
-                self.set_input_height(3);
+                self.set_input_height(INPUT_DEFAULT_HEIGHT);
                 self.input.focus();
                 self.status_message = None;
             }
@@ -1487,7 +1487,7 @@ After approving access in the browser, press Enter in Pi to complete login."
         // Clear input and reset to single-line mode
         self.input.reset();
         self.input_mode = InputMode::SingleLine;
-        self.set_input_height(3);
+        self.set_input_height(INPUT_DEFAULT_HEIGHT);
 
         let label = match kind {
             QueuedMessageKind::Steering => "steering",
@@ -1702,7 +1702,7 @@ After approving access in the browser, press Enter in Pi to complete login."
         // Clear input and reset to single-line mode
         self.input.reset();
         self.input_mode = InputMode::SingleLine;
-        self.set_input_height(3);
+        self.set_input_height(INPUT_DEFAULT_HEIGHT);
 
         // Start processing
         self.agent_state = AgentState::Processing;
@@ -2074,7 +2074,7 @@ After approving access in the browser, press Enter in Pi to complete login."
         // Clear input and reset to single-line mode
         self.input.reset();
         self.input_mode = InputMode::SingleLine;
-        self.set_input_height(3);
+        self.set_input_height(INPUT_DEFAULT_HEIGHT);
 
         // Start processing
         self.agent_state = AgentState::Processing;

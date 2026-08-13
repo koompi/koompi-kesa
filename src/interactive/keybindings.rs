@@ -663,7 +663,7 @@ impl PiApp {
                 // When idle, Escape exits multi-line mode (but does NOT quit)
                 if key.key_type == KeyType::Esc && self.input_mode == InputMode::MultiLine {
                     self.input_mode = InputMode::SingleLine;
-                    self.set_input_height(3);
+                    self.set_input_height(INPUT_DEFAULT_HEIGHT);
                     self.status_message = Some("Single-line mode".to_string());
                 }
                 // Legacy behavior: Escape when idle does nothing (no quit)
