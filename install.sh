@@ -134,6 +134,15 @@ install -m 0755 "${TMP}/${BIN}" "${DEST}/.${BIN}.new"
 mv -f "${DEST}/.${BIN}.new" "${DEST}/${BIN}"
 ok "Installed ${DEST}/${BIN}"
 
+# A v0.2.0 install left `kode` here. It keeps working, against ~/.kode, which
+# is how somebody ends up running two agents with two diverging configs.
+if [ -e "${DEST}/kode" ]; then
+  say ""
+  say "${DEST}/kode is left over from the old name. Your settings and sessions"
+  say "have been copied to ~/.kesa; remove the old binary once this one looks right:"
+  say "  ${C_BOLD}rm ${DEST}/kode${C_OFF}"
+fi
+
 case ":${PATH}:" in
   *":${DEST}:"*) ;;
   *)

@@ -30,24 +30,30 @@ while [ $# -gt 0 ]; do
 KOOMPI KESA uninstaller
 
   --dest <dir>   Where kesa was installed (default: \$HOME/.local/bin)
-  --purge        Also delete ~/.kesa (config, sessions, credentials)
+  --purge        Also delete ~/.kesa and ~/.kode (config, sessions, credentials)
 EOF
       exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; exit 1 ;;
   esac
 done
 
+# `kode` is the pre-rename binary; leaving it behind leaves a working agent on
+# PATH after the user asked for none. Only the one this installer put in $DEST -
+# a `kode` from anywhere else on PATH is not ours to delete.
 removed=0
-for candidate in "${DEST}/${BIN}" "$(command -v "$BIN" 2>/dev/null || true)"; do
+for candidate in "${DEST}/${BIN}" "$(command -v "$BIN" 2>/dev/null || true)" "${DEST}/kode"; do
   if [ -n "$candidate" ] && [ -f "$candidate" ]; then
     rm -f "$candidate" && ok "Removed ${candidate}" && removed=1
   fi
 done
 [ "$removed" = 1 ] || say "No ${BIN} binary found."
 
-if [ "$PURGE" = 1 ] && [ -d "$HOME/.kesa" ]; then
-  rm -rf "$HOME/.kesa"
-  ok "Removed ~/.kesa"
-elif [ -d "$HOME/.kesa" ]; then
-  say "${C_DIM}Config kept at ~/.kesa. Pass --purge to delete it.${C_OFF}"
-fi
+for dir in "$HOME/.kesa" "$HOME/.kode"; do
+  [ -d "$dir" ] || continue
+  if [ "$PURGE" = 1 ]; then
+    rm -rf "$dir"
+    ok "Removed ${dir}"
+  else
+    say "${C_DIM}Config kept at ${dir}. Pass --purge to delete it.${C_OFF}"
+  fi
+done
