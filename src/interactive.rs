@@ -1872,6 +1872,7 @@ pub async fn run_interactive(
         ));
         let mut app = app;
         app.attach_tool_policy(tool_policy, pending_approvals);
+        app.attach_input_history();
         // bubbletea's own crossterm reader turns Ctrl+C into InterruptMsg and
         // quits before update() sees it, so the abort/double-tap logic in
         // handle_action is unreachable from a real terminal. custom_io stops
@@ -2628,6 +2629,15 @@ impl PiApp {
             .mode();
         self.tool_policy = policy;
         self.tool_approval_queue = queue;
+    }
+
+    /// Recall what was typed in earlier sessions, and record this one. Armed only by
+    /// the terminal front-end, so a `PiApp` built by a test never touches `$HOME`.
+    pub fn attach_input_history(&mut self) {
+        let path = Config::global_dir().join("input-history.jsonl");
+        if let Some(warning) = self.history.attach_store(path) {
+            self.status_message = Some(warning);
+        }
     }
 
     fn initial_window_size_cmd() -> Cmd {

@@ -1,7 +1,9 @@
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 use bubbles::list::{DefaultDelegate, Item as ListItem, List};
+use regex::Regex;
 
 use asupersync::channel::oneshot;
 
@@ -991,11 +993,15 @@ impl ListItem for HistoryItem {
     }
 }
 
+// bash HISTSIZE default; whole-file rewrite on submit stays sub-millisecond here
+const INPUT_HISTORY_MAX_ENTRIES: usize = 1000;
+
 #[derive(Clone)]
 pub(super) struct HistoryList {
     // We never render the list UI; we use it as a battle-tested cursor+navigation model.
     // The final item is always a sentinel representing "empty input".
     list: List<HistoryItem, DefaultDelegate>,
+    store_path: Option<PathBuf>,
 }
 
 impl HistoryList {
@@ -1016,7 +1022,29 @@ impl HistoryList {
         // Start at the "empty input" sentinel.
         list.select(0);
 
-        Self { list }
+        Self {
+            list,
+            store_path: None,
+        }
+    }
+
+    /// Loads the on-disk history, persists later submissions, returns a load warning.
+    pub(super) fn attach_store(&mut self, path: PathBuf) -> Option<String> {
+        let (loaded, warning) = read_input_history(&path);
+        if !loaded.is_empty() {
+            let mut items: Vec<HistoryItem> = loaded
+                .into_iter()
+                .map(|value| HistoryItem { value })
+                .collect();
+            items.extend_from_slice(self.entries());
+            items.push(HistoryItem {
+                value: String::new(),
+            });
+            self.list.set_items(items);
+            self.reset_cursor();
+        }
+        self.store_path = Some(path);
+        warning
     }
 
     pub(super) fn entries(&self) -> &[HistoryItem] {
@@ -1043,13 +1071,33 @@ impl HistoryList {
 
     pub(super) fn push(&mut self, value: String) {
         let mut items = self.entries().to_vec();
-        items.push(HistoryItem { value });
+        if items.last().map(|last| last.value.as_str()) != Some(value.as_str()) {
+            items.push(HistoryItem { value });
+        }
         items.push(HistoryItem {
             value: String::new(),
         });
 
         self.list.set_items(items);
         self.reset_cursor();
+        self.persist();
+    }
+
+    fn persist(&self) {
+        let Some(path) = self.store_path.as_ref() else {
+            return;
+        };
+
+        let entries: Vec<&str> = self
+            .entries()
+            .iter()
+            .map(|item| item.value.as_str())
+            .filter(|value| !value.trim().is_empty() && !looks_like_secret(value))
+            .collect();
+        let start = entries.len().saturating_sub(INPUT_HISTORY_MAX_ENTRIES);
+
+        // losing history must not take the editor down
+        let _ = write_input_history(path, &entries[start..]);
     }
 
     pub(super) fn cursor_up(&mut self) {
@@ -1065,6 +1113,151 @@ impl HistoryList {
             .selected_item()
             .map_or("", |item| item.value.as_str())
     }
+}
+
+fn read_input_history(path: &Path) -> (Vec<String>, Option<String>) {
+    let contents = match std::fs::read_to_string(path) {
+        Ok(contents) => contents,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return (Vec::new(), None),
+        Err(err) => {
+            return (
+                Vec::new(),
+                Some(format!(
+                    "Input history unavailable ({}): {err}",
+                    path.display()
+                )),
+            );
+        }
+    };
+
+    let mut entries: Vec<String> = Vec::new();
+    let mut unreadable = 0usize;
+    for line in contents.lines() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        match serde_json::from_str::<String>(line) {
+            Ok(value) => {
+                if value.trim().is_empty() || entries.last().is_some_and(|last| *last == value) {
+                    continue;
+                }
+                entries.push(value);
+            }
+            Err(_) => unreadable += 1,
+        }
+    }
+
+    let start = entries.len().saturating_sub(INPUT_HISTORY_MAX_ENTRIES);
+    entries.drain(..start);
+
+    let warning = (unreadable > 0).then(|| {
+        format!(
+            "Input history: skipped {unreadable} unreadable line(s) in {}",
+            path.display()
+        )
+    });
+    (entries, warning)
+}
+
+fn write_input_history(path: &Path, entries: &[&str]) -> std::io::Result<()> {
+    use std::io::Write as _;
+
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    if !parent.as_os_str().is_empty() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    let mut contents = String::new();
+    for entry in entries {
+        contents.push_str(&serde_json::to_string(entry).map_err(std::io::Error::other)?);
+        contents.push('\n');
+    }
+
+    let mut tmp = tempfile::NamedTempFile::new_in(parent)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        tmp.as_file()
+            .set_permissions(std::fs::Permissions::from_mode(0o600))?;
+    }
+    tmp.write_all(contents.as_bytes())?;
+    tmp.as_file().sync_all()?;
+    tmp.persist(path).map_err(|err| err.error)?;
+    Ok(())
+}
+
+/// Partial credential filter: vendor key prefixes, credential assignments, bearer
+/// tokens, PEM, JWT, long mixed-case opaque tokens. Misses short, all-lowercase or
+/// dictionary-word secrets.
+fn looks_like_secret(value: &str) -> bool {
+    const KEY_PREFIXES: [&str; 20] = [
+        "sk-",
+        "sk_",
+        "pk_live_",
+        "rk_live_",
+        "ghp_",
+        "gho_",
+        "ghu_",
+        "ghs_",
+        "ghr_",
+        "github_pat_",
+        "xox",
+        "AKIA",
+        "ASIA",
+        "AIza",
+        "glpat-",
+        "hf_",
+        "npm_",
+        "pypi-",
+        "dop_v1_",
+        "shpat_",
+    ];
+
+    static CREDENTIAL_ASSIGNMENT: OnceLock<Regex> = OnceLock::new();
+    let assignment = CREDENTIAL_ASSIGNMENT.get_or_init(|| {
+        Regex::new(
+            r"(?i)(api[-_ ]?key|access[-_ ]?key|secret|token|password|passwd|passphrase|credential)\s*[:=]\s*\S{6,}",
+        )
+        .expect("static credential regex")
+    });
+    if assignment.is_match(value) {
+        return true;
+    }
+
+    static BEARER: OnceLock<Regex> = OnceLock::new();
+    let bearer =
+        BEARER.get_or_init(|| Regex::new(r"(?i)\bbearer\s+\S{12,}").expect("static bearer regex"));
+    if bearer.is_match(value) {
+        return true;
+    }
+
+    if value.contains("-----BEGIN") {
+        return true;
+    }
+
+    value.split_whitespace().any(|token| {
+        let token = token.trim_matches(|c: char| matches!(c, '"' | '\'' | '`' | ',' | ';'));
+        if token.starts_with("eyJ") && token.len() >= 20 {
+            return true;
+        }
+        if KEY_PREFIXES
+            .iter()
+            .any(|prefix| token.starts_with(prefix) && token.len() > prefix.len() + 8)
+        {
+            return true;
+        }
+        opaque_token(token)
+    })
+}
+
+fn opaque_token(token: &str) -> bool {
+    token.len() >= 32
+        && token
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '/' | '=' | '_' | '-'))
+        && token.chars().any(|c| c.is_ascii_digit())
+        && token.chars().any(|c| c.is_ascii_uppercase())
+        && token.chars().any(|c| c.is_ascii_lowercase())
 }
 
 /// Progress metrics emitted by long-running tools (e.g. bash).
@@ -1208,5 +1401,158 @@ mod tests {
     fn settings_ui_includes_default_permissive_toggle() {
         let state = SettingsUiState::new();
         assert!(state.entries.contains(&SettingsUiEntry::DefaultPermissive));
+    }
+
+    fn history_values(history: &HistoryList) -> Vec<String> {
+        history
+            .entries()
+            .iter()
+            .map(|item| item.value.clone())
+            .collect()
+    }
+
+    #[test]
+    fn input_history_survives_a_new_process() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("input-history.jsonl");
+
+        let mut first = HistoryList::new();
+        assert!(first.attach_store(path.clone()).is_none());
+        first.push("one".to_string());
+        first.push("two".to_string());
+        first.push("three".to_string());
+
+        let mut second = HistoryList::new();
+        assert!(second.attach_store(path).is_none());
+        assert_eq!(history_values(&second), vec!["one", "two", "three"]);
+
+        second.cursor_up();
+        assert_eq!(second.selected_value(), "three");
+        second.cursor_up();
+        assert_eq!(second.selected_value(), "two");
+        second.cursor_up();
+        assert_eq!(second.selected_value(), "one");
+    }
+
+    #[test]
+    fn input_history_dedups_consecutive_repeats_and_caps_the_file() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("input-history.jsonl");
+
+        let mut history = HistoryList::new();
+        history.attach_store(path.clone());
+        history.push("same".to_string());
+        history.push("same".to_string());
+        assert_eq!(history_values(&history), vec!["same"]);
+
+        for idx in 0..INPUT_HISTORY_MAX_ENTRIES + 20 {
+            history.push(format!("entry {idx}"));
+        }
+
+        let lines: Vec<String> = std::fs::read_to_string(&path)
+            .expect("history file")
+            .lines()
+            .map(|line| serde_json::from_str::<String>(line).expect("json line"))
+            .collect();
+        assert_eq!(lines.len(), INPUT_HISTORY_MAX_ENTRIES);
+        assert_eq!(lines[0], "entry 20");
+        assert_eq!(
+            lines[INPUT_HISTORY_MAX_ENTRIES - 1],
+            format!("entry {}", INPUT_HISTORY_MAX_ENTRIES + 19)
+        );
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn input_history_file_is_owner_only() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("input-history.jsonl");
+        let mut history = HistoryList::new();
+        history.attach_store(path.clone());
+        history.push("hello".to_string());
+
+        let mode = std::fs::metadata(&path)
+            .expect("metadata")
+            .permissions()
+            .mode()
+            & 0o777;
+        assert_eq!(mode, 0o600);
+    }
+
+    #[test]
+    fn corrupt_input_history_warns_instead_of_crashing() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("input-history.jsonl");
+        std::fs::write(&path, "\"good\"\n{not json\n\"tail\n").expect("write");
+
+        let mut history = HistoryList::new();
+        let warning = history.attach_store(path).expect("warning");
+        assert!(
+            warning.contains("skipped 2 unreadable line(s)"),
+            "{warning}"
+        );
+        assert_eq!(history_values(&history), vec!["good"]);
+    }
+
+    #[test]
+    fn credential_shaped_entries_never_reach_the_file() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("input-history.jsonl");
+
+        let secrets = [
+            "use sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAA for the call",
+            "export ANTHROPIC_API_KEY=hunter2sekrit",
+            "curl -H 'Authorization: Bearer abcdefghijklmnop'",
+            "ghp_0123456789abcdefghijABCDEFGHIJ",
+            "token: Zm9vYmFyMTIzNDU2Nzg5MFFXRVJUWXVpb3A=",
+        ];
+
+        let mut history = HistoryList::new();
+        history.attach_store(path.clone());
+        for secret in secrets {
+            history.push(secret.to_string());
+        }
+        history.push("git status".to_string());
+
+        let contents = std::fs::read_to_string(&path).expect("history file");
+        for secret in secrets {
+            assert!(!contents.contains(secret), "leaked: {secret}");
+        }
+        assert!(contents.contains("git status"));
+    }
+
+    #[test]
+    fn ordinary_input_is_not_mistaken_for_a_secret() {
+        for value in [
+            "cargo test --lib",
+            "explain src/interactive/state.rs to me",
+            "fix the bug in commit 4f2b1c9d8e7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c",
+            "why does the token bucket refill twice",
+        ] {
+            assert!(!looks_like_secret(value), "false positive: {value}");
+        }
+    }
+
+    #[test]
+    fn unsubmitted_and_blank_input_is_never_persisted() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("input-history.jsonl");
+
+        let mut history = HistoryList::new();
+        history.attach_store(path.clone());
+        history.push("   ".to_string());
+        assert!(
+            std::fs::read_to_string(&path).is_ok_and(|contents| contents.is_empty()),
+            "blank submissions must not reach the file"
+        );
+
+        let mut unarmed = HistoryList::new();
+        unarmed.push("typed but never submitted elsewhere".to_string());
+        assert_eq!(
+            std::fs::read_to_string(&path).expect("history file").trim(),
+            ""
+        );
     }
 }
