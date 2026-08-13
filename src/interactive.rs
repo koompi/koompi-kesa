@@ -2404,6 +2404,10 @@ pub struct PiApp {
     event_tx: mpsc::Sender<PiMsg>,
     runtime_handle: RuntimeHandle,
 
+    /// True while the turn exists only because a `Stop` hook blocked the last
+    /// one. A hook that never reads it would otherwise loop forever.
+    stop_hook_active: Arc<AtomicBool>,
+
     // Extension session state
     extension_streaming: Arc<AtomicBool>,
     extension_compacting: Arc<AtomicBool>,
@@ -2743,6 +2747,7 @@ impl PiApp {
             total_usage,
             event_tx,
             runtime_handle,
+            stop_hook_active: Arc::new(AtomicBool::new(false)),
             extension_streaming: extension_streaming.clone(),
             extension_compacting: extension_compacting.clone(),
             extension_ui_queue: VecDeque::new(),

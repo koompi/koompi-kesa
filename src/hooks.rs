@@ -209,12 +209,16 @@ impl HookRunner {
     }
 
     /// Run the `Stop` hooks. A block asks the caller to keep the turn going.
-    pub async fn stop(&self) -> HookDecision {
-        self.dispatch(
-            HookEvent::Stop,
-            "",
-            || json!({ "hook_event_name": HookEvent::Stop.as_str() }),
-        )
+    ///
+    /// `stop_hook_active` is true when this turn only exists because a `Stop`
+    /// hook blocked the last one; a hook that ignores it blocks forever.
+    pub async fn stop(&self, stop_hook_active: bool) -> HookDecision {
+        self.dispatch(HookEvent::Stop, "", || {
+            json!({
+                "hook_event_name": HookEvent::Stop.as_str(),
+                "stop_hook_active": stop_hook_active,
+            })
+        })
         .await
     }
 
@@ -566,7 +570,7 @@ mod tests {
                 runner.pre_tool_use("bash", &json!({})).await,
                 HookDecision::Allow
             );
-            assert_eq!(runner.stop().await, HookDecision::Allow);
+            assert_eq!(runner.stop(false).await, HookDecision::Allow);
         });
     }
 
@@ -594,7 +598,7 @@ mod tests {
 
             let stop = runner("Stop", "*", "printf 'keep going' >&2; exit 2", Some(10));
             assert_eq!(
-                stop.stop().await,
+                stop.stop(false).await,
                 HookDecision::Block {
                     reason: "keep going".to_string()
                 }

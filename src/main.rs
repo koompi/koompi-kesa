@@ -7299,10 +7299,87 @@ fn is_retryable_prompt_result(msg: &AssistantMessage) -> bool {
     kode::error::is_retryable_error(err_msg, Some(msg.usage.input), None)
 }
 
+/// Flatten a prompt to the text a `UserPromptSubmit` hook is given.
+fn prompt_hook_text(input: &PromptInput) -> String {
+    match input {
+        PromptInput::Text(text) => text.clone(),
+        PromptInput::Content(content) => content
+            .iter()
+            .filter_map(|block| match block {
+                kode::model::ContentBlock::Text(text) => Some(text.text.as_str()),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+            .join("\n"),
+    }
+}
+
+/// Run one prompt, then keep running while a `Stop` hook refuses to let the
+/// turn end. A `UserPromptSubmit` block rejects the prompt outright.
+#[allow(clippy::too_many_arguments)]
+async fn run_print_prompt_with_retry<H, EH>(
+    session: &mut AgentSession,
+    config: &Config,
+    abort_signal: &kode::agent::AbortSignal,
+    make_event_handler: &H,
+    retry_enabled: bool,
+    max_retries: u32,
+    is_json: bool,
+    text_stream_state: &Arc<StdMutex<PrintTextStreamState>>,
+    input: PromptInput,
+) -> Result<AssistantMessage>
+where
+    H: Fn() -> EH + Sync,
+    EH: Fn(AgentEvent) + Send + Sync + 'static,
+{
+    let hooks = Arc::clone(session.agent.shell_hooks());
+    if !hooks.is_empty()
+        && let kode::hooks::HookDecision::Block { reason } =
+            hooks.user_prompt_submit(&prompt_hook_text(&input)).await
+    {
+        bail!("{reason}");
+    }
+
+    let mut message = run_print_prompt_attempt(
+        session,
+        config,
+        abort_signal,
+        make_event_handler,
+        retry_enabled,
+        max_retries,
+        is_json,
+        text_stream_state,
+        input,
+    )
+    .await?;
+
+    let mut stop_hook_active = false;
+    while !hooks.is_empty() {
+        let kode::hooks::HookDecision::Block { reason } = hooks.stop(stop_hook_active).await else {
+            break;
+        };
+        stop_hook_active = true;
+        message = run_print_prompt_attempt(
+            session,
+            config,
+            abort_signal,
+            make_event_handler,
+            retry_enabled,
+            max_retries,
+            is_json,
+            text_stream_state,
+            PromptInput::Text(reason),
+        )
+        .await?;
+    }
+
+    Ok(message)
+}
+
 /// Execute a single prompt with automatic retry and `AutoRetryStart`/`AutoRetryEnd`
 /// event emission. Mirrors the retry behaviour in RPC mode (`src/rpc.rs`).
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
-async fn run_print_prompt_with_retry<H, EH>(
+async fn run_print_prompt_attempt<H, EH>(
     session: &mut AgentSession,
     config: &Config,
     abort_signal: &kode::agent::AbortSignal,

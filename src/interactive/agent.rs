@@ -59,6 +59,56 @@ async fn dispatch_input_event(
     Ok(apply_input_event_response(response, text, images))
 }
 
+/// Runs the user's `UserPromptSubmit` hooks. A block is reported here, so the
+/// caller only has to stop.
+async fn user_prompt_submit_blocked(
+    hooks: &crate::hooks::HookRunner,
+    event_tx: &mpsc::Sender<PiMsg>,
+    task_cx: &Cx,
+    prompt: &str,
+) -> bool {
+    if hooks.is_empty() {
+        return false;
+    }
+    let crate::hooks::HookDecision::Block { reason } = hooks.user_prompt_submit(prompt).await
+    else {
+        return false;
+    };
+    let _ = crate::interactive::enqueue_pi_event(
+        event_tx,
+        task_cx,
+        PiMsg::UpdateLastUserMessage("[input blocked]".to_string()),
+    )
+    .await;
+    let _ =
+        crate::interactive::enqueue_pi_event(event_tx, task_cx, PiMsg::AgentError(reason)).await;
+    true
+}
+
+/// Runs the user's `Stop` hooks at the end of a turn. A block feeds its reason
+/// back as the next input, which is how the turn keeps going.
+async fn run_stop_hooks(
+    hooks: &crate::hooks::HookRunner,
+    stop_hook_active: &Arc<AtomicBool>,
+    event_tx: &mpsc::Sender<PiMsg>,
+    task_cx: &Cx,
+) {
+    if hooks.is_empty() {
+        return;
+    }
+    let was_active = stop_hook_active.swap(false, Ordering::SeqCst);
+    let crate::hooks::HookDecision::Block { reason } = hooks.stop(was_active).await else {
+        return;
+    };
+    stop_hook_active.store(true, Ordering::SeqCst);
+    let _ = crate::interactive::enqueue_pi_event(
+        event_tx,
+        task_cx,
+        PiMsg::EnqueuePendingInput(PendingInput::Text(reason)),
+    )
+    .await;
+}
+
 const UI_STREAM_DELTA_FLUSH_INTERVAL: std::time::Duration = std::time::Duration::from_millis(45);
 const UI_STREAM_DELTA_MAX_BUFFER_BYTES: usize = 2 * 1024;
 const EXTENSION_CUSTOM_WIDGET_KEY: &str = "__pi_custom_overlay";
@@ -1508,6 +1558,7 @@ After approving access in the browser, press Enter in Pi to complete login."
         self.scroll_to_bottom();
 
         let runtime_handle_for_task = runtime_handle.clone();
+        let stop_hook_active = Arc::clone(&self.stop_hook_active);
         let task_cx = Cx::current().unwrap_or_else(Cx::for_request);
         runtime_handle.spawn(async move {
             #[cfg(test)]
@@ -1531,6 +1582,7 @@ After approving access in the browser, press Enter in Pi to complete login."
                         return;
                     }
                 };
+            let shell_hooks = Arc::clone(agent_guard.shell_hooks());
             let previous_len = agent_guard.messages().len();
 
             let event_sender = event_tx.clone();
@@ -1607,7 +1659,10 @@ After approving access in the browser, press Enter in Pi to complete login."
                     PiMsg::AgentError(formatted),
                 )
                 .await;
+                return;
             }
+
+            run_stop_hooks(&shell_hooks, &stop_hook_active, &event_tx, &task_cx).await;
         });
 
         None
@@ -1667,10 +1722,11 @@ After approving access in the browser, press Enter in Pi to complete login."
         self.abort_handle = Some(abort_handle);
 
         let runtime_handle_for_task = runtime_handle.clone();
+        let stop_hook_active = Arc::clone(&self.stop_hook_active);
         let task_cx = Cx::current().unwrap_or_else(Cx::for_request);
         runtime_handle.spawn(async move {
             let mut content_for_agent = content_for_agent;
-            let base_system_prompt = {
+            let (base_system_prompt, shell_hooks) = {
                 let guard =
                     match asupersync::sync::OwnedMutexGuard::lock(Arc::clone(&agent), &task_cx)
                         .await
@@ -1687,8 +1743,9 @@ After approving access in the browser, press Enter in Pi to complete login."
                         }
                     };
                 let prompt = guard.system_prompt().map(str::to_string);
+                let hooks = Arc::clone(guard.shell_hooks());
                 drop(guard);
-                prompt
+                (prompt, hooks)
             };
             let before_start = if let Some(manager) = extensions.clone() {
                 let (text, images) = split_content_blocks_for_input(&content_for_agent);
@@ -1754,6 +1811,13 @@ After approving access in the browser, press Enter in Pi to complete login."
                     system_prompt: None,
                 }
             };
+
+            let (prompt_for_hooks, _) = split_content_blocks_for_input(&content_for_agent);
+            if user_prompt_submit_blocked(&shell_hooks, &event_tx, &task_cx, &prompt_for_hooks)
+                .await
+            {
+                return;
+            }
 
             let mut agent_guard =
                 match asupersync::sync::OwnedMutexGuard::lock(Arc::clone(&agent), &task_cx).await {
@@ -1863,7 +1927,10 @@ After approving access in the browser, press Enter in Pi to complete login."
                     PiMsg::AgentError(formatted),
                 )
                 .await;
+                return;
             }
+
+            run_stop_hooks(&shell_hooks, &stop_hook_active, &event_tx, &task_cx).await;
         });
 
         None
@@ -2019,6 +2086,7 @@ After approving access in the browser, press Enter in Pi to complete login."
 
         // Spawn async task to run the agent
         let runtime_handle_for_agent = runtime_handle.clone();
+        let stop_hook_active = Arc::clone(&self.stop_hook_active);
         let task_cx = Cx::current().unwrap_or_else(Cx::for_request);
         runtime_handle.spawn(async move {
             let mut message_for_agent = message_for_agent;
@@ -2081,6 +2149,12 @@ After approving access in the browser, press Enter in Pi to complete login."
                         return;
                     }
                 };
+            let shell_hooks = Arc::clone(agent_guard.shell_hooks());
+            if user_prompt_submit_blocked(&shell_hooks, &event_tx, &task_cx, &message_for_agent)
+                .await
+            {
+                return;
+            }
             let previous_len = agent_guard.messages().len();
 
             let event_sender = event_tx.clone();
@@ -2180,7 +2254,10 @@ After approving access in the browser, press Enter in Pi to complete login."
                     PiMsg::AgentError(err.to_string()),
                 )
                 .await;
+                return;
             }
+
+            run_stop_hooks(&shell_hooks, &stop_hook_active, &event_tx, &task_cx).await;
         });
 
         None
