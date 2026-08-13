@@ -1273,12 +1273,8 @@ impl PiApp {
 
         // Input area vs processing spinner.
         if self.editor_input_is_available() {
-            // render_input: "\n  header\n" (2 rows) + box border (2 rows)
-            // + input.height() rows + the mode indicator when it is shown.
-            chrome += 4 + self.input.height();
-            if self.permission_mode.indicator().is_some() {
-                chrome += 1;
-            }
+            // render_input: compact labeled border (2 rows) + input.height() rows.
+            chrome += 2 + self.input.height();
 
             // Autocomplete dropdown chrome when open: top border(1) +
             // items(visible_count) + description(1) + pagination(1) +
@@ -2590,9 +2586,9 @@ impl PiApp {
         input.prompt = String::new();
         input.focused_style.placeholder = styles.muted.clone();
         input.blurred_style.placeholder = styles.muted.clone();
-        input.set_height(3); // Start with 3 lines
+        input.set_height(1); // Start compact like Claude/Codex; grow as needed.
         input.set_width(view::editor_width(term_width, editor_padding_x));
-        input.max_height = 10; // Allow expansion up to 10 lines
+        input.max_height = 8; // Allow expansion without taking over the screen.
         input.focus();
 
         let spinner = SpinnerModel::with_spinner(spinners::dot()).style(styles.accent.clone());

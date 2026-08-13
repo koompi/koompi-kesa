@@ -1,14 +1,15 @@
 ---
 source: tests/tui_snapshot.rs
-assertion_line: 216
 expression: view
 ---
-  Pi (dummy/dummy-model)
-  ctrl+l: model  ctrl+p: next  ctrl+shift+p: prev  ctrl+o: tools  shift+tab: ...
-  resources: 0 skills, 0 prompts, 0 themes, 0 extensions
+  Kode (dummy/dummy-model)  <cwd>  mode: default
+  ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
+  0 skills  0 prompts  0 themes  0 extensions  (0 resources ready)
 
 
-  ▶ Tool read output: (60 lines, collapsed)
+  › Read the file.
+
+  ⎿ Tool read output: (+60 lines, ctrl+o to expand)
     line 1
     Tool read output:
     line 2
@@ -16,14 +17,10 @@ expression: view
     line 3
     ... 54 more lines
 
-  Assistant:
+  ●
+      Done.
+  ╭ think off ───────────────────────────────────────────────────────────────╮
+  │ > Type a message... (/help, /exit)                                       │
+  ╰──────────────────────────────────────────────────────────────────────────╯
 
-    Done.
-  [100%] ↑/↓ PgUp/PgDn Shift+Up/Down to scroll
-
-  Enter: send  Shift+Enter: newline  Alt+Enter: multi-line  [thinking: off]
-  │ > Type a message... (/help, /exit)
-  │ >
-  │ >
-
-  Tokens: 0 in / 0 out  |  Persist: balanced  |  /help  |  Ctrl+C: quit
+  <cwd>  |  0/0 tokens  |  Persist: balanced  |  /help  |  Ctrl+C...

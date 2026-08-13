@@ -202,8 +202,14 @@ fn strip_ansi(input: &str) -> String {
     re.replace_all(input, "").replace('\r', "")
 }
 
+fn strip_temp_paths(input: &str) -> String {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    let re = RE.get_or_init(|| Regex::new(r"(?:~|/)[\w./\-]*\.tmp[A-Za-z0-9.]*").expect("regex"));
+    re.replace_all(input, "<cwd>").into_owned()
+}
+
 fn normalize_snapshot(input: &str) -> String {
-    let stripped = strip_ansi(input);
+    let stripped = strip_temp_paths(&strip_ansi(input));
     stripped
         .lines()
         .map(str::trim_end)

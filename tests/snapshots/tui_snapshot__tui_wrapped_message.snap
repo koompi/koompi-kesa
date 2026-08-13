@@ -1,21 +1,17 @@
 ---
 source: tests/tui_snapshot.rs
-assertion_line: 216
 expression: view
 ---
-  Pi (dummy/dummy-model)
-  ctrl+l: model  ctrl+p: next  ctrl+shift+p: pr...
-  resources: 0 skills, 0 prompts, 0 themes, 0 e...
+  Kode (dummy/dummy-model)  <cwd>  ...
+  ctrl+l: model  ctrl+o: tools  shift+tab: mode...
+  0 skills  0 prompts  0 themes  0 extensions  ...
 
 
-  Assistant:
+  ●
+      This is a longer assistant response that
+      should wrap across multiple lines.
+  ╭ think off ─────────────────────────────────╮
+  │ > Type a message... (/help, /exit)         │
+  ╰────────────────────────────────────────────╯
 
-    This is a longer assistant response that
-    should wrap across multiple lines.
-
-  Enter: send  Shift+Enter: ne...  [thinking: off]
-  │ > Type a message... (/help, /exit)
-  │ >
-  │ >
-
-  Tokens: 0 in / 0 out  |  Persist: balanced  |...
+  <cwd>  |  0/0 tokens  |  Persist:...

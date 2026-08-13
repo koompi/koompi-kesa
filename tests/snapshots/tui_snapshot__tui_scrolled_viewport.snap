@@ -1,29 +1,28 @@
 ---
 source: tests/tui_snapshot.rs
-assertion_line: 216
 expression: view
 ---
-  Pi (dummy/dummy-model)
-  ctrl+l: model  ctrl+p: next  ctrl+shift+p: prev  ctrl+o: tools  shift+tab: ...
-  resources: 0 skills, 0 prompts, 0 themes, 0 extensions
+  Kode (dummy/dummy-model)  <cwd>  mode: default
+  ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
+  0 skills  0 prompts  0 themes  0 extensions  (0 resources ready)
 
 
 
 
-  You: User message 10
+  › User message 9
 
-  Assistant:
-
-    Assistant reply 10
-
+  ●
+      Assistant reply 9
 
 
-  You: User message 11
-  [85%] ↑/↓ PgUp/PgDn Shift+Up/Down to scroll
 
-  Enter: send  Shift+Enter: newline  Alt+Enter: multi-line  [thinking: off]
-  │ > Type a message... (/help, /exit)
-  │ >
-  │ >
+  › User message 10
 
-  Tokens: 0 in / 0 out  |  Persist: balanced  |  /help  |  Ctrl+C: quit
+  ●
+      Assistant reply 10
+  [79%] ↑/↓ PgUp/PgDn Shift+Up/Down to scroll
+  ╭ think off ───────────────────────────────────────────────────────────────╮
+  │ > Type a message... (/help, /exit)                                       │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+
+  <cwd>  |  0/0 tokens  |  Persist: balanced  |  /help  |  Ctrl+C...

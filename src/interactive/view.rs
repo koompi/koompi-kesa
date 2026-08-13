@@ -7,6 +7,8 @@ const USER_PROMPT_GLYPH: &str = "\u{203a}";
 const ASSISTANT_GLYPH: &str = "\u{25cf}";
 const TOOL_RESULT_GLYPH: &str = "\u{23bf}";
 
+const APP_LABEL: &str = "Kode";
+
 /// Prompt shown on the first row inside the input box.
 const INPUT_PROMPT_GLYPH: &str = ">";
 
@@ -411,6 +413,26 @@ fn stabilize_streaming_markdown(markdown: &str) -> std::borrow::Cow<'_, str> {
     std::borrow::Cow::Owned(stabilized)
 }
 
+fn format_path_label(path: &std::path::Path) -> String {
+    let display = dirs::home_dir()
+        .and_then(|home| {
+            path.strip_prefix(&home)
+                .ok()
+                .map(|tail| (home, tail.to_path_buf()))
+        })
+        .map_or_else(
+            || path.to_string_lossy().to_string(),
+            |(_, tail)| {
+                if tail.as_os_str().is_empty() {
+                    "~".to_string()
+                } else {
+                    format!("~/{}", tail.to_string_lossy())
+                }
+            },
+        );
+    truncate(&display, 32)
+}
+
 fn format_persistence_footer_segment(
     mode: crate::session::AutosaveDurabilityMode,
     metrics: crate::session::AutosaveQueueMetrics,
@@ -466,6 +488,26 @@ impl PiApp {
             for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
                 let _ = writeln!(output, "  {line}");
             }
+        }
+
+        let quickstart_rows = vec![
+            self.styles
+                .accent_bold
+                .render("Ask for a change, paste an error, or drag files here."),
+            self.styles
+                .muted
+                .render("/help commands   @file attach context   Shift+Tab mode   Ctrl+L model"),
+            self.styles.muted.render(
+                "Start with a plan: \"inspect this repo and propose the smallest safe fix\"",
+            ),
+        ];
+        let quickstart_width = box_width(self.term_width);
+        for line in bordered_box(
+            quickstart_rows.iter().map(String::as_str),
+            quickstart_width,
+            &self.styles.border,
+        ) {
+            let _ = writeln!(output, "  {line}");
         }
 
         match &self.startup_changelog {
@@ -728,6 +770,8 @@ impl PiApp {
     /// intermediate `String` allocation on the hot path.
     fn render_header_into(&self, output: &mut String) {
         let model_label = format!("({})", self.model);
+        let cwd_label = format_path_label(&self.cwd);
+        let mode_label = format!("mode: {}", self.permission_mode);
 
         // Branch indicator: show "Branch N/M" when session has multiple leaves.
         let branch_indicator = self
@@ -756,18 +800,28 @@ impl PiApp {
         let thinking_key = self.header_binding_hint(AppAction::CycleThinkingLevel, "alt+t");
         let mode_key = self.header_binding_hint(AppAction::CyclePermissionMode, "shift+tab");
         let max_width = self.term_width.saturating_sub(2);
-
-        let hints_line = truncate(
-            &format!(
-                "{model_key}: model  {next_model_key}: next  {prev_model_key}: prev  \
-                 {tools_key}: tools  {thinking_key}: thinking  {mode_key}: mode"
-            ),
+        let title_line = truncate(
+            &format!("{APP_LABEL} {model_label}  {cwd_label}{branch_indicator}  {mode_label}"),
             max_width,
         );
 
+        let hints_line = if self.term_width >= 88 {
+            format!(
+                "{model_key}: model  {next_model_key}: next  {prev_model_key}: prev  \
+                 {tools_key}: tools  {thinking_key}: thinking  {mode_key}: mode"
+            )
+        } else {
+            format!("{model_key}: model  {tools_key}: tools  {mode_key}: mode  /help")
+        };
+        let hints_line = truncate(&hints_line, max_width);
+
+        let resource_count = self.resources.skills().len()
+            + self.resources.prompts().len()
+            + self.resources.themes().len()
+            + self.resources.extensions().len();
         let resources_line = truncate(
             &format!(
-                "resources: {} skills, {} prompts, {} themes, {} extensions",
+                "{} skills  {} prompts  {} themes  {} extensions  ({resource_count} resources ready)",
                 self.resources.skills().len(),
                 self.resources.prompts().len(),
                 self.resources.themes().len(),
@@ -778,10 +832,8 @@ impl PiApp {
 
         let _ = write!(
             output,
-            "  {} {}{}\n  {}\n  {}\n",
-            self.styles.title.render("Pi"),
-            self.styles.muted.render(&model_label),
-            self.styles.accent.render(&branch_indicator),
+            "  {}\n  {}\n  {}\n",
+            self.styles.title.render(&title_line),
             self.styles.muted.render(&hints_line),
             self.styles.muted.render(&resources_line),
         );
@@ -821,74 +873,15 @@ impl PiApp {
         let input_text = self.input.value();
         let is_bash_mode = parse_bash_command(&input_text).is_some();
 
-        let (thinking_label, thinking_style, thinking_border_style) = match thinking_level {
-            ThinkingLevel::Off => (
-                "off",
-                self.styles.muted_bold.clone(),
-                self.styles.border.clone(),
-            ),
-            ThinkingLevel::Minimal => (
-                "minimal",
-                self.styles.accent.clone(),
-                self.styles.accent.clone(),
-            ),
-            ThinkingLevel::Low => (
-                "low",
-                self.styles.accent.clone(),
-                self.styles.accent.clone(),
-            ),
-            ThinkingLevel::Medium => (
-                "medium",
-                self.styles.accent_bold.clone(),
-                self.styles.accent.clone(),
-            ),
-            ThinkingLevel::High => (
-                "high",
-                self.styles.warning_bold.clone(),
-                self.styles.warning.clone(),
-            ),
-            ThinkingLevel::XHigh => (
-                "xhigh",
-                self.styles.error_bold.clone(),
-                self.styles.error_bold.clone(),
-            ),
-            ThinkingLevel::Max => (
-                "max",
-                self.styles.error_bold.clone(),
-                self.styles.error_bold.clone(),
-            ),
+        let (thinking_label, thinking_border_style) = match thinking_level {
+            ThinkingLevel::Off => ("off", self.styles.border.clone()),
+            ThinkingLevel::Minimal => ("minimal", self.styles.accent.clone()),
+            ThinkingLevel::Low => ("low", self.styles.accent.clone()),
+            ThinkingLevel::Medium => ("medium", self.styles.accent.clone()),
+            ThinkingLevel::High => ("high", self.styles.warning.clone()),
+            ThinkingLevel::XHigh => ("xhigh", self.styles.error_bold.clone()),
+            ThinkingLevel::Max => ("max", self.styles.error_bold.clone()),
         };
-
-        let thinking_plain = format!("[thinking: {thinking_label}]");
-        let thinking_badge = thinking_style.render(&thinking_plain);
-        let bash_badge = is_bash_mode.then(|| self.styles.warning_bold.render("[bash]"));
-
-        let max_width = self.term_width.saturating_sub(2);
-        let reserved = 2
-            + thinking_plain.chars().count()
-            + if is_bash_mode {
-                2 + "[bash]".chars().count()
-            } else {
-                0
-            };
-        let available_for_mode = max_width.saturating_sub(reserved);
-        let mut mode_text = match self.input_mode {
-            InputMode::SingleLine => "Enter: send  Shift+Enter: newline  Alt+Enter: multi-line",
-            InputMode::MultiLine => "Alt+Enter: send  Enter: newline  Esc: single-line",
-        }
-        .to_string();
-        if mode_text.chars().count() > available_for_mode {
-            mode_text = truncate(&mode_text, available_for_mode);
-        }
-        let mut header_line = String::new();
-        header_line.push_str(&self.styles.muted.render(&mode_text));
-        header_line.push_str("  ");
-        header_line.push_str(&thinking_badge);
-        if let Some(bash_badge) = bash_badge {
-            header_line.push_str("  ");
-            header_line.push_str(&bash_badge);
-        }
-        let _ = writeln!(output, "\n  {header_line}");
 
         let border_style = if is_bash_mode {
             self.styles.warning_bold.clone()
@@ -896,32 +889,66 @@ impl PiApp {
             thinking_border_style
         };
 
+        let mode_text = match self.input_mode {
+            InputMode::SingleLine if self.term_width >= 76 => {
+                "Enter send · Shift+Enter newline · Alt+Enter multi-line · @file context"
+            }
+            InputMode::SingleLine => "Enter send · Shift+Enter newline · @file",
+            InputMode::MultiLine if self.term_width >= 76 => {
+                "Alt+Enter send · Enter newline · Esc single-line · @file context"
+            }
+            InputMode::MultiLine => "Alt+Enter send · Enter newline · Esc",
+        };
+        let width = box_width(self.term_width);
+        let middle_width = width.saturating_sub(2);
+
+        let mut segments: Vec<&str> = Vec::new();
+        if is_bash_mode {
+            segments.push("bash");
+        }
+        segments.extend(self.permission_mode.indicator());
+        let thinking_segment = format!("think {thinking_label}");
+        segments.push(&thinking_segment);
+        segments.push(mode_text);
+
+        let mut label = String::new();
+        for segment in segments {
+            let candidate = if label.is_empty() {
+                format!(" {segment} ")
+            } else {
+                format!("{label}· {segment} ")
+            };
+            if lipgloss::width(&candidate) <= middle_width {
+                label = candidate;
+            }
+        }
+        if lipgloss::width(&label) > middle_width {
+            label = truncate(&label, middle_width);
+        }
+        let label_width = lipgloss::width(&label).min(middle_width);
+        let top_middle = format!("{label}{}", "─".repeat(middle_width - label_width));
+        let rule = "─".repeat(width.saturating_sub(2));
+        let _ = writeln!(
+            output,
+            "  {}",
+            border_style.render(&format!("╭{top_middle}╮"))
+        );
+
+        let left = border_style.render("│");
+        let right = border_style.render("│");
         let padding = " ".repeat(self.editor_padding_x);
         let prompt = self.styles.accent_bold.render(INPUT_PROMPT_GLYPH);
         let editor = self.input.view();
-        let rows: Vec<String> = editor
-            .lines()
-            .enumerate()
-            .map(|(idx, line)| {
-                if idx == 0 {
-                    format!("{padding}{prompt} {line}")
-                } else {
-                    format!("{padding}  {line}")
-                }
-            })
-            .collect();
-
-        for line in bordered_box(
-            rows.iter().map(String::as_str),
-            box_width(self.term_width),
-            &border_style,
-        ) {
-            let _ = writeln!(output, "  {line}");
+        for (idx, line) in editor.lines().enumerate() {
+            let row = if idx == 0 {
+                format!("{padding}{prompt} {line}")
+            } else {
+                format!("{padding}  {line}")
+            };
+            let row = fit_to_width(&row, width.saturating_sub(4));
+            let _ = writeln!(output, "  {left} {row} {right}");
         }
-
-        if let Some(indicator) = self.permission_mode.indicator() {
-            let _ = writeln!(output, "  {}", self.styles.warning.render(indicator));
-        }
+        let _ = writeln!(output, "  {}", border_style.render(&format!("╰{rule}╯")));
 
         output
     }
@@ -951,15 +978,16 @@ impl PiApp {
             .vcs_info
             .as_ref()
             .map_or_else(String::new, |b| format!("  |  {b}"));
+        let cwd_str = format_path_label(&self.cwd);
         let mode_hint = match self.input_mode {
             InputMode::SingleLine => "Shift+Enter: newline  |  Alt+Enter: multi-line",
             InputMode::MultiLine => "Enter: newline  |  Alt+Enter: send  |  Esc: single-line",
         };
         let footer_long = format!(
-            "Tokens: {input} in / {output_tokens} out{cost_str}{branch_str}  |  {persistence_str}  |  {mode_hint}  |  /help  |  Ctrl+C: quit"
+            "{cwd_str}{branch_str}  |  Tokens: {input} in / {output_tokens} out{cost_str}  |  {persistence_str}  |  {mode_hint}  |  /help  |  Ctrl+C quit"
         );
         let footer_short = format!(
-            "Tokens: {input} in / {output_tokens} out{cost_str}{branch_str}  |  {persistence_str}  |  /help  |  Ctrl+C: quit"
+            "{cwd_str}{branch_str}  |  {input}/{output_tokens} tokens{cost_str}  |  {persistence_str}  |  /help  |  Ctrl+C quit"
         );
         let max_width = self.term_width.saturating_sub(2);
         let mut footer = if footer_long.chars().count() <= max_width {
