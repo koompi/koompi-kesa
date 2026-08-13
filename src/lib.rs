@@ -143,6 +143,8 @@ pub mod file_lock;
 #[doc(hidden)]
 pub mod flake_classifier;
 #[doc(hidden)]
+pub mod hooks;
+#[doc(hidden)]
 pub mod hostcall_amac;
 #[doc(hidden)]
 pub mod hostcall_io_uring_lane;
@@ -234,6 +236,8 @@ pub mod swarm_replay;
 pub mod terminal_images;
 #[doc(hidden)]
 pub mod theme;
+#[doc(hidden)]
+pub mod todo;
 #[doc(hidden)]
 pub mod tool_policy;
 #[doc(hidden)]
