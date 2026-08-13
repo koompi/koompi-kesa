@@ -250,6 +250,8 @@ pub mod validation_broker;
 pub mod vcr;
 #[doc(hidden)]
 pub mod version_check;
+#[doc(hidden)]
+pub mod web_tools;
 
 pub use error::{Error, Result as PiResult};
 #[doc(hidden)]
