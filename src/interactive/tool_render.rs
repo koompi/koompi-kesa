@@ -4,7 +4,40 @@ use serde_json::Value;
 
 use super::conversation::tool_content_blocks_to_text;
 
+/// Render a tool result for the transcript.
+///
+/// A leading `ToolCall` block is the call being reported; it becomes the header
+/// line and the rest of the blocks become the body. Both the live path and
+/// session replay hand the content over in that shape, which is what makes a
+/// resumed transcript identical to the one the user watched.
 pub(super) fn format_tool_output(
+    content: &[ContentBlock],
+    details: Option<&Value>,
+    show_images: bool,
+) -> Option<String> {
+    let (header, content) = match content.split_first() {
+        Some((ContentBlock::ToolCall(call), rest)) => (
+            Some(format_tool_call_header(&call.name, &call.arguments)),
+            rest,
+        ),
+        _ => (None, content),
+    };
+    match (header, format_tool_result_body(content, details, show_images)) {
+        (Some(header), Some(body)) => Some(format!("{header}\n{body}")),
+        (Some(header), None) => Some(header),
+        (None, body) => body,
+    }
+}
+
+/// Append the failure marker to a rendered tool result's header line.
+pub(super) fn mark_tool_failed(output: &str) -> String {
+    match output.split_once('\n') {
+        Some((header, body)) => format!("{header} failed\n{body}"),
+        None => format!("{output} failed"),
+    }
+}
+
+fn format_tool_result_body(
     content: &[ContentBlock],
     details: Option<&Value>,
     show_images: bool,
@@ -28,8 +61,6 @@ pub(super) fn format_tool_output(
         } else if output.trim().is_empty() {
             output = pretty_json(details);
         }
-    } else if output.trim().is_empty() {
-        // No primary content and no details payload.
     }
     if output.trim().is_empty() {
         None

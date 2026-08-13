@@ -4,6 +4,7 @@ use crate::model::{
 use crate::models::ModelEntry;
 use crate::session::{Session, SessionEntry, SessionMessage, bash_execution_to_text};
 use serde_json::{Value, json};
+use std::collections::HashMap;
 
 use super::text_utils::push_line;
 use super::{ConversationMessage, MessageRole};
@@ -127,9 +128,30 @@ pub(super) fn tool_content_blocks_to_text(blocks: &[ContentBlock], show_images: 
     output
 }
 
+/// Drop the transcript entries an incoming todo write supersedes, so the plan
+/// appears once. Both the live path and replay apply it, or a resumed session
+/// grows one plan per write.
+pub(super) fn drop_superseded_todo_messages(
+    messages: &mut Vec<ConversationMessage>,
+    incoming: &str,
+) -> bool {
+    if !incoming.starts_with(super::agent::TODO_MESSAGE_HEADER) {
+        return false;
+    }
+    let before = messages.len();
+    messages.retain(|message| {
+        message.role != MessageRole::Tool
+            || !message
+                .content
+                .starts_with(super::agent::TODO_MESSAGE_HEADER)
+    });
+    messages.len() != before
+}
+
 pub fn conversation_from_session(session: &Session) -> (Vec<ConversationMessage>, Usage) {
     let mut messages = Vec::new();
     let mut usage = Usage::default();
+    let mut calls: HashMap<String, ContentBlock> = HashMap::new();
 
     for entry in session.entries_for_current_path() {
         let SessionEntry::Message(message_entry) = entry else {
@@ -145,44 +167,53 @@ pub fn conversation_from_session(session: &Session) -> (Vec<ConversationMessage>
                 ));
             }
             SessionMessage::Assistant { message } => {
+                for block in &message.content {
+                    if let ContentBlock::ToolCall(call) = block {
+                        calls.insert(call.id.clone(), block.clone());
+                    }
+                }
                 let (text, thinking) = assistant_content_to_text(&message.content);
                 add_usage(&mut usage, &message.usage);
-                messages.push(ConversationMessage::new(
-                    MessageRole::Assistant,
-                    text,
-                    thinking,
-                ));
+                // live only pushes a turn that said something (`AgentDone`'s `had_response`)
+                if !text.trim().is_empty() || thinking.is_some() {
+                    messages.push(ConversationMessage::new(
+                        MessageRole::Assistant,
+                        text,
+                        thinking,
+                    ));
+                }
             }
             SessionMessage::ToolResult {
+                tool_call_id,
                 tool_name,
                 content,
                 details,
                 is_error,
                 ..
             } => {
-                let (mut text, _) = assistant_content_to_text(content);
-                if let Some(diff) = details
-                    .as_ref()
-                    .and_then(|d: &Value| d.get("diff"))
-                    .and_then(Value::as_str)
-                {
-                    let diff = diff.trim();
-                    if !diff.is_empty() {
-                        if !text.trim().is_empty() {
-                            text.push_str("\n\n");
-                        }
-                        text.push_str("Diff:\n");
-                        text.push_str(diff);
-                    }
-                }
-                let prefix = if *is_error {
-                    "Tool error"
-                } else {
-                    "Tool result"
+                let call = calls.remove(tool_call_id).unwrap_or_else(|| {
+                    ContentBlock::ToolCall(crate::model::ToolCall {
+                        id: tool_call_id.clone(),
+                        name: tool_name.clone(),
+                        arguments: Value::Null,
+                        thought_signature: None,
+                    })
+                });
+                let mut blocks = Vec::with_capacity(content.len() + 1);
+                blocks.push(call);
+                blocks.extend(content.iter().cloned());
+                let Some(text) =
+                    super::tool_render::format_tool_output(&blocks, details.as_ref(), true)
+                else {
+                    continue;
                 };
-                messages.push(ConversationMessage::tool(format!(
-                    "{prefix} ({tool_name}): {text}"
-                )));
+                let text = if *is_error {
+                    super::tool_render::mark_tool_failed(&text)
+                } else {
+                    text
+                };
+                drop_superseded_todo_messages(&mut messages, &text);
+                messages.push(ConversationMessage::tool(text));
             }
             SessionMessage::BashExecution {
                 command,

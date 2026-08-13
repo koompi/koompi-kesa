@@ -6,9 +6,9 @@ use super::ext_session::{format_extension_ui_prompt, parse_extension_ui_response
 use super::*;
 use crate::extension_events::{BeforeAgentStartOutcome, apply_before_agent_start_response};
 
-/// First line of the transcript entry a todo write leaves. A later write
-/// replaces the entry that carries it, so the plan appears once.
-const TODO_MESSAGE_HEADER: &str = "Todos";
+/// Header `format_tool_call_header` gives a todo write, and the key a later
+/// write matches on to replace the earlier plan so it appears once.
+pub(super) const TODO_MESSAGE_HEADER: &str = "Todos";
 
 pub(super) fn extension_commands_for_catalog(
     manager: &ExtensionManager,
@@ -363,13 +363,21 @@ fn dispatch_agent_event_to_ui(event: &AgentEvent, batcher: &mut UiStreamDeltaBat
         AgentEvent::ToolExecutionUpdate {
             tool_name,
             tool_call_id,
+            args,
             partial_result,
-            ..
         } => {
+            let mut content = Vec::with_capacity(partial_result.content.len() + 1);
+            content.push(ContentBlock::ToolCall(crate::model::ToolCall {
+                id: tool_call_id.clone(),
+                name: tool_name.clone(),
+                arguments: args.clone(),
+                thought_signature: None,
+            }));
+            content.extend(partial_result.content.iter().cloned());
             batcher.send_immediate(PiMsg::ToolUpdate {
                 name: tool_name.clone(),
                 tool_id: tool_call_id.clone(),
-                content: partial_result.content.clone(),
+                content,
                 details: partial_result.details.clone(),
             });
         }
@@ -467,10 +475,7 @@ impl PiApp {
                 self.pending_tool_output = None;
             }
             PiMsg::ToolUpdate {
-                name,
-                content,
-                details,
-                ..
+                content, details, ..
             } => {
                 // Update progress metrics from details if present.
                 if let Some(ref mut progress) = self.tool_progress {
@@ -485,28 +490,23 @@ impl PiApp {
                     details.as_ref(),
                     self.config.terminal_show_images(),
                 ) {
-                    self.pending_tool_output = Some(if name == "todo" {
-                        format!("{TODO_MESSAGE_HEADER}\n{output}")
-                    } else {
-                        format!("Tool {name} output:\n{output}")
-                    });
+                    self.pending_tool_output = Some(output);
                 }
             }
-            PiMsg::ToolEnd { .. } => {
+            PiMsg::ToolEnd { is_error, .. } => {
                 self.agent_state = AgentState::Processing;
                 self.current_tool = None;
                 self.tool_progress = None;
-                if let Some(output) = self.pending_tool_output.take() {
-                    if output.starts_with(TODO_MESSAGE_HEADER) {
-                        let before = self.messages.len();
-                        self.messages.retain(|message| {
-                            message.role != MessageRole::Tool
-                                || !message.content.starts_with(TODO_MESSAGE_HEADER)
-                        });
-                        if self.messages.len() != before {
-                            // removal shifts indices under a count-keyed prefix cache
-                            self.message_render_cache.invalidate_all();
-                        }
+                if let Some(mut output) = self.pending_tool_output.take() {
+                    if is_error {
+                        output = super::tool_render::mark_tool_failed(&output);
+                    }
+                    if super::conversation::drop_superseded_todo_messages(
+                        &mut self.messages,
+                        &output,
+                    ) {
+                        // removal shifts indices under a count-keyed prefix cache
+                        self.message_render_cache.invalidate_all();
                     }
                     self.messages.push(ConversationMessage::tool(output));
                     self.scroll_to_bottom();
@@ -2342,6 +2342,72 @@ mod stream_delta_batcher_tests {
 
     fn runtime_handle() -> asupersync::runtime::RuntimeHandle {
         runtime().handle()
+    }
+
+    /// The header a resumed session shows has to be the one the user watched,
+    /// so both paths are rendered from the same call and compared.
+    #[test]
+    fn live_and_resumed_render_the_same_tool_header() {
+        let call = crate::model::ToolCall {
+            id: "call-1".to_string(),
+            name: "bash".to_string(),
+            arguments: json!({"command": "echo hi"}),
+            thought_signature: None,
+        };
+        let output = crate::tools::ToolOutput {
+            content: vec![ContentBlock::Text(TextContent::new("hi"))],
+            details: None,
+            is_error: false,
+        };
+
+        let (tx, mut rx) = mpsc::channel(8);
+        let mut batcher = UiStreamDeltaBatcher::new(tx);
+        dispatch_agent_event_to_ui(
+            &crate::agent::AgentEvent::ToolExecutionUpdate {
+                tool_call_id: call.id.clone(),
+                tool_name: call.name.clone(),
+                args: call.arguments.clone(),
+                partial_result: output.clone(),
+            },
+            &mut batcher,
+        );
+        let PiMsg::ToolUpdate { content, details, .. } =
+            rx.try_recv().expect("expected a tool update")
+        else {
+            panic!("expected a tool update");
+        };
+        let live = format_tool_output(&content, details.as_ref(), true).expect("live output");
+
+        let mut session = Session::in_memory();
+        session.append_message(SessionMessage::Assistant {
+            message: AssistantMessage {
+                content: vec![ContentBlock::ToolCall(call.clone())],
+                api: "dummy".to_string(),
+                provider: "dummy".to_string(),
+                model: "dummy-model".to_string(),
+                usage: Usage::default(),
+                stop_reason: crate::model::StopReason::ToolUse,
+                stop_details: None,
+                error_message: None,
+                timestamp: 0,
+            },
+        });
+        session.append_message(SessionMessage::ToolResult {
+            tool_call_id: call.id.clone(),
+            tool_name: call.name.clone(),
+            content: output.content.clone(),
+            details: output.details.clone(),
+            is_error: false,
+            timestamp: Some(0),
+        });
+        let (messages, _) = super::super::conversation::conversation_from_session(&session);
+        let resumed = messages
+            .iter()
+            .find(|message| message.role == MessageRole::Tool)
+            .expect("expected a tool message");
+
+        assert_eq!(live, "Bash(echo hi)\nhi");
+        assert_eq!(resumed.content, live);
     }
 
     fn text_tool_update(text: &str) -> PiMsg {

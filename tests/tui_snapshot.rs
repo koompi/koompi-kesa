@@ -10,7 +10,7 @@ use kode::agent::{Agent, AgentConfig};
 use kode::config::Config;
 use kode::interactive::{ConversationMessage, MessageRole, PiApp, PiMsg};
 use kode::keybindings::KeyBindings;
-use kode::model::{ContentBlock, Cost, StopReason, StreamEvent, TextContent, Usage};
+use kode::model::{ContentBlock, Cost, StopReason, StreamEvent, TextContent, ToolCall, Usage};
 use kode::models::ModelEntry;
 use kode::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
 use kode::resources::{ResourceCliOptions, ResourceLoader};
@@ -447,7 +447,15 @@ fn tui_snapshot_tool_output_message() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-2".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("file contents here"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-2".to_string(),
+                    name: "read".to_string(),
+                    arguments: serde_json::json!({"path": "src/main.rs"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("file contents here")),
+            ],
             details: None,
         },
     );
