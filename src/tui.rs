@@ -519,19 +519,28 @@ fn render_plain_fenced_code_block(
     code: &str,
     width: usize,
 ) -> Vec<Segment<'static>> {
-    let mut markdown = String::from("```");
-    if let Some(language) = language.filter(|language| !language.is_empty()) {
-        markdown.push_str(language);
-    }
-    markdown.push('\n');
-    markdown.push_str(code);
-    markdown.push_str("```\n");
+    let fence = |language: Option<&str>| {
+        let mut markdown = String::from("```");
+        if let Some(language) = language.filter(|language| !language.is_empty()) {
+            markdown.push_str(language);
+        }
+        markdown.push('\n');
+        markdown.push_str(code);
+        markdown.push_str("```\n");
 
-    Markdown::new(markdown)
-        .render(width)
-        .into_iter()
-        .map(Segment::into_owned)
-        .collect()
+        Markdown::new(markdown)
+            .render(width)
+            .into_iter()
+            .map(Segment::into_owned)
+            .collect::<Vec<_>>()
+    };
+
+    let rendered = fence(language);
+    // rich_rust drops the whole block for a language it does not know, `toml` and `text` included
+    if rendered.is_empty() && language.is_some_and(|language| !language.is_empty()) {
+        return fence(None);
+    }
+    rendered
 }
 
 fn render_code_block_segments(
@@ -893,6 +902,17 @@ mod tests {
             code_styles.len() > 1,
             "expected multiple token styles from syntax highlighting, got {code_styles:?}"
         );
+    }
+
+    #[test]
+    fn render_plain_fenced_code_block_keeps_code_for_languages_rich_rust_rejects() {
+        for language in ["toml", "text", "notalanguage"] {
+            let segments = render_plain_fenced_code_block(Some(language), "keep = \"me\"\n", 80);
+            assert!(
+                segments_text(&segments).contains("keep"),
+                "fence tagged {language} rendered nothing"
+            );
+        }
     }
 
     #[test]
