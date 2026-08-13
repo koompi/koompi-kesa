@@ -97,6 +97,7 @@ fn known_long_option(name: &str) -> Option<LongOptionSpec> {
         | "acp"
         | "verbose"
         | "no-tools"
+        | "no-sandbox"
         | "no-extensions"
         | "explain-extension-policy"
         | "explain-repair-policy"
@@ -118,6 +119,10 @@ fn known_long_option(name: &str) -> Option<LongOptionSpec> {
         | "session-dir"
         | "session-durability"
         | "mode"
+        | "permission-mode"
+        | "allow-tool"
+        | "deny-tool"
+        | "sandbox-write"
         | "tools"
         | "extension"
         | "extension-policy"
@@ -608,7 +613,7 @@ pub struct Cli {
 #[cfg(test)]
 mod tests {
     use super::{
-        Cli, Commands, DEFAULT_TOOLS, REGISTERED_TOOLS, ROOT_SUBCOMMANDS,
+        Cli, Commands, DEFAULT_TOOLS, REGISTERED_TOOLS, ROOT_SUBCOMMANDS, known_long_option,
         parse_with_extension_flags,
     };
     use clap::{CommandFactory, Parser, error::ErrorKind};
@@ -1148,6 +1153,123 @@ mod tests {
                 "web_fetch",
                 "web_search",
             ]
+        );
+    }
+
+    /// Shape of one root flag as clap itself reports it.
+    fn clap_long_options() -> Vec<(String, bool, bool)> {
+        let mut command = Cli::command();
+        command.build();
+        let mut found = Vec::new();
+        for arg in command.get_arguments() {
+            // `--help` never reaches the preprocessor: `parse_with_extension_flags`
+            // returns clap's DisplayHelp before it runs.
+            if arg.get_id() == "help" {
+                continue;
+            }
+            let range = arg.get_num_args().unwrap_or_else(|| 0.into());
+            let takes_value = range.takes_values();
+            let optional_value = takes_value && range.min_values() == 0;
+            let mut names = vec![arg.get_long().map(str::to_owned)];
+            names.extend(
+                arg.get_all_aliases()
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|alias| Some(alias.to_owned())),
+            );
+            for name in names.into_iter().flatten() {
+                found.push((name, takes_value, optional_value));
+            }
+        }
+        found.sort();
+        found
+    }
+
+    /// The table in `known_long_option` is what stands between a flag and
+    /// `preprocess_extension_flags` swallowing it. A permission flag that gets
+    /// swallowed fails open: `--permission-mode read-only` enforces nothing and
+    /// `--deny-tool` is discarded, both of which read as protection.
+    #[test]
+    fn known_long_option_covers_every_root_flag() {
+        let mut missing = Vec::new();
+        let mut wrong_shape = Vec::new();
+        for (name, takes_value, optional_value) in clap_long_options() {
+            match known_long_option(&name) {
+                None => missing.push(name),
+                Some(spec) => {
+                    if spec.takes_value != takes_value || spec.optional_value != optional_value {
+                        wrong_shape.push(format!(
+                            "--{name}: clap says takes_value={takes_value} optional_value={optional_value}, \
+                             table says takes_value={} optional_value={}",
+                            spec.takes_value, spec.optional_value
+                        ));
+                    }
+                }
+            }
+        }
+        assert!(
+            missing.is_empty() && wrong_shape.is_empty(),
+            "known_long_option is out of sync with the clap definitions.\n\
+             missing: {missing:?}\nwrong shape: {wrong_shape:#?}"
+        );
+    }
+
+    /// The five that were missing, called out by name so a regression names the
+    /// security-relevant ones rather than a bare list diff.
+    #[test]
+    fn permission_and_sandbox_flags_reach_clap() {
+        for name in [
+            "permission-mode",
+            "allow-tool",
+            "deny-tool",
+            "no-sandbox",
+            "sandbox-write",
+        ] {
+            assert!(
+                known_long_option(name).is_some(),
+                "--{name} is missing from known_long_option, so preprocess_extension_flags \
+                 will divert it and clap will never see it"
+            );
+        }
+
+        let parsed = parse_with_extension_flags(
+            [
+                "pi",
+                "--permission-mode",
+                "read-only",
+                "--deny-tool",
+                "Bash(rm:*)",
+                "--allow-tool",
+                "web_fetch",
+                "--no-sandbox",
+                "--sandbox-write",
+                "/tmp/out",
+                "--unknown-extension-flag",
+                "value",
+                "hello",
+            ]
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect(),
+        )
+        .expect("permission flags parse");
+
+        assert_eq!(parsed.cli.permission_mode.as_deref(), Some("read-only"));
+        assert_eq!(parsed.cli.deny_tool, vec!["Bash(rm:*)".to_string()]);
+        assert_eq!(parsed.cli.allow_tool, vec!["web_fetch".to_string()]);
+        assert!(parsed.cli.no_sandbox);
+        assert_eq!(
+            parsed.cli.sandbox_write,
+            vec![std::path::PathBuf::from("/tmp/out")]
+        );
+        assert_eq!(parsed.cli.args, vec!["hello".to_string()]);
+        assert_eq!(
+            parsed
+                .extension_flags
+                .iter()
+                .map(|flag| flag.name.as_str())
+                .collect::<Vec<_>>(),
+            vec!["unknown-extension-flag"]
         );
     }
 
