@@ -5010,14 +5010,20 @@ impl ToolRegistry {
         let block_images = config
             .and_then(|c| c.images.as_ref().and_then(|i| i.block_images))
             .unwrap_or(false);
+        // without a read tool in the set there is no way to satisfy the guard, so leave it off
+        let reads = enabled
+            .contains(&"read")
+            .then(|| Arc::new(SessionFileReads::default()));
 
         for name in enabled {
             match *name {
-                "read" => tools.push(Box::new(ReadTool::with_settings(
-                    cwd,
-                    image_auto_resize,
-                    block_images,
-                ))),
+                "read" => {
+                    let tool = ReadTool::with_settings(cwd, image_auto_resize, block_images);
+                    tools.push(match &reads {
+                        Some(reads) => Box::new(tool.tracking_reads(Arc::clone(reads))),
+                        None => Box::new(tool),
+                    });
+                }
                 "bash" => tools.push(Box::new(BashTool::with_shell(
                     cwd,
                     shell_path.clone(),
@@ -5025,8 +5031,20 @@ impl ToolRegistry {
                 ))),
                 "bash_output" => tools.push(Box::new(BashOutputTool)),
                 "kill_shell" => tools.push(Box::new(KillShellTool)),
-                "edit" => tools.push(Box::new(EditTool::new(cwd))),
-                "write" => tools.push(Box::new(WriteTool::new(cwd))),
+                "edit" => {
+                    let tool = EditTool::new(cwd);
+                    tools.push(match &reads {
+                        Some(reads) => Box::new(tool.tracking_reads(Arc::clone(reads))),
+                        None => Box::new(tool),
+                    });
+                }
+                "write" => {
+                    let tool = WriteTool::new(cwd);
+                    tools.push(match &reads {
+                        Some(reads) => Box::new(tool.tracking_reads(Arc::clone(reads))),
+                        None => Box::new(tool),
+                    });
+                }
                 "grep" => tools.push(Box::new(GrepTool::new(cwd))),
                 "find" => tools.push(Box::new(FindTool::new(cwd))),
                 "ls" => tools.push(Box::new(LsTool::new(cwd))),
@@ -5079,6 +5097,105 @@ impl ToolRegistry {
     }
 }
 
+const SESSION_READ_LEDGER_MAX_ENTRIES: usize = 4096;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct FileReadStamp {
+    modified: Option<SystemTime>,
+    // mtime granularity is a whole second on some filesystems; length catches a same-second rewrite
+    len: u64,
+}
+
+impl FileReadStamp {
+    fn of(meta: &std::fs::Metadata) -> Self {
+        Self {
+            modified: meta.modified().ok(),
+            len: meta.len(),
+        }
+    }
+}
+
+fn describe_stamp_change(before: &FileReadStamp, after: &FileReadStamp) -> String {
+    if before.len == after.len {
+        "same size, different modification time".to_string()
+    } else {
+        format!("was {} bytes, now {} bytes", before.len, after.len)
+    }
+}
+
+#[derive(Default)]
+struct ReadLedger {
+    seen: HashMap<PathBuf, (FileReadStamp, u64)>,
+    next_seq: u64,
+}
+
+/// Files the session has read, shared by the read, write and edit tools so an
+/// edit can refuse a file the model never looked at.
+#[derive(Default)]
+pub struct SessionFileReads {
+    ledger: Mutex<ReadLedger>,
+}
+
+impl SessionFileReads {
+    fn lock(&self) -> std::sync::MutexGuard<'_, ReadLedger> {
+        self.ledger
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    fn record(&self, path: &Path, meta: &std::fs::Metadata) {
+        let key = safe_canonicalize(path);
+        let mut ledger = self.lock();
+        let seq = ledger.next_seq;
+        ledger.next_seq = ledger.next_seq.wrapping_add(1);
+        ledger.seen.insert(key, (FileReadStamp::of(meta), seq));
+        while ledger.seen.len() > SESSION_READ_LEDGER_MAX_ENTRIES {
+            let Some(oldest) = ledger
+                .seen
+                .iter()
+                .min_by_key(|(_, (_, seq))| *seq)
+                .map(|(path, _)| path.clone())
+            else {
+                break;
+            };
+            ledger.seen.remove(&oldest);
+        }
+    }
+
+    fn guard(
+        &self,
+        tool: &'static str,
+        display_path: &str,
+        path: &Path,
+        meta: &std::fs::Metadata,
+    ) -> Result<()> {
+        let key = safe_canonicalize(path);
+        let ledger = self.lock();
+        let Some((recorded, _)) = ledger.seen.get(&key) else {
+            return Err(Error::tool(
+                tool,
+                format!(
+                    "Refusing to {tool} {display_path}: this session has not read it. \
+                     Call the read tool on {display_path} first, then retry this {tool}."
+                ),
+            ));
+        };
+        let current = FileReadStamp::of(meta);
+        if *recorded == current {
+            return Ok(());
+        }
+        Err(Error::tool(
+            tool,
+            format!(
+                "Refusing to {tool} {display_path}: it changed on disk since this session read it ({}). \
+                 Call the read tool on {display_path} again so you are working from the current contents, \
+                 then retry this {tool}.",
+                describe_stamp_change(recorded, &current)
+            ),
+        ))
+    }
+}
+
 // ============================================================================
 // Read Tool
 // ============================================================================
@@ -5100,6 +5217,7 @@ pub struct ReadTool {
     auto_resize: bool,
     block_images: bool,
     artifact_root: Option<PathBuf>,
+    reads: Option<Arc<SessionFileReads>>,
     #[cfg(test)]
     after_open_hook: Option<Arc<dyn Fn() + Send + Sync>>,
 }
@@ -5111,6 +5229,7 @@ impl ReadTool {
             auto_resize: true,
             block_images: false,
             artifact_root: None,
+            reads: None,
             #[cfg(test)]
             after_open_hook: None,
         }
@@ -5122,9 +5241,16 @@ impl ReadTool {
             auto_resize,
             block_images,
             artifact_root: None,
+            reads: None,
             #[cfg(test)]
             after_open_hook: None,
         }
+    }
+
+    #[must_use]
+    pub fn tracking_reads(mut self, reads: Arc<SessionFileReads>) -> Self {
+        self.reads = Some(reads);
+        self
     }
 
     #[cfg(test)]
@@ -5134,6 +5260,7 @@ impl ReadTool {
             auto_resize: true,
             block_images: false,
             artifact_root: Some(artifact_root.to_path_buf()),
+            reads: None,
             after_open_hook: None,
         }
     }
@@ -5148,7 +5275,14 @@ impl ReadTool {
             auto_resize: true,
             block_images: false,
             artifact_root: None,
+            reads: None,
             after_open_hook: Some(Arc::new(after_open_hook)),
+        }
+    }
+
+    fn note_read(&self, path: &Path, meta: &std::fs::Metadata) {
+        if let Some(reads) = &self.reads {
+            reads.record(path, meta);
         }
     }
 }
@@ -5269,6 +5403,7 @@ impl Tool for ReadTool {
                 cache_deps.as_deref(),
             );
             if stable_deps.is_some() {
+                self.note_read(&path, &meta);
                 return Ok(output);
             }
         }
@@ -5381,6 +5516,7 @@ impl Tool for ReadTool {
                 }
             }
 
+            self.note_read(&path, &meta);
             return Ok(ToolOutput {
                 content: vec![
                     ContentBlock::Text(TextContent::new(note)),
@@ -5524,6 +5660,7 @@ impl Tool for ReadTool {
                 ),
                 &output,
             );
+            self.note_read(&path, &meta);
             return Ok(output);
         }
 
@@ -5675,6 +5812,7 @@ impl Tool for ReadTool {
             ),
             &output,
         );
+        self.note_read(&path, &meta);
         Ok(output)
     }
 }
@@ -6818,6 +6956,7 @@ struct EditInput {
 pub struct EditTool {
     cwd: PathBuf,
     before_persist_hook: Option<Arc<dyn Fn() + Send + Sync>>,
+    reads: Option<Arc<SessionFileReads>>,
 }
 
 impl EditTool {
@@ -6825,7 +6964,14 @@ impl EditTool {
         Self {
             cwd: cwd.to_path_buf(),
             before_persist_hook: None,
+            reads: None,
         }
+    }
+
+    #[must_use]
+    pub fn tracking_reads(mut self, reads: Arc<SessionFileReads>) -> Self {
+        self.reads = Some(reads);
+        self
     }
 
     #[cfg(test)]
@@ -6833,6 +6979,7 @@ impl EditTool {
         Self {
             cwd: cwd.to_path_buf(),
             before_persist_hook: Some(Arc::new(hook)),
+            reads: None,
         }
     }
 }
@@ -7473,6 +7620,9 @@ impl Tool for EditTool {
                 format!("Path {} is not a regular file", absolute_path.display()),
             ));
         }
+        if let Some(reads) = &self.reads {
+            reads.guard("edit", &input.path, &absolute_path, &meta)?;
+        }
         ensure_effective_mode_access(
             &meta,
             &absolute_path,
@@ -7711,6 +7861,12 @@ impl Tool for EditTool {
         .await
         .map_err(|e| Error::tool("edit", format!("Failed to write file: {e}")))?;
 
+        if let Some(reads) = &self.reads
+            && let Ok(meta) = std_metadata_async(&absolute_path).await
+        {
+            reads.record(&absolute_path, &meta);
+        }
+
         let (diff, first_changed_line) =
             generate_diff_string(&normalized_content, &new_content_for_diff);
         let mut details = serde_json::Map::new();
@@ -7748,6 +7904,7 @@ struct WriteInput {
 pub struct WriteTool {
     cwd: PathBuf,
     before_persist_hook: Option<Arc<dyn Fn() + Send + Sync>>,
+    reads: Option<Arc<SessionFileReads>>,
 }
 
 impl WriteTool {
@@ -7755,7 +7912,14 @@ impl WriteTool {
         Self {
             cwd: cwd.to_path_buf(),
             before_persist_hook: None,
+            reads: None,
         }
+    }
+
+    #[must_use]
+    pub fn tracking_reads(mut self, reads: Arc<SessionFileReads>) -> Self {
+        self.reads = Some(reads);
+        self
     }
 
     #[cfg(test)]
@@ -7763,6 +7927,7 @@ impl WriteTool {
         Self {
             cwd: cwd.to_path_buf(),
             before_persist_hook: Some(Arc::new(hook)),
+            reads: None,
         }
     }
 }
@@ -7825,6 +7990,9 @@ impl Tool for WriteTool {
                         "write",
                         format!("Path {} is not a regular file", path.display()),
                     ));
+                }
+                if let Some(reads) = &self.reads {
+                    reads.guard("write", &input.path, &path, &meta)?;
                 }
                 ensure_effective_mode_access(&meta, &path, UNIX_ACCESS_WRITE, "file writing")
                     .map_err(|err| {
@@ -7899,6 +8067,12 @@ impl Tool for WriteTool {
         })
         .await
         .map_err(|e| Error::tool("write", format!("Failed to write file: {e}")))?;
+
+        if let Some(reads) = &self.reads
+            && let Ok(meta) = std_metadata_async(&path).await
+        {
+            reads.record(&path, &meta);
+        }
 
         Ok(ToolOutput {
             content: vec![ContentBlock::Text(TextContent::new(format!(
@@ -14629,6 +14803,165 @@ mod tests {
     // Edit Tool Tests
     // ========================================================================
 
+    fn guarded_registry(cwd: &Path) -> ToolRegistry {
+        ToolRegistry::new(&["read", "edit", "write"], cwd, None)
+    }
+
+    async fn run_tool(
+        registry: &ToolRegistry,
+        name: &str,
+        input: serde_json::Value,
+    ) -> Result<ToolOutput> {
+        registry.get(name).unwrap().execute("t", input, None).await
+    }
+
+    #[test]
+    fn edit_refuses_a_file_the_session_never_read() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("code.rs");
+            std::fs::write(&path, "fn foo() { bar() }").unwrap();
+            let registry = guarded_registry(tmp.path());
+
+            let err = run_tool(
+                &registry,
+                "edit",
+                serde_json::json!({
+                    "path": path.to_string_lossy(),
+                    "oldText": "bar()",
+                    "newText": "baz()"
+                }),
+            )
+            .await
+            .unwrap_err()
+            .to_string();
+            assert!(err.contains("has not read it"), "{err}");
+            assert!(err.contains("code.rs"), "{err}");
+            assert_eq!(
+                std::fs::read_to_string(&path).unwrap(),
+                "fn foo() { bar() }"
+            );
+
+            run_tool(
+                &registry,
+                "read",
+                serde_json::json!({ "path": path.to_string_lossy() }),
+            )
+            .await
+            .unwrap();
+            run_tool(
+                &registry,
+                "edit",
+                serde_json::json!({
+                    "path": path.to_string_lossy(),
+                    "oldText": "bar()",
+                    "newText": "baz()"
+                }),
+            )
+            .await
+            .unwrap();
+            assert_eq!(
+                std::fs::read_to_string(&path).unwrap(),
+                "fn foo() { baz() }"
+            );
+        });
+    }
+
+    #[test]
+    fn edit_refuses_a_file_that_changed_since_the_read() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("code.rs");
+            std::fs::write(&path, "fn foo() { bar() }").unwrap();
+            let registry = guarded_registry(tmp.path());
+
+            run_tool(
+                &registry,
+                "read",
+                serde_json::json!({ "path": path.to_string_lossy() }),
+            )
+            .await
+            .unwrap();
+            std::fs::write(&path, "fn foo() { bar() } // touched elsewhere").unwrap();
+
+            let err = run_tool(
+                &registry,
+                "edit",
+                serde_json::json!({
+                    "path": path.to_string_lossy(),
+                    "oldText": "bar()",
+                    "newText": "baz()"
+                }),
+            )
+            .await
+            .unwrap_err()
+            .to_string();
+            assert!(err.contains("changed on disk"), "{err}");
+        });
+    }
+
+    #[test]
+    fn write_creates_a_new_file_without_a_prior_read() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("fresh.rs");
+            let registry = guarded_registry(tmp.path());
+
+            run_tool(
+                &registry,
+                "write",
+                serde_json::json!({ "path": path.to_string_lossy(), "content": "fn fresh() {}" }),
+            )
+            .await
+            .unwrap();
+
+            run_tool(
+                &registry,
+                "edit",
+                serde_json::json!({
+                    "path": path.to_string_lossy(),
+                    "oldText": "fresh",
+                    "newText": "renamed"
+                }),
+            )
+            .await
+            .unwrap();
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "fn renamed() {}");
+        });
+    }
+
+    #[test]
+    fn consecutive_edits_to_one_file_are_allowed() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("code.rs");
+            std::fs::write(&path, "a b c").unwrap();
+            let registry = guarded_registry(tmp.path());
+
+            run_tool(
+                &registry,
+                "read",
+                serde_json::json!({ "path": path.to_string_lossy() }),
+            )
+            .await
+            .unwrap();
+            for (old, new) in [("a", "x"), ("b", "y"), ("c", "z")] {
+                run_tool(
+                    &registry,
+                    "edit",
+                    serde_json::json!({
+                        "path": path.to_string_lossy(),
+                        "oldText": old,
+                        "newText": new
+                    }),
+                )
+                .await
+                .unwrap();
+            }
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "x y z");
+        });
+    }
+
     #[test]
     fn test_edit_exact_match_replace() {
         asupersync::test_utils::run_test(|| async {
@@ -15120,9 +15453,12 @@ mod tests {
             let empty = shell.take_new_output();
             assert_eq!(empty.text, "");
 
-            ingest_bash_chunk(b"second\n".to_vec(), &mut shell.output.lock().unwrap().state)
-                .await
-                .expect("second chunk");
+            ingest_bash_chunk(
+                b"second\n".to_vec(),
+                &mut shell.output.lock().unwrap().state,
+            )
+            .await
+            .expect("second chunk");
             let second = shell.take_new_output();
             assert_eq!(second.text, "second\n");
 

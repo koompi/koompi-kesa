@@ -61,6 +61,7 @@ use sha2::{Digest as _, Sha256};
 use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::fmt;
+use std::fmt::Write as _;
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::sync::OnceLock;
@@ -1164,6 +1165,105 @@ pub struct Agent {
 
     /// User shell hooks, read from settings on the first tool call.
     shell_hooks: OnceLock<Arc<crate::hooks::HookRunner>>,
+
+    /// Active model's context window, the source the per-result byte budget is
+    /// derived from. Same value the footer and compaction resolve.
+    context_window_tokens: u32,
+}
+
+/// Share of the context window one tool result may occupy.
+const TOOL_RESULT_BUDGET_PERCENT: usize = 15;
+
+/// Floor for the per-result budget so a tiny declared window still leaves the
+/// model something usable to read.
+const TOOL_RESULT_BUDGET_MIN_BYTES: usize = 16 * 1024;
+
+/// Matches `compaction::CHARS_PER_TOKEN_ESTIMATE`, which is private to that module.
+const TOOL_RESULT_CHARS_PER_TOKEN: usize = 3;
+
+fn tool_result_budget_bytes(context_window_tokens: u32) -> usize {
+    let budget = (context_window_tokens as usize)
+        .saturating_mul(TOOL_RESULT_CHARS_PER_TOKEN)
+        .saturating_mul(TOOL_RESULT_BUDGET_PERCENT)
+        / 100;
+    budget.max(TOOL_RESULT_BUDGET_MIN_BYTES)
+}
+
+fn floor_char_boundary(text: &str, index: usize) -> usize {
+    let mut index = index.min(text.len());
+    while index > 0 && !text.is_char_boundary(index) {
+        index -= 1;
+    }
+    index
+}
+
+fn ceil_char_boundary(text: &str, index: usize) -> usize {
+    let mut index = index.min(text.len());
+    while index < text.len() && !text.is_char_boundary(index) {
+        index += 1;
+    }
+    index
+}
+
+/// Cut the middle out of an over-budget tool result. The head says what ran and
+/// the tail carries the error or the answer, so neither end may be dropped.
+fn elide_middle(text: &str, budget: usize) -> Option<String> {
+    if text.len() <= budget {
+        return None;
+    }
+
+    let head_end = floor_char_boundary(text, budget / 2);
+    let tail_start = ceil_char_boundary(text, text.len().saturating_sub(budget - head_end));
+    if tail_start <= head_end {
+        return None;
+    }
+
+    let dropped = &text[head_end..tail_start];
+    let dropped_bytes = dropped.len();
+    let dropped_lines = dropped.bytes().filter(|byte| *byte == b'\n').count();
+
+    let mut out = String::with_capacity(budget + 512);
+    out.push_str(&text[..head_end]);
+    let _ = write!(
+        out,
+        "\n\n[... {dropped_bytes} bytes / {dropped_lines} lines elided from the middle of this \
+         tool result, which exceeded the {budget}-byte per-result budget. The head above and the \
+         tail below are intact. If you need the elided part, re-run the command with its output \
+         redirected to a file (`… > /tmp/out.txt 2>&1`) and read that file in slices; bash already \
+         writes a full-output file and names its path whenever it truncates. ...]\n\n"
+    );
+    out.push_str(&text[tail_start..]);
+    Some(out)
+}
+
+/// The one place a tool result is measured against the context window. Text
+/// blocks are budgeted together because that is what the provider concatenates.
+fn apply_tool_result_budget(content: Vec<ContentBlock>, budget: usize) -> Vec<ContentBlock> {
+    let total: usize = content
+        .iter()
+        .map(|block| match block {
+            ContentBlock::Text(text) => text.text.len(),
+            _ => 0,
+        })
+        .sum();
+    if total <= budget {
+        return content;
+    }
+
+    let mut joined = String::with_capacity(total);
+    let mut others = Vec::new();
+    for block in content {
+        match block {
+            ContentBlock::Text(text) => joined.push_str(&text.text),
+            other => others.push(other),
+        }
+    }
+
+    let text = elide_middle(&joined, budget).unwrap_or(joined);
+    let mut out = Vec::with_capacity(others.len() + 1);
+    out.push(ContentBlock::Text(TextContent::new(text)));
+    out.extend(others);
+    out
 }
 
 impl Agent {
@@ -1180,7 +1280,37 @@ impl Agent {
             message_queue: MessageQueue::new(QueueMode::OneAtATime, QueueMode::OneAtATime),
             cached_tool_defs: None,
             shell_hooks: OnceLock::new(),
+            context_window_tokens: ResolvedCompactionSettings::default().context_window_tokens,
         }
+    }
+
+    /// Point the tool-result budget at the active model's context window.
+    pub const fn set_context_window_tokens(&mut self, context_window_tokens: u32) {
+        if context_window_tokens > 0 {
+            self.context_window_tokens = context_window_tokens;
+        }
+    }
+
+    /// The single place a tool result is built, so the budget cannot be bypassed
+    /// by a tool that forgets to opt in.
+    fn budgeted_tool_result(
+        &self,
+        tool_call: &ToolCall,
+        content: Vec<ContentBlock>,
+        details: Option<serde_json::Value>,
+        is_error: bool,
+    ) -> Arc<ToolResultMessage> {
+        Arc::new(ToolResultMessage {
+            tool_call_id: tool_call.id.clone(),
+            tool_name: tool_call.name.clone(),
+            content: apply_tool_result_budget(
+                content,
+                tool_result_budget_bytes(self.context_window_tokens),
+            ),
+            details,
+            is_error,
+            timestamp: Utc::now().timestamp_millis(),
+        })
     }
 
     /// Shell hooks for this session. Empty unless the user configured any.
@@ -2957,14 +3087,8 @@ impl Agent {
                     is_error: true,
                 });
 
-                let tool_result = Arc::new(ToolResultMessage {
-                    tool_call_id: tool_call.id.clone(),
-                    tool_name: tool_call.name.clone(),
-                    content: output.content,
-                    details: output.details,
-                    is_error: true,
-                    timestamp: Utc::now().timestamp_millis(),
-                });
+                let tool_result =
+                    self.budgeted_tool_result(tool_call, output.content, output.details, true);
 
                 let msg = Message::ToolResult(Arc::clone(&tool_result));
                 self.messages.push(msg.clone());
@@ -3004,14 +3128,8 @@ impl Agent {
             },
         });
 
-        let tool_result = Arc::new(ToolResultMessage {
-            tool_call_id: tool_call.id.clone(),
-            tool_name: tool_call.name.clone(),
-            content: output.content,
-            details: output.details,
-            is_error,
-            timestamp: Utc::now().timestamp_millis(),
-        });
+        let tool_result =
+            self.budgeted_tool_result(tool_call, output.content, output.details, is_error);
 
         on_event(AgentEvent::ToolExecutionEnd {
             tool_call_id: tool_result.tool_call_id.clone(),
@@ -3445,14 +3563,8 @@ impl Agent {
             is_error: true,
         });
 
-        let tool_result = Arc::new(ToolResultMessage {
-            tool_call_id: tool_call.id.clone(),
-            tool_name: tool_call.name.clone(),
-            content: output.content,
-            details: output.details,
-            is_error: true,
-            timestamp: Utc::now().timestamp_millis(),
-        });
+        let tool_result =
+            self.budgeted_tool_result(tool_call, output.content, output.details, true);
 
         let msg = Message::ToolResult(Arc::clone(&tool_result));
         self.messages.push(msg.clone());
@@ -8335,11 +8447,12 @@ impl AgentSession {
     }
 
     pub fn new(
-        agent: Agent,
+        mut agent: Agent,
         session: Arc<Mutex<Session>>,
         save_enabled: bool,
         compaction_settings: ResolvedCompactionSettings,
     ) -> Self {
+        agent.set_context_window_tokens(compaction_settings.context_window_tokens);
         let extension_ai_completion = Arc::new(StdMutex::new(ExtensionAiCompletionHostState {
             provider: agent.provider(),
             stream_options: agent.stream_options().clone(),
@@ -8460,6 +8573,7 @@ impl AgentSession {
 
     pub const fn set_compaction_context_window(&mut self, context_window_tokens: u32) {
         self.compaction_settings.context_window_tokens = context_window_tokens;
+        self.agent.set_context_window_tokens(context_window_tokens);
     }
 
     pub async fn set_provider_model(&mut self, provider_id: &str, model_id: &str) -> Result<()> {
@@ -8715,6 +8829,8 @@ impl AgentSession {
             Ok(provider) => {
                 tracing::info!("Updating agent provider to {provider_id}/{model_id}");
                 self.agent.set_provider(provider);
+                self.agent
+                    .set_context_window_tokens(entry.model.context_window);
 
                 let stream_options = self.agent.stream_options_mut();
                 stream_options.api_key.clone_from(&resolved_key);
@@ -10883,6 +10999,65 @@ mod tests {
     use std::path::Path;
     use std::pin::Pin;
     use std::sync::{Arc as StdArc, Mutex as StdTestMutex};
+
+    #[test]
+    fn tool_result_budget_tracks_the_context_window() {
+        assert_eq!(tool_result_budget_bytes(200_000), 90_000);
+        assert_eq!(tool_result_budget_bytes(1_000_000), 450_000);
+        assert_eq!(
+            tool_result_budget_bytes(4_096),
+            TOOL_RESULT_BUDGET_MIN_BYTES
+        );
+        assert_eq!(tool_result_budget_bytes(0), TOOL_RESULT_BUDGET_MIN_BYTES);
+    }
+
+    #[test]
+    fn elide_middle_keeps_both_ends_and_names_what_it_dropped() {
+        let text = (0..5_000)
+            .map(|line| format!("line {line}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let elided = elide_middle(&text, 2_000).expect("over budget");
+
+        assert!(elided.starts_with("line 0\nline 1\n"), "head lost");
+        assert!(elided.ends_with("line 4999"), "tail lost");
+        assert!(elided.contains("elided from the middle"));
+        assert!(elided.contains("/tmp/out.txt"));
+
+        let dropped_bytes: usize = elided
+            .split("[... ")
+            .nth(1)
+            .and_then(|rest| rest.split(' ').next())
+            .and_then(|count| count.parse().ok())
+            .expect("byte count in notice");
+        assert_eq!(dropped_bytes, text.len() - 2_000);
+    }
+
+    #[test]
+    fn under_budget_results_pass_through_untouched() {
+        assert!(elide_middle("short", 2_000).is_none());
+        let out =
+            apply_tool_result_budget(vec![ContentBlock::Text(TextContent::new("short"))], 2_000);
+        assert_eq!(out.len(), 1);
+        match &out[0] {
+            ContentBlock::Text(text) => assert_eq!(text.text, "short"),
+            other => panic!("unexpected block: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn budget_preserves_non_text_blocks() {
+        let content = vec![
+            ContentBlock::Text(TextContent::new("x".repeat(4_000))),
+            ContentBlock::Image(ImageContent {
+                data: "AAAA".to_string(),
+                mime_type: "image/png".to_string(),
+            }),
+        ];
+        let out = apply_tool_result_budget(content, 1_000);
+        assert_eq!(out.len(), 2);
+        assert!(matches!(out[1], ContentBlock::Image(_)));
+    }
 
     fn user_message(text: &str) -> Message {
         Message::User(UserMessage {
