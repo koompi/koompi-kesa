@@ -222,9 +222,23 @@ fn provider_hints(message: &str) -> ErrorHint {
             summary: "Model not found or unavailable",
             hints: &[
                 "Check that the model ID is correct",
-                "Use 'pi --list-models' to see available models",
+                "Use 'kode --list-models' to see available models",
             ],
             context_fields: &["provider", "model_id"],
+        };
+    }
+    let lowered = message.to_ascii_lowercase();
+    if lowered.contains("401")
+        || lowered.contains("token_expired")
+        || lowered.contains("unauthorized")
+    {
+        return ErrorHint {
+            summary: "Provider rejected the credentials",
+            hints: &[
+                "Run /login to sign in again",
+                "A token read from another agent's install (~/.codex/auth.json, ~/.claude/.credentials.json) is used as-is and never refreshed; /login stores one kode can refresh",
+            ],
+            context_fields: &["provider", "status_code"],
         };
     }
     ErrorHint {
@@ -584,6 +598,17 @@ mod tests {
         let error = Error::auth("401 unauthorized");
         let hint = hints_for_error(&error);
         assert!(hint.summary.contains("invalid") || hint.summary.contains("expired"));
+    }
+
+    #[test]
+    fn test_provider_expired_token_points_at_login() {
+        let error = Error::provider(
+            "openai-codex",
+            r#"OpenAI API error (HTTP 401): {"code":"token_expired"}"#,
+        );
+        let hint = hints_for_error(&error);
+        assert!(hint.summary.contains("credentials"), "{}", hint.summary);
+        assert!(hint.hints.iter().any(|h| h.contains("/login")));
     }
 
     #[test]

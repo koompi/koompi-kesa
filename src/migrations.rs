@@ -21,6 +21,8 @@ const MANAGED_TOOL_BINARIES: &[&str] = &["fd", "rg", "fd.exe", "rg.exe"];
 pub struct MigrationReport {
     /// Providers migrated into `auth.json`.
     pub migrated_auth_providers: Vec<String>,
+    /// Path `auth.json` was adopted from when this install had none of its own.
+    pub adopted_legacy_auth: Option<PathBuf>,
     /// Number of session files moved from `~/.kode/agent/*.jsonl` to `sessions/<encoded-cwd>/`.
     pub migrated_session_files: usize,
     /// Directories where `commands/` was renamed to `prompts/`.
@@ -38,6 +40,12 @@ impl MigrationReport {
     pub fn messages(&self) -> Vec<String> {
         let mut messages = Vec::new();
 
+        if let Some(source) = &self.adopted_legacy_auth {
+            messages.push(format!(
+                "Adopted existing credentials from {}",
+                source.display()
+            ));
+        }
         if !self.migrated_auth_providers.is_empty() {
             messages.push(format!(
                 "Migrated legacy credentials into auth.json for providers: {}",
@@ -85,7 +93,11 @@ impl MigrationReport {
 /// Run one-time startup migrations against the global agent directory.
 #[must_use]
 pub fn run_startup_migrations(cwd: &Path) -> MigrationReport {
-    run_startup_migrations_with_agent_dir(&Config::global_dir(), cwd)
+    let agent_dir = Config::global_dir();
+    let mut report = run_startup_migrations_with_agent_dir(&agent_dir, cwd);
+    // only after this install's own legacy files had their chance at auth.json
+    report.adopted_legacy_auth = adopt_legacy_home_auth(&agent_dir, &mut report.warnings);
+    report
 }
 
 fn run_startup_migrations_with_agent_dir(agent_dir: &Path, cwd: &Path) -> MigrationReport {
@@ -116,6 +128,52 @@ fn run_startup_migrations_with_agent_dir(agent_dir: &Path, cwd: &Path) -> Migrat
         .extend(check_deprecated_extension_dirs(&project_dir, "Project"));
 
     report
+}
+
+// rebrand moved the agent dir out of ~/.pi; pi's auth.json refreshes, the codex fallback does not
+fn adopt_legacy_home_auth(agent_dir: &Path, warnings: &mut Vec<String>) -> Option<PathBuf> {
+    let legacy = dirs::home_dir()?.join(".pi").join("agent").join("auth.json");
+    adopt_auth_from(agent_dir, &legacy, warnings)
+}
+
+fn adopt_auth_from(
+    agent_dir: &Path,
+    legacy: &Path,
+    warnings: &mut Vec<String>,
+) -> Option<PathBuf> {
+    let auth_path = agent_dir.join("auth.json");
+    if auth_path.exists() {
+        return None;
+    }
+
+    if !legacy.exists() {
+        return None;
+    }
+
+    if let Err(err) = fs::create_dir_all(agent_dir) {
+        warnings.push(format!(
+            "could not create agent dir to adopt {}: {err}",
+            legacy.display()
+        ));
+        return None;
+    }
+
+    let tmp = auth_path.with_extension("json.adopting");
+    let adopted = fs::copy(legacy, &tmp)
+        .and_then(|_| set_owner_only_permissions(&tmp))
+        .and_then(|()| fs::rename(&tmp, &auth_path));
+
+    match adopted {
+        Ok(()) => Some(legacy.to_path_buf()),
+        Err(err) => {
+            drop(fs::remove_file(&tmp));
+            warnings.push(format!(
+                "could not adopt credentials from {}: {err}",
+                legacy.display()
+            ));
+            None
+        }
+    }
 }
 
 #[allow(clippy::too_many_lines)]
@@ -494,6 +552,51 @@ mod tests {
             fs::create_dir_all(parent).expect("create parent directory");
         }
         fs::write(path, content).expect("write fixture file");
+    }
+
+    #[test]
+    fn adopts_legacy_auth_when_this_install_has_none() {
+        let temp = TempDir::new().expect("tempdir");
+        let agent_dir = temp.path().join("kode/agent");
+        let legacy = temp.path().join("pi/agent/auth.json");
+        write(&legacy, r#"{"openai-codex":{"refresh_token":"r"}}"#);
+
+        let mut warnings = Vec::new();
+        let source = super::adopt_auth_from(&agent_dir, &legacy, &mut warnings);
+
+        assert_eq!(source.as_deref(), Some(legacy.as_path()));
+        assert!(warnings.is_empty(), "unexpected warnings: {warnings:?}");
+        assert_eq!(
+            fs::read_to_string(agent_dir.join("auth.json")).expect("adopted auth.json"),
+            r#"{"openai-codex":{"refresh_token":"r"}}"#
+        );
+        assert!(legacy.exists(), "the legacy file must survive the copy");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = fs::metadata(agent_dir.join("auth.json"))
+                .expect("metadata")
+                .permissions()
+                .mode()
+                & 0o777;
+            assert_eq!(mode, 0o600, "adopted auth.json should be 0600, got {mode:#o}");
+        }
+    }
+
+    #[test]
+    fn adoption_never_overwrites_existing_credentials() {
+        let temp = TempDir::new().expect("tempdir");
+        let agent_dir = temp.path().join("kode/agent");
+        let legacy = temp.path().join("pi/agent/auth.json");
+        write(&agent_dir.join("auth.json"), r#"{"anthropic":{"api_key":"mine"}}"#);
+        write(&legacy, r#"{"openai-codex":{"refresh_token":"r"}}"#);
+
+        let mut warnings = Vec::new();
+        assert!(super::adopt_auth_from(&agent_dir, &legacy, &mut warnings).is_none());
+        assert_eq!(
+            fs::read_to_string(agent_dir.join("auth.json")).expect("existing auth.json"),
+            r#"{"anthropic":{"api_key":"mine"}}"#
+        );
     }
 
     #[test]
@@ -896,6 +999,7 @@ mod tests {
             ) {
                 let report = MigrationReport {
                     migrated_auth_providers: (0..n_providers).map(|i| format!("p{i}")).collect(),
+                    adopted_legacy_auth: None,
                     migrated_session_files: sessions,
                     migrated_commands_dirs: Vec::new(),
                     migrated_tool_binaries: Vec::new(),
