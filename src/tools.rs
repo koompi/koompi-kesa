@@ -5023,6 +5023,8 @@ impl ToolRegistry {
                     shell_path.clone(),
                     shell_command_prefix.clone(),
                 ))),
+                "bash_output" => tools.push(Box::new(BashOutputTool)),
+                "kill_shell" => tools.push(Box::new(KillShellTool)),
                 "edit" => tools.push(Box::new(EditTool::new(cwd))),
                 "write" => tools.push(Box::new(WriteTool::new(cwd))),
                 "grep" => tools.push(Box::new(GrepTool::new(cwd))),
@@ -5687,6 +5689,9 @@ impl Tool for ReadTool {
 struct BashInput {
     command: String,
     timeout: Option<u64>,
+    // schema name is snake_case; the struct's camelCase rename would not bind it
+    #[serde(rename = "run_in_background", alias = "runInBackground", default)]
+    run_in_background: bool,
 }
 
 pub struct BashTool {
@@ -5744,26 +5749,11 @@ fn bash_cancellation_details(
     })
 }
 
-#[allow(clippy::too_many_lines)]
-pub(crate) async fn run_bash_command(
+fn prepare_bash_command(
     cwd: &Path,
     shell_path: Option<&str>,
-    command_prefix: Option<&str>,
     command: &str,
-    timeout_secs: Option<u64>,
-    on_update: Option<&(dyn Fn(ToolUpdate) + Send + Sync)>,
-) -> Result<BashRunResult> {
-    let timeout_secs = match timeout_secs {
-        None => Some(DEFAULT_BASH_TIMEOUT_SECS),
-        Some(0) => None,
-        Some(value) => Some(value),
-    };
-    let command = command_prefix.filter(|p| !p.trim().is_empty()).map_or_else(
-        || command.to_string(),
-        |prefix| format!("{prefix}\n{command}"),
-    );
-    let command = format!("trap 'code=$?; wait; exit $code' EXIT\n{command}");
-
+) -> Result<std::process::Command> {
     if !cwd.exists() {
         return Err(Error::tool(
             "bash",
@@ -5791,15 +5781,40 @@ pub(crate) async fn run_bash_command(
     let mut cmd =
         crate::sandbox::wrap_command(cmd, cwd).map_err(|e| Error::tool("bash", e.to_string()))?;
     cmd.arg("-c")
-        .arg(&command)
+        .arg(command)
         .current_dir(cwd)
-        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
     // Place the shell in its own process group so background children
     // can be killed reliably even if the shell exits first.
     isolate_command_process_group(&mut cmd);
+
+    Ok(cmd)
+}
+
+#[allow(clippy::too_many_lines)]
+pub(crate) async fn run_bash_command(
+    cwd: &Path,
+    shell_path: Option<&str>,
+    command_prefix: Option<&str>,
+    command: &str,
+    timeout_secs: Option<u64>,
+    on_update: Option<&(dyn Fn(ToolUpdate) + Send + Sync)>,
+) -> Result<BashRunResult> {
+    let timeout_secs = match timeout_secs {
+        None => Some(DEFAULT_BASH_TIMEOUT_SECS),
+        Some(0) => None,
+        Some(value) => Some(value),
+    };
+    let command = command_prefix.filter(|p| !p.trim().is_empty()).map_or_else(
+        || command.to_string(),
+        |prefix| format!("{prefix}\n{command}"),
+    );
+    let command = format!("trap 'code=$?; wait; exit $code' EXIT\n{command}");
+
+    let mut cmd = prepare_bash_command(cwd, shell_path, &command)?;
+    cmd.stdin(Stdio::null());
 
     let mut child = cmd
         .spawn()
@@ -6124,7 +6139,7 @@ impl Tool for BashTool {
         "bash"
     }
     fn description(&self) -> &str {
-        "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 1MB (whichever is hit first). If truncated, full output is saved to a temp file. `timeout` defaults to 120 seconds; set `timeout: 0` to disable."
+        "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 1MB (whichever is hit first). If truncated, full output is saved to a temp file. `timeout` defaults to 120 seconds; set `timeout: 0` to disable. For a command that does not end on its own - a dev server, a watcher, a long build - set `run_in_background: true` and read it with bash_output instead of raising the timeout."
     }
 
     fn parameters(&self) -> serde_json::Value {
@@ -6137,7 +6152,11 @@ impl Tool for BashTool {
                 },
                 "timeout": {
                     "type": "integer",
-                    "description": "Timeout in seconds (default 120; set 0 to disable)"
+                    "description": "Timeout in seconds (default 120; set 0 to disable). Ignored when run_in_background is set."
+                },
+                "run_in_background": {
+                    "type": "boolean",
+                    "description": "Return a shell id immediately and keep the command running. Read its output with bash_output and stop it with kill_shell. The shell and everything it spawned are terminated when its command exits, when kill_shell runs, or when the agent exits."
                 }
             },
             "required": ["command"]
@@ -6157,6 +6176,30 @@ impl Tool for BashTool {
     ) -> Result<ToolOutput> {
         let input: BashInput =
             serde_json::from_value(input).map_err(|e| Error::validation(e.to_string()))?;
+
+        if input.run_in_background {
+            let shell = start_background_bash(
+                &self.cwd,
+                self.shell_path.as_deref(),
+                self.command_prefix.as_deref(),
+                &input.command,
+            )?;
+            return Ok(ToolOutput {
+                content: vec![ContentBlock::Text(TextContent::new(format!(
+                    "Running in the background with shell id {}.\nRead new output with bash_output({}), stop it with kill_shell({}).",
+                    shell.id, shell.id, shell.id
+                )))],
+                details: Some(serde_json::json!({
+                    "backgroundShell": {
+                        "shellId": shell.id,
+                        "command": shell.command,
+                        "pid": shell.pid,
+                        "status": BackgroundStatus::Running.as_str(),
+                    }
+                })),
+                is_error: false,
+            });
+        }
 
         let result = run_bash_command(
             &self.cwd,
@@ -6211,6 +6254,550 @@ impl Tool for BashTool {
             content: vec![ContentBlock::Text(TextContent::new(output_text))],
             details,
             is_error,
+        })
+    }
+}
+
+// ============================================================================
+// Background Shells
+// ============================================================================
+
+/// Prologue for a background shell. Fd 3 is the read end of a pipe whose write
+/// end this process holds, so the watchdog's `read` returns the moment the
+/// agent dies however it dies, and takes the whole process group with it.
+const BACKGROUND_SHELL_PROLOGUE: &str = "exec 3<&0\n\
+     { while IFS= read -r __pi_watchdog <&3; do :; done; kill -TERM 0 2>/dev/null; } &\n\
+     exec 3<&- 0</dev/null\n\
+     trap 'code=$?; trap \"\" TERM; kill -TERM 0 2>/dev/null; exit $code' EXIT\n";
+
+const MAX_FINISHED_BACKGROUND_SHELLS: usize = 16;
+const BACKGROUND_DRAIN_POLL: Duration = Duration::from_millis(50);
+const BACKGROUND_DRAIN_GRACE_SECS: u64 = 5;
+
+struct BackgroundShellProc {
+    child: Option<std::process::Child>,
+    stdin: Option<std::process::ChildStdin>,
+}
+
+struct BackgroundShellOutput {
+    state: BashOutputState,
+    read_offset: usize,
+    exit_code: Option<i32>,
+    killed: bool,
+    error: Option<String>,
+}
+
+struct BackgroundShell {
+    id: String,
+    command: String,
+    pid: u32,
+    proc: Mutex<BackgroundShellProc>,
+    output: Mutex<BackgroundShellOutput>,
+}
+
+struct BackgroundRead {
+    text: String,
+    new_bytes: usize,
+    dropped_bytes: usize,
+    total_bytes: usize,
+    status: BackgroundStatus,
+    exit_code: Option<i32>,
+    error: Option<String>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum BackgroundStatus {
+    Running,
+    Completed,
+    Killed,
+}
+
+impl BackgroundStatus {
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Running => "running",
+            Self::Completed => "completed",
+            Self::Killed => "killed",
+        }
+    }
+}
+
+impl BackgroundShell {
+    fn take_new_output(&self) -> BackgroundRead {
+        let Ok(mut output) = self.output.lock() else {
+            return BackgroundRead {
+                text: String::new(),
+                new_bytes: 0,
+                dropped_bytes: 0,
+                total_bytes: 0,
+                status: BackgroundStatus::Running,
+                exit_code: None,
+                error: Some("background shell state is poisoned".to_string()),
+            };
+        };
+
+        let total = output.state.total_bytes;
+        let window_start = total.saturating_sub(output.state.chunks_bytes);
+        let dropped = window_start.saturating_sub(output.read_offset);
+        let start = output.read_offset.max(window_start);
+        let raw = chunk_bytes_from(&output.state.chunks, start - window_start);
+        output.read_offset = total;
+
+        let new_bytes = raw.len();
+        let text = String::from_utf8_lossy(&raw).into_owned();
+        let truncation = truncate_tail(text, DEFAULT_MAX_LINES, DEFAULT_MAX_BYTES);
+
+        BackgroundRead {
+            text: truncation.content,
+            new_bytes,
+            dropped_bytes: dropped,
+            total_bytes: total,
+            status: output.status(),
+            exit_code: output.exit_code,
+            error: output.error.clone(),
+        }
+    }
+
+    fn kill(&self) -> bool {
+        let Ok(mut proc) = self.proc.lock() else {
+            return false;
+        };
+        if proc.child.is_none() {
+            return false;
+        }
+        kill_process_group_tree(Some(self.pid));
+        // Dropping the write end wakes the watchdog, which kills the group again
+        // from inside it. Covers a group leader that died before its children.
+        proc.stdin = None;
+        if let Ok(mut output) = self.output.lock() {
+            output.killed = true;
+        }
+        true
+    }
+}
+
+impl BackgroundShellOutput {
+    const fn status(&self) -> BackgroundStatus {
+        if self.killed {
+            BackgroundStatus::Killed
+        } else if self.exit_code.is_some() {
+            BackgroundStatus::Completed
+        } else {
+            BackgroundStatus::Running
+        }
+    }
+
+    const fn is_running(&self) -> bool {
+        self.exit_code.is_none()
+    }
+}
+
+fn chunk_bytes_from(chunks: &VecDeque<Vec<u8>>, skip: usize) -> Vec<u8> {
+    let mut remaining = skip;
+    let mut out = Vec::new();
+    for chunk in chunks {
+        if remaining >= chunk.len() {
+            remaining -= chunk.len();
+            continue;
+        }
+        out.extend_from_slice(&chunk[remaining..]);
+        remaining = 0;
+    }
+    out
+}
+
+struct BackgroundShellRegistry {
+    next_id: u64,
+    shells: Vec<Arc<BackgroundShell>>,
+}
+
+static BACKGROUND_SHELLS: OnceLock<Mutex<BackgroundShellRegistry>> = OnceLock::new();
+
+fn background_shells() -> &'static Mutex<BackgroundShellRegistry> {
+    BACKGROUND_SHELLS.get_or_init(|| {
+        Mutex::new(BackgroundShellRegistry {
+            next_id: 0,
+            shells: Vec::new(),
+        })
+    })
+}
+
+fn find_background_shell(id: &str) -> Option<Arc<BackgroundShell>> {
+    let registry = background_shells().lock().ok()?;
+    registry.shells.iter().find(|s| s.id == id).cloned()
+}
+
+fn known_background_shell_ids() -> Vec<String> {
+    background_shells()
+        .lock()
+        .map(|registry| registry.shells.iter().map(|s| s.id.clone()).collect())
+        .unwrap_or_default()
+}
+
+fn unknown_shell_error(tool: &'static str, id: &str) -> Error {
+    let known = known_background_shell_ids();
+    let known = if known.is_empty() {
+        "no background shells have been started".to_string()
+    } else {
+        format!("known shell ids: {}", known.join(", "))
+    };
+    Error::tool(
+        tool,
+        format!("No background shell with id `{id}` ({known})."),
+    )
+}
+
+/// Register a shell and evict finished ones past the retention cap, so a long
+/// session cannot accumulate their buffers without bound.
+fn register_background_shell(shell: &Arc<BackgroundShell>) {
+    let Ok(mut registry) = background_shells().lock() else {
+        return;
+    };
+    registry.shells.push(Arc::clone(shell));
+
+    let mut finished: Vec<usize> = registry
+        .shells
+        .iter()
+        .enumerate()
+        .filter(|(_, s)| {
+            s.output
+                .lock()
+                .is_ok_and(|output| !output.is_running() || output.killed)
+        })
+        .map(|(idx, _)| idx)
+        .collect();
+    if finished.len() <= MAX_FINISHED_BACKGROUND_SHELLS {
+        return;
+    }
+    finished.truncate(finished.len() - MAX_FINISHED_BACKGROUND_SHELLS);
+    let evicted: std::collections::HashSet<usize> = finished.into_iter().collect();
+    let mut idx = 0;
+    registry.shells.retain(|_| {
+        let keep = !evicted.contains(&idx);
+        idx += 1;
+        keep
+    });
+}
+
+fn next_background_shell_id() -> String {
+    let Ok(mut registry) = background_shells().lock() else {
+        return format!("bash_{}", Uuid::new_v4().simple());
+    };
+    registry.next_id += 1;
+    format!("bash_{}", registry.next_id)
+}
+
+/// Read the pipes into the shell's buffer until the process exits, then close
+/// the watchdog pipe so nothing the command spawned outlives it.
+fn spawn_background_drain(shell: Arc<BackgroundShell>, rx: mpsc::Receiver<BashPipeFrame>) {
+    thread::spawn(move || {
+        let mut finished_at: Option<std::time::Instant> = None;
+        let mut disconnected = false;
+        loop {
+            match rx.recv_timeout(BACKGROUND_DRAIN_POLL) {
+                Ok(frame) => {
+                    if let Ok(mut output) = shell.output.lock() {
+                        let ingested = futures::executor::block_on(ingest_bash_pipe_frame(
+                            frame,
+                            &mut output.state,
+                        ));
+                        if let Err(err) = ingested {
+                            output.error = Some(err.to_string());
+                            drop(output);
+                            break;
+                        }
+                    }
+                    continue;
+                }
+                Err(mpsc::RecvTimeoutError::Timeout) => {}
+                Err(mpsc::RecvTimeoutError::Disconnected) => disconnected = true,
+            }
+
+            if finished_at.is_none()
+                && let Ok(mut proc) = shell.proc.lock()
+            {
+                let status = match proc.child.as_mut() {
+                    Some(child) => child.try_wait(),
+                    None => Ok(None),
+                };
+                match status {
+                    Ok(Some(status)) => {
+                        proc.child = None;
+                        if let Ok(mut output) = shell.output.lock() {
+                            output.exit_code = Some(exit_status_code(status));
+                        }
+                        finished_at = Some(std::time::Instant::now());
+                    }
+                    Ok(None) => {}
+                    Err(err) => {
+                        proc.child = None;
+                        if let Ok(mut output) = shell.output.lock() {
+                            output.exit_code = Some(-1);
+                            output.error = Some(err.to_string());
+                        }
+                        finished_at = Some(std::time::Instant::now());
+                    }
+                }
+            }
+
+            if let Some(at) = finished_at
+                && (disconnected || at.elapsed().as_secs() >= BACKGROUND_DRAIN_GRACE_SECS)
+            {
+                break;
+            }
+        }
+
+        if let Ok(mut proc) = shell.proc.lock() {
+            proc.stdin = None;
+            if let Some(mut child) = proc.child.take() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+        }
+        if let Ok(mut output) = shell.output.lock() {
+            output.exit_code.get_or_insert(-1);
+            drop(output.state.temp_file.take());
+        }
+    });
+}
+
+fn start_background_bash(
+    cwd: &Path,
+    shell_path: Option<&str>,
+    command_prefix: Option<&str>,
+    command: &str,
+) -> Result<Arc<BackgroundShell>> {
+    let display_command = command.to_string();
+    let command = command_prefix.filter(|p| !p.trim().is_empty()).map_or_else(
+        || command.to_string(),
+        |prefix| format!("{prefix}\n{command}"),
+    );
+    let command = format!("{BACKGROUND_SHELL_PROLOGUE}{command}");
+
+    let mut cmd = prepare_bash_command(cwd, shell_path, &command)?;
+    cmd.stdin(Stdio::piped());
+
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| Error::tool("bash", format!("Failed to spawn shell: {e}")))?;
+
+    let pid = child.id();
+    let stdin = child
+        .stdin
+        .take()
+        .ok_or_else(|| Error::tool("bash", "Missing stdin".to_string()))?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| Error::tool("bash", "Missing stdout".to_string()))?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| Error::tool("bash", "Missing stderr".to_string()))?;
+
+    let (tx, rx) = mpsc::sync_channel::<BashPipeFrame>(1024);
+    let tx_stdout = tx.clone();
+    thread::spawn(move || pump_stream(stdout, "stdout", &tx_stdout));
+    thread::spawn(move || pump_stream(stderr, "stderr", &tx));
+
+    let shell = Arc::new(BackgroundShell {
+        id: next_background_shell_id(),
+        command: display_command,
+        pid,
+        proc: Mutex::new(BackgroundShellProc {
+            child: Some(child),
+            stdin: Some(stdin),
+        }),
+        output: Mutex::new(BackgroundShellOutput {
+            state: BashOutputState::new(DEFAULT_MAX_BYTES.saturating_mul(2)),
+            read_offset: 0,
+            exit_code: None,
+            killed: false,
+            error: None,
+        }),
+    });
+
+    register_background_shell(&shell);
+    spawn_background_drain(Arc::clone(&shell), rx);
+    Ok(shell)
+}
+
+#[derive(Debug, Deserialize)]
+struct BackgroundShellInput {
+    #[serde(alias = "shellId")]
+    shell_id: String,
+}
+
+pub struct BashOutputTool;
+
+#[async_trait]
+#[allow(clippy::unnecessary_literal_bound)]
+impl Tool for BashOutputTool {
+    fn name(&self) -> &str {
+        "bash_output"
+    }
+    fn label(&self) -> &str {
+        "bash output"
+    }
+    fn description(&self) -> &str {
+        "Read output from a background shell started by `bash` with `run_in_background: true`. Returns only what has arrived since the previous call, plus whether the shell is still running and its exit code if it is not."
+    }
+
+    fn parameters(&self) -> serde_json::Value {
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "shell_id": {
+                    "type": "string",
+                    "description": "Shell id returned by the backgrounded bash call"
+                }
+            },
+            "required": ["shell_id"]
+        })
+    }
+
+    fn effects(&self) -> ToolEffects {
+        ToolEffects::read()
+    }
+
+    async fn execute(
+        &self,
+        _tool_call_id: &str,
+        input: serde_json::Value,
+        _on_update: Option<Box<dyn Fn(ToolUpdate) + Send + Sync>>,
+    ) -> Result<ToolOutput> {
+        let input: BackgroundShellInput =
+            serde_json::from_value(input).map_err(|e| Error::validation(e.to_string()))?;
+        let shell = find_background_shell(&input.shell_id)
+            .ok_or_else(|| unknown_shell_error("bash_output", &input.shell_id))?;
+
+        let read = shell.take_new_output();
+        let mut text = if read.text.is_empty() {
+            "(no new output)\n".to_string()
+        } else {
+            read.text
+        };
+        if !text.ends_with('\n') {
+            text.push('\n');
+        }
+        text.push('\n');
+
+        if read.dropped_bytes > 0 {
+            let _ = writeln!(
+                text,
+                "[{} of earlier output was dropped before it was read; the buffer keeps the last {}]",
+                format_size(read.dropped_bytes),
+                format_size(DEFAULT_MAX_BYTES.saturating_mul(2))
+            );
+        }
+        match read.status {
+            BackgroundStatus::Running => {
+                let _ = write!(text, "[shell {} is running]", shell.id);
+            }
+            BackgroundStatus::Completed => {
+                let _ = write!(
+                    text,
+                    "[shell {} exited with code {}]",
+                    shell.id,
+                    read.exit_code.unwrap_or(-1)
+                );
+            }
+            BackgroundStatus::Killed => {
+                let _ = write!(text, "[shell {} was killed]", shell.id);
+            }
+        }
+        if let Some(err) = read.error.as_ref() {
+            let _ = write!(text, "\n[capture error: {err}]");
+        }
+
+        Ok(ToolOutput {
+            content: vec![ContentBlock::Text(TextContent::new(text))],
+            details: Some(serde_json::json!({
+                "backgroundShell": {
+                    "shellId": shell.id,
+                    "command": shell.command,
+                    "pid": shell.pid,
+                    "status": read.status.as_str(),
+                    "exitCode": read.exit_code,
+                    "newBytes": read.new_bytes,
+                    "droppedBytes": read.dropped_bytes,
+                    "totalBytes": read.total_bytes,
+                }
+            })),
+            is_error: false,
+        })
+    }
+}
+
+pub struct KillShellTool;
+
+#[async_trait]
+#[allow(clippy::unnecessary_literal_bound)]
+impl Tool for KillShellTool {
+    fn name(&self) -> &str {
+        "kill_shell"
+    }
+    fn label(&self) -> &str {
+        "kill shell"
+    }
+    fn description(&self) -> &str {
+        "Terminate a background shell started by `bash` with `run_in_background: true`, along with every process it spawned. Use this to free a port or stop a watcher; output already captured stays readable with bash_output."
+    }
+
+    fn parameters(&self) -> serde_json::Value {
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "shell_id": {
+                    "type": "string",
+                    "description": "Shell id returned by the backgrounded bash call"
+                }
+            },
+            "required": ["shell_id"]
+        })
+    }
+
+    fn effects(&self) -> ToolEffects {
+        ToolEffects::process()
+    }
+
+    async fn execute(
+        &self,
+        _tool_call_id: &str,
+        input: serde_json::Value,
+        _on_update: Option<Box<dyn Fn(ToolUpdate) + Send + Sync>>,
+    ) -> Result<ToolOutput> {
+        let input: BackgroundShellInput =
+            serde_json::from_value(input).map_err(|e| Error::validation(e.to_string()))?;
+        let shell = find_background_shell(&input.shell_id)
+            .ok_or_else(|| unknown_shell_error("kill_shell", &input.shell_id))?;
+
+        let killed = shell.kill();
+        let text = if killed {
+            format!(
+                "Killed background shell {} (pid {}, process group terminated): {}",
+                shell.id, shell.pid, shell.command
+            )
+        } else {
+            let read = shell.take_new_output();
+            format!(
+                "Background shell {} had already exited with code {}.",
+                shell.id,
+                read.exit_code.unwrap_or(-1)
+            )
+        };
+
+        Ok(ToolOutput {
+            content: vec![ContentBlock::Text(TextContent::new(text))],
+            details: Some(serde_json::json!({
+                "backgroundShell": {
+                    "shellId": shell.id,
+                    "command": shell.command,
+                    "pid": shell.pid,
+                    "status": if killed { "killed" } else { "completed" },
+                }
+            })),
+            is_error: false,
         })
     }
 }
@@ -14474,6 +15061,100 @@ mod tests {
         }
 
         assert!(matches!(rx.try_recv(), Err(mpsc::TryRecvError::Empty)));
+    }
+
+    /// The struct is `rename_all = "camelCase"`, so a snake_case field silently
+    /// stops binding the name the schema advertises.
+    #[test]
+    fn bash_input_binds_the_run_in_background_name_the_schema_advertises() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let schema = BashTool::new(tmp.path()).parameters();
+        let properties = schema
+            .get("properties")
+            .and_then(serde_json::Value::as_object)
+            .expect("schema properties");
+        assert!(properties.contains_key("run_in_background"));
+
+        let input: BashInput = serde_json::from_value(serde_json::json!({
+            "command": "true",
+            "timeout": 120,
+            "run_in_background": true,
+        }))
+        .expect("bash input");
+        assert!(input.run_in_background);
+
+        let default: BashInput = serde_json::from_value(serde_json::json!({"command": "true"}))
+            .expect("bash input without the flag");
+        assert!(!default.run_in_background);
+    }
+
+    #[test]
+    fn background_read_returns_only_bytes_arrived_since_the_previous_read() {
+        asupersync::test_utils::run_test(|| async {
+            let mut output = BackgroundShellOutput {
+                state: BashOutputState::new(16),
+                read_offset: 0,
+                exit_code: None,
+                killed: false,
+                error: None,
+            };
+            ingest_bash_chunk(b"first\n".to_vec(), &mut output.state)
+                .await
+                .expect("first chunk");
+
+            let shell = BackgroundShell {
+                id: "bash_1".to_string(),
+                command: "true".to_string(),
+                pid: 0,
+                proc: Mutex::new(BackgroundShellProc {
+                    child: None,
+                    stdin: None,
+                }),
+                output: Mutex::new(output),
+            };
+
+            let first = shell.take_new_output();
+            assert_eq!(first.text, "first\n");
+            assert_eq!(first.dropped_bytes, 0);
+
+            let empty = shell.take_new_output();
+            assert_eq!(empty.text, "");
+
+            ingest_bash_chunk(b"second\n".to_vec(), &mut shell.output.lock().unwrap().state)
+                .await
+                .expect("second chunk");
+            let second = shell.take_new_output();
+            assert_eq!(second.text, "second\n");
+
+            // Past the 16-byte ring: the oldest unread bytes are reported dropped,
+            // never silently skipped.
+            ingest_bash_chunk(
+                b"0123456789abcdefghij".to_vec(),
+                &mut shell.output.lock().unwrap().state,
+            )
+            .await
+            .expect("third chunk");
+            let third = shell.take_new_output();
+            assert_eq!(third.text, "0123456789abcdefghij");
+            assert_eq!(third.dropped_bytes, 0);
+        });
+    }
+
+    #[test]
+    fn unknown_shell_id_is_an_error_naming_the_id() {
+        asupersync::test_utils::run_test(|| async {
+            let err = BashOutputTool
+                .execute("call", serde_json::json!({"shell_id": "bash_nope"}), None)
+                .await
+                .expect_err("unknown id");
+            assert!(err.to_string().contains("bash_nope"), "{err}");
+
+            let err = KillShellTool
+                .execute("call", serde_json::json!({"shell_id": "bash_nope"}), None)
+                .await
+                .expect_err("unknown id");
+            assert!(err.to_string().contains("bash_nope"), "{err}");
+        });
     }
 
     #[test]

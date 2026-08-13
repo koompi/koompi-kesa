@@ -9,13 +9,15 @@ use std::path::PathBuf;
 /// Tools enabled when `--tools` is not given. Kept character-identical to the
 /// list in the `--tools` help so the two cannot drift.
 pub const DEFAULT_TOOLS: &str =
-    "read,bash,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search";
+    "read,bash,bash_output,kill_shell,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search";
 
 /// Every name `ToolRegistry::new` knows how to construct. `subagent` is opt-in,
 /// so it is accepted here but absent from [`DEFAULT_TOOLS`].
 pub const REGISTERED_TOOLS: &[&str] = &[
     "read",
     "bash",
+    "bash_output",
+    "kill_shell",
     "edit",
     "write",
     "grep",
@@ -484,7 +486,7 @@ pub struct Cli {
     #[arg(long)]
     pub no_tools: bool,
 
-    /// Specific tools to enable (comma-separated: read,bash,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search)
+    /// Specific tools to enable (comma-separated: read,bash,bash_output,kill_shell,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search)
     #[arg(long, default_value = DEFAULT_TOOLS, value_parser = parse_tools_list)]
     pub tools: String,
 
@@ -1143,6 +1145,8 @@ mod tests {
             vec![
                 "read",
                 "bash",
+                "bash_output",
+                "kill_shell",
                 "edit",
                 "write",
                 "grep",
