@@ -488,9 +488,10 @@ fn check_config(cwd: &Path, findings: &mut Vec<Finding>) {
     if project_path.exists() {
         let label = format!(
             "Project settings ({}/settings.json)",
-            project_dir
-                .file_name()
-                .map_or_else(|| crate::config::DIR_NAME.into(), |name| name.to_string_lossy())
+            project_dir.file_name().map_or_else(
+                || crate::config::DIR_NAME.into(),
+                |name| name.to_string_lossy()
+            )
         );
         check_settings_file(cat, &project_path, &label, findings);
     } else {
@@ -2474,18 +2475,15 @@ fn read_numa_topology(source_errors: &mut Vec<String>) -> NumaTopologySnapshot {
 }
 
 fn read_memory_limit_snapshot(source_errors: &mut Vec<String>) -> MemoryLimitSnapshot {
-    let mem_total_bytes = read_first_existing_trimmed(
-        "DOCTOR_MEMINFO_PATH",
-        &["/proc/meminfo"],
-        source_errors,
-    )
-    .and_then(|(source, raw)| {
-        let parsed = parse_mem_total_bytes(&raw);
-        if parsed.is_none() {
-            source_errors.push(format!("invalid MemTotal in {source}"));
-        }
-        parsed
-    });
+    let mem_total_bytes =
+        read_first_existing_trimmed("DOCTOR_MEMINFO_PATH", &["/proc/meminfo"], source_errors)
+            .and_then(|(source, raw)| {
+                let parsed = parse_mem_total_bytes(&raw);
+                if parsed.is_none() {
+                    source_errors.push(format!("invalid MemTotal in {source}"));
+                }
+                parsed
+            });
     let (source, parsed_limit) = read_first_existing_trimmed(
         "DOCTOR_CGROUP_MEMORY_MAX_PATH",
         &[
@@ -2585,7 +2583,10 @@ fn collect_local_build_pressure(effective_cpu_cores: u64) -> LocalBuildPressureS
             || ("/proc".to_string(), count_local_build_processes()),
             |count| {
                 (
-                    format!("env:{}", crate::env::name(SWARM_RESOURCE_PREFLIGHT_LOCAL_BUILD_PROCESS_COUNT_ENV)),
+                    format!(
+                        "env:{}",
+                        crate::env::name(SWARM_RESOURCE_PREFLIGHT_LOCAL_BUILD_PROCESS_COUNT_ENV)
+                    ),
                     Some(count),
                 )
             },
@@ -2653,7 +2654,10 @@ fn read_rch_queue_posture(source_errors: &mut Vec<String>) -> RchQueuePostureSna
     if let Some(raw) = crate::env::var(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV) {
         return parse_rch_queue_posture_json(
             &raw,
-            format!("env:{}", crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV)),
+            format!(
+                "env:{}",
+                crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_ENV)
+            ),
             source_errors,
         );
     }
@@ -2666,7 +2670,7 @@ fn read_rch_queue_posture(source_errors: &mut Vec<String>) -> RchQueuePostureSna
                     &raw,
                     format!(
                         "env:{}:{}",
-                    crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV),
+                        crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV),
                         path.display()
                     ),
                     source_errors,
@@ -2674,7 +2678,7 @@ fn read_rch_queue_posture(source_errors: &mut Vec<String>) -> RchQueuePostureSna
             }
             Err(err) => source_errors.push(format!(
                 "{} failed to read {}: {err}",
-                        crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV),
+                crate::env::name(SWARM_RESOURCE_PREFLIGHT_RCH_QUEUE_JSON_PATH_ENV),
                 path.display()
             )),
         }
@@ -5542,11 +5546,10 @@ fn check_swarm_validation_broker(cwd: &Path, findings: &mut Vec<Finding>) {
     let Some(store_raw) = crate::env::var(SWARM_VALIDATION_BROKER_STORE_ENV) else {
         findings.push(
             Finding::info(cat, "Validation broker posture not configured")
-                .with_detail(
-                    "No validation broker slot store is configured for Doctor projection",
-                )
+                .with_detail("No validation broker slot store is configured for Doctor projection")
                 .with_remediation(format!(
-                    "Set {} when using validation-broker advisory handoff", crate::env::name(SWARM_VALIDATION_BROKER_STORE_ENV)
+                    "Set {} when using validation-broker advisory handoff",
+                    crate::env::name(SWARM_VALIDATION_BROKER_STORE_ENV)
                 ))
                 .with_data(validation_broker_not_configured_json()),
         );
@@ -5832,7 +5835,8 @@ fn build_swarm_progress_slo_finding(cwd: &Path, raw_path: Option<&str>) -> Findi
             "not_configured",
             None,
             Some(format!(
-                "Set {} to a pi.swarm.progress_slo.v1 JSON report when projecting progress SLO posture into Doctor", crate::env::name(SWARM_PROGRESS_SLO_JSON_ENV)
+                "Set {} to a pi.swarm.progress_slo.v1 JSON report when projecting progress SLO posture into Doctor",
+                crate::env::name(SWARM_PROGRESS_SLO_JSON_ENV)
             )),
             &[],
         );
@@ -9517,7 +9521,9 @@ fn build_rch_affinity_plan_from_env(
 ) -> std::result::Result<RchAffinityPlan, String> {
     let recommended_target_dir = default_rch_affinity_target_dir();
     let current_git_commit = current_git_commit.map(str::to_string);
-    let raw_jobs = match crate::env::var_os(SWARM_RCH_AFFINITY_JOBS_ENV).map(std::ffi::OsString::into_string) {
+    let raw_jobs = match crate::env::var_os(SWARM_RCH_AFFINITY_JOBS_ENV)
+        .map(std::ffi::OsString::into_string)
+    {
         None => None,
         Some(Ok(raw)) if raw.trim().is_empty() => None,
         Some(Ok(raw)) => Some(raw),
@@ -9538,13 +9544,18 @@ fn build_rch_affinity_plan_from_env(
             groups: Vec::new(),
             blockers: vec!["no_job_specs".to_string()],
             notes: vec![format!(
-                "Set {} to a JSON array of cargo jobs before launching a swarm", crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
+                "Set {} to a JSON array of cargo jobs before launching a swarm",
+                crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
             )],
         });
     };
 
-    let specs = serde_json::from_str::<Vec<RchAffinityJobSpec>>(&raw_jobs)
-        .map_err(|err| format!("{} is not a valid job array: {err}", crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)))?;
+    let specs = serde_json::from_str::<Vec<RchAffinityJobSpec>>(&raw_jobs).map_err(|err| {
+        format!(
+            "{} is not a valid job array: {err}",
+            crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
+        )
+    })?;
     Ok(build_rch_affinity_plan_from_specs(
         specs,
         current_git_commit,
@@ -9756,12 +9767,16 @@ fn classify_rch_affinity_plan(plan: &RchAffinityPlan) -> Finding {
     );
 
     if plan.source == "no_job_specs" {
-        return Finding::info(CheckCategory::Swarm, "RCH warm-target affinity plan needs job specs")
-            .with_detail(detail)
-            .with_remediation(format!(
-                "Set {} before swarm launches to preview safe worker/target reuse", crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
-            ))
-            .with_data(data);
+        return Finding::info(
+            CheckCategory::Swarm,
+            "RCH warm-target affinity plan needs job specs",
+        )
+        .with_detail(detail)
+        .with_remediation(format!(
+            "Set {} before swarm launches to preview safe worker/target reuse",
+            crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
+        ))
+        .with_data(data);
     }
     if !plan.blockers.is_empty() {
         return Finding::warn(CheckCategory::Swarm, "RCH warm-target affinity plan has blockers")
@@ -9784,7 +9799,8 @@ fn rch_affinity_parse_error_finding(err: &str, current_git_commit: Option<&str>)
     )
     .with_detail(err.to_string())
     .with_remediation(format!(
-        "Fix {} JSON or unset it to use the default no-job diagnostic", crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
+        "Fix {} JSON or unset it to use the default no-job diagnostic",
+        crate::env::name(SWARM_RCH_AFFINITY_JOBS_ENV)
     ))
     .with_data(serde_json::json!({
         "schema": SWARM_DOCTOR_RCH_AFFINITY_SCHEMA,

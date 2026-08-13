@@ -22,7 +22,10 @@ pub(super) fn format_tool_output(
         ),
         _ => (None, content),
     };
-    match (header, format_tool_result_body(content, details, show_images)) {
+    match (
+        header,
+        format_tool_result_body(content, details, show_images),
+    ) {
         (Some(header), Some(body)) => Some(format!("{header}\n{body}")),
         (Some(header), None) => Some(header),
         (None, body) => body,

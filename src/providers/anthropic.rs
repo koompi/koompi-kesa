@@ -203,7 +203,11 @@ fn kimi_device_id_paths() -> Option<(std::path::PathBuf, std::path::PathBuf)> {
     let primary = kimi_share_dir()?.join("device_id");
     let legacy = home_dir().map_or_else(
         || primary.clone(),
-        |home| home.join(crate::config::DIR_NAME).join("agent").join("kimi-device-id"),
+        |home| {
+            home.join(crate::config::DIR_NAME)
+                .join("agent")
+                .join("kimi-device-id")
+        },
     );
     Some((primary, legacy))
 }

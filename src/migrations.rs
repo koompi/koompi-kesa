@@ -155,7 +155,9 @@ fn adopt_home_dir_at(home: &Path, warnings: &mut Vec<String>) -> Option<PathBuf>
     let mut staging = current.clone().into_os_string();
     staging.push(ADOPTION_STAGING_SUFFIX);
     let staging = PathBuf::from(staging);
-    if staging.exists() && let Err(err) = fs::remove_dir_all(&staging) {
+    if staging.exists()
+        && let Err(err) = fs::remove_dir_all(&staging)
+    {
         warnings.push(format!(
             "could not clear the interrupted adoption at {}: {err}",
             staging.display()
@@ -214,15 +216,14 @@ fn copy_symlink(source: &Path, target: &Path) -> std::io::Result<()> {
 
 // rebrand moved the agent dir out of ~/.pi; pi's auth.json refreshes, the codex fallback does not
 fn adopt_legacy_home_auth(agent_dir: &Path, warnings: &mut Vec<String>) -> Option<PathBuf> {
-    let legacy = dirs::home_dir()?.join(".pi").join("agent").join("auth.json");
+    let legacy = dirs::home_dir()?
+        .join(".pi")
+        .join("agent")
+        .join("auth.json");
     adopt_auth_from(agent_dir, &legacy, warnings)
 }
 
-fn adopt_auth_from(
-    agent_dir: &Path,
-    legacy: &Path,
-    warnings: &mut Vec<String>,
-) -> Option<PathBuf> {
+fn adopt_auth_from(agent_dir: &Path, legacy: &Path, warnings: &mut Vec<String>) -> Option<PathBuf> {
     let auth_path = agent_dir.join("auth.json");
     if auth_path.exists() {
         return None;
@@ -748,7 +749,10 @@ mod tests {
                 .permissions()
                 .mode()
                 & 0o777;
-            assert_eq!(mode, 0o600, "adopted auth.json should be 0600, got {mode:#o}");
+            assert_eq!(
+                mode, 0o600,
+                "adopted auth.json should be 0600, got {mode:#o}"
+            );
         }
     }
 
@@ -757,7 +761,10 @@ mod tests {
         let temp = TempDir::new().expect("tempdir");
         let agent_dir = temp.path().join("kesa/agent");
         let legacy = temp.path().join("pi/agent/auth.json");
-        write(&agent_dir.join("auth.json"), r#"{"anthropic":{"api_key":"mine"}}"#);
+        write(
+            &agent_dir.join("auth.json"),
+            r#"{"anthropic":{"api_key":"mine"}}"#,
+        );
         write(&legacy, r#"{"openai-codex":{"refresh_token":"r"}}"#);
 
         let mut warnings = Vec::new();

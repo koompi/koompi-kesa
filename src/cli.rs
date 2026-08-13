@@ -8,8 +8,7 @@ use std::path::PathBuf;
 
 /// Tools enabled when `--tools` is not given. Kept character-identical to the
 /// list in the `--tools` help so the two cannot drift.
-pub const DEFAULT_TOOLS: &str =
-    "read,bash,bash_output,kill_shell,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search";
+pub const DEFAULT_TOOLS: &str = "read,bash,bash_output,kill_shell,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search";
 
 /// Every name `ToolRegistry::new` knows how to construct. `subagent` is opt-in,
 /// so it is accepted here but absent from [`DEFAULT_TOOLS`].
@@ -333,13 +332,12 @@ fn adopt_legacy_env(cli: &mut Cli) {
             .filter(|mode| PERMISSION_MODES.contains(&mode.as_str()));
     }
     if cli.request_timeout.is_none() {
-        cli.request_timeout =
-            crate::env::legacy_fallback("HTTP_REQUEST_TIMEOUT_SECS")
-                .and_then(|raw| raw.trim().parse().ok());
+        cli.request_timeout = crate::env::legacy_fallback("HTTP_REQUEST_TIMEOUT_SECS")
+            .and_then(|raw| raw.trim().parse().ok());
     }
     if !cli.hide_cwd_in_prompt {
-        cli.hide_cwd_in_prompt = crate::env::legacy_fallback("HIDE_CWD_IN_PROMPT")
-            .is_some_and(|raw| {
+        cli.hide_cwd_in_prompt =
+            crate::env::legacy_fallback("HIDE_CWD_IN_PROMPT").is_some_and(|raw| {
                 matches!(
                     raw.trim().to_ascii_lowercase().as_str(),
                     "" | "1" | "true" | "yes" | "on"

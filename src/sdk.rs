@@ -64,8 +64,8 @@ pub type ToolDefinition = ToolDef;
 // ============================================================================
 
 use crate::tools::{
-    BashOutputTool, BashTool, EditTool, FindTool, GrepTool, HashlineEditTool, KillShellTool, LsTool,
-    ReadTool, WriteTool,
+    BashOutputTool, BashTool, EditTool, FindTool, GrepTool, HashlineEditTool, KillShellTool,
+    LsTool, ReadTool, WriteTool,
 };
 
 /// Built-in tool names included in the default non-delegating SDK registry.

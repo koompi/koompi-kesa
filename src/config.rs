@@ -524,8 +524,7 @@ impl Config {
         }
 
         let global = Self::load_from_path(&global_dir.join("settings.json"))?;
-        let mut project =
-            Self::load_from_path(&Self::project_dir_in(&cwd).join("settings.json"))?;
+        let mut project = Self::load_from_path(&Self::project_dir_in(&cwd).join("settings.json"))?;
         drop_untrusted_project_hooks(global.hooks.as_ref(), &mut project.hooks);
         let merged = Self::merge(global, project);
         merged.emit_queue_mode_diagnostics();
@@ -858,7 +857,8 @@ impl Config {
             .as_ref()
             .and_then(|p| p.allow_dangerous)
             .unwrap_or(false);
-        let env_allows = crate::env::var("EXTENSION_ALLOW_DANGEROUS").is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
+        let env_allows = crate::env::var("EXTENSION_ALLOW_DANGEROUS")
+            .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let allow_dangerous = config_allows || env_allows;
 
         // Build audit trail before mutating deny_caps.
@@ -1150,14 +1150,8 @@ fn global_dir_from_env<F>(get_env: F) -> PathBuf
 where
     F: Fn(&str) -> Option<String>,
 {
-    get_env("CODING_AGENT_DIR").map_or_else(
-        || {
-            home_dir()
-                .join(DIR_NAME)
-                .join("agent")
-        },
-        PathBuf::from,
-    )
+    get_env("CODING_AGENT_DIR")
+        .map_or_else(|| home_dir().join(DIR_NAME).join("agent"), PathBuf::from)
 }
 
 fn sessions_dir_from_env<F>(get_env: F, global_dir: &Path) -> PathBuf

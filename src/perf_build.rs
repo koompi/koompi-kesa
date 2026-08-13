@@ -500,7 +500,7 @@ mod tests {
             assert!(
                 resolved.fallback_reason.is_some(),
                 "{}=jemalloc should report fallback without compiled jemalloc",
-            crate::env::name(BENCH_ALLOCATOR_ENV)
+                crate::env::name(BENCH_ALLOCATOR_ENV)
             );
         }
     }

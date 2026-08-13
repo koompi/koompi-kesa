@@ -99,8 +99,7 @@ fn compatible_tool_parallelism_limit() -> usize {
                 parallelism.get()
             });
         resolve_compatible_tool_parallelism(
-            crate::env::var("MAX_CONCURRENT_COMPATIBLE_TOOLS")
-                .as_deref(),
+            crate::env::var("MAX_CONCURRENT_COMPATIBLE_TOOLS").as_deref(),
             host_parallelism,
         )
     })
@@ -10823,7 +10822,8 @@ fn log_repair_diagnostics(events: &[crate::extensions_js::ExtensionRepairEvent])
             .push(&ev.extension_id);
     }
 
-    let verbose = crate::env::var("AUTO_REPAIR_VERBOSE").is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
+    let verbose = crate::env::var("AUTO_REPAIR_VERBOSE")
+        .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
 
     if verbose {
         warn!(

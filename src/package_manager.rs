@@ -894,10 +894,9 @@ impl PackageManager {
     fn lockfile_path_for_scope(&self, scope: PackageScope) -> Option<PathBuf> {
         match scope {
             PackageScope::User => Some(Config::global_dir().join("packages.lock.json")),
-            PackageScope::Project => Some(
-                Config::project_dir_in(&self.cwd)
-                    .join("packages.lock.json"),
-            ),
+            PackageScope::Project => {
+                Some(Config::project_dir_in(&self.cwd).join("packages.lock.json"))
+            }
             PackageScope::Temporary => None,
         }
     }
@@ -905,10 +904,9 @@ impl PackageManager {
     fn trust_audit_path_for_scope(&self, scope: PackageScope) -> Option<PathBuf> {
         match scope {
             PackageScope::User => Some(Config::global_dir().join("package-trust-audit.jsonl")),
-            PackageScope::Project => Some(
-                Config::project_dir_in(&self.cwd)
-                    .join("package-trust-audit.jsonl"),
-            ),
+            PackageScope::Project => {
+                Some(Config::project_dir_in(&self.cwd).join("package-trust-audit.jsonl"))
+            }
             PackageScope::Temporary => None,
         }
     }

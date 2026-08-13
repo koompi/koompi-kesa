@@ -33,10 +33,7 @@ impl HostcallRewriteEngine {
 
     #[must_use]
     pub fn from_env() -> Self {
-        Self::from_opt(
-            crate::env::var("HOSTCALL_EGRAPH_REWRITE")
-                .as_deref(),
-        )
+        Self::from_opt(crate::env::var("HOSTCALL_EGRAPH_REWRITE").as_deref())
     }
 
     #[must_use]

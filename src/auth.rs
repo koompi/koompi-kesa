@@ -159,20 +159,14 @@ fn anthropic_oauth_token_url() -> String {
     oauth_param("ANTHROPIC_OAUTH_TOKEN_URL", ANTHROPIC_OAUTH_TOKEN_URL)
 }
 fn anthropic_oauth_redirect_uri() -> String {
-    oauth_param(
-        "ANTHROPIC_OAUTH_REDIRECT_URI",
-        ANTHROPIC_OAUTH_REDIRECT_URI,
-    )
+    oauth_param("ANTHROPIC_OAUTH_REDIRECT_URI", ANTHROPIC_OAUTH_REDIRECT_URI)
 }
 fn anthropic_oauth_scopes() -> String {
     oauth_param("ANTHROPIC_OAUTH_SCOPES", ANTHROPIC_OAUTH_SCOPES)
 }
 
 fn openai_codex_oauth_client_id() -> String {
-    oauth_param(
-        "OPENAI_CODEX_OAUTH_CLIENT_ID",
-        OPENAI_CODEX_OAUTH_CLIENT_ID,
-    )
+    oauth_param("OPENAI_CODEX_OAUTH_CLIENT_ID", OPENAI_CODEX_OAUTH_CLIENT_ID)
 }
 fn openai_codex_oauth_authorize_url() -> String {
     oauth_param(
@@ -181,10 +175,7 @@ fn openai_codex_oauth_authorize_url() -> String {
     )
 }
 fn openai_codex_oauth_token_url() -> String {
-    oauth_param(
-        "OPENAI_CODEX_OAUTH_TOKEN_URL",
-        OPENAI_CODEX_OAUTH_TOKEN_URL,
-    )
+    oauth_param("OPENAI_CODEX_OAUTH_TOKEN_URL", OPENAI_CODEX_OAUTH_TOKEN_URL)
 }
 fn openai_codex_oauth_redirect_uri() -> String {
     oauth_param(
@@ -4516,7 +4507,11 @@ fn kimi_device_id_paths() -> Option<(PathBuf, PathBuf)> {
     let primary = kimi_share_dir()?.join("device_id");
     let legacy = home_dir().map_or_else(
         || primary.clone(),
-        |home| home.join(crate::config::DIR_NAME).join("agent").join("kimi-device-id"),
+        |home| {
+            home.join(crate::config::DIR_NAME)
+                .join("agent")
+                .join("kimi-device-id")
+        },
     );
     Some((primary, legacy))
 }
@@ -11130,10 +11125,7 @@ sso_region = us-east-1
             let mut env_map = std::collections::HashMap::new();
             env_map.insert("AWS_PROFILE", "dev".to_string());
             env_map.insert("AWS_CONFIG_FILE", config_path.to_string_lossy().to_string());
-            env_map.insert(
-                "AWS_SSO_CACHE_DIR",
-                cache_dir.to_string_lossy().to_string(),
-            );
+            env_map.insert("AWS_SSO_CACHE_DIR", cache_dir.to_string_lossy().to_string());
 
             let auth = empty_auth();
             let client = crate::http::client::Client::new();
@@ -11191,10 +11183,7 @@ sso_start_url = https://example.awsapps.com/start
             let mut env_map = std::collections::HashMap::new();
             env_map.insert("AWS_PROFILE", "dev".to_string());
             env_map.insert("AWS_CONFIG_FILE", config_path.to_string_lossy().to_string());
-            env_map.insert(
-                "AWS_SSO_CACHE_DIR",
-                cache_dir.to_string_lossy().to_string(),
-            );
+            env_map.insert("AWS_SSO_CACHE_DIR", cache_dir.to_string_lossy().to_string());
 
             let auth = empty_auth();
             let client = crate::http::client::Client::new();

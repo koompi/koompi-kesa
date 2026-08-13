@@ -9,9 +9,9 @@ use crate::error::{Error, Result};
 use crate::http::client::Client;
 use crate::model::{ContentBlock, TextContent};
 use crate::tools::{Tool, ToolEffects, ToolOutput, ToolUpdate};
-use async_trait::async_trait;
 use asupersync::http::h1::ParsedUrl;
 use asupersync::http::h1::http_client::Scheme;
+use async_trait::async_trait;
 use serde_json::{Value, json};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
@@ -273,7 +273,10 @@ fn decode_entities(raw: &str) -> String {
                 .and_then(|num| {
                     num.strip_prefix('x')
                         .or_else(|| num.strip_prefix('X'))
-                        .map_or_else(|| num.parse::<u32>().ok(), |hex| u32::from_str_radix(hex, 16).ok())
+                        .map_or_else(
+                            || num.parse::<u32>().ok(),
+                            |hex| u32::from_str_radix(hex, 16).ok(),
+                        )
                 })
                 .and_then(char::from_u32),
         };
@@ -450,7 +453,10 @@ async fn fetch_page(url: &str, max_bytes: usize) -> Result<FetchedPage> {
 
         let response = client
             .get(&current)
-            .header("Accept", "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.5")
+            .header(
+                "Accept",
+                "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.5",
+            )
             .header("Accept-Encoding", "identity")
             .send()
             .await?;
@@ -498,7 +504,10 @@ async fn fetch_page(url: &str, max_bytes: usize) -> Result<FetchedPage> {
 
     Err(Error::tool(
         "web_fetch",
-        format!("Redirect chain exceeded {MAX_REDIRECTS} hops: {}", chain.join(" -> ")),
+        format!(
+            "Redirect chain exceeded {MAX_REDIRECTS} hops: {}",
+            chain.join(" -> ")
+        ),
     ))
 }
 
@@ -559,12 +568,15 @@ impl Tool for WebFetchTool {
             .and_then(Value::as_str)
             .ok_or_else(|| Error::validation("`url` is required"))?;
         let prompt = input.get("prompt").and_then(Value::as_str);
-        let max_bytes = input
-            .get("max_bytes")
-            .and_then(Value::as_u64)
-            .map_or(DEFAULT_FETCH_BYTES, |n| {
-                usize::try_from(n).unwrap_or(DEFAULT_FETCH_BYTES).min(MAX_FETCH_BYTES)
-            });
+        let max_bytes =
+            input
+                .get("max_bytes")
+                .and_then(Value::as_u64)
+                .map_or(DEFAULT_FETCH_BYTES, |n| {
+                    usize::try_from(n)
+                        .unwrap_or(DEFAULT_FETCH_BYTES)
+                        .min(MAX_FETCH_BYTES)
+                });
         if max_bytes == 0 {
             return Err(Error::validation("`max_bytes` must be greater than 0"));
         }
@@ -881,7 +893,10 @@ fn render_results(query: &str, provider: &str, results: &[SearchResult]) -> Stri
     if results.is_empty() {
         return format!("No results for `{query}` from {provider}.");
     }
-    let mut out = format!("{} result(s) for `{query}` from {provider}:\n", results.len());
+    let mut out = format!(
+        "{} result(s) for `{query}` from {provider}:\n",
+        results.len()
+    );
     for (index, result) in results.iter().enumerate() {
         out.push_str(&format!(
             "\n{}. {}\n   {}\n",
@@ -961,14 +976,15 @@ impl Tool for WebSearchTool {
             .ok_or_else(|| Error::validation("`query` is required"))?;
         let allowed = string_list(&input, "allowed_domains");
         let blocked = string_list(&input, "blocked_domains");
-        let count = input
-            .get("count")
-            .and_then(Value::as_u64)
-            .map_or(DEFAULT_SEARCH_RESULTS, |n| {
-                usize::try_from(n)
-                    .unwrap_or(DEFAULT_SEARCH_RESULTS)
-                    .clamp(1, MAX_SEARCH_RESULTS)
-            });
+        let count =
+            input
+                .get("count")
+                .and_then(Value::as_u64)
+                .map_or(DEFAULT_SEARCH_RESULTS, |n| {
+                    usize::try_from(n)
+                        .unwrap_or(DEFAULT_SEARCH_RESULTS)
+                        .clamp(1, MAX_SEARCH_RESULTS)
+                });
 
         let backend = resolve_backend()?;
         let raw = run_search(&backend, query, count).await?;
@@ -1044,7 +1060,10 @@ mod tests {
             blocked_reason("100.64.0.1".parse().unwrap()),
             Some("CGNAT shared address")
         );
-        assert_eq!(blocked_reason("::1".parse().unwrap()), Some("loopback address"));
+        assert_eq!(
+            blocked_reason("::1".parse().unwrap()),
+            Some("loopback address")
+        );
         assert_eq!(
             blocked_reason("fd00::1".parse().unwrap()),
             Some("unique-local address")
@@ -1072,7 +1091,10 @@ mod tests {
             let err = fetch_page("http://127.0.0.1:1/", 1024).await.unwrap_err();
             let text = err.to_string();
             assert!(text.contains("loopback address"), "{text}");
-            assert!(text.contains(&crate::env::name(ALLOW_PRIVATE_ENV)), "{text}");
+            assert!(
+                text.contains(&crate::env::name(ALLOW_PRIVATE_ENV)),
+                "{text}"
+            );
 
             let err = fetch_page("http://169.254.169.254/latest/meta-data/", 1024)
                 .await
@@ -1159,7 +1181,10 @@ mod tests {
     fn missing_credential_names_the_key_to_set() {
         let err = no_provider_error().to_string();
         assert!(err.contains(&crate::env::name(SEARCH_API_KEY_ENV)), "{err}");
-        assert!(err.contains(&crate::env::name(SEARCH_PROVIDER_ENV)), "{err}");
+        assert!(
+            err.contains(&crate::env::name(SEARCH_PROVIDER_ENV)),
+            "{err}"
+        );
         assert!(err.contains("BRAVE_SEARCH_API_KEY"), "{err}");
     }
 

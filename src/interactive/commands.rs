@@ -192,7 +192,8 @@ fn provider_has_dedicated_login_flow(provider: &str) -> bool {
 /// no client id is explicitly configured, since that path is the most robust on
 /// headless/SSH sessions where a localhost OAuth redirect can't be reached.
 fn should_use_copilot_device_flow() -> bool {
-    if crate::env::var("COPILOT_FORCE_DEVICE_FLOW").is_some_and(|v| matches!(v.as_str(), "1" | "true" | "yes"))
+    if crate::env::var("COPILOT_FORCE_DEVICE_FLOW")
+        .is_some_and(|v| matches!(v.as_str(), "1" | "true" | "yes"))
     {
         return true;
     }

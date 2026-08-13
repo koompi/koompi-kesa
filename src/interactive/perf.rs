@@ -37,8 +37,7 @@ pub(super) const FRAME_BUDGET_US: u64 = 16_667;
 
 impl FrameTimingStats {
     pub(super) fn new() -> Self {
-        let enabled =
-            crate::env::var_os("PERF_TELEMETRY").is_some_and(|v| v == "1" || v == "true");
+        let enabled = crate::env::var_os("PERF_TELEMETRY").is_some_and(|v| v == "1" || v == "true");
         Self {
             frame_times_us: std::cell::RefCell::new(VecDeque::with_capacity(FRAME_TIMING_WINDOW)),
             content_build_times_us: std::cell::RefCell::new(VecDeque::with_capacity(

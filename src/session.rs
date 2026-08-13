@@ -2989,8 +2989,7 @@ impl Session {
         let durability_mode = resolve_autosave_durability_mode(
             cli.session_durability.as_deref(),
             config.session_durability.as_deref(),
-            crate::env::var("SESSION_DURABILITY_MODE")
-                .as_deref(),
+            crate::env::var("SESSION_DURABILITY_MODE").as_deref(),
         );
         if cli.no_session {
             let mut session = Self::in_memory();

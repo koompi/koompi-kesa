@@ -719,8 +719,7 @@ static GLOBAL_METRICS: OnceLock<SessionMetrics> = OnceLock::new();
 pub fn global() -> &'static SessionMetrics {
     GLOBAL_METRICS.get_or_init(|| {
         let metrics = SessionMetrics::new();
-        let enabled =
-            crate::env::var_os("PERF_TELEMETRY").is_some_and(|v| v == "1" || v == "true");
+        let enabled = crate::env::var_os("PERF_TELEMETRY").is_some_and(|v| v == "1" || v == "true");
         if enabled {
             metrics.enabled.store(true, Ordering::Relaxed);
         }

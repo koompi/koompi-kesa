@@ -777,11 +777,10 @@ impl DualExecOracleConfig {
             .and_then(|raw| raw.trim().parse::<u64>().ok())
             .unwrap_or(DUAL_EXEC_DEFAULT_OVERHEAD_BUDGET_US)
             .max(1);
-        let overhead_backoff_requests =
-            crate::env::var("EXT_DUAL_EXEC_OVERHEAD_BACKOFF_REQUESTS")
-                .and_then(|raw| raw.trim().parse::<usize>().ok())
-                .unwrap_or(DUAL_EXEC_DEFAULT_OVERHEAD_BACKOFF_REQUESTS)
-                .max(1);
+        let overhead_backoff_requests = crate::env::var("EXT_DUAL_EXEC_OVERHEAD_BACKOFF_REQUESTS")
+            .and_then(|raw| raw.trim().parse::<usize>().ok())
+            .unwrap_or(DUAL_EXEC_DEFAULT_OVERHEAD_BACKOFF_REQUESTS)
+            .max(1);
 
         Self {
             sample_ppm,
@@ -1188,10 +1187,7 @@ fn io_uring_lane_policy_from_env() -> IoUringLanePolicyConfig {
         enabled: parse_env_bool("EXT_IO_URING_ENABLED", default.enabled),
         ring_available: parse_env_bool("EXT_IO_URING_RING_AVAILABLE", default.ring_available),
         max_queue_depth,
-        allow_filesystem: parse_env_bool(
-            "EXT_IO_URING_ALLOW_FILESYSTEM",
-            default.allow_filesystem,
-        ),
+        allow_filesystem: parse_env_bool("EXT_IO_URING_ALLOW_FILESYSTEM", default.allow_filesystem),
         allow_network: parse_env_bool("EXT_IO_URING_ALLOW_NETWORK", default.allow_network),
     }
 }

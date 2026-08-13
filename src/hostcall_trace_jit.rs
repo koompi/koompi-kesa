@@ -83,10 +83,8 @@ impl TraceJitConfig {
             "HOSTCALL_TRACE_JIT_MIN_EXECUTIONS",
             DEFAULT_MIN_JIT_EXECUTIONS,
         );
-        let max_compiled_traces = usize_from_env(
-            "HOSTCALL_TRACE_JIT_MAX_TRACES",
-            DEFAULT_MAX_COMPILED_TRACES,
-        );
+        let max_compiled_traces =
+            usize_from_env("HOSTCALL_TRACE_JIT_MAX_TRACES", DEFAULT_MAX_COMPILED_TRACES);
         let max_guard_failures = u64_from_env(
             "HOSTCALL_TRACE_JIT_MAX_GUARD_FAILURES",
             DEFAULT_MAX_GUARD_FAILURES,

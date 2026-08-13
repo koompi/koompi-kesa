@@ -2371,8 +2371,9 @@ mod stream_delta_batcher_tests {
             },
             &mut batcher,
         );
-        let PiMsg::ToolUpdate { content, details, .. } =
-            rx.try_recv().expect("expected a tool update")
+        let PiMsg::ToolUpdate {
+            content, details, ..
+        } = rx.try_recv().expect("expected a tool update")
         else {
             panic!("expected a tool update");
         };
