@@ -245,6 +245,10 @@ fn default_system_prompt(enabled_tools: &[&str], package_dir: &Path) -> String {
             "subagent",
             "Delegate isolated work to a named Rust Pi child agent; supports single, bounded parallel, and chained workflows",
         ),
+        (
+            "todo",
+            "Track the plan for a multi-step task; send the whole list each call, exactly one item in_progress",
+        ),
     ];
 
     let mut tools = Vec::new();

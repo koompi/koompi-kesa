@@ -1669,6 +1669,53 @@ fn tui_state_tool_end_appends_tool_output_message() {
 }
 
 #[test]
+fn tui_state_second_todo_write_replaces_the_first_block() {
+    let harness = TestHarness::new("tui_state_second_todo_write_replaces_the_first_block");
+    let mut app = build_app(&harness, Vec::new());
+    log_initial_state(&harness, &app);
+
+    let write = |app: &mut PiApp, tool_id: &str, status: &str| {
+        apply_pi(
+            &harness,
+            app,
+            "PiMsg::ToolUpdate(todo)",
+            PiMsg::ToolUpdate {
+                name: "todo".to_string(),
+                tool_id: tool_id.to_string(),
+                content: vec![ContentBlock::Text(TextContent::new("ignored"))],
+                details: Some(serde_json::json!({
+                    "schema": "kode.todo.list.v1",
+                    "todos": [
+                        {
+                            "content": "Run the tests",
+                            "status": status,
+                            "active_form": "Running the tests",
+                        },
+                    ],
+                })),
+            },
+        );
+        apply_pi(
+            &harness,
+            app,
+            "PiMsg::ToolEnd(todo)",
+            PiMsg::ToolEnd {
+                name: "todo".to_string(),
+                tool_id: tool_id.to_string(),
+                is_error: false,
+            },
+        )
+    };
+
+    let first = write(&mut app, "tool-1", "pending");
+    assert_after_contains(&harness, &first, "☐ Run the tests");
+
+    let second = write(&mut app, "tool-2", "in_progress");
+    assert_after_contains(&harness, &second, "▣ Running the tests");
+    assert_after_not_contains(&harness, &second, "☐ Run the tests");
+}
+
+#[test]
 fn tui_state_tool_update_with_diff_details_appends_diff_block() {
     let harness = TestHarness::new("tui_state_tool_update_with_diff_details_appends_diff_block");
     let mut app = build_app(&harness, Vec::new());
