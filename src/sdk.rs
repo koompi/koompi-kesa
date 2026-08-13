@@ -64,7 +64,8 @@ pub type ToolDefinition = ToolDef;
 // ============================================================================
 
 use crate::tools::{
-    BashTool, EditTool, FindTool, GrepTool, HashlineEditTool, LsTool, ReadTool, WriteTool,
+    BashOutputTool, BashTool, EditTool, FindTool, GrepTool, HashlineEditTool, KillShellTool, LsTool,
+    ReadTool, WriteTool,
 };
 
 /// Built-in tool names included in the default non-delegating SDK registry.
@@ -74,6 +75,8 @@ use crate::tools::{
 pub const BUILTIN_TOOL_NAMES: &[&str] = &[
     "read",
     "bash",
+    "bash_output",
+    "kill_shell",
     "edit",
     "write",
     "grep",
@@ -93,6 +96,18 @@ pub fn create_read_tool(cwd: &Path) -> Box<dyn Tool> {
 /// Create a bash tool configured for `cwd`.
 pub fn create_bash_tool(cwd: &Path) -> Box<dyn Tool> {
     Box::new(BashTool::new(cwd))
+}
+
+/// Create the background-shell output reader. Shells are process-wide, so `cwd` plays no part.
+#[must_use]
+pub fn create_bash_output_tool() -> Box<dyn Tool> {
+    Box::new(BashOutputTool)
+}
+
+/// Create the background-shell killer. Shells are process-wide, so `cwd` plays no part.
+#[must_use]
+pub fn create_kill_shell_tool() -> Box<dyn Tool> {
+    Box::new(KillShellTool)
 }
 
 /// Create an edit tool configured for `cwd`.
@@ -148,6 +163,8 @@ pub fn create_all_tools(cwd: &Path) -> Vec<Box<dyn Tool>> {
     vec![
         create_read_tool(cwd),
         create_bash_tool(cwd),
+        create_bash_output_tool(),
+        create_kill_shell_tool(),
         create_edit_tool(cwd),
         create_write_tool(cwd),
         create_grep_tool(cwd),
