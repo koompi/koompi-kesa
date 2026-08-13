@@ -1021,10 +1021,11 @@ impl PiApp {
                 None
             }
             AppAction::ExpandTools => {
-                self.tools_expanded = !self.tools_expanded;
-                // When expanding globally, also reset per-message collapse for
-                // all tools so they show expanded. When collapsing globally,
-                // the global flag is enough (render checks both).
+                let has_collapsed = self
+                    .messages
+                    .iter()
+                    .any(|msg| msg.role == MessageRole::Tool && msg.collapsed);
+                self.tools_expanded = has_collapsed || !self.tools_expanded;
                 if self.tools_expanded {
                     for msg in &mut self.messages {
                         if msg.role == MessageRole::Tool {

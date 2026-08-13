@@ -713,6 +713,32 @@ fn tui_snapshot_tool_output_auto_collapsed() {
 }
 
 #[test]
+fn tui_one_ctrl_o_expands_an_auto_collapsed_tool() {
+    let harness = TestHarness::new("tui_one_ctrl_o_expands_an_auto_collapsed_tool");
+    let mut app = build_app(&harness);
+    let large_output: String = (1..=30)
+        .map(|i| format!("line {i}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let large_output = format!("Tool read output:\n{large_output}");
+    set_conversation(
+        &mut app,
+        vec![tool_msg(&large_output)],
+        Usage::default(),
+        None,
+    );
+    assert!(
+        !normalize_snapshot(&BubbleteaModel::view(&app)).contains("line 30"),
+        "fixture must start auto-collapsed"
+    );
+    send_key(&mut app, KeyMsg::from_type(KeyType::CtrlO));
+    assert!(
+        normalize_snapshot(&BubbleteaModel::view(&app)).contains("line 30"),
+        "one ctrl+o must expand an auto-collapsed tool, not collapse everything"
+    );
+}
+
+#[test]
 fn tui_snapshot_tool_output_small_not_collapsed() {
     let harness = TestHarness::new("tui_snapshot_tool_output_small_not_collapsed");
     let mut app = build_app(&harness);
@@ -844,9 +870,7 @@ fn tui_snapshot_mixed_tool_and_thinking_toggles() {
         Usage::default(),
         None,
     );
-    // Hide thinking (Ctrl+T) and expand tools (Ctrl+O twice to collapse then expand)
     send_key(&mut app, KeyMsg::from_type(KeyType::CtrlT));
-    send_key(&mut app, KeyMsg::from_type(KeyType::CtrlO));
     send_key(&mut app, KeyMsg::from_type(KeyType::CtrlO));
     let context = vec![
         ("scenario".to_string(), "mixed-toggles".to_string()),
