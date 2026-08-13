@@ -1161,6 +1161,9 @@ pub struct Agent {
 
     /// Cached tool definitions. Invalidated when tools change via `extend_tools`.
     cached_tool_defs: Option<Vec<ToolDef>>,
+
+    /// User shell hooks, read from settings on the first tool call.
+    shell_hooks: OnceLock<Arc<crate::hooks::HookRunner>>,
 }
 
 impl Agent {
@@ -1176,7 +1179,14 @@ impl Agent {
             follow_up_fetchers: Vec::new(),
             message_queue: MessageQueue::new(QueueMode::OneAtATime, QueueMode::OneAtATime),
             cached_tool_defs: None,
+            shell_hooks: OnceLock::new(),
         }
+    }
+
+    /// Shell hooks for this session. Empty unless the user configured any.
+    pub fn shell_hooks(&self) -> &Arc<crate::hooks::HookRunner> {
+        self.shell_hooks
+            .get_or_init(|| Arc::new(crate::hooks::HookRunner::from_settings()))
     }
 
     /// Get the current message history.
@@ -3037,7 +3047,19 @@ impl Agent {
             .request_tool_approval(&tool_call, Arc::clone(&on_event))
             .await;
 
-        let (mut output, is_error) = if let Some(output) = approval_denied_output {
+        // A denied call never reaches a hook: the policy decision comes first.
+        let hook_blocked_output = if approval_denied_output.is_some() {
+            None
+        } else {
+            self.run_pre_tool_use_hook(&tool_call).await
+        };
+        // PostToolUse describes a tool that ran, so every path that skips the
+        // spawn leaves this false.
+        let mut tool_ran = false;
+
+        let (mut output, mut is_error) = if let Some(output) = approval_denied_output {
+            (output, true)
+        } else if let Some(output) = hook_blocked_output {
             (output, true)
         } else if let Some(extensions) = &extensions {
             let hook_started_at = Instant::now();
@@ -3052,6 +3074,7 @@ impl Agent {
             if let Some(blocked_output) = hook_outcome {
                 (blocked_output, true)
             } else {
+                tool_ran = true;
                 let tool_started_at = Instant::now();
                 let outcome = self
                     .execute_tool_without_hooks(&tool_call, Arc::clone(&on_event))
@@ -3060,6 +3083,7 @@ impl Agent {
                 outcome
             }
         } else {
+            tool_ran = true;
             let tool_started_at = Instant::now();
             let outcome = self
                 .execute_tool_without_hooks(&tool_call, Arc::clone(&on_event))
@@ -3074,7 +3098,64 @@ impl Agent {
             record_extension_hostcall_latency(&latency, hook_started_at.elapsed());
         }
 
+        if tool_ran {
+            self.run_post_tool_use_hook(&tool_call, &mut output, &mut is_error)
+                .await;
+        }
+
         (output, is_error)
+    }
+
+    /// Blocked by a `PreToolUse` hook: the hook's stderr becomes the result.
+    async fn run_pre_tool_use_hook(&self, tool_call: &ToolCall) -> Option<ToolOutput> {
+        let hooks = self.shell_hooks();
+        if hooks.is_empty() {
+            return None;
+        }
+
+        match hooks
+            .pre_tool_use(&tool_call.name, &tool_call.arguments)
+            .await
+        {
+            crate::hooks::HookDecision::Allow => None,
+            crate::hooks::HookDecision::Block { reason } => Some(ToolOutput {
+                content: vec![ContentBlock::Text(TextContent::new(reason.clone()))],
+                details: Some(json!({
+                    "status": "blocked",
+                    "source": "PreToolUse hook",
+                    "reason": reason,
+                })),
+                is_error: true,
+            }),
+        }
+    }
+
+    /// The tool already ran, so a `PostToolUse` block is feedback appended to
+    /// the result rather than a refusal.
+    async fn run_post_tool_use_hook(
+        &self,
+        tool_call: &ToolCall,
+        output: &mut ToolOutput,
+        is_error: &mut bool,
+    ) {
+        let hooks = self.shell_hooks();
+        if hooks.is_empty() {
+            return;
+        }
+
+        let response = json!({
+            "content": serde_json::to_value(&output.content).unwrap_or(Value::Null),
+            "is_error": *is_error,
+        });
+        if let crate::hooks::HookDecision::Block { reason } = hooks
+            .post_tool_use(&tool_call.name, &tool_call.arguments, &response)
+            .await
+        {
+            output
+                .content
+                .push(ContentBlock::Text(TextContent::new(reason)));
+            *is_error = true;
+        }
     }
 
     /// Effects the policy should judge `tool_name` by.
