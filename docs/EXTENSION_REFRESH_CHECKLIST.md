@@ -27,7 +27,7 @@ git pull origin main
 
 Check for new extensions under:
 - `packages/coding-agent/examples/extensions/`
-- `.kode/extensions/`
+- `.kesa/extensions/`
 
 ### 1.2 GitHub discovery sweep
 

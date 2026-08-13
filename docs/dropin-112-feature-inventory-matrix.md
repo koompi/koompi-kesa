@@ -614,7 +614,7 @@
 
 | Feature | TS Pi | Rust Pi | Notes |
 |---------|-------|---------|-------|
-| `keybindings.json` | Y | Y | `~/.kode/agent/keybindings.json` |
+| `keybindings.json` | Y | Y | `~/.kesa/agent/keybindings.json` |
 
 ---
 

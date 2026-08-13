@@ -2228,15 +2228,15 @@ mod tests {
 
     #[test]
     fn for_sessions_root_constructs_correct_paths() {
-        let root = Path::new("/home/user/.kode/sessions");
+        let root = Path::new("/home/user/.kesa/sessions");
         let index = SessionIndex::for_sessions_root(root);
         assert_eq!(
             index.db_path,
-            PathBuf::from("/home/user/.kode/sessions/session-index.sqlite")
+            PathBuf::from("/home/user/.kesa/sessions/session-index.sqlite")
         );
         assert_eq!(
             index.lock_path,
-            PathBuf::from("/home/user/.kode/sessions/session-index.lock")
+            PathBuf::from("/home/user/.kesa/sessions/session-index.lock")
         );
     }
 
@@ -2244,7 +2244,7 @@ mod tests {
 
     #[test]
     fn sessions_root_returns_parent_of_db_path() {
-        let root = Path::new("/home/user/.kode/sessions");
+        let root = Path::new("/home/user/.kesa/sessions");
         let index = SessionIndex::for_sessions_root(root);
         assert_eq!(index.sessions_root(), root);
     }

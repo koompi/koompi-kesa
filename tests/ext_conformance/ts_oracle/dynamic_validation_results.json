@@ -1033,7 +1033,7 @@
             "name": "session-control",
             "type": "boolean",
             "default": null,
-            "description": "Enable per-session control socket under ~/.kode/session-control"
+            "description": "Enable per-session control socket under ~/.kesa/session-control"
           }
         ],
         "messageRenderers": [

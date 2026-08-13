@@ -9,8 +9,8 @@ This is a **source-first, unfiltered** candidate inventory for extension samplin
    Upstream snapshot: https://upd.dev/badlogic/pi-mono/src/commit/c6fc084534d0091e6243bdcf929249e48c36c9e9/packages/coding-agent/examples/extensions/README.md  
    Repo: https://github.com/badlogic/pi-mono  
 
-2. **pi‑mono local `.kode/extensions`** (seed extensions in repo)  
-   `legacy_pi_mono_code/pi-mono/.kode/extensions/`  
+2. **pi‑mono local `.kesa/extensions`** (seed extensions in repo)  
+   `legacy_pi_mono_code/pi-mono/.kesa/extensions/`  
 
 3. **Official Pi site** (docs + packages)  
    https://buildwithpi.ai/  
@@ -460,7 +460,7 @@ Goal: provide a deterministic checklist of **discovery channels + copy/paste que
 - `pi-mono` examples/extensions list (local snapshot):  
   `legacy_pi_mono_code/pi-mono/packages/coding-agent/examples/extensions/README.md`
 - `pi-mono` seed extensions (local snapshot):  
-  `legacy_pi_mono_code/pi-mono/.kode/extensions/`
+  `legacy_pi_mono_code/pi-mono/.kesa/extensions/`
 - buildwithpi packages + docs:  
   https://buildwithpi.ai/  
   https://buildwithpi.ai/packages
@@ -526,7 +526,7 @@ Executed via `gh search code` (limit=100 unless noted). Result counts:
 | `registerFlag(` | 100 |
 | `registerShortcut(` | 100 |
 | `registerMessageRenderer(` | 100 |
-| `.kode/agent/extensions` | 9 |
+| `.kesa/agent/extensions` | 9 |
 | `"pi-extensions" "ExtensionAPI"` | 0 |
 | `pi.registerTool(` | rate-limited (403) |
 | `pi.registerCommand(` | rate-limited (403) |
@@ -536,7 +536,7 @@ Validation pass (51 unique entrypoints; export‑default + registration/event ho
 
 | Repo | Entrypoint | Evidence |
 |---|---|---|
-| `openclaw/openclaw` | `.kode/extensions/redraws.ts` | `export default` + `registerCommand(...)` |
+| `openclaw/openclaw` | `.kesa/extensions/redraws.ts` | `export default` + `registerCommand(...)` |
 | `mitsuhiko/agent-stuff` | `pi-extensions/loop.ts` | `export default` + `registerTool(...)` |
 | `joelazar/dotfiles` | `dot_pi/agent/extensions/qna.ts` | `export default` + `registerCommand(...)` |
 | `w-winter/dot314` | `extensions/mac-system-theme.ts` | `export default` + `pi.on(...)` |
@@ -549,8 +549,8 @@ Validation pass (51 unique entrypoints; export‑default + registration/event ho
 | `hjanuschka/shitty-extensions` | `extensions/memory-mode.ts` | `export default` + `registerCommand(...)` |
 | `hjanuschka/shitty-extensions` | `extensions/plan-mode.ts` | `export default` + `registerFlag(...)` |
 | `hjanuschka/shitty-extensions` | `extensions/speedreading.ts` | `export default` + `registerCommand(...)` |
-| `Mic92/dotfiles` | `home/.kode/agent/extensions/direnv.ts` | `export default` + `pi.on(...)` |
-| `Mic92/dotfiles` | `home/.kode/agent/extensions/custom-footer.ts` | `export default` + `pi.on(...)` |
+| `Mic92/dotfiles` | `home/.kesa/agent/extensions/direnv.ts` | `export default` + `pi.on(...)` |
+| `Mic92/dotfiles` | `home/.kesa/agent/extensions/custom-footer.ts` | `export default` + `pi.on(...)` |
 | `leiserfg/nix-config` | `home/leiserfg/pi-extensions/fzf.ts` | `export default` + `registerShortcut(...)` |
 | `leiserfg/nix-config` | `home/leiserfg/pi-extensions/notify.ts` | `export default` + `pi.on(...)` |
 | `zenobi-us/dotfiles` | `devtools/files/pi/agent/extensions/lsp/lsp.ts` | `export default` + `pi.on(...)` |
@@ -572,18 +572,18 @@ Validation pass (51 unique entrypoints; export‑default + registration/event ho
 | `prateekmedia/pi-hooks` | `lsp/lsp.ts` | `export default` + `registerMessageRenderer(...)` |
 | `w-winter/dot314` | `extensions/oracle.ts` | `export default` + `registerCommand(...)` |
 | `w-winter/dot314` | `extensions/skill-palette/index.ts` | `export default` + `registerMessageRenderer(...)` |
-| `deybhayden/dotfiles` | `.kode/agent/extensions/answer.ts` | `export default` + `registerCommand(...)` |
-| `deybhayden/dotfiles` | `.kode/agent/extensions/github.ts` | `export default` + `registerTool(...)` |
-| `deybhayden/dotfiles` | `.kode/agent/extensions/uv.ts` | `export default` + `pi.on(...)` |
+| `deybhayden/dotfiles` | `.kesa/agent/extensions/answer.ts` | `export default` + `registerCommand(...)` |
+| `deybhayden/dotfiles` | `.kesa/agent/extensions/github.ts` | `export default` + `registerTool(...)` |
+| `deybhayden/dotfiles` | `.kesa/agent/extensions/uv.ts` | `export default` + `pi.on(...)` |
 | `joshuadavidthomas/agentkit` | `runtimes/pi/extensions/notify.ts` | `export default` + `pi.on(...)` |
-| `l-lin/dotfiles` | `home-manager/modules/share/ai/pi/.kode/agent/extensions/handoff.ts` | `export default` + `registerCommand(...)` |
+| `l-lin/dotfiles` | `home-manager/modules/share/ai/pi/.kesa/agent/extensions/handoff.ts` | `export default` + `registerCommand(...)` |
 | `leiserfg/nix-config` | `home/leiserfg/pi-extensions/loop.ts` | `export default` + `registerTool(...)` |
 | `mikeyobrien/rho` | `extensions/rho.ts` | `export default` + `pi.on(...)` |
 | `nicobailon/pi-coordination` | `scout.ts` | `export default` + `registerTool(...)` |
 | `pasky/pi-amplike` | `extensions/session-query.ts` | `export default` + `registerTool(...)` |
 | `tmustier/pi-extensions` | `arcade/tetris.ts` | `export default` + `registerCommand(...)` |
 | `tmustier/pi-extensions` | `tab-status/tab-status.ts` | `export default` + `pi.on(...)` |
-| `vrslev/dotfiles` | `home/.kode/agent/extensions/todo.ts` | `export default` + `pi.on(...)` |
+| `vrslev/dotfiles` | `home/.kesa/agent/extensions/todo.ts` | `export default` + `pi.on(...)` |
 | `zanieb/pi-plugins` | `extensions/rename.ts` | `export default` + `registerCommand(...)` |
 | `tmustier/pi-extensions` | `arcade/mario-not/mario-not.ts` | `export default` + `registerCommand(...)` |
 | `tmustier/pi-extensions` | `arcade/picman.ts` | `export default` + `registerCommand(...)` |
@@ -720,7 +720,7 @@ OpenClaw extends this with its own **plugin architecture** (4 types: channels, t
 | File format | SKILL.md (YAML frontmatter + markdown) | SKILL.md (metadata + markdown) | PARTIAL |
 | Frontmatter | YAML: `name`, `description`, `disable-model-invocation` | Table/YAML: `metadata.clawdbot.secrets`, `nix.plugin` | NEEDS NORMALIZATION |
 | Body content | Markdown instructions/prompts | Markdown instructions/prompts | YES (direct) |
-| Load path | `~/.kode/agent/skills/*/SKILL.md` | `~/.openclaw/skills/*/SKILL.md` | TRIVIAL REMAP |
+| Load path | `~/.kesa/agent/skills/*/SKILL.md` | `~/.openclaw/skills/*/SKILL.md` | TRIVIAL REMAP |
 | Invocation | `/skill:name` | Automatic (agent discovers and loads) | COMPATIBLE |
 
 **Verdict on SKILL.md compatibility:**
@@ -1028,14 +1028,14 @@ without manual glue. Each selected candidate should carry:
 
 ---
 
-## C) Repo-local `.kode/extensions` (legacy pi-mono)
+## C) Repo-local `.kesa/extensions` (legacy pi-mono)
 
 | Name/Path | Source | Type | Interaction Model | Capabilities (likely) | I/O Pattern | Notes |
 |---|---|---|---|---|---|---|
-| `.kode/extensions/diff.ts` | pi‑mono `.pi` | file | command + UI | exec | FS‑heavy | Local diff UI extension. |
-| `.kode/extensions/files.ts` | pi‑mono `.pi` | file | command + UI | read | FS‑heavy | File browser helper. |
-| `.kode/extensions/prompt-url-widget.ts` | pi‑mono `.pi` | file | UI | http | network‑heavy | URL preview widget. |
-| `.kode/extensions/redraws.ts` | pi‑mono `.pi` | file | UI | env | UI‑centric | UI redraw debugging. |
+| `.kesa/extensions/diff.ts` | pi‑mono `.pi` | file | command + UI | exec | FS‑heavy | Local diff UI extension. |
+| `.kesa/extensions/files.ts` | pi‑mono `.pi` | file | command + UI | read | FS‑heavy | File browser helper. |
+| `.kesa/extensions/prompt-url-widget.ts` | pi‑mono `.pi` | file | UI | http | network‑heavy | URL preview widget. |
+| `.kesa/extensions/redraws.ts` | pi‑mono `.pi` | file | UI | env | UI‑centric | UI redraw debugging. |
 
 ---
 

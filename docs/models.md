@@ -6,8 +6,8 @@ Pi loads available models from a built-in registry and an optional user-defined 
 
 | Path | Description |
 |------|-------------|
-| `~/.kode/agent/models.json` | User-defined model overrides and custom providers |
-| `~/.kode/agent/models.fetched.json` | Generated v2 live-catalog membership; managed only by `--persist-models` |
+| `~/.kesa/agent/models.json` | User-defined model overrides and custom providers |
+| `~/.kesa/agent/models.fetched.json` | Generated v2 live-catalog membership; managed only by `--persist-models` |
 
 Do not hand-edit `models.fetched.json`. Its provider/model IDs are bound to the
 fetching endpoint and transport shape by a non-secret fingerprint and timestamp. The

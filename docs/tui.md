@@ -56,7 +56,7 @@ gates under `tests/perf/reports/`, `docs/evidence/`, and the perf SLI contract.
 
 ### Keyboard shortcuts (`/hotkeys`)
 Use `/hotkeys` to see the current shortcut list (including any user overrides
-from `~/.kode/agent/keybindings.json`).
+from `~/.kesa/agent/keybindings.json`).
 
 ## Slash commands
 

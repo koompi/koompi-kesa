@@ -548,7 +548,7 @@ mod permission_management {
     use super::*;
 
     // Note: ExtensionManager::new() loads persisted permissions from
-    // ~/.kode/agent/permissions.json. Tests must not assume a clean state.
+    // ~/.kesa/agent/permissions.json. Tests must not assume a clean state.
 
     #[test]
     fn reset_all_then_list_is_empty() {

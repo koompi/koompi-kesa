@@ -1441,7 +1441,7 @@ mod error_hints {
 
     #[test]
     fn config_missing_file_hints() {
-        let err = Error::config("Configuration file not found: /home/user/.kode/settings.json");
+        let err = Error::config("Configuration file not found: /home/user/.kesa/settings.json");
         let hints = err.hints();
         assert!(
             hints.summary.contains("missing") || hints.summary.contains("Configuration"),

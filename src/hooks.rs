@@ -74,7 +74,7 @@ pub struct HookEntry {
 /// {
 ///   "hooks": {
 ///     "PreToolUse": [
-///       { "matcher": "bash", "command": "~/.kode/deny-rm.sh", "timeout": 5 }
+///       { "matcher": "bash", "command": "~/.kesa/deny-rm.sh", "timeout": 5 }
 ///     ]
 ///   }
 /// }
@@ -82,7 +82,7 @@ pub struct HookEntry {
 ///
 /// Every command here runs with the user's own privileges and is not sandboxed,
 /// so only a settings file the user controls may supply one. Hooks from a
-/// project's `.kode/settings.json` are ignored unless the *global* settings file
+/// project's `.kesa/settings.json` are ignored unless the *global* settings file
 /// sets `trustProjectHooks`, because a cloned repository can carry that file.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]

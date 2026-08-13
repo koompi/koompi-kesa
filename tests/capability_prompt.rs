@@ -919,7 +919,7 @@ mod prompt_persistence_integration {
         // The handler calls PermissionStore::open_default().record() for persistent actions.
         // We can verify the intent by checking that the cache was updated by
         // the manager (since cache_policy_prompt_decision is called separately).
-        // The actual persistence to ~/.kode/... happens in the TUI handler.
+        // The actual persistence to ~/.kesa/... happens in the TUI handler.
     }
 
     #[test]

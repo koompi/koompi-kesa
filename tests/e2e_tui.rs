@@ -152,7 +152,7 @@ fn setup_config_ui_fixture(session: &TuiSession, package_name: &str) -> PathBuf 
     let project_settings = session
         .harness
         .temp_dir()
-        .join(".kode")
+        .join(".kesa")
         .join("settings.json");
     fs::create_dir_all(
         project_settings
@@ -1333,7 +1333,7 @@ E2E-only skill used by tests.
         .harness
         .record_artifact("skill.valid.SKILL.md", &skill_path);
 
-    let project_pi_dir = session.harness.temp_dir().join(".kode");
+    let project_pi_dir = session.harness.temp_dir().join(".kesa");
     let global_agent_dir = session.harness.temp_dir().join("env").join("agent");
 
     let snapshot_pi_after_add = session.harness.temp_path("snapshot.pi.after_add.txt");

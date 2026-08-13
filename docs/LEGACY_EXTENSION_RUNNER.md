@@ -72,13 +72,13 @@ npx tsx packages/coding-agent/src/cli.ts
 
 **Auto‑discover by copying into extensions dir:**
 ```bash
-cp packages/coding-agent/examples/extensions/permission-gate.ts ~/.kode/agent/extensions/
+cp packages/coding-agent/examples/extensions/permission-gate.ts ~/.kesa/agent/extensions/
 ./pi-test.sh
 ```
 
 **Repo‑local extensions** (already present):
 ```
-legacy_pi_mono_code/pi-mono/.kode/extensions/
+legacy_pi_mono_code/pi-mono/.kesa/extensions/
 ```
 
 ---
@@ -95,8 +95,8 @@ Install packages with extensions/skills/prompts/themes:
 
 Packages install to:
 ```
-~/.kode/agent/git/   (git)
-~/.kode/agent/npm/   (npm)
+~/.kesa/agent/git/   (git)
+~/.kesa/agent/npm/   (npm)
 ```
 
 For project‑local installs:
@@ -109,7 +109,7 @@ For project‑local installs:
 ## 6) Capture Baseline Workflow (Suggested)
 
 1. **Ensure pin:** checkout the exact commit and run `npm ci`.  
-2. **Select extension:** from `examples/extensions/` or `.kode/extensions/`.  
+2. **Select extension:** from `examples/extensions/` or `.kesa/extensions/`.  
 3. **Run with deterministic env:** prefer `--no-env` unless API keys are required.  
 4. **Record outputs:** capture stdout/stderr and any session JSONL outputs.
 

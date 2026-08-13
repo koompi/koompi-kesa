@@ -157,7 +157,7 @@ impl Tool for SubagentTool {
     }
 
     fn description(&self) -> &'static str {
-        "Delegate an isolated task to a named KOOMPI Code child agent. Supports one task, bounded parallel tasks, or a sequential chain whose tasks may reference {previous}. Agent definitions live in $KESA_CODING_AGENT_DIR/agents/*.md or .kode/agents/*.md."
+        "Delegate an isolated task to a named KOOMPI Code child agent. Supports one task, bounded parallel tasks, or a sequential chain whose tasks may reference {previous}. Agent definitions live in $KESA_CODING_AGENT_DIR/agents/*.md or .kesa/agents/*.md."
     }
 
     fn parameters(&self) -> Value {
@@ -375,7 +375,7 @@ fn discover_agents_with_roots(
 fn nearest_project_agents_dir(cwd: &Path) -> Option<PathBuf> {
     let mut current = cwd.to_path_buf();
     loop {
-        let candidate = current.join(".kode").join("agents");
+        let candidate = crate::config::Config::project_dir_in(&current).join("agents");
         if candidate.is_dir() {
             return Some(candidate);
         }
@@ -1065,7 +1065,7 @@ mod tests {
             "---\nname: scout\ndescription: user\nmodel: provider/user\nreasoning: low\ntools: read,grep\nskills: one.md,two.md\n---\nuser prompt",
         );
         write_agent(
-            &cwd.parent().expect("parent").join(".kode/agents"),
+            &cwd.parent().expect("parent").join(".kesa/agents"),
             "scout",
             "---\nname: scout\ndescription: project\nmodel: provider/project\nthinking: high\ntools: read,find\n---\nproject prompt",
         );

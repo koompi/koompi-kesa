@@ -441,6 +441,25 @@ fn main_impl() -> Result<()> {
         extra_writable: cli.sandbox_write.clone(),
     });
 
+    // Before the first read of the agent directory, and before the subcommand
+    // fast paths below, or `kesa doctor` on a fresh rename would report an
+    // empty install.
+    if !cli.no_migrations {
+        let mut warnings = Vec::new();
+        if let Some(source) = kesa::migrations::adopt_legacy_home_dir(&mut warnings) {
+            eprintln!(
+                "Adopted {} into {}. The old directory is untouched; delete it once this install looks right.",
+                source.display(),
+                kesa::config::home_dir()
+                    .join(kesa::config::DIR_NAME)
+                    .display()
+            );
+        }
+        for warning in warnings {
+            eprintln!("Warning: {warning}");
+        }
+    }
+
     // Validate theme file paths.
     // Named themes (without .json, /, ~) are validated later after resource loading.
     let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -5094,7 +5113,7 @@ fn build_config_report(cwd: &Path, packages: &[ConfigPackageState]) -> ConfigRep
     let config_path = config_override_path
         .clone()
         .unwrap_or_else(|| global_dir.join("settings.json"));
-    let project_path = cwd.join(Config::project_dir()).join("settings.json");
+    let project_path = Config::project_dir_in(&cwd).join("settings.json");
 
     let (config_valid, config_error) =
         match Config::load_with_roots(config_override_path.as_deref(), &global_dir, cwd) {
@@ -8627,7 +8646,7 @@ mod tests {
         let global_dir = temp.path().join("global");
         std::fs::create_dir_all(&cwd).expect("create cwd");
         std::fs::create_dir_all(&global_dir).expect("create global dir");
-        std::fs::create_dir_all(cwd.join(".kode")).expect("create project .kode");
+        std::fs::create_dir_all(cwd.join(".kesa")).expect("create project .kesa");
 
         std::fs::write(
             global_dir.join("settings.json"),
@@ -8639,7 +8658,7 @@ mod tests {
         .expect("write global settings");
 
         std::fs::write(
-            cwd.join(".kode").join("settings.json"),
+            cwd.join(".kesa").join("settings.json"),
             serde_json::to_string_pretty(&json!({
                 "packages": [
                     {
@@ -8712,7 +8731,7 @@ mod tests {
         );
 
         let project_value: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(cwd.join(".kode").join("settings.json"))
+            &std::fs::read_to_string(cwd.join(".kesa").join("settings.json"))
                 .expect("read project"),
         )
         .expect("parse project json");
@@ -8764,7 +8783,7 @@ mod tests {
         std::fs::create_dir_all(&cwd).expect("create cwd");
         std::fs::create_dir_all(&global_dir).expect("create global dir");
         std::fs::create_dir_all(&override_dir).expect("create override dir");
-        std::fs::create_dir_all(cwd.join(".kode")).expect("create project .kode");
+        std::fs::create_dir_all(cwd.join(".kesa")).expect("create project .kesa");
 
         let global_original = serde_json::to_string_pretty(&json!({
             "packages": ["npm:global-default"]
@@ -8777,7 +8796,7 @@ mod tests {
             "packages": ["npm:project-default"]
         }))
         .expect("serialize project settings");
-        std::fs::write(cwd.join(".kode").join("settings.json"), &project_original)
+        std::fs::write(cwd.join(".kesa").join("settings.json"), &project_original)
             .expect("write project settings");
 
         std::fs::write(
@@ -8908,7 +8927,7 @@ mod tests {
             fixture.global_original
         );
         assert_eq!(
-            std::fs::read_to_string(fixture.cwd.join(".kode").join("settings.json"))
+            std::fs::read_to_string(fixture.cwd.join(".kesa").join("settings.json"))
                 .expect("read project"),
             fixture.project_original
         );

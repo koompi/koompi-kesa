@@ -343,7 +343,7 @@ impl ResourceLoader {
         // Extension entries:
         // - `--no-extensions` disables configured + auto discovery but still allows CLI `-e` sources.
         // - Deduplicate by canonical extension ID so that transpiled cache copies
-        //   in `~/.kode/agent/cache/modules/` don't cause command collisions with
+        //   in `~/.kesa/agent/cache/modules/` don't cause command collisions with
         //   the original source `.ts` extensions (Issue #37).
         let extension_entries = dedupe_extension_entries_by_id(merge_resource_paths(
             &[],
@@ -940,7 +940,7 @@ pub fn load_skills(options: LoadSkillsOptions) -> LoadSkillsResult {
     if options.include_defaults {
         merge_skills(
             load_skills_from_dir_with_visited(
-                options.cwd.join(Config::project_dir()).join("skills"),
+                Config::project_dir_in(&options.cwd).join("skills"),
                 "project".to_string(),
                 true,
                 &mut visited_dirs,
@@ -981,7 +981,7 @@ pub fn load_skills(options: LoadSkillsOptions) -> LoadSkillsResult {
             "user".to_string()
         } else if is_under_path(
             &resolved,
-            &options.cwd.join(Config::project_dir()).join("skills"),
+            &Config::project_dir_in(&options.cwd).join("skills"),
         ) {
             "project".to_string()
         } else {
@@ -1327,7 +1327,7 @@ fn escape_xml(input: &str) -> String {
 pub fn load_prompt_templates(options: LoadPromptTemplatesOptions) -> Vec<PromptTemplate> {
     let mut templates = Vec::new();
     let user_dir = options.agent_dir.join("prompts");
-    let project_dir = options.cwd.join(Config::project_dir()).join("prompts");
+    let project_dir = Config::project_dir_in(&options.cwd).join("prompts");
 
     if options.include_defaults {
         templates.extend(load_templates_from_dir(
@@ -1443,7 +1443,7 @@ pub fn load_themes(options: LoadThemesOptions) -> LoadThemesResult {
     let mut diagnostics = Vec::new();
 
     let user_dir = options.agent_dir.join("themes");
-    let project_dir = options.cwd.join(Config::project_dir()).join("themes");
+    let project_dir = Config::project_dir_in(&options.cwd).join("themes");
 
     if options.include_defaults {
         themes.extend(load_themes_from_dir(
@@ -1984,7 +1984,7 @@ fn module_cache_dir() -> Option<PathBuf> {
         };
     }
     dirs::home_dir().map(|home| {
-        home.join(".kode")
+        home.join(crate::config::DIR_NAME)
             .join("agent")
             .join("cache")
             .join("modules")
@@ -2031,7 +2031,7 @@ fn extension_dedupe_key_from_path(path: &Path) -> Option<String> {
 /// entries over transpiled cache copies (Issue #37).
 ///
 /// When both a source `.ts` extension and its transpiled cache copy in
-/// `~/.kode/agent/cache/modules/` are discovered, the cache entry is dropped to
+/// `~/.kesa/agent/cache/modules/` are discovered, the cache entry is dropped to
 /// prevent command collisions at load time.
 fn dedupe_extension_entries_by_id(entries: Vec<PathBuf>) -> Vec<PathBuf> {
     let cache_dir = module_cache_dir();
@@ -2726,7 +2726,7 @@ mod tests {
             let extension_path = temp_dir.path().join("ext.native.json");
             fs::write(&extension_path, "{}").expect("write extension");
 
-            let settings_dir = temp_dir.path().join(".kode");
+            let settings_dir = temp_dir.path().join(".kesa");
             fs::create_dir_all(&settings_dir).expect("create settings dir");
             let settings_path = settings_dir.join("settings.json");
             let settings = json!({
@@ -3016,7 +3016,7 @@ still frontmatter",
                 },
             },
             ResolvedResource {
-                path: PathBuf::from("/project/.kode/prompts/review.md"),
+                path: PathBuf::from("/project/.kesa/prompts/review.md"),
                 enabled: true,
                 metadata: crate::package_manager::PathMetadata {
                     source: "local:project".to_string(),
@@ -3026,7 +3026,7 @@ still frontmatter",
                 },
             },
             ResolvedResource {
-                path: PathBuf::from("/global/.kode/prompts/review.md"),
+                path: PathBuf::from("/global/.kesa/prompts/review.md"),
                 enabled: true,
                 metadata: crate::package_manager::PathMetadata {
                     source: "local:user".to_string(),
@@ -3072,8 +3072,8 @@ still frontmatter",
             sorted,
             vec![
                 PathBuf::from("/tmp/cli-ext/review.md"),
-                PathBuf::from("/project/.kode/prompts/review.md"),
-                PathBuf::from("/global/.kode/prompts/review.md"),
+                PathBuf::from("/project/.kesa/prompts/review.md"),
+                PathBuf::from("/global/.kesa/prompts/review.md"),
                 PathBuf::from("/project/package/review.md"),
                 PathBuf::from("/global/package/review.md"),
             ]
@@ -3104,7 +3104,7 @@ still frontmatter",
                 },
             },
             ResolvedResource {
-                path: PathBuf::from("/project/.kode/prompts/review.md"),
+                path: PathBuf::from("/project/.kesa/prompts/review.md"),
                 enabled: true,
                 metadata: crate::package_manager::PathMetadata {
                     source: "local:project".to_string(),
@@ -3121,7 +3121,7 @@ still frontmatter",
             vec![
                 PathBuf::from("/tmp/cli-ext/zeta/review.md"),
                 PathBuf::from("/tmp/cli-ext/alpha/review.md"),
-                PathBuf::from("/project/.kode/prompts/review.md"),
+                PathBuf::from("/project/.kesa/prompts/review.md"),
             ],
             "same-tier resources should keep their original source order"
         );
@@ -3144,7 +3144,7 @@ still frontmatter",
             }],
             vec![
                 ResolvedResource {
-                    path: PathBuf::from("/project/.kode/prompts/review.md"),
+                    path: PathBuf::from("/project/.kesa/prompts/review.md"),
                     enabled: true,
                     metadata: crate::package_manager::PathMetadata {
                         source: "local:project".to_string(),
@@ -3154,7 +3154,7 @@ still frontmatter",
                     },
                 },
                 ResolvedResource {
-                    path: PathBuf::from("/global/.kode/prompts/review.md"),
+                    path: PathBuf::from("/global/.kesa/prompts/review.md"),
                     enabled: true,
                     metadata: crate::package_manager::PathMetadata {
                         source: "local:user".to_string(),
@@ -3172,8 +3172,8 @@ still frontmatter",
             vec![
                 explicit_path,
                 PathBuf::from("/tmp/cli-ext/review.md"),
-                PathBuf::from("/project/.kode/prompts/review.md"),
-                PathBuf::from("/global/.kode/prompts/review.md"),
+                PathBuf::from("/project/.kesa/prompts/review.md"),
+                PathBuf::from("/global/.kesa/prompts/review.md"),
             ]
         );
     }

@@ -566,7 +566,7 @@ mod tests {
             r#"{"permissions": {"mode": "plan", "deny": ["Bash(rm:*)"]}}"#,
         )
         .expect("write global settings");
-        let project_settings = project_dir.path().join(".kode");
+        let project_settings = project_dir.path().join(".kesa");
         std::fs::create_dir_all(&project_settings).expect("create project dir");
         std::fs::write(
             project_settings.join("settings.json"),

@@ -627,7 +627,7 @@ pub const GREP_MAX_LINE_LENGTH: usize = 500;
 ### 6.1 File Organization
 
 ```
-~/.kode/agent/sessions/
+~/.kesa/agent/sessions/
 └── --{encoded-cwd}--/
     └── {timestamp}_{session-id}.jsonl
 ```
@@ -794,11 +794,11 @@ pub struct SessionInfoEntry {
 
 | Type | Path |
 |------|------|
-| Global settings | `~/.kode/agent/settings.json` |
-| Project settings | `./.kode/settings.json` |
-| Auth | `~/.kode/agent/auth.json` |
-| Models | `~/.kode/agent/models.json` |
-| Sessions | `~/.kode/agent/sessions/` |
+| Global settings | `~/.kesa/agent/settings.json` |
+| Project settings | `./.kesa/settings.json` |
+| Auth | `~/.kesa/agent/auth.json` |
+| Models | `~/.kesa/agent/models.json` |
+| Sessions | `~/.kesa/agent/sessions/` |
 
 ### 7.2 Settings Structure
 
@@ -885,15 +885,15 @@ pub struct TerminalSettings {
 
 1. CLI flags (highest)
 2. Environment variables
-3. Project settings (`./.kode/settings.json`)
-4. Global settings (`~/.kode/agent/settings.json`)
+3. Project settings (`./.kesa/settings.json`)
+4. Global settings (`~/.kesa/agent/settings.json`)
 5. Built-in defaults (lowest)
 
 ### 7.4 Environment Variables
 
 ```rust
 // Config paths
-KESA_CODING_AGENT_DIR     // Override ~/.kode/agent
+KESA_CODING_AGENT_DIR     // Override ~/.kesa/agent
 KESA_PACKAGE_DIR          // Override package assets
 
 // API Keys (per provider)
@@ -916,7 +916,7 @@ MISTRAL_API_KEY
 
 ### 8.1 Auth File
 
-- **Path:** `~/.kode/agent/auth.json`
+- **Path:** `~/.kesa/agent/auth.json`
 - **Permissions:** `0o600` (read-write owner only)
 - **Locking:** File lock with 30-second stale timeout
 
@@ -1740,8 +1740,8 @@ If `pi` field is absent, defaults apply:
 Skills are markdown files with YAML frontmatter defining agent capabilities.
 
 **File locations:**
-- Global: `~/.kode/agent/skills/*.md`
-- Project: `./.kode/skills/*.md`
+- Global: `~/.kesa/agent/skills/*.md`
+- Project: `./.kesa/skills/*.md`
 - Package: `<package>/skills/*.md`
 
 **Frontmatter schema:**
@@ -1778,8 +1778,8 @@ allowed_tools:             # Optional, restrict to specific tools
 Prompt templates are markdown files for reusable user prompts.
 
 **File locations:**
-- Global: `~/.kode/agent/prompts/*.md`
-- Project: `./.kode/prompts/*.md`
+- Global: `~/.kesa/agent/prompts/*.md`
+- Project: `./.kesa/prompts/*.md`
 - Package: `<package>/prompts/*.md`
 
 **Command format:** `/template-name arg1 arg2 ...`
@@ -1799,8 +1799,8 @@ Prompt templates are markdown files for reusable user prompts.
 Themes are JSON files defining terminal color schemes.
 
 **File locations:**
-- Global: `~/.kode/agent/themes/*.json`
-- Project: `./.kode/themes/*.json`
+- Global: `~/.kesa/agent/themes/*.json`
+- Project: `./.kesa/themes/*.json`
 - Package: `<package>/themes/*.json`
 
 **Schema:**

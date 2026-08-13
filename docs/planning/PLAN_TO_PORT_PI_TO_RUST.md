@@ -138,7 +138,7 @@ Use `tokio` for async I/O (HTTP requests, streaming, file operations).
 ### 6. Configuration
 - TOML format for config files
 - Environment variable overrides
-- Project-local `.kode/` directory support
+- Project-local `.kesa/` directory support
 
 ---
 

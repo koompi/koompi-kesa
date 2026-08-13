@@ -1,7 +1,7 @@
 //! Cross-implementation file locking compatible with Node `proper-lockfile`.
 //!
 //! Upstream TS pi (`@earendil-works/pi-coding-agent`) locks the shared files under
-//! `~/.kode/agent/` (`auth.json`, `settings.json`, `sessions/session-index`) with
+//! `~/.kesa/agent/` (`auth.json`, `settings.json`, `sessions/session-index`) with
 //! [`proper-lockfile`](https://www.npmjs.com/package/proper-lockfile) `4.1.2`.
 //! That protocol represents a held lock as a **directory** created atomically with
 //! `mkdir(2)` at `<target>.lock`; existence means "held", release is `rmdir(2)`,

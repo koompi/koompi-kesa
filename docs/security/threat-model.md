@@ -335,7 +335,7 @@ Vector:
 - Extension updates change behavior without clear provenance controls.
 
 Controls (current + planned):
-- Current: deterministic package lockfile, fail-closed digest/provenance verification, and trust-transition audit ledger (`.kode/packages.lock.json`, `.kode/package-trust-audit.jsonl`).
+- Current: deterministic package lockfile, fail-closed digest/provenance verification, and trust-transition audit ledger (`.kesa/packages.lock.json`, `.kesa/package-trust-audit.jsonl`).
 - Current: extension scanner/ledger evidence path in runtime.
 - Planned: quarantine-to-trust promotion workflow (SEC-2.4).
 

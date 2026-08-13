@@ -8357,7 +8357,7 @@ mod tests {
             assert_eq!(requests.len(), 1);
 
             let state = Arc::new(Mutex::new(serde_json::json!({
-                "sessionFile": "/home/user/.kode/sessions/abc.json"
+                "sessionFile": "/home/user/.kesa/sessions/abc.json"
             })));
             let session = Arc::new(TestSession {
                 state,
@@ -8391,7 +8391,7 @@ mod tests {
                 .eval(
                     r#"
                     if (globalThis.file === "__unset__") throw new Error("get_file not resolved");
-                    if (globalThis.file !== "/home/user/.kode/sessions/abc.json") {
+                    if (globalThis.file !== "/home/user/.kesa/sessions/abc.json") {
                         throw new Error("Expected session file path, got: " + JSON.stringify(globalThis.file));
                     }
                 "#,

@@ -483,12 +483,12 @@ fn check_config(cwd: &Path, findings: &mut Vec<Finding>) {
     check_settings_file(cat, &global_path, "Global settings", findings);
 
     // Project settings
-    let project_path = cwd.join(Config::project_dir()).join("settings.json");
+    let project_path = Config::project_dir_in(&cwd).join("settings.json");
     if project_path.exists() {
         check_settings_file(
             cat,
             &project_path,
-            "Project settings (.kode/settings.json)",
+            "Project settings (.kesa/settings.json)",
             findings,
         );
     } else {
@@ -14049,7 +14049,7 @@ fn doctor_swarm_context_intelligence_json_reports_posture() {
     #[test]
     fn run_doctor_extension_path_uses_supplied_cwd_for_policy_resolution() {
         let project = tempfile::tempdir().expect("project dir");
-        let config_dir = project.path().join(".kode");
+        let config_dir = project.path().join(".kesa");
         std::fs::create_dir_all(&config_dir).expect("create project config dir");
         std::fs::write(
             config_dir.join("settings.json"),
@@ -14084,7 +14084,7 @@ export default function(pi) {
     #[test]
     fn run_doctor_extension_path_reports_config_load_failure_without_aborting() {
         let project = tempfile::tempdir().expect("project dir");
-        let config_dir = project.path().join(".kode");
+        let config_dir = project.path().join(".kesa");
         std::fs::create_dir_all(&config_dir).expect("create project config dir");
         std::fs::write(config_dir.join("settings.json"), r#"{ "extensionPolicy": "#)
             .expect("write malformed project settings");
@@ -14128,7 +14128,7 @@ import net from "node:net";
     #[test]
     fn run_doctor_extension_path_config_load_failure_falls_back_to_safe_policy() {
         let project = tempfile::tempdir().expect("project dir");
-        let config_dir = project.path().join(".kode");
+        let config_dir = project.path().join(".kesa");
         std::fs::create_dir_all(&config_dir).expect("create project config dir");
         std::fs::write(config_dir.join("settings.json"), r#"{ "extensionPolicy": "#)
             .expect("write malformed project settings");
@@ -14166,7 +14166,7 @@ export default function(pi) {
     #[test]
     fn run_doctor_extension_path_config_load_failure_honors_cli_policy_override() {
         let project = tempfile::tempdir().expect("project dir");
-        let config_dir = project.path().join(".kode");
+        let config_dir = project.path().join(".kesa");
         std::fs::create_dir_all(&config_dir).expect("create project config dir");
         std::fs::write(config_dir.join("settings.json"), r#"{ "extensionPolicy": "#)
             .expect("write malformed project settings");

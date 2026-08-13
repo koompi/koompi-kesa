@@ -126,11 +126,11 @@ Tools: `read`, `write`, `edit`, `hashline_edit`, `bash`, `grep`, `find`, `ls`,
 
 ## Configure
 
-Settings live in `~/.kode/settings.json`, and a project can override them from
-`.kode/settings.json`. Project settings merge over global ones rather than
+Settings live in `~/.kesa/settings.json`, and a project can override them from
+`.kesa/settings.json`. Project settings merge over global ones rather than
 replacing them.
 
-Skills, prompts, themes and extensions load from `~/.kode/` and from `.kode/`
+Skills, prompts, themes and extensions load from `~/.kesa/` and from `.kesa/`
 in the project. `kode config` opens the settings UI, `kode doctor` reports on
 the environment, and `kode list` shows what is installed.
 

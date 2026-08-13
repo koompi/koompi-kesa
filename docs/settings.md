@@ -8,8 +8,8 @@ Pi loads settings from (up to) two files:
 
 | Location | Scope |
 |----------|-------|
-| `~/.kode/agent/settings.json` | Global (all projects) |
-| `.kode/settings.json` | Project (current directory) |
+| `~/.kesa/agent/settings.json` | Global (all projects) |
+| `.kesa/settings.json` | Project (current directory) |
 
 You can override the path entirely with `KESA_CONFIG_PATH` (see below).
 
@@ -19,8 +19,8 @@ Run `pi config` to print the effective paths and precedence.
 
 1. CLI flags
 2. Environment variables
-3. Project settings (`.kode/settings.json`)
-4. Global settings (`~/.kode/agent/settings.json`)
+3. Project settings (`.kesa/settings.json`)
+4. Global settings (`~/.kesa/agent/settings.json`)
 5. Built-in defaults
 
 ## `KESA_CONFIG_PATH` (single-file mode)
@@ -32,7 +32,7 @@ If `KESA_CONFIG_PATH` is set, Pi loads *only* that file and skips the global/pro
 Project settings override global settings on a per-field basis.
 
 Important detail: nested objects like `compaction`, `retry`, `images`, `terminal`, `branch_summary`,
-and `thinking_budgets` are treated as *single* fields. If `.kode/settings.json` contains a
+and `thinking_budgets` are treated as *single* fields. If `.kesa/settings.json` contains a
 `compaction` object, it replaces the entire global `compaction` object.
 
 Within a single file, missing nested keys fall back to built-in defaults when accessed (see
@@ -41,12 +41,12 @@ Within a single file, missing nested keys fall back to built-in defaults when ac
 Example:
 
 ```json
-// ~/.kode/agent/settings.json (global)
+// ~/.kesa/agent/settings.json (global)
 { "compaction": { "enabled": false, "reserve_tokens": 16384 } }
 ```
 
 ```json
-// .kode/settings.json (project)
+// .kesa/settings.json (project)
 { "compaction": { "reserve_tokens": 8192 } }
 ```
 

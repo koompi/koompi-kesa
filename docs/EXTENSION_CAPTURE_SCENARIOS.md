@@ -417,7 +417,7 @@ Scenarios (deterministic-first):
 
 - `subagent/ui_integration/deny_project_agents` (interactive)
   - Setup:
-    - have a project agent in `.kode/agents/`
+    - have a project agent in `.kesa/agents/`
     - call subagent with `agentScope: "project"` and `confirmProjectAgents: true`
     - scripted confirm returns `false`
   - Expected:

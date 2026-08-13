@@ -2966,7 +2966,7 @@ fn normalize_tool_diagnostic_snapshot_is_invariant_to_noise() {
                 "nested": [
                     "/tmp/pi-a/project/data/sample.txt",
                     {
-                        "config": "/tmp/pi-a/project/.kode/settings.json"
+                        "config": "/tmp/pi-a/project/.kesa/settings.json"
                     }
                 ]
             }
@@ -2978,7 +2978,7 @@ fn normalize_tool_diagnostic_snapshot_is_invariant_to_noise() {
                     "permissions_octal": "644"
                 },
                 {
-                    "path": "/tmp/pi-a/project/.kode/settings.json",
+                    "path": "/tmp/pi-a/project/.kesa/settings.json",
                     "permissions_octal": "600"
                 }
             ]
@@ -3010,7 +3010,7 @@ fn normalize_tool_diagnostic_snapshot_is_invariant_to_noise() {
                 "nested": [
                     "/var/tmp/pi-b/project/data/sample.txt",
                     {
-                        "config": "/var/tmp/pi-b/project/.kode/settings.json"
+                        "config": "/var/tmp/pi-b/project/.kesa/settings.json"
                     }
                 ]
             }
@@ -3022,7 +3022,7 @@ fn normalize_tool_diagnostic_snapshot_is_invariant_to_noise() {
                     "permissions_octal": "755"
                 },
                 {
-                    "path": "/var/tmp/pi-b/project/.kode/settings.json",
+                    "path": "/var/tmp/pi-b/project/.kesa/settings.json",
                     "permissions_octal": "700"
                 }
             ]

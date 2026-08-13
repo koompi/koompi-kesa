@@ -6,8 +6,8 @@ Skills provide specialized instructions and capabilities to the agent. They are 
 
 Skills are loaded from:
 
-1. **Global**: `~/.kode/agent/skills/*/SKILL.md` or `~/.kode/agent/skills/*.md`
-2. **Project**: `.kode/skills/*/SKILL.md` or `.kode/skills/*.md`
+1. **Global**: `~/.kesa/agent/skills/*/SKILL.md` or `~/.kesa/agent/skills/*.md`
+2. **Project**: `.kesa/skills/*/SKILL.md` or `.kesa/skills/*.md`
 3. **Packages**: Installed packages.
 
 ## File Format

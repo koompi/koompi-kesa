@@ -1095,7 +1095,7 @@ schema exactly. One log entry per line.
 - Stable IDs (like `scenario_id`) must be deterministic and **not** randomized.
 
 **Log sinks (documented contract):**
-- **Runtime:** `~/.kode/agent/logs/extensions/<session_id>.jsonl`
+- **Runtime:** `~/.kesa/agent/logs/extensions/<session_id>.jsonl`
   (override with `KESA_EXTENSION_LOG_DIR`).
 - **Capture:** `tests/ext_conformance/capture/<ext>/<scenario>/extension.log.jsonl`
 - **Harness:** `target/ext_conformance/logs/<scenario_id>.jsonl`

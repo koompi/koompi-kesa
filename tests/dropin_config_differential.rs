@@ -22,7 +22,7 @@ fn load_from_values(global: &serde_json::Value, project: &serde_json::Value) -> 
     let global_dir = temp.path().join("global");
     let cwd = temp.path().join("workspace");
     write_settings(&global_dir.join("settings.json"), global);
-    write_settings(&cwd.join(".kode/settings.json"), project);
+    write_settings(&cwd.join(".kesa/settings.json"), project);
     Config::load_with_roots(None, &global_dir, &cwd).expect("load merged config")
 }
 
@@ -218,7 +218,7 @@ fn g07_config_path_override_skips_global_and_project_merge() {
         &json!({ "theme": "global", "defaultProvider": "anthropic" }),
     );
     write_settings(
-        &cwd.join(".kode/settings.json"),
+        &cwd.join(".kesa/settings.json"),
         &json!({ "theme": "project", "defaultProvider": "gemini" }),
     );
     write_settings(

@@ -7574,8 +7574,8 @@ mod tests {
 
     #[test]
     fn default_models_path_joins_correctly() {
-        let path = default_models_path(Path::new("/home/user/.kode"));
-        assert_eq!(path, PathBuf::from("/home/user/.kode/models.json"));
+        let path = default_models_path(Path::new("/home/user/.kesa"));
+        assert_eq!(path, PathBuf::from("/home/user/.kesa/models.json"));
     }
 
     #[test]

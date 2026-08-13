@@ -4,7 +4,7 @@
 //! - Sources: `npm:pkg`, `git:host/owner/repo[@ref]`, local paths
 //! - Scopes: user (global) and project (local)
 //! - Global npm installs use `npm install -g` (npm-managed global root)
-//! - Git installs are under Pi's agent/project directories (`~/.kode/agent/git`, `./.kode/git`)
+//! - Git installs are under Pi's agent/project directories (`~/.kesa/agent/git`, `./.kesa/git`)
 
 use crate::agent_cx::AgentCx;
 use crate::config::Config;
@@ -112,7 +112,7 @@ impl ResolveRoots {
             ),
             project_settings_path: project_settings_path(cwd),
             global_base_dir: Config::global_dir(),
-            project_base_dir: cwd.join(Config::project_dir()),
+            project_base_dir: Config::project_dir_in(&cwd),
             project_settings_enabled: config_override_path.is_none(),
         }
     }
@@ -895,8 +895,7 @@ impl PackageManager {
         match scope {
             PackageScope::User => Some(Config::global_dir().join("packages.lock.json")),
             PackageScope::Project => Some(
-                self.cwd
-                    .join(Config::project_dir())
+                Config::project_dir_in(&self.cwd)
                     .join("packages.lock.json"),
             ),
             PackageScope::Temporary => None,
@@ -907,8 +906,7 @@ impl PackageManager {
         match scope {
             PackageScope::User => Some(Config::global_dir().join("package-trust-audit.jsonl")),
             PackageScope::Project => Some(
-                self.cwd
-                    .join(Config::project_dir())
+                Config::project_dir_in(&self.cwd)
                     .join("package-trust-audit.jsonl"),
             ),
             PackageScope::Temporary => None,
@@ -1318,11 +1316,11 @@ impl PackageManager {
     }
 
     fn project_npm_root(&self) -> PathBuf {
-        self.cwd.join(Config::project_dir()).join("npm")
+        Config::project_dir_in(&self.cwd).join("npm")
     }
 
     fn project_git_root(&self) -> PathBuf {
-        self.cwd.join(Config::project_dir()).join("git")
+        Config::project_dir_in(&self.cwd).join("git")
     }
 
     #[allow(clippy::unused_self)]
@@ -3469,7 +3467,7 @@ fn parse_git_source(spec: &str, cwd: &Path) -> ParsedSource {
         let repo_path = local_path_from_spec(repo_raw, cwd);
 
         // Use a short stable hash for the on-disk install directory to avoid embedding absolute
-        // paths (slashes, drive letters) into `.kode/git/**` paths.
+        // paths (slashes, drive letters) into `.kesa/git/**` paths.
         let mut hasher = Sha256::new();
         hasher.update(repo_path.to_string_lossy().as_bytes());
         let digest = hasher.finalize();
@@ -4264,7 +4262,7 @@ fn global_settings_path(cwd: &Path) -> PathBuf {
 }
 
 fn project_settings_path(cwd: &Path) -> PathBuf {
-    cwd.join(Config::project_dir()).join("settings.json")
+    Config::project_dir_in(&cwd).join("settings.json")
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -4757,7 +4755,7 @@ mod tests {
         run_async(async {
             let temp_dir = tempfile::tempdir().expect("tempdir");
             let project_root = temp_dir.path().join("project");
-            fs::create_dir_all(project_root.join(".kode")).expect("create project settings dir");
+            fs::create_dir_all(project_root.join(".kesa")).expect("create project settings dir");
 
             let package_root = temp_dir.path().join("pkg");
             fs::create_dir_all(package_root.join("extensions")).expect("create extensions dir");
@@ -4767,7 +4765,7 @@ mod tests {
                 .expect("write b.native.json");
 
             let global_settings_path = temp_dir.path().join("global-settings.json");
-            let project_settings_path = project_root.join(".kode/settings.json");
+            let project_settings_path = project_root.join(".kesa/settings.json");
 
             let global_settings = json!({
                 "packages": [{
@@ -4798,7 +4796,7 @@ mod tests {
                 global_settings_path: global_settings_path.clone(),
                 project_settings_path: project_settings_path.clone(),
                 global_base_dir: temp_dir.path().join("global-base"),
-                project_base_dir: project_root.join(".kode"),
+                project_base_dir: project_root.join(".kesa"),
                 project_settings_enabled: true,
             };
             fs::create_dir_all(&roots.global_base_dir).expect("create global base dir");
@@ -4835,10 +4833,10 @@ mod tests {
     fn test_list_packages_with_override_roots_ignores_project_settings() {
         let temp_dir = tempfile::tempdir().expect("tempdir");
         let project_root = temp_dir.path().join("project");
-        fs::create_dir_all(project_root.join(".kode")).expect("create project settings dir");
+        fs::create_dir_all(project_root.join(".kesa")).expect("create project settings dir");
 
         let override_settings_path = temp_dir.path().join("override-settings.json");
-        let project_settings_path = project_root.join(".kode/settings.json");
+        let project_settings_path = project_root.join(".kesa/settings.json");
 
         fs::write(
             &override_settings_path,
@@ -4875,8 +4873,8 @@ mod tests {
         run_async(async {
             let temp_dir = tempfile::tempdir().expect("tempdir");
             let project_root = temp_dir.path().join("project");
-            fs::create_dir_all(project_root.join(".kode")).expect("create project settings dir");
-            fs::create_dir_all(project_root.join(".kode/extensions"))
+            fs::create_dir_all(project_root.join(".kesa")).expect("create project settings dir");
+            fs::create_dir_all(project_root.join(".kesa/extensions"))
                 .expect("create project extension dir");
 
             let package_root = temp_dir.path().join("pkg");
@@ -4889,14 +4887,14 @@ mod tests {
             fs::write(package_root2.join("extensions/b.native.json"), "{}")
                 .expect("write b.native.json");
             let project_local_extension =
-                project_root.join(".kode/extensions/project-local.native.json");
+                project_root.join(".kesa/extensions/project-local.native.json");
             let project_auto_extension =
-                project_root.join(".kode/extensions/project-auto.native.json");
+                project_root.join(".kesa/extensions/project-auto.native.json");
             fs::write(&project_local_extension, "{}").expect("write project local extension");
             fs::write(&project_auto_extension, "{}").expect("write project auto extension");
 
             let override_settings_path = temp_dir.path().join("override-settings.json");
-            let project_settings_path = project_root.join(".kode/settings.json");
+            let project_settings_path = project_root.join(".kesa/settings.json");
 
             let override_settings = json!({
                 "packages": [{
@@ -4929,7 +4927,7 @@ mod tests {
                 global_settings_path: override_settings_path.clone(),
                 project_settings_path: project_settings_path.clone(),
                 global_base_dir: temp_dir.path().join("global-base"),
-                project_base_dir: project_root.join(".kode"),
+                project_base_dir: project_root.join(".kesa"),
                 project_settings_enabled: false,
             };
             fs::create_dir_all(&roots.global_base_dir).expect("create global base dir");
@@ -7605,11 +7603,11 @@ mod tests {
         run_async(async {
             let temp_dir = tempfile::tempdir().expect("tempdir");
             let project_root = temp_dir.path().join("project");
-            fs::create_dir_all(project_root.join(".kode")).expect("create project settings dir");
+            fs::create_dir_all(project_root.join(".kesa")).expect("create project settings dir");
 
             // Pre-install a project-scoped npm package satisfying its range.
             let installed = project_root
-                .join(".kode")
+                .join(".kesa")
                 .join("npm")
                 .join("node_modules")
                 .join("pi-test-preinstalled-pkg");
@@ -7621,7 +7619,7 @@ mod tests {
             .expect("write package.json");
             fs::write(installed.join("extensions/a.native.json"), "{}").expect("write extension");
 
-            let project_settings_path = project_root.join(".kode/settings.json");
+            let project_settings_path = project_root.join(".kesa/settings.json");
             fs::write(
                 &project_settings_path,
                 serde_json::to_string_pretty(&json!({
@@ -7635,7 +7633,7 @@ mod tests {
                 global_settings_path: temp_dir.path().join("global-settings.json"),
                 project_settings_path,
                 global_base_dir: temp_dir.path().join("global-base"),
-                project_base_dir: project_root.join(".kode"),
+                project_base_dir: project_root.join(".kesa"),
                 project_settings_enabled: true,
             };
             fs::create_dir_all(&roots.global_base_dir).expect("create global base dir");
@@ -7690,7 +7688,7 @@ mod tests {
 
     #[test]
     fn auto_dirs_constructs_correct_paths() {
-        let base = Path::new("/home/user/.kode/agent");
+        let base = Path::new("/home/user/.kesa/agent");
         let dirs = AutoDirs::new(base);
         assert_eq!(dirs.extensions, base.join("extensions"));
         assert_eq!(dirs.skills, base.join("skills"));
@@ -7906,7 +7904,7 @@ mod tests {
             )
             .expect("first lock verification");
 
-        let lockfile_path = cwd.join(".kode").join("packages.lock.json");
+        let lockfile_path = cwd.join(".kesa").join("packages.lock.json");
         let first = fs::read_to_string(&lockfile_path).expect("read first lockfile");
 
         manager
@@ -7978,8 +7976,8 @@ mod tests {
             fs::write(pkg.join("index.js"), "export const ok = true;\n").expect("write entry");
         }
 
-        let settings_path = cwd.join(".kode").join("settings.json");
-        fs::create_dir_all(settings_path.parent().unwrap()).expect("mkdir .kode");
+        let settings_path = cwd.join(".kesa").join("settings.json");
+        fs::create_dir_all(settings_path.parent().unwrap()).expect("mkdir .kesa");
         fs::write(
             &settings_path,
             json!({ "packages": ["./pkg1", "./pkg2"] }).to_string(),
@@ -7994,7 +7992,7 @@ mod tests {
             .verify_and_record_lock("./pkg2", PackageScope::Project, PackageLockAction::Install)
             .expect("lock pkg2");
 
-        let lockfile_path = cwd.join(".kode").join("packages.lock.json");
+        let lockfile_path = cwd.join(".kesa").join("packages.lock.json");
         let before = read_package_lockfile(&lockfile_path).expect("read pre-reconcile lockfile");
         assert_eq!(
             before.entries.len(),
@@ -8044,7 +8042,7 @@ mod tests {
         assert!(again.is_empty(), "second reconcile should prune nothing");
 
         // Audit event should record the reconciled prune.
-        let audit_path = cwd.join(".kode").join("package-trust-audit.jsonl");
+        let audit_path = cwd.join(".kesa").join("package-trust-audit.jsonl");
         let audit = fs::read_to_string(&audit_path).expect("read audit log");
         assert!(
             audit.lines().any(|line| line.contains("\"reconciled\"")),
@@ -8078,8 +8076,8 @@ mod tests {
         fs::create_dir_all(&pkg).expect("mkdir keep-me");
         fs::write(pkg.join("index.js"), "export const ok = true;\n").expect("write entry");
 
-        let settings_path = cwd.join(".kode").join("settings.json");
-        fs::create_dir_all(settings_path.parent().unwrap()).expect("mkdir .kode");
+        let settings_path = cwd.join(".kesa").join("settings.json");
+        fs::create_dir_all(settings_path.parent().unwrap()).expect("mkdir .kesa");
         fs::write(
             &settings_path,
             json!({ "packages": ["./keep-me"] }).to_string(),
@@ -8095,7 +8093,7 @@ mod tests {
             )
             .expect("lock keep-me");
 
-        let lockfile_path = cwd.join(".kode").join("packages.lock.json");
+        let lockfile_path = cwd.join(".kesa").join("packages.lock.json");
         let before_len = read_package_lockfile(&lockfile_path)
             .expect("read lockfile")
             .entries

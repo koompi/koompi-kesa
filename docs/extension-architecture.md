@@ -292,7 +292,7 @@ Key security properties:
 
 ### Loading
 
-1. Discovery: scan `~/.kode/agent/extensions/` for `extension.json` manifests
+1. Discovery: scan `~/.kesa/agent/extensions/` for `extension.json` manifests
 2. Parse: `JsExtensionLoadSpec::from_entry_path(path)` validates manifest
 3. QuickJS init: `PiJsRuntime` created with virtual modules + policy
 4. Execute: extension's entry point runs, calls `pi.register(payload)`

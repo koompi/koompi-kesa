@@ -167,14 +167,14 @@ I/O = `fs-heavy`, `network-heavy`, `ui-centric`, `cpu-heavy`, `os-heavy`
 | `with-deps/` | pkg-with-deps | mixed | read, write | medium | fs-heavy |
 | `file-trigger.ts` | legacy-js | event_hook | read | small | fs-heavy |
 
-### B) Repo‑local `.kode/extensions`
+### B) Repo‑local `.kesa/extensions`
 
 | Candidate | Runtime | Interaction | Capabilities | Complexity | I/O |
 |---|---|---|---|---|---|
-| `.kode/extensions/diff.ts` | legacy-js | slash_command, ui_integration | exec | medium | fs-heavy |
-| `.kode/extensions/files.ts` | legacy-js | slash_command, ui_integration | read | small | fs-heavy |
-| `.kode/extensions/prompt-url-widget.ts` | legacy-js | ui_integration | http | medium | network-heavy |
-| `.kode/extensions/redraws.ts` | legacy-js | ui_integration | env | small | ui-centric |
+| `.kesa/extensions/diff.ts` | legacy-js | slash_command, ui_integration | exec | medium | fs-heavy |
+| `.kesa/extensions/files.ts` | legacy-js | slash_command, ui_integration | read | small | fs-heavy |
+| `.kesa/extensions/prompt-url-widget.ts` | legacy-js | ui_integration | http | medium | network-heavy |
+| `.kesa/extensions/redraws.ts` | legacy-js | ui_integration | env | small | ui-centric |
 
 ### C) badlogic gists
 

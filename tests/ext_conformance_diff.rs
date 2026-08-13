@@ -2235,7 +2235,7 @@ fn diff_thirdparty_manifest() {
 // ─── Built-in extensions (bd-k7i) ─────────────────────────────────────────
 
 /// Differential conformance tests on built-in pi-mono extensions (4 extensions
-/// from .kode/extensions/).
+/// from .kesa/extensions/).
 #[test]
 fn diff_builtin_manifest() {
     let selected: Vec<(String, String)> = builtin_extensions().clone();

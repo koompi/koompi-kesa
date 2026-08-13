@@ -4579,7 +4579,7 @@ pub struct PiJsRuntimeConfig {
     ///
     /// When set, transpiled module sources are cached on disk keyed by a
     /// content-aware hash so that SWC transpilation is skipped across process
-    /// restarts. Defaults to `~/.kode/agent/cache/modules/` (overridden by
+    /// restarts. Defaults to `~/.kesa/agent/cache/modules/` (overridden by
     /// `PIJS_MODULE_CACHE_DIR`). Set to `None` to disable.
     pub disk_cache_dir: Option<PathBuf>,
 }
@@ -4616,7 +4616,7 @@ impl Default for PiJsRuntimeConfig {
 
 /// Resolve the persistent module disk cache directory.
 ///
-/// Priority: `PIJS_MODULE_CACHE_DIR` env var > `~/.kode/agent/cache/modules/`.
+/// Priority: `PIJS_MODULE_CACHE_DIR` env var > `~/.kesa/agent/cache/modules/`.
 /// Set `PIJS_MODULE_CACHE_DIR=""` to explicitly disable the disk cache.
 fn runtime_disk_cache_dir() -> Option<PathBuf> {
     if let Some(raw) = std::env::var_os("PIJS_MODULE_CACHE_DIR") {
@@ -4627,7 +4627,7 @@ fn runtime_disk_cache_dir() -> Option<PathBuf> {
         };
     }
     dirs::home_dir().map(|home| {
-        home.join(".kode")
+        home.join(crate::config::DIR_NAME)
             .join("agent")
             .join("cache")
             .join("modules")
@@ -9390,7 +9390,7 @@ export function getAgentDir() {
     globalThis.pi && globalThis.pi.env && typeof globalThis.pi.env.get === "function"
       ? globalThis.pi.env.get("HOME")
       : undefined;
-  return home ? `${home}/.kode/agent` : "/home/unknown/.kode/agent";
+  return home ? `${home}/.kesa/agent` : "/home/unknown/.kesa/agent";
 }
 
 // Canonical upstream action IDs used by extension-facing key hints. Keep the
@@ -22145,7 +22145,7 @@ pi.time = {
 
 // Make the host API available globally. `pi` stays bound so extensions
 // published against the upstream API keep working unchanged.
-globalThis.kode = pi;
+globalThis.kesa = pi;
 globalThis.pi = pi;
 
 const __pi_det_time_raw = __pi_env_get('KESA_DETERMINISTIC_TIME_MS');
@@ -29861,7 +29861,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
                 .expect("system time")
                 .as_nanos();
             let workspace = std::env::temp_dir().join(format!("pijs-host-readdir-{unique}"));
-            let prompt_dir = workspace.join(".kode").join("prompts");
+            let prompt_dir = workspace.join(".kesa").join("prompts");
             std::fs::create_dir_all(&prompt_dir).expect("mkdir prompt dir");
             std::fs::write(
                 prompt_dir.join("model-mode.md"),
@@ -29885,7 +29885,7 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
                     globalThis.hostReaddir = {};
                     import('node:fs').then((fs) => {
                         try {
-                            const dir = `${process.cwd()}/.kode/prompts`;
+                            const dir = `${process.cwd()}/.kesa/prompts`;
                             const entries = fs.readdirSync(dir, { withFileTypes: true });
                             const names = entries.map((entry) => entry.name);
                             const prompt = entries.find((entry) => entry.name === 'model-mode.md');

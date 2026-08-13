@@ -1,6 +1,6 @@
 //! Authentication storage and API key resolution.
 //!
-//! Auth file: ~/.kode/agent/auth.json
+//! Auth file: ~/.kesa/agent/auth.json
 
 use crate::config::Config;
 use crate::error::{Error, Result};
@@ -253,7 +253,7 @@ pub enum AuthCredential {
     },
     /// OAuth credential, serialized in the shape upstream TS pi
     /// (`@earendil-works/pi-coding-agent`) reads and writes to the shared
-    /// `~/.kode/agent/auth.json`: `{"type":"oauth","access":..,"refresh":..,"expires":..}`
+    /// `~/.kesa/agent/auth.json`: `{"type":"oauth","access":..,"refresh":..,"expires":..}`
     /// (see `pi-ai` `dist/auth/types.d.ts` `OAuthCredential`). The variant tag and
     /// field names carry `alias`es for the historical koompi_code_cli shape
     /// (`o_auth` / `access_token` / `refresh_token`) so previously-written
@@ -1136,7 +1136,7 @@ where
 impl AuthStorage {
     fn allow_external_provider_lookup(&self) -> bool {
         // External credential auto-detection is intended for Pi's global auth
-        // file (typically `~/.kode/agent/auth.json`). Scoping it this way keeps
+        // file (typically `~/.kesa/agent/auth.json`). Scoping it this way keeps
         // tests and custom auth sandboxes deterministic.
         self.path.eq(&Config::auth_path())
     }
@@ -4516,7 +4516,7 @@ fn kimi_device_id_paths() -> Option<(PathBuf, PathBuf)> {
     let primary = kimi_share_dir()?.join("device_id");
     let legacy = home_dir().map_or_else(
         || primary.clone(),
-        |home| home.join(".kode").join("agent").join("kimi-device-id"),
+        |home| home.join(crate::config::DIR_NAME).join("agent").join("kimi-device-id"),
     );
     Some((primary, legacy))
 }

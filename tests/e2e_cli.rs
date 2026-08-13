@@ -236,7 +236,7 @@ impl CliTestHarness {
 
     #[cfg(unix)]
     fn project_settings_path(&self) -> PathBuf {
-        self.harness.temp_dir().join(".kode").join("settings.json")
+        self.harness.temp_dir().join(".kesa").join("settings.json")
     }
 
     #[cfg(unix)]
@@ -525,7 +525,7 @@ fn resolve_roots_for_cli_harness(harness: &CliTestHarness) -> ResolveRoots {
         global_settings_path: harness.global_settings_path(),
         project_settings_path: harness.project_settings_path(),
         global_base_dir,
-        project_base_dir: harness.harness.temp_dir().join(".kode"),
+        project_base_dir: harness.harness.temp_dir().join(".kesa"),
     }
 }
 
@@ -1981,7 +1981,7 @@ fn e2e_cli_config_show_lists_discovered_package_resources() {
     let project_settings = harness
         .harness
         .temp_dir()
-        .join(".kode")
+        .join(".kesa")
         .join("settings.json");
     fs::create_dir_all(
         project_settings
@@ -2022,7 +2022,7 @@ fn e2e_cli_config_show_surfaces_invalid_package_settings() {
     let project_settings = harness
         .harness
         .temp_dir()
-        .join(".kode")
+        .join(".kesa")
         .join("settings.json");
     fs::create_dir_all(
         project_settings
@@ -2062,7 +2062,7 @@ fn e2e_cli_config_without_tty_surfaces_invalid_package_settings() {
     let project_settings = harness
         .harness
         .temp_dir()
-        .join(".kode")
+        .join(".kesa")
         .join("settings.json");
     fs::create_dir_all(
         project_settings
@@ -2245,7 +2245,7 @@ fn e2e_cli_config_paths_honor_env_overrides() {
     );
     // On macOS, temp_dir() is a symlink; on Windows, strip \\?\ prefix.
     let canonical_temp = canon(harness.harness.temp_dir());
-    let project_path = canonical_temp.join(".kode").join("settings.json");
+    let project_path = canonical_temp.join(".kesa").join("settings.json");
     assert_contains(
         &harness.harness,
         &result.stdout,
@@ -2297,7 +2297,7 @@ fn e2e_cli_config_paths_fallback_to_agent_dir() {
     // On macOS, temp_dir() is a symlink; canonicalize to match binary output.
     // On Windows, strip \\?\ prefix.
     let canonical_temp = canon(harness.harness.temp_dir());
-    let project_path = canonical_temp.join(".kode").join("settings.json");
+    let project_path = canonical_temp.join(".kesa").join("settings.json");
     assert_contains(
         &harness.harness,
         &result.stdout,
@@ -2396,7 +2396,7 @@ fn e2e_cli_packages_install_list_remove_offline() {
     let npm_install_path = harness
         .harness
         .temp_dir()
-        .join(".kode")
+        .join(".kesa")
         .join("npm")
         .join("node_modules")
         .join("demo-pkg");
@@ -2550,7 +2550,7 @@ fn e2e_cli_packages_update_respects_pinning_offline() {
     assert_eq!(
         settings.get("packages"),
         settings_after.get("packages"),
-        "update should not rewrite .kode/settings.json"
+        "update should not rewrite .kesa/settings.json"
     );
 
     write_jsonl_artifacts(
@@ -2670,7 +2670,7 @@ fn e2e_cli_extensions_install_update_manifest_resolution_offline() {
     let remote_pkg_root = harness
         .harness
         .temp_dir()
-        .join(".kode")
+        .join(".kesa")
         .join("npm")
         .join("node_modules")
         .join(remote_extension_id);

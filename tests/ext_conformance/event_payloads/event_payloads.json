@@ -27,7 +27,7 @@
         "payload": {
           "type": "startup",
           "version": "1.0.0-test",
-          "sessionFile": "/tmp/test-workspace/.kode/sessions/test-session.jsonl"
+          "sessionFile": "/tmp/test-workspace/.kesa/sessions/test-session.jsonl"
         },
         "default_response": null
       },
@@ -428,8 +428,8 @@
           "reason": "reload"
         },
         "default_response": {
-          "skillPaths": ["/tmp/test-workspace/.kode/skills"],
-          "promptPaths": ["/tmp/test-workspace/.kode/prompts"]
+          "skillPaths": ["/tmp/test-workspace/.kesa/skills"],
+          "promptPaths": ["/tmp/test-workspace/.kesa/prompts"]
         }
       }
     ],
@@ -649,7 +649,7 @@
         "payload": {
           "type": "session_switch",
           "reason": "resume",
-          "previousSessionFile": "/tmp/test-workspace/.kode/sessions/prev-session.jsonl"
+          "previousSessionFile": "/tmp/test-workspace/.kesa/sessions/prev-session.jsonl"
         },
         "default_response": null
       },
@@ -692,7 +692,7 @@
         "description": "Session fork with a previous session file",
         "payload": {
           "type": "session_fork",
-          "previousSessionFile": "/tmp/test-workspace/.kode/sessions/prev-session.jsonl"
+          "previousSessionFile": "/tmp/test-workspace/.kesa/sessions/prev-session.jsonl"
         },
         "default_response": null
       },

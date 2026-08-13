@@ -60,10 +60,10 @@ pi config show | grep -A 20 extensions.policy
 ### Symptom: "Allow Always" not persisting
 
 **Cause**: The `PermissionStore` writes to
-`~/.kode/agent/extension_permissions.json`. If this file is unwritable or
+`~/.kesa/agent/extension_permissions.json`. If this file is unwritable or
 the directory doesn't exist, decisions are session-only.
 
-**Fix**: Ensure `~/.kode/agent/` exists and is writable.
+**Fix**: Ensure `~/.kesa/agent/` exists and is writable.
 
 ### Policy Precedence (for debugging)
 
@@ -100,7 +100,7 @@ descriptor).
 **Cause**: `JsExtensionLoadSpec::from_entry_path()` cannot find the file.
 
 **Fix**:
-- Verify the extension is installed: `ls ~/.kode/agent/extensions/`
+- Verify the extension is installed: `ls ~/.kesa/agent/extensions/`
 - Check that `extension.json` exists in the extension directory
 - Ensure `entry_path` in `extension.json` points to a valid `.js`/`.ts`
 

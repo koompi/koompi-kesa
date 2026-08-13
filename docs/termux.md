@@ -31,7 +31,7 @@ Pi detects `termux-clipboard-get` and `termux-clipboard-set` when standard clipb
 
 ## Storage
 
-- Sessions live in `~/.kode/agent/sessions`.
+- Sessions live in `~/.kesa/agent/sessions`.
 - To access shared storage (Downloads/Documents), run once:
   ```bash
   termux-setup-storage

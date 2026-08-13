@@ -6,19 +6,19 @@
   "status": "pass",
   "upstream_baseline": {
     "source": "legacy_pi_mono_code/pi-mono/packages/coding-agent/src/core/settings-manager.ts",
-    "merge_semantics": "project .kode/settings.json recursively overrides global settings; arrays and primitive values replace rather than concatenate"
+    "merge_semantics": "project .kesa/settings.json recursively overrides global settings; arrays and primitive values replace rather than concatenate"
   },
   "rust_implementation": {
     "source": "src/config.rs",
-    "merge_semantics": "Config::load_with_roots loads global settings.json, then project .kode/settings.json, and Config::merge recursively merges nested settings with project precedence",
+    "merge_semantics": "Config::load_with_roots loads global settings.json, then project .kesa/settings.json, and Config::merge recursively merges nested settings with project precedence",
     "override_semantics": "KESA_CONFIG_PATH maps to Config::load_with_roots(Some(path), ...) and loads only that file, skipping global/project merge"
   },
   "precedence_model": [
     "CLI runtime overrides",
     "environment runtime overrides",
     "KESA_CONFIG_PATH single-file override, when set",
-    "project .kode/settings.json",
-    "global ~/.kode/agent/settings.json",
+    "project .kesa/settings.json",
+    "global ~/.kesa/agent/settings.json",
     "built-in defaults"
   ],
   "legacy_settings_fields": [

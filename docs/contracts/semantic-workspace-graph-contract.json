@@ -789,7 +789,7 @@
     "path_classes_requiring_redaction": [
       "tests/fixtures/vcr/**",
       "tests/e2e_results/**",
-      ".kode/sessions/**",
+      ".kesa/sessions/**",
       "docs/evidence/**",
       "tests/perf/reports/**"
     ],

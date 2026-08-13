@@ -86,8 +86,8 @@ Move settings and secrets deliberately; do not rely on implicit defaults.
 ### 2.1 Settings
 
 Review and reconcile:
-- `~/.kode/agent/settings.json`
-- project-level `.kode/settings.json`
+- `~/.kesa/agent/settings.json`
+- project-level `.kesa/settings.json`
 
 Key parity-sensitive areas:
 - default provider/model/thinking level

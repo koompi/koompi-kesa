@@ -17,7 +17,7 @@ The **index** is a single JSON file containing a list of extension descriptors +
 for local (client-side) search.
 
 Default location:
-- `~/.kode/agent/extension-index.json`
+- `~/.kesa/agent/extension-index.json`
 - Override via `KESA_EXTENSION_INDEX_PATH`
 
 ### Seed Index (Bundled)

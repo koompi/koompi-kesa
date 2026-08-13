@@ -23,7 +23,7 @@ pub struct MigrationReport {
     pub migrated_auth_providers: Vec<String>,
     /// Path `auth.json` was adopted from when this install had none of its own.
     pub adopted_legacy_auth: Option<PathBuf>,
-    /// Number of session files moved from `~/.kode/agent/*.jsonl` to `sessions/<encoded-cwd>/`.
+    /// Number of session files moved from `~/.kesa/agent/*.jsonl` to `sessions/<encoded-cwd>/`.
     pub migrated_session_files: usize,
     /// Directories where `commands/` was renamed to `prompts/`.
     pub migrated_commands_dirs: Vec<PathBuf>,
@@ -113,7 +113,7 @@ fn run_startup_migrations_with_agent_dir(agent_dir: &Path, cwd: &Path) -> Migrat
             .migrated_commands_dirs
             .push(agent_dir.join("prompts"));
     }
-    let project_dir = cwd.join(Config::project_dir());
+    let project_dir = Config::project_dir_in(&cwd);
     if migrate_commands_to_prompts(&project_dir, &mut report.warnings) {
         report
             .migrated_commands_dirs
@@ -128,6 +128,88 @@ fn run_startup_migrations_with_agent_dir(agent_dir: &Path, cwd: &Path) -> Migrat
         .extend(check_deprecated_extension_dirs(&project_dir, "Project"));
 
     report
+}
+
+/// Staging name for the copy. A crash leaves this behind and `~/.kesa` absent,
+/// so the next run clears it and starts over against an untouched `~/.kode`.
+const ADOPTION_STAGING_SUFFIX: &str = ".adopting";
+
+/// A published v0.2.0 means a user has `~/.kode` holding their auth, sessions
+/// and settings. Copy it, never move it: a half-finished adoption has to leave
+/// the old install working.
+pub fn adopt_legacy_home_dir(warnings: &mut Vec<String>) -> Option<PathBuf> {
+    let home = crate::config::home_dir();
+    adopt_home_dir_at(&home, warnings)
+}
+
+fn adopt_home_dir_at(home: &Path, warnings: &mut Vec<String>) -> Option<PathBuf> {
+    let current = home.join(crate::config::DIR_NAME);
+    if current.symlink_metadata().is_ok() {
+        return None;
+    }
+    let legacy = home.join(crate::config::LEGACY_DIR_NAME);
+    if !legacy.is_dir() {
+        return None;
+    }
+
+    let mut staging = current.clone().into_os_string();
+    staging.push(ADOPTION_STAGING_SUFFIX);
+    let staging = PathBuf::from(staging);
+    if staging.exists() && let Err(err) = fs::remove_dir_all(&staging) {
+        warnings.push(format!(
+            "could not clear the interrupted adoption at {}: {err}",
+            staging.display()
+        ));
+        return None;
+    }
+
+    match copy_tree(&legacy, &staging).and_then(|()| fs::rename(&staging, &current)) {
+        Ok(()) => Some(legacy),
+        Err(err) => {
+            drop(fs::remove_dir_all(&staging));
+            warnings.push(format!(
+                "could not adopt {} into {}: {err}",
+                legacy.display(),
+                current.display()
+            ));
+            None
+        }
+    }
+}
+
+/// `~/.kode/skills` is a symlink into `~/.claude/skills`. Recreate links as
+/// links; following them would copy somebody else's tree in.
+fn copy_tree(from: &Path, to: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(to)?;
+    for entry in fs::read_dir(from)? {
+        let entry = entry?;
+        let source = entry.path();
+        let target = to.join(entry.file_name());
+        let kind = entry.file_type()?;
+        if kind.is_symlink() {
+            copy_symlink(&source, &target)?;
+        } else if kind.is_dir() {
+            copy_tree(&source, &target)?;
+        } else {
+            fs::copy(&source, &target)?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+fn copy_symlink(source: &Path, target: &Path) -> std::io::Result<()> {
+    std::os::unix::fs::symlink(fs::read_link(source)?, target)
+}
+
+#[cfg(windows)]
+fn copy_symlink(source: &Path, target: &Path) -> std::io::Result<()> {
+    let link = fs::read_link(source)?;
+    if source.is_dir() {
+        std::os::windows::fs::symlink_dir(link, target)
+    } else {
+        std::os::windows::fs::symlink_file(link, target)
+    }
 }
 
 // rebrand moved the agent dir out of ~/.pi; pi's auth.json refreshes, the codex fallback does not
@@ -540,6 +622,93 @@ fn set_owner_only_permissions(path: &Path) -> std::io::Result<()> {
 }
 
 #[cfg(test)]
+mod adoption_tests {
+    use super::{ADOPTION_STAGING_SUFFIX, adopt_home_dir_at};
+    use std::fs;
+    use tempfile::TempDir;
+
+    fn legacy_home() -> TempDir {
+        let home = TempDir::new().expect("temp home");
+        let legacy = home.path().join(".kode");
+        fs::create_dir_all(legacy.join("agent/sessions")).expect("create legacy tree");
+        fs::write(legacy.join("agent/auth.json"), r#"{"anthropic":{}}"#).expect("write auth");
+        fs::write(legacy.join("agent/sessions/old.jsonl"), "{}\n").expect("write session");
+        home
+    }
+
+    #[test]
+    fn adopts_the_legacy_directory_and_leaves_it_intact() {
+        let home = legacy_home();
+        let mut warnings = Vec::new();
+        let source = adopt_home_dir_at(home.path(), &mut warnings).expect("adopted");
+
+        assert_eq!(source, home.path().join(".kode"));
+        assert!(warnings.is_empty(), "{warnings:?}");
+        assert_eq!(
+            fs::read_to_string(home.path().join(".kesa/agent/auth.json")).expect("copied auth"),
+            r#"{"anthropic":{}}"#
+        );
+        assert!(
+            home.path().join(".kode/agent/auth.json").exists(),
+            "adoption must copy, never move"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn skills_symlink_stays_a_symlink() {
+        let home = legacy_home();
+        let outside = home.path().join(".claude/skills");
+        fs::create_dir_all(&outside).expect("create skills");
+        fs::write(outside.join("SKILL.md"), "x").expect("write skill");
+        std::os::unix::fs::symlink(&outside, home.path().join(".kode/skills")).expect("symlink");
+
+        let mut warnings = Vec::new();
+        adopt_home_dir_at(home.path(), &mut warnings).expect("adopted");
+
+        let copied = home.path().join(".kesa/skills");
+        assert!(
+            copied
+                .symlink_metadata()
+                .expect("stat copy")
+                .file_type()
+                .is_symlink(),
+            "the copy followed the link instead of recreating it"
+        );
+        assert_eq!(fs::read_link(&copied).expect("read link"), outside);
+    }
+
+    #[test]
+    fn an_existing_directory_is_never_overwritten() {
+        let home = legacy_home();
+        fs::create_dir_all(home.path().join(".kesa/agent")).expect("create current");
+        fs::write(home.path().join(".kesa/agent/auth.json"), "mine").expect("write");
+
+        let mut warnings = Vec::new();
+        assert!(adopt_home_dir_at(home.path(), &mut warnings).is_none());
+        assert_eq!(
+            fs::read_to_string(home.path().join(".kesa/agent/auth.json")).expect("read"),
+            "mine"
+        );
+    }
+
+    #[test]
+    fn an_interrupted_copy_is_cleared_and_retried() {
+        let home = legacy_home();
+        let staging = home.path().join(format!(".kesa{ADOPTION_STAGING_SUFFIX}"));
+        fs::create_dir_all(&staging).expect("create staging");
+        fs::write(staging.join("half-written"), "truncated").expect("write");
+
+        let mut warnings = Vec::new();
+        adopt_home_dir_at(home.path(), &mut warnings).expect("adopted");
+
+        assert!(!staging.exists(), "staging directory outlived the adoption");
+        assert!(!home.path().join(".kesa/half-written").exists());
+        assert!(home.path().join(".kesa/agent/auth.json").exists());
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::run_startup_migrations_with_agent_dir;
     use crate::session::encode_cwd;
@@ -769,7 +938,7 @@ mod tests {
         let temp = TempDir::new().expect("tempdir");
         let agent_dir = temp.path().join("agent");
         let cwd = temp.path().join("workspace");
-        let project_dir = cwd.join(".kode");
+        let project_dir = cwd.join(".kesa");
         fs::create_dir_all(&agent_dir).expect("create agent dir");
         fs::create_dir_all(&project_dir).expect("create project dir");
 
@@ -815,7 +984,7 @@ mod tests {
         let temp = TempDir::new().expect("tempdir");
         let agent_dir = temp.path().join("agent");
         let cwd = temp.path().join("workspace");
-        let project_dir = cwd.join(".kode");
+        let project_dir = cwd.join(".kesa");
         fs::create_dir_all(agent_dir.join("hooks")).expect("create global hooks");
         fs::create_dir_all(project_dir.join("hooks")).expect("create project hooks");
         write(&agent_dir.join("tools/custom.sh"), "#!/bin/sh\necho hi\n");

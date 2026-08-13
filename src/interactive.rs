@@ -565,7 +565,7 @@ impl PiApp {
     }
 
     fn persist_project_theme(&self, theme_name: &str) -> crate::error::Result<()> {
-        let settings_path = self.cwd.join(Config::project_dir()).join("settings.json");
+        let settings_path = Config::project_dir_in(&self.cwd).join("settings.json");
         let mut settings = if settings_path.exists() {
             let content = std::fs::read_to_string(&settings_path)?;
             serde_json::from_str::<Value>(&content)?

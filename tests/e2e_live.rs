@@ -3,7 +3,7 @@
 //! These tests are gated behind `KESA_E2E_TESTS=1` (or `CI_E2E_TESTS=1`) so they
 //! never run in normal
 //! `cargo test`.  They exercise the full streaming pipeline using real API keys
-//! from `~/.kode/agent/models.json`.
+//! from `~/.kesa/agent/models.json`.
 //!
 //! # Running
 //!

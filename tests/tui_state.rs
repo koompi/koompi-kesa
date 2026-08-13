@@ -331,7 +331,7 @@ fn build_app_with_models(
 }
 
 fn read_project_settings_json(harness: &TestHarness) -> serde_json::Value {
-    let path = harness.temp_dir().join(".kode/settings.json");
+    let path = harness.temp_dir().join(".kesa/settings.json");
     let content = std::fs::read_to_string(&path).expect("read settings.json");
     serde_json::from_str(&content).expect("parse settings.json")
 }
@@ -2846,7 +2846,7 @@ fn tui_state_slash_theme_lists_and_switches() {
     let step = press_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, "Switched to theme: light");
 
-    let settings_path = harness.temp_path(".kode/settings.json");
+    let settings_path = harness.temp_path(".kesa/settings.json");
     let settings = fs::read_to_string(settings_path).expect("read settings.json");
     assert!(
         settings.contains("\"theme\": \"light\""),
@@ -3297,18 +3297,18 @@ fn tui_state_slash_settings_opens_selector_and_restores_editor() {
     assert_after_contains(&harness, &step, "light (built-in)");
     assert_after_not_contains(&harness, &step, SINGLE_LINE_HINT);
 
-    // Switch to `light` and ensure it persists to .kode/settings.json.
+    // Switch to `light` and ensure it persists to .kesa/settings.json.
     press_down(&harness, &mut app);
     let step = press_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, "Switched to theme: light");
     assert_after_contains(&harness, &step, SINGLE_LINE_HINT);
 
-    let settings_path = harness.temp_dir().join(".kode/settings.json");
+    let settings_path = harness.temp_dir().join(".kesa/settings.json");
     let content = std::fs::read_to_string(&settings_path).expect("read settings.json");
     let value: serde_json::Value = serde_json::from_str(&content).expect("parse settings.json");
     assert_eq!(value["theme"], "light");
 
-    // Reopen and toggle a delivery mode (should persist to .kode/settings.json).
+    // Reopen and toggle a delivery mode (should persist to .kesa/settings.json).
     type_text(&harness, &mut app, "/settings");
     let step = press_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, "steeringMode:");
@@ -3317,7 +3317,7 @@ fn tui_state_slash_settings_opens_selector_and_restores_editor() {
     let step = press_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, "Updated steeringMode: all");
 
-    let settings_path = harness.temp_dir().join(".kode/settings.json");
+    let settings_path = harness.temp_dir().join(".kesa/settings.json");
     let content = std::fs::read_to_string(&settings_path).expect("read settings.json");
     let value: serde_json::Value = serde_json::from_str(&content).expect("parse settings.json");
     assert_eq!(value["steeringMode"], "all");
@@ -3355,7 +3355,7 @@ fn tui_state_slash_settings_quiet_startup_persists_and_overrides_global() {
     let step = press_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, "Updated quietStartup: on");
 
-    let settings_path = harness.temp_dir().join(".kode/settings.json");
+    let settings_path = harness.temp_dir().join(".kesa/settings.json");
     let content = std::fs::read_to_string(&settings_path).expect("read settings.json");
     let value: serde_json::Value = serde_json::from_str(&content).expect("parse settings.json");
     assert_eq!(value["quiet_startup"], json!(true));

@@ -3924,7 +3924,7 @@ async fn ensure_parent_allows_creation(path: &Path) -> std::io::Result<()> {
 
 /// Same scoping contract as `enforce_cwd_scope`, but also accepts paths under
 /// the configured pi-agent directory (`Config::global_dir()`, default
-/// `~/.kode/agent/`, override via `KESA_CODING_AGENT_DIR`).
+/// `~/.kesa/agent/`, override via `KESA_CODING_AGENT_DIR`).
 ///
 /// Read access is broadened so the model can fetch the bodies of skill files,
 /// prompt templates, and other resources that ship under the agent dir
@@ -3934,7 +3934,7 @@ async fn ensure_parent_allows_creation(path: &Path) -> std::io::Result<()> {
 /// risk surface than the read case warrants. See pi_agent_rust#71.
 ///
 /// Symlink escapes remain blocked because `safe_canonicalize` resolves
-/// symlinks before the prefix check, so e.g. `~/.kode/agent/skills/foo/SKILL.md`
+/// symlinks before the prefix check, so e.g. `~/.kesa/agent/skills/foo/SKILL.md`
 /// pointing at `/etc/passwd` resolves to `/etc/passwd` and fails the prefix
 /// test against both cwd and agent dir.
 fn enforce_read_scope_with_roots(path: &Path, cwd: &Path, agent_dir: &Path) -> Result<PathBuf> {
@@ -14110,7 +14110,7 @@ mod tests {
     }
 
     /// Issue #71: skill files, prompt templates, and themes live under the
-    /// agent dir (`~/.kode/agent/`, default). The agent legitimately needs to
+    /// agent dir (`~/.kesa/agent/`, default). The agent legitimately needs to
     /// read these even when cwd is a user project on a different path.
     /// Ensure `enforce_read_scope_with_roots` accepts the agent dir as a
     /// second valid root without breaking the cwd-only contract for paths

@@ -81,7 +81,7 @@ Self::YourProvider => write!(f, "your-provider"),
 
 ### Step 4: Add Model Entries (Optional)
 
-**File:** User's `~/.kode/agent/models.json` or built-in registry
+**File:** User's `~/.kesa/agent/models.json` or built-in registry
 
 If the provider has well-known models, add entries in `models.json`:
 

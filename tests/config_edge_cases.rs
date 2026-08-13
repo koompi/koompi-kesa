@@ -265,7 +265,7 @@ fn config_load_empty_file_returns_defaults() {
     let cwd = harness.create_dir("cwd");
     let global_dir = harness.create_dir("global");
     write_file(&global_dir.join("settings.json"), "");
-    write_file(&cwd.join(".kode/settings.json"), "   \n  ");
+    write_file(&cwd.join(".kesa/settings.json"), "   \n  ");
 
     let config = Config::load_with_roots(None, &global_dir, &cwd).expect("load config");
     assert!(config.theme.is_none());
@@ -322,7 +322,7 @@ fn config_load_invalid_json_in_project_returns_error() {
     let cwd = harness.create_dir("cwd");
     let global_dir = harness.create_dir("global");
     write_file(&global_dir.join("settings.json"), "{}");
-    write_file(&cwd.join(".kode/settings.json"), "not json");
+    write_file(&cwd.join(".kesa/settings.json"), "not json");
 
     let result = Config::load_with_roots(None, &global_dir, &cwd);
     assert!(

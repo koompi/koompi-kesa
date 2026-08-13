@@ -62,7 +62,7 @@ fn config_hints(msg: &str) -> ErrorHint {
         return ErrorHint {
             summary: "Invalid or missing configuration file",
             hints: &[
-                "Check that ~/.kode/agent/settings.json exists and is valid JSON",
+                "Check that ~/.kesa/agent/settings.json exists and is valid JSON",
                 "Run 'pi config' to see configuration paths and precedence",
             ],
             context_fields: &["file_path"],
@@ -72,7 +72,7 @@ fn config_hints(msg: &str) -> ErrorHint {
         return ErrorHint {
             summary: "Invalid models configuration",
             hints: &[
-                "Verify ~/.kode/agent/models.json has valid JSON syntax",
+                "Verify ~/.kesa/agent/models.json has valid JSON syntax",
                 "Check that 'providers' key exists in models.json",
             ],
             context_fields: &["file_path", "parse_error"],
@@ -132,7 +132,7 @@ fn auth_hints(msg: &str) -> ErrorHint {
             summary: "API key not configured",
             hints: &[
                 "Set ANTHROPIC_API_KEY environment variable",
-                "Or add key to ~/.kode/agent/auth.json",
+                "Or add key to ~/.kesa/agent/auth.json",
             ],
             context_fields: &["provider"],
         };
@@ -480,7 +480,7 @@ fn sqlite_hints(err: &sqlmodel_core::Error) -> ErrorHint {
             summary: "Database corrupted",
             hints: &[
                 "The session index may need to be rebuilt",
-                "Delete ~/.kode/agent/sessions/index.db to rebuild",
+                "Delete ~/.kesa/agent/sessions/index.db to rebuild",
             ],
             context_fields: &["db_path"],
         };

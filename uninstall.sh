@@ -4,7 +4,7 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/uninstall.sh | bash
 #
-# Removes the `kode` binary. Config, sessions and credentials under ~/.kode are
+# Removes the `kode` binary. Config, sessions and credentials under ~/.kesa are
 # left alone unless you pass --purge.
 
 set -euo pipefail
@@ -30,7 +30,7 @@ while [ $# -gt 0 ]; do
 KOOMPI Code uninstaller
 
   --dest <dir>   Where kode was installed (default: \$HOME/.local/bin)
-  --purge        Also delete ~/.kode (config, sessions, credentials)
+  --purge        Also delete ~/.kesa (config, sessions, credentials)
 EOF
       exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; exit 1 ;;
@@ -45,9 +45,9 @@ for candidate in "${DEST}/${BIN}" "$(command -v "$BIN" 2>/dev/null || true)"; do
 done
 [ "$removed" = 1 ] || say "No ${BIN} binary found."
 
-if [ "$PURGE" = 1 ] && [ -d "$HOME/.kode" ]; then
-  rm -rf "$HOME/.kode"
-  ok "Removed ~/.kode"
-elif [ -d "$HOME/.kode" ]; then
-  say "${C_DIM}Config kept at ~/.kode. Pass --purge to delete it.${C_OFF}"
+if [ "$PURGE" = 1 ] && [ -d "$HOME/.kesa" ]; then
+  rm -rf "$HOME/.kesa"
+  ok "Removed ~/.kesa"
+elif [ -d "$HOME/.kesa" ]; then
+  say "${C_DIM}Config kept at ~/.kesa. Pass --purge to delete it.${C_OFF}"
 fi

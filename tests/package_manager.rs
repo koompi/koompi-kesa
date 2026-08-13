@@ -120,7 +120,7 @@ fn installed_path_resolves_project_and_user_scopes_without_external_commands() {
         });
     assert_eq!(
         npm_project,
-        cwd.join(".kode")
+        cwd.join(".kesa")
             .join("npm")
             .join("node_modules")
             .join("react")
@@ -139,7 +139,7 @@ fn installed_path_resolves_project_and_user_scopes_without_external_commands() {
         });
     assert_eq!(
         git_project,
-        cwd.join(".kode")
+        cwd.join(".kesa")
             .join("git")
             .join("github.com")
             .join("example-org")
@@ -152,7 +152,7 @@ fn installed_path_resolves_project_and_user_scopes_without_external_commands() {
     harness.log().info_ctx("installed_path", "git user", |ctx| {
         ctx.push(("path".into(), git_user.display().to_string()));
     });
-    let expected_suffix = Path::new(".kode")
+    let expected_suffix = Path::new(".kesa")
         .join("agent")
         .join("git")
         .join("github.com")
@@ -179,7 +179,7 @@ fn resolve_with_roots_auto_discovery_ignores_parent_gitignore() {
     let manager = PackageManager::new(cwd.clone());
 
     let global_base_dir = harness.create_dir("global");
-    let project_base_dir = cwd.join(".kode");
+    let project_base_dir = cwd.join(".kesa");
     std::fs::create_dir_all(&project_base_dir).expect("create project base dir");
 
     let global_settings_path = global_base_dir.join("settings.json");
@@ -219,7 +219,7 @@ fn resolve_with_roots_applies_auto_discovery_override_patterns() {
     let manager = PackageManager::new(cwd.clone());
 
     let global_base_dir = harness.create_dir("global");
-    let project_base_dir = cwd.join(".kode");
+    let project_base_dir = cwd.join(".kesa");
     std::fs::create_dir_all(&project_base_dir).expect("create project base dir");
 
     let global_settings_path = global_base_dir.join("settings.json");
@@ -313,7 +313,7 @@ fn resolve_with_roots_applies_package_filters_and_prefers_project_package() {
     let manager = PackageManager::new(cwd.clone());
 
     let global_base_dir = harness.create_dir("global");
-    let project_base_dir = cwd.join(".kode");
+    let project_base_dir = cwd.join(".kesa");
     std::fs::create_dir_all(&project_base_dir).expect("create project base dir");
 
     let global_settings_path = global_base_dir.join("settings.json");
@@ -658,7 +658,7 @@ fn resolve_with_roots_auto_discovers_extension_directory_entries() {
     let manager = PackageManager::new(cwd.clone());
 
     let global_base_dir = harness.create_dir("global");
-    let project_base_dir = cwd.join(".kode");
+    let project_base_dir = cwd.join(".kesa");
     std::fs::create_dir_all(&project_base_dir).expect("create project base dir");
 
     let global_settings_path = global_base_dir.join("settings.json");
@@ -716,7 +716,7 @@ fn resolve_with_roots_auto_discovers_extension_directory_index_fallback() {
     let manager = PackageManager::new(cwd.clone());
 
     let global_base_dir = harness.create_dir("global");
-    let project_base_dir = cwd.join(".kode");
+    let project_base_dir = cwd.join(".kesa");
     std::fs::create_dir_all(&project_base_dir).expect("create project base dir");
 
     let global_settings_path = global_base_dir.join("settings.json");
@@ -760,7 +760,7 @@ fn resolve_with_roots_auto_discovery_follows_symlink_extension_dirs() {
     let manager = PackageManager::new(cwd.clone());
 
     let global_base_dir = harness.create_dir("global");
-    let project_base_dir = cwd.join(".kode");
+    let project_base_dir = cwd.join(".kesa");
     std::fs::create_dir_all(&project_base_dir).expect("create project base dir");
 
     let global_settings_path = global_base_dir.join("settings.json");
@@ -852,7 +852,7 @@ fn resolve_with_roots_fixture_project_package_overrides_global_and_filters_resou
     let manager = PackageManager::new(cwd.clone());
 
     let global_base_dir = dest_root.join("global");
-    let project_base_dir = cwd.join(".kode");
+    let project_base_dir = cwd.join(".kesa");
 
     let roots = ResolveRoots {
         project_settings_enabled: true,
