@@ -854,6 +854,7 @@ dependencies = [
  "charmed-lipgloss",
  "lru 0.12.5",
  "pulldown-cmark",
+ "syntect",
  "tracing",
  "unicode-width 0.1.14",
 ]
@@ -1921,6 +1922,17 @@ dependencies = [
  "rayon-core",
  "smallvec",
  "zune-inflate",
+]
+
+[[package]]
+name = "fancy-regex"
+version = "0.16.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "998b056554fbe42e03ae0e152895cd1a7e1002aec800fdc6635d20270260c46f"
+dependencies = [
+ "bit-set",
+ "regex-automata",
+ "regex-syntax",
 ]
 
 [[package]]
@@ -3647,7 +3659,7 @@ dependencies = [
  "bytecount",
  "data-encoding",
  "email_address",
- "fancy-regex",
+ "fancy-regex 0.17.0",
  "fraction",
  "getrandom 0.3.4",
  "idna",
@@ -5293,7 +5305,7 @@ dependencies = [
  "backtrace",
  "bitflags",
  "crossterm",
- "fancy-regex",
+ "fancy-regex 0.17.0",
  "log",
  "lru 0.16.4",
  "num-rational",
@@ -6254,6 +6266,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "656b45c05d95a5704399aeef6bd0ddec7b2b3531b7c9e900abbf7c4d2190c925"
 dependencies = [
  "bincode",
+ "fancy-regex 0.16.2",
  "flate2",
  "fnv",
  "once_cell",

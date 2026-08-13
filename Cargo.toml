@@ -341,7 +341,7 @@ rquickjs = { version = "0.11", features = ["futures", "loader", "bindgen"] }
 rquickjs = { version = "0.11", features = ["futures", "loader", "bindgen"] }
 
 [features]
-default = ["sqlite-sessions", "tui"]
+default = ["sqlite-sessions", "tui", "syntax-highlighting"]
 full = [
     "image-resize",
     "jemalloc",
@@ -369,7 +369,7 @@ image-resize = ["image"]
 clipboard = ["dep:arboard"]
 wasm-host = ["dep:wasmtime"]
 sqlite-sessions = []
-syntax-highlighting = ["rich_rust/syntax"]
+syntax-highlighting = ["rich_rust/syntax", "glamour?/syntax-highlighting"]
 ext-conformance = []
 fuzzing = []
 # Internal-only legacy capture utility. This is deliberately non-default so
