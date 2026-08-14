@@ -466,6 +466,30 @@ fn discover_sibling_index_entries_ignores_huge_parent_clusters() {
 }
 
 #[test]
+fn discover_related_extension_entries_ignores_an_extensions_own_source_dir() {
+    let temp = tempdir().expect("tempdir");
+    let ext_dir = temp.path().join("code-actions");
+    let src_dir = ext_dir.join("src");
+    std::fs::create_dir_all(&src_dir).expect("mkdir src");
+
+    let primary = ext_dir.join("index.ts");
+    std::fs::write(&primary, "export { default } from \"./src/index.js\";\n").expect("write entry");
+    std::fs::write(
+        src_dir.join("index.ts"),
+        "export default function (_pi) {}\n",
+    )
+    .expect("write implementation");
+
+    let discovered =
+        discover_related_extension_entries(&primary).expect("discover should not fail");
+    assert_eq!(
+        discovered,
+        vec![safe_canonicalize(&primary)],
+        "src/ holds the implementation, not a second extension"
+    );
+}
+
+#[test]
 fn discover_related_extension_entries_keeps_shared_extensions_dir_entries_independent() {
     let temp = tempdir().expect("tempdir");
     let extensions_dir = temp.path().join("extensions");

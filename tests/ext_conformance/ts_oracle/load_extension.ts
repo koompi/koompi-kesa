@@ -138,7 +138,9 @@ async function main() {
 	const cwd = args[1] ? path.resolve(args[1]) : envCwd ? path.resolve(envCwd) : process.cwd();
 	// Anything past cwd is a sibling the Rust loader resolves from the package
 	// manifest. Loading only args[0] compares a package against a single file.
-	const entryPaths = [extensionPath, ...args.slice(2).map((arg) => path.resolve(arg))];
+	const entryPaths = [
+		...new Set([extensionPath, ...args.slice(2).map((arg) => path.resolve(arg))]),
+	];
 	const timeoutMs = Number(process.env.KESA_TS_ORACLE_TIMEOUT_MS ?? "20000");
 
 	try {

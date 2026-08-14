@@ -13152,6 +13152,15 @@ fn discover_sibling_index_entries(primary: &Path) -> Vec<PathBuf> {
     out
 }
 
+// An extension's own source and build directories hold its implementation, not
+// a second extension. Loading foo/src/index.ts alongside foo/index.ts registers
+// the same extension twice.
+fn is_non_extension_subdir(name: &str) -> bool {
+    ["src", "lib", "dist", "build", "node_modules"]
+        .iter()
+        .any(|reserved| name.eq_ignore_ascii_case(reserved))
+}
+
 fn discover_sibling_extension_entries(primary: &Path) -> Vec<PathBuf> {
     let canonical_primary = safe_canonicalize(primary);
     let Some(parent_dir) = primary.parent() else {
@@ -13181,6 +13190,13 @@ fn discover_sibling_extension_entries(primary: &Path) -> Vec<PathBuf> {
                 continue;
             }
             if !path.is_dir() {
+                continue;
+            }
+            if path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(is_non_extension_subdir)
+            {
                 continue;
             }
             if let Some(index_path) = resolve_extension_entry_file(&path.join("index")) {

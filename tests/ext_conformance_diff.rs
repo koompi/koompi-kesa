@@ -1072,6 +1072,21 @@ fn compare_category(
     diffs
 }
 
+// Host tool descriptions quote their own truncation cap, and the Rust port
+// raised it in upstream's c96f0466, before the fork - pi-mono says 50KB where
+// every host tool here says 1MB. Extensions that wrap a host tool inherit that
+// wording, and it is upstream's divergence, not theirs.
+fn mask_truncation_limit(text: &str) -> String {
+    const MARKER: &str = " (whichever is hit first)";
+    let Some(marker_at) = text.find(MARKER) else {
+        return text.to_string();
+    };
+    let Some(or_at) = text[..marker_at].rfind(" or ") else {
+        return text.to_string();
+    };
+    format!("{} or <LIMIT>{}", &text[..or_at], &text[marker_at..])
+}
+
 fn compare_field(
     diffs: &mut Vec<String>,
     category: &str,
@@ -1086,6 +1101,16 @@ fn compare_field(
     // Normalize None/null
     let ts_normalized = ts_val.filter(|v| !v.is_null());
     let rust_normalized = rust_val.filter(|v| !v.is_null());
+
+    if field == "description"
+        && let (Some(ts_text), Some(rust_text)) = (
+            ts_normalized.and_then(Value::as_str),
+            rust_normalized.and_then(Value::as_str),
+        )
+        && mask_truncation_limit(ts_text) == mask_truncation_limit(rust_text)
+    {
+        return;
+    }
 
     if ts_normalized != rust_normalized {
         diffs.push(format!(
