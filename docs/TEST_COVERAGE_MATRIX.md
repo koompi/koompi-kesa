@@ -147,7 +147,6 @@ This document is the current source-file coverage inventory for `src/**/*.rs`. I
 | `src/subagents.rs` | Native isolated child-agent tool | Unit tests in this module; opt-in registration coverage through built-in tool tests. |
 | `src/swarm_activity_ledger.rs` | Swarm activity ledger | Unit; evidence docs in `docs/swarm-activity-ledger.md`, CI evidence bundle tests. |
 | `src/swarm_flight_recorder.rs` | Swarm flight recorder | Unit and E2E; `tests/e2e_swarm_flight_recorder.rs` covers deterministic multi-agent replay artifacts. |
-| `src/swarm_progress_slo.rs` | Swarm progress SLO evaluation | Unit; `tests/swarm_progress_slo_contract.rs`. |
 | `src/swarm_replay.rs` | Swarm trace replay and policy comparison | Unit; `tests/swarm_replay_trace_contract.rs` and `tests/swarm_replay_ingestor.rs`. |
 | `src/terminal_images.rs` | Terminal images | Unit; interactive/TUI rendering tests. |
 | `src/theme.rs` | Theme loading | Unit; `tests/tui_snapshot.rs`, interactive UI tests. |

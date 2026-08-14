@@ -121,7 +121,6 @@ files = [
     "semantic_workspace_graph_contract",
     "session_conformance",
     "session_store_v2",
-    "swarm_progress_slo_contract",
     "swarm_replay_trace_contract",
     "trust_onboarding_killswitch_sec52",
     "validation_broker_contract",

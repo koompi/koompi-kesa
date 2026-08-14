@@ -230,7 +230,6 @@ pub mod swarm_activity_ledger;
 #[doc(hidden)]
 pub mod swarm_flight_recorder;
 #[doc(hidden)]
-pub mod swarm_progress_slo;
 #[doc(hidden)]
 pub mod swarm_replay;
 #[doc(hidden)]

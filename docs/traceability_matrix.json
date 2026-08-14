@@ -826,10 +826,6 @@
           "justification": "Classified traceability repair suite included so CI governance covers the semantic workspace graph contract."
         },
         {
-          "path": "tests/swarm_progress_slo_contract.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers the swarm progress SLO contract."
-        },
-        {
           "path": "tests/swarm_replay_ingestor.rs",
           "justification": "Classified traceability repair suite included so CI governance covers swarm replay ingestion, policy, and golden-corpus fixtures."
         },
