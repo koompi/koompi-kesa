@@ -1,9 +1,0 @@
-{
-  "error": {
-    "code": "CONFIG_ERROR",
-    "message": "Configuration error: Invalid JSON at line 1443: expected `,` or `}` at line 1 column 3908",
-    "hint": null,
-    "retryable": false,
-    "context": null
-  }
-}

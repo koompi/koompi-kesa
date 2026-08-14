@@ -1,3 +1,0 @@
-repo_path=.
-timestamp=20260315T063533Z
-issue_id=bd-tm2zq
