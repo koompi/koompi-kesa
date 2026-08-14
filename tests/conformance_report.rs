@@ -700,10 +700,78 @@ fn overall_status(status: &ExtensionStatus) -> &'static str {
     if status.diff_status.as_deref() == Some("pass") {
         return "PASS";
     }
+    // A recorded load time says the extension started, and nothing else.
+    // Reporting that as PASS files a benchmark under conformance.
     if status.rust_load_ms.is_some() {
-        return "PASS";
+        return LOAD_ONLY;
     }
     "N/A"
+}
+
+const LOAD_ONLY: &str = "LOAD-ONLY";
+
+const MEASURES_NOTE: &str = "PASS needs at least one behavioural result: a differential registration snapshot matching the TS oracle, a scenario run, a smoke run or a parity run. LOAD-ONLY means the extension loaded and a load time was recorded, and nothing about its behaviour was checked. Coverage is PASS+FAIL over the whole manifest, so LOAD-ONLY and N/A both count as uncovered.";
+
+#[derive(Debug, Default, PartialEq, Eq)]
+struct StatusCounts {
+    total: usize,
+    pass: u32,
+    fail: u32,
+    load_only: u32,
+    na: u32,
+}
+
+impl StatusCounts {
+    const fn tested(&self) -> u32 {
+        self.pass + self.fail
+    }
+
+    fn pass_rate_pct(&self) -> f64 {
+        if self.tested() == 0 {
+            return 0.0;
+        }
+        f64::from(self.pass) / f64::from(self.tested()) * 100.0
+    }
+
+    #[allow(clippy::cast_precision_loss)]
+    fn coverage_rate_pct(&self) -> f64 {
+        if self.total == 0 {
+            return 0.0;
+        }
+        f64::from(self.tested()) / (self.total as f64) * 100.0
+    }
+
+    fn headline(&self) -> String {
+        format!(
+            "{} of {} extensions behaviourally tested ({} pass, {} fail); {} loaded only; {} untested. Coverage {:.1}%.",
+            self.tested(),
+            self.total,
+            self.pass,
+            self.fail,
+            self.load_only,
+            self.na,
+            self.coverage_rate_pct(),
+        )
+    }
+}
+
+fn count_statuses(
+    extensions: &[ManifestExtension],
+    statuses: &BTreeMap<String, ExtensionStatus>,
+) -> StatusCounts {
+    let mut counts = StatusCounts {
+        total: extensions.len(),
+        ..StatusCounts::default()
+    };
+    for ext in extensions {
+        match statuses.get(&ext.id).map_or("N/A", overall_status) {
+            "PASS" => counts.pass += 1,
+            "FAIL" => counts.fail += 1,
+            LOAD_ONLY => counts.load_only += 1,
+            _ => counts.na += 1,
+        }
+    }
+    counts
 }
 
 const fn tier_label(tier: u8) -> &'static str {
@@ -737,18 +805,7 @@ fn generate_markdown(
     }
 
     // Compute aggregate stats
-    let total = extensions.len();
-    let mut pass_count = 0u32;
-    let mut fail_count = 0u32;
-    let mut na_count = 0u32;
-    for ext in extensions {
-        let status = statuses.get(&ext.id);
-        match status.map_or("N/A", overall_status) {
-            "PASS" => pass_count += 1,
-            "FAIL" => fail_count += 1,
-            _ => na_count += 1,
-        }
-    }
+    let counts = count_statuses(extensions, statuses);
 
     let mut md = String::with_capacity(32 * 1024);
 
@@ -758,25 +815,29 @@ fn generate_markdown(
 
     // Summary
     md.push_str("## Summary\n\n");
+    let _ = writeln!(md, "{}\n", counts.headline());
+    let _ = writeln!(md, "{MEASURES_NOTE}\n");
     md.push_str("| Metric | Value |\n");
     md.push_str("|----|----|\n");
-    let _ = writeln!(md, "| Total extensions | {total} |");
-    let _ = writeln!(md, "| PASS | {pass_count} |");
-    let _ = writeln!(md, "| FAIL | {fail_count} |");
-    let _ = writeln!(md, "| N/A (not yet tested) | {na_count} |");
-    let tested_count = pass_count + fail_count;
-    if tested_count > 0 {
-        #[allow(clippy::cast_precision_loss)]
-        let rate = f64::from(pass_count) / f64::from(tested_count) * 100.0;
-        let _ = writeln!(md, "| Pass rate (tested only) | {rate:.1}% |");
-    } else {
-        md.push_str("| Pass rate (tested only) | 0.0% |\n");
-    }
-    if total > 0 {
-        #[allow(clippy::cast_precision_loss)]
-        let coverage = f64::from(tested_count) / (total as f64) * 100.0;
-        let _ = writeln!(md, "| Coverage (tested/total) | {coverage:.1}% |");
-    }
+    let _ = writeln!(md, "| Total extensions | {} |", counts.total);
+    let _ = writeln!(md, "| PASS (behaviour checked) | {} |", counts.pass);
+    let _ = writeln!(md, "| FAIL | {} |", counts.fail);
+    let _ = writeln!(
+        md,
+        "| LOAD-ONLY (loaded, behaviour unchecked) | {} |",
+        counts.load_only
+    );
+    let _ = writeln!(md, "| N/A (not run) | {} |", counts.na);
+    let _ = writeln!(
+        md,
+        "| Pass rate (of behaviourally tested) | {:.1}% |",
+        counts.pass_rate_pct()
+    );
+    let _ = writeln!(
+        md,
+        "| Coverage (behaviourally tested / total) | {:.1}% |",
+        counts.coverage_rate_pct()
+    );
     let _ = writeln!(
         md,
         "| Policy negative tests | {negative_pass} pass, {negative_fail} fail |"
@@ -795,12 +856,16 @@ fn generate_markdown(
             .iter()
             .filter(|e| statuses.get(&e.id).map(overall_status) == Some("FAIL"))
             .count();
+        let tier_load_only = tier_exts
+            .iter()
+            .filter(|e| statuses.get(&e.id).map(overall_status) == Some(LOAD_ONLY))
+            .count();
 
         let _ = writeln!(
             md,
-            "{} extensions ({tier_pass} pass, {tier_fail} fail, {} untested)\n",
+            "{} extensions ({tier_pass} pass, {tier_fail} fail, {tier_load_only} load-only, {} untested)\n",
             tier_exts.len(),
-            tier_exts.len() - tier_pass - tier_fail
+            tier_exts.len() - tier_pass - tier_fail - tier_load_only
         );
 
         md.push_str("| Extension | Version | Tier | Status | Evidence | Load (Rust) | Scenarios | Failures |\n");
@@ -868,6 +933,7 @@ fn generate_markdown(
             let status_emoji = match overall {
                 "PASS" => "PASS",
                 "FAIL" => "FAIL",
+                LOAD_ONLY => LOAD_ONLY,
                 _ => "N/A",
             };
 
@@ -933,14 +999,20 @@ fn generate_markdown(
     // Coverage gaps — group untested extensions by conformance tier
     let untested: Vec<&ManifestExtension> = extensions
         .iter()
-        .filter(|e| statuses.get(&e.id).map_or("N/A", overall_status) == "N/A")
+        .filter(|e| {
+            matches!(
+                statuses.get(&e.id).map_or("N/A", overall_status),
+                "N/A" | LOAD_ONLY
+            )
+        })
         .collect();
     if !untested.is_empty() {
         md.push_str("## Coverage Gaps\n\n");
         let _ = writeln!(
             md,
-            "{} extensions have not been tested yet.\n",
-            untested.len()
+            "{} extensions have no behavioural result, {} of them because loading is all that was measured.\n",
+            untested.len(),
+            counts.load_only,
         );
 
         let mut by_reason: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
@@ -1090,51 +1162,29 @@ fn generate_conformance_report_impl() {
         .expect("write conformance_events.jsonl");
 
     // 4. Write summary JSON
-    let total = extensions.len();
-    let mut pass = 0u32;
-    let mut fail = 0u32;
-    let mut na = 0u32;
-    for ext in &extensions {
-        match statuses.get(&ext.id).map_or("N/A", overall_status) {
-            "PASS" => pass += 1,
-            "FAIL" => fail += 1,
-            _ => na += 1,
-        }
-    }
+    let counts = count_statuses(&extensions, &statuses);
+    let (total, pass, fail, na) = (counts.total, counts.pass, counts.fail, counts.na);
 
     let mut per_tier: BTreeMap<String, Value> = BTreeMap::new();
     for ext in &extensions {
         let entry = per_tier
             .entry(ext.source_tier.clone())
-            .or_insert_with(|| json!({"total": 0, "pass": 0, "fail": 0, "na": 0}));
+            .or_insert_with(|| json!({"total": 0, "pass": 0, "fail": 0, "load_only": 0, "na": 0}));
         let obj = entry.as_object_mut().unwrap();
         *obj.get_mut("total").unwrap() = json!(obj["total"].as_u64().unwrap_or(0) + 1);
-        match statuses.get(&ext.id).map_or("N/A", overall_status) {
-            "PASS" => {
-                *obj.get_mut("pass").unwrap() = json!(obj["pass"].as_u64().unwrap_or(0) + 1);
-            }
-            "FAIL" => {
-                *obj.get_mut("fail").unwrap() = json!(obj["fail"].as_u64().unwrap_or(0) + 1);
-            }
-            _ => {
-                *obj.get_mut("na").unwrap() = json!(obj["na"].as_u64().unwrap_or(0) + 1);
-            }
-        }
+        let bucket = match statuses.get(&ext.id).map_or("N/A", overall_status) {
+            "PASS" => "pass",
+            "FAIL" => "fail",
+            LOAD_ONLY => "load_only",
+            _ => "na",
+        };
+        *obj.get_mut(bucket).unwrap() = json!(obj[bucket].as_u64().unwrap_or(0) + 1);
     }
 
-    let tested = pass + fail;
-    #[allow(clippy::cast_precision_loss)]
-    let pass_rate = if tested > 0 {
-        f64::from(pass) / f64::from(tested) * 100.0
-    } else {
-        0.0
-    };
-    #[allow(clippy::cast_precision_loss)]
-    let coverage_rate = if total > 0 {
-        f64::from(tested) / (total as f64) * 100.0
-    } else {
-        0.0
-    };
+    let tested = counts.tested();
+    let pass_rate = counts.pass_rate_pct();
+    let coverage_rate = counts.coverage_rate_pct();
+    eprintln!("[conformance_report] {}", counts.headline());
 
     // Count evidence artifacts
     let fixture_count = extensions
@@ -1167,9 +1217,12 @@ fn generate_conformance_report_impl() {
             "total": total,
             "pass": pass,
             "fail": fail,
+            "load_only": counts.load_only,
             "na": na,
             "tested": tested,
         },
+        "headline": counts.headline(),
+        "measures": MEASURES_NOTE,
         "pass_rate_pct": pass_rate,
         "coverage_rate_pct": coverage_rate,
         "negative": {
@@ -1892,5 +1945,66 @@ fn conformance_report_default_path_does_not_mutate_release_outputs() {
     assert_eq!(
         before, after,
         "ordinary tests must not freshen release evidence"
+    );
+}
+
+// bd-J44/D27: the headline used to certify PASS on a recorded load time, so a
+// run of 60 load benchmarks and 0 behavioural results reported 100% pass.
+#[test]
+fn load_time_alone_is_not_reported_as_pass() {
+    let tmp = tempdir().expect("create tempdir");
+    std::fs::write(
+        tmp.path().join("load_time_benchmark.json"),
+        r#"{"results": [{"extension": "loaded-only/loaded-only.ts", "rust": {"load_time_ms": 12}}]}"#,
+    )
+    .expect("write load time report");
+    std::fs::write(
+        tmp.path().join("scenario_conformance.json"),
+        r#"{"results": [
+    {"extension_id": "checked", "status": "pass"},
+    {"extension_id": "broken", "status": "fail"}
+  ]}"#,
+    )
+    .expect("write scenario report");
+
+    let mut statuses = BTreeMap::new();
+    ingest_load_time_report(&mut statuses, tmp.path());
+    ingest_scenario_report(&mut statuses, tmp.path());
+
+    let extensions: Vec<ManifestExtension> = ["loaded-only", "checked", "broken", "never-run"]
+        .iter()
+        .map(|id| ManifestExtension {
+            id: (*id).to_string(),
+            entry_path: format!("{id}/{id}.ts"),
+            source_tier: "official-pi-mono".to_string(),
+            conformance_tier: 1,
+            capabilities: Value::Null,
+            registrations: Value::Null,
+            mock_requirements: Vec::new(),
+        })
+        .collect();
+
+    let counts = count_statuses(&extensions, &statuses);
+    eprintln!("headline: {}", counts.headline());
+    eprintln!("measures: {MEASURES_NOTE}");
+
+    assert_eq!(overall_status(&statuses["loaded-only"]), LOAD_ONLY);
+    assert_eq!(overall_status(&statuses["checked"]), "PASS");
+    assert_eq!(overall_status(&statuses["broken"]), "FAIL");
+
+    assert_eq!(
+        counts,
+        StatusCounts {
+            total: 4,
+            pass: 1,
+            fail: 1,
+            load_only: 1,
+            na: 1,
+        }
+    );
+    assert!(
+        (counts.coverage_rate_pct() - 50.0).abs() < f64::EPSILON,
+        "coverage must exclude the load-only and untested extensions: {}",
+        counts.coverage_rate_pct()
     );
 }
