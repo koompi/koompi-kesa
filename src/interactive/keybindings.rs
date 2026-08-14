@@ -959,32 +959,20 @@ impl PiApp {
             // Viewport scrolling
             // =========================================================
             AppAction::PageUp => {
-                // Sync viewport content and height so page_up() has correct
-                // line count and page size.  Save/restore y_offset across
-                // set_content() which can clamp or reset the offset.
-                let saved_offset = self.conversation_viewport.y_offset();
-                let content = self.build_conversation_content();
-                let effective = self.view_effective_conversation_height().max(1);
-                self.conversation_viewport.height = effective;
-                self.conversation_viewport.set_content(content.trim_end());
-                self.conversation_viewport.set_y_offset(saved_offset);
+                self.sync_conversation_viewport_for_paging();
                 self.conversation_viewport.page_up();
                 self.follow_stream_tail = false;
                 None
             }
             AppAction::PageDown => {
-                // Sync viewport content and height so page_down() has correct
-                // line count and page size.  Save/restore y_offset across
-                // set_content() which can clamp or reset the offset.
-                let saved_offset = self.conversation_viewport.y_offset();
-                let content = self.build_conversation_content();
-                let effective = self.view_effective_conversation_height().max(1);
-                self.conversation_viewport.height = effective;
-                self.conversation_viewport.set_content(content.trim_end());
-                self.conversation_viewport.set_y_offset(saved_offset);
+                // Following the tail already means the bottom, so there is
+                // nowhere to page to and nothing to rebuild.
+                if self.follow_stream_tail {
+                    return None;
+                }
+                self.sync_conversation_viewport_for_paging();
                 self.conversation_viewport.page_down();
-                // Re-enable auto-follow if the user scrolled back to the bottom.
-                if self.is_at_bottom() {
+                if self.conversation_viewport.at_bottom() {
                     self.follow_stream_tail = true;
                 }
                 None
@@ -1182,6 +1170,25 @@ impl PiApp {
 
             // Other actions pass through to TextArea
             _ => false,
+        }
+    }
+
+    /// Give the viewport the line count and page size paging measures against.
+    ///
+    /// Stale only while following the tail: `view()` slices freshly built
+    /// content there, so `TextDelta` skips the viewport. Once the user has
+    /// scrolled away every writer calls `refresh_conversation_viewport()`.
+    fn sync_conversation_viewport_for_paging(&mut self) {
+        self.conversation_viewport.height = self.view_effective_conversation_height().max(1);
+        if self.follow_stream_tail {
+            let content = self.build_conversation_content();
+            self.conversation_viewport.set_content(content.trim_end());
+            // offset drifted behind the streamed lines
+            self.conversation_viewport.goto_bottom();
+        } else {
+            // re-clamp against the new page size
+            self.conversation_viewport
+                .set_y_offset(self.conversation_viewport.y_offset());
         }
     }
 }
@@ -1994,6 +2001,103 @@ mod tests {
 
         assert!(app.follow_stream_tail);
         assert!(app.is_at_bottom());
+    }
+
+    fn pgup() -> KeyMsg {
+        KeyMsg::from_type(KeyType::PgUp)
+    }
+
+    fn pgdn() -> KeyMsg {
+        KeyMsg::from_type(KeyType::PgDown)
+    }
+
+    fn scrolled_transcript_app(line: &str, count: usize) -> PiApp {
+        let mut app = busy_app();
+        for i in 0..count {
+            app.messages.push(ConversationMessage {
+                role: MessageRole::Assistant,
+                content: format!("{line} {i}"),
+                thinking: None,
+                collapsed: false,
+            });
+        }
+        app.scroll_to_bottom();
+        app
+    }
+
+    #[test]
+    fn paging_up_and_back_down_lands_on_the_offset_it_started_from() {
+        let mut app = scrolled_transcript_app("reply", 120);
+        let bottom = app.conversation_viewport.y_offset();
+        assert!(bottom > 0, "the transcript must be taller than one page");
+
+        app.handle_action(AppAction::PageUp, &pgup());
+        let one_page_up = app.conversation_viewport.y_offset();
+        app.handle_action(AppAction::PageUp, &pgup());
+        let two_pages_up = app.conversation_viewport.y_offset();
+        assert!(two_pages_up < one_page_up && one_page_up < bottom);
+
+        app.handle_action(AppAction::PageDown, &pgdn());
+        assert_eq!(app.conversation_viewport.y_offset(), one_page_up);
+        app.handle_action(AppAction::PageDown, &pgdn());
+        assert_eq!(app.conversation_viewport.y_offset(), bottom);
+        assert!(app.follow_stream_tail, "the tail re-arms at the bottom");
+    }
+
+    #[test]
+    fn paging_reuses_the_synced_transcript_instead_of_rebuilding_it() {
+        let mut app = scrolled_transcript_app("reply", 120);
+        app.handle_action(AppAction::PageUp, &pgup());
+        let lines = app.conversation_viewport.total_line_count();
+
+        // no viewport sync, which every real writer does
+        app.messages.push(ConversationMessage {
+            role: MessageRole::Assistant,
+            content: "never synced".to_string(),
+            thinking: None,
+            collapsed: false,
+        });
+        app.handle_action(AppAction::PageUp, &pgup());
+
+        assert_eq!(
+            app.conversation_viewport.total_line_count(),
+            lines,
+            "paging must not rebuild the transcript"
+        );
+    }
+
+    #[test]
+    fn a_chunk_streamed_while_scrolled_up_is_in_the_page_that_follows() {
+        let mut app = scrolled_transcript_app("reply", 120);
+        app.handle_action(AppAction::PageUp, &pgup());
+        let before = app.conversation_viewport.total_line_count();
+
+        let _ = BubbleteaModel::update(
+            &mut app,
+            Message::new(PiMsg::TextDelta("streamed tail\n".repeat(3))),
+        );
+
+        assert!(
+            app.conversation_viewport.total_line_count() > before,
+            "a chunk arriving while scrolled away must reach the pager"
+        );
+        app.conversation_viewport.goto_bottom();
+        assert!(strip_ansi(&app.conversation_viewport.view()).contains("streamed tail"));
+    }
+
+    #[test]
+    fn a_resize_mid_scroll_rewraps_the_page() {
+        let mut app = scrolled_transcript_app(&"wide ".repeat(12), 40);
+        app.handle_action(AppAction::PageUp, &pgup());
+        let before = app.conversation_viewport.total_line_count();
+
+        app.set_terminal_size(40, 24);
+        app.handle_action(AppAction::PageUp, &pgup());
+
+        assert!(
+            app.conversation_viewport.total_line_count() > before,
+            "a narrower terminal must rewrap the transcript the pager walks"
+        );
     }
 
     #[test]
