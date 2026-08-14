@@ -347,7 +347,7 @@ const PERMISSION_MODES: &[&str] = &["default", "accept-edits", "plan", "read-onl
 /// KESA - AI coding agent CLI
 #[derive(Parser, Debug)]
 #[allow(clippy::struct_excessive_bools)] // CLI flags are naturally boolean
-#[command(name = "pi")]
+#[command(name = "kesa")]
 // the package description carries the full product name for crates.io; the
 // interface says KESA alone
 #[command(

@@ -45,9 +45,9 @@ path = "src/lib.rs"
 [[bin]]
 name = "kesa"
 path = "src/main.rs"
-# The `pi` binary is the interactive terminal front-end; it requires the full
+# The `kesa` binary is the interactive terminal front-end; it requires the full
 # TUI stack (crossterm + charmed_rust). `tui` is in the default feature set, so
-# `cargo build` still produces `pi` with no extra flags. A `--no-default-features`
+# `cargo build` still produces `kesa` with no extra flags. A `--no-default-features`
 # build correctly skips the binary while the library still compiles for SDK
 # consumers that do not want the terminal stack.
 required-features = ["tui"]
@@ -145,18 +145,6 @@ path = "examples/pijs_workload.rs"
 [[example]]
 name = "session_workload_bench"
 path = "examples/session_workload_bench.rs"
-
-[[example]]
-name = "test_duration"
-path = "examples/test_duration.rs"
-
-[[example]]
-name = "test_infinite_loop"
-path = "examples/test_infinite_loop.rs"
-
-[[example]]
-name = "test_time"
-path = "examples/test_time.rs"
 
 [dependencies]
 # CLI
