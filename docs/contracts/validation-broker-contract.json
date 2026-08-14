@@ -5,9 +5,6 @@
   "decision_schema": "pi.validation_broker.decision.v1",
   "fault_corpus_schema": "pi.validation_broker.fault_corpus.v1",
   "fault_event_schema": "pi.validation_broker.fault_event.v1",
-  "cli_status_schema": "pi.validation_broker.cli_status.v1",
-  "cli_plan_schema": "pi.validation_broker.cli_plan.v1",
-  "cli_lease_mutation_schema": "pi.validation_broker.cli_lease_mutation.v1",
   "stress_profile_corpus_schema": "pi.validation_broker.stress_profile_corpus.v1",
   "stress_budget_report_schema": "pi.validation_broker.stress_budget_report.v1",
   "stress_evidence_schema": "pi.validation_broker.stress_evidence.v1",
@@ -380,70 +377,7 @@
     "missing_data_policy": "Synthetic stress evidence with missing profile inputs must emit verdict=blocked, list missing_data, leave measurement fields null, and must not become pass or release performance evidence.",
     "claim_policy": "Stress-budget evidence is an engineering signal for validation-broker sizing and backpressure only. It is not release-facing performance evidence and cannot replace RCH, Doctor, cargo_headroom.sh, CI, UBS, Beads, Agent Mail, or required repo gates."
   },
-  "cli_surface_contract": {
-    "subcommand": "validation-broker",
-    "actions": [
-      "status",
-      "plan",
-      "acquire",
-      "renew",
-      "release"
-    ],
-    "format_modes": [
-      "text",
-      "json"
-    ],
-    "output_path_policy": "All --out-json and --out-text paths must refuse to overwrite existing files.",
-    "plan_mode": {
-      "read_only": true,
-      "required_inputs": [
-        "ValidationAdmissionRequestContext JSON",
-        "ValidationBrokerInputSnapshot JSON",
-        "ValidationSlotStore JSONL"
-      ],
-      "required_next_actions": [
-        "run_now",
-        "wait",
-        "coalesce_with_reusable_slot",
-        "narrow_scope",
-        "surface_blocker",
-        "recover_stale_slot_or_bead"
-      ]
-    },
-    "lease_mutations": {
-      "allowed_actions": [
-        "acquire",
-        "renew",
-        "release"
-      ],
-      "mutation_shape": "append_slot_record_only",
-      "degraded_store_policy": "Lease mutations must refuse to append when the slot store is degraded."
-    }
-  },
-  "doctor_runpack_projection_contract": {
-    "doctor_schema": "pi.doctor.validation_broker_posture.v1",
-    "runpack_optional_source_id": "validation_broker",
-    "autopilot_optional_source_id": "validation_broker",
-    "required_projection_fields": [
-      "source_status",
-      "current_slots",
-      "degraded_reasons",
-      "duplicate_gate_opportunities",
-      "stale_build_warnings",
-      "recommended_next_actions",
-      "guards"
-    ],
-    "required_guards": [
-      "advisory_only",
-      "no_live_mutation",
-      "not_ci_success",
-      "not_release_claim_evidence",
-      "does_not_replace_rch_doctor_beads_agent_mail"
-    ],
-    "authority_boundary": "Doctor, runpack, and autopilot input-pack projections are advisory handoff summaries. They may surface source status, current slot counts, degraded reasons, duplicate-gate opportunities, stale build warnings, and recommended next actions, but they must not replace RCH, Doctor, Beads, Agent Mail, CI, UBS, cargo_headroom.sh, or release-claim gates."
-  },
   "mutation_policy": {
-    "plan_mode_live_mutation_allowed": false,
     "lease_mode_allowed_mutations": [
       "append_slot_record",
       "renew_own_slot",
@@ -571,27 +505,11 @@
       ]
     },
     {
-      "id": "VALIDBROKER-MUST-009",
-      "description": "The CLI surface exposes status, read-only plan, and explicit lease mutation actions with stable text/JSON output and overwrite refusal for output artifacts.",
-      "validated_by": [
-        "cli_surface_contract",
-        "mutation_policy"
-      ]
-    },
-    {
       "id": "VALIDBROKER-MUST-010",
       "description": "Build-storm, stale-slot, local-fallback, headroom, duplicate, and reusable-artifact faults are frozen in a golden corpus with event-log evidence and rejected-reuse diagnostics.",
       "validated_by": [
         "fault_corpus_contract",
         "decision_contract.required_top_level_keys"
-      ]
-    },
-    {
-      "id": "VALIDBROKER-MUST-011",
-      "description": "Doctor, runpack, and dry-run autopilot projections expose broker posture as advisory source status, slot counts, stale warnings, duplicate-gate opportunities, and next actions without replacing operational or release authorities.",
-      "validated_by": [
-        "doctor_runpack_projection_contract",
-        "overlap_boundaries"
       ]
     },
     {

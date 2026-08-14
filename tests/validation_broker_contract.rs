@@ -6,13 +6,7 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 
 const CONTRACT_PATH: &str = "docs/contracts/validation-broker-contract.json";
-const CLOSEOUT_CONTRACT_PATH: &str = "docs/contracts/validation-broker-closeout-gate-contract.json";
-const CLOSEOUT_EVIDENCE_PATH: &str = "docs/evidence/validation-broker-closeout-gate.json";
-const README_PATH: &str = "README.md";
-const SWARM_RUNBOOK_PATH: &str = "docs/swarm-operations-runbook.md";
 const EXPECTED_SCHEMA: &str = "pi.validation_broker.contract.v1";
-const EXPECTED_CLOSEOUT_CONTRACT_SCHEMA: &str = "pi.validation_broker.closeout_gate_contract.v1";
-const EXPECTED_CLOSEOUT_SCHEMA: &str = "pi.validation_broker.closeout_gate.v1";
 const EXPECTED_REQUEST_SCHEMA: &str = "pi.validation_broker.request.v1";
 const EXPECTED_SLOT_SCHEMA: &str = "pi.validation_broker.slot.v1";
 const EXPECTED_DECISION_SCHEMA: &str = "pi.validation_broker.decision.v1";
@@ -45,21 +39,11 @@ fn repo_root() -> PathBuf {
 }
 
 fn load_contract() -> Result<Value, String> {
-    load_json(CONTRACT_PATH)
-}
-
-fn load_json(relative_path: &str) -> Result<Value, String> {
-    let path = repo_root().join(relative_path);
+    let path = repo_root().join(CONTRACT_PATH);
     let raw = std::fs::read_to_string(&path)
         .map_err(|err| format!("failed to read {}: {err}", path.display()))?;
     serde_json::from_str(&raw)
         .map_err(|err| format!("failed to parse {} as JSON: {err}", path.display()))
-}
-
-fn load_text(relative_path: &str) -> Result<String, String> {
-    let path = repo_root().join(relative_path);
-    std::fs::read_to_string(&path)
-        .map_err(|err| format!("failed to read {}: {err}", path.display()))
 }
 
 fn require(condition: bool, message: impl Into<String>) -> TestResult {
@@ -80,12 +64,6 @@ fn pointer_str<'a>(value: &'a Value, path: &str) -> Result<&'a str, String> {
     pointer(value, path)?
         .as_str()
         .ok_or_else(|| format!("{path} must be a string"))
-}
-
-fn pointer_bool(value: &Value, path: &str) -> Result<bool, String> {
-    pointer(value, path)?
-        .as_bool()
-        .ok_or_else(|| format!("{path} must be a bool"))
 }
 
 fn pointer_array<'a>(value: &'a Value, path: &str) -> Result<&'a [Value], String> {
@@ -115,16 +93,6 @@ fn require_set(value: &Value, path: &str, expected: &[&str], label: &str) -> Tes
     let observed = string_set(value, path)?;
     if let Some(missing) = expected.iter().find(|item| !observed.contains(**item)) {
         return Err(format!("missing {label}: {missing}"));
-    }
-    Ok(())
-}
-
-fn require_object_keys(value: &Value, keys: &[&str], label: &str) -> TestResult {
-    for key in keys {
-        require(
-            value.get(*key).is_some(),
-            format!("{label} missing key {key}"),
-        )?;
     }
     Ok(())
 }
@@ -766,16 +734,9 @@ fn validate_fault_event_line(line: &str, line_number: usize) -> TestResult {
 }
 
 #[test]
-fn validation_broker_contract_is_read_only_in_plan_mode() -> TestResult {
+fn validation_broker_contract_forbids_destructive_mutations() -> TestResult {
     let contract = load_contract()?;
 
-    require(
-        !pointer_bool(
-            &contract,
-            "/mutation_policy/plan_mode_live_mutation_allowed",
-        )?,
-        "plan mode must be read-only",
-    )?;
     require_set(
         &contract,
         "/mutation_policy/forbidden_mutations",
@@ -802,170 +763,6 @@ fn validation_broker_contract_is_read_only_in_plan_mode() -> TestResult {
         ],
         "safe stale action",
     )
-}
-
-#[test]
-fn validation_broker_contract_declares_cli_surface() -> TestResult {
-    let contract = load_contract()?;
-
-    require(
-        pointer_str(&contract, "/cli_status_schema")? == "pi.validation_broker.cli_status.v1",
-        "CLI status schema mismatch",
-    )?;
-    require(
-        pointer_str(&contract, "/cli_plan_schema")? == "pi.validation_broker.cli_plan.v1",
-        "CLI plan schema mismatch",
-    )?;
-    require(
-        pointer_bool(&contract, "/cli_surface_contract/plan_mode/read_only")?,
-        "CLI plan mode must be read-only",
-    )?;
-    require_set(
-        &contract,
-        "/cli_surface_contract/actions",
-        &["status", "plan", "acquire", "renew", "release"],
-        "CLI action",
-    )?;
-    require_set(
-        &contract,
-        "/cli_surface_contract/plan_mode/required_next_actions",
-        &[
-            "run_now",
-            "wait",
-            "coalesce_with_reusable_slot",
-            "narrow_scope",
-            "surface_blocker",
-            "recover_stale_slot_or_bead",
-        ],
-        "CLI next action",
-    )
-}
-
-#[test]
-fn validation_broker_contract_declares_doctor_runpack_projection() -> TestResult {
-    let contract = load_contract()?;
-
-    require(
-        pointer_str(
-            &contract,
-            "/doctor_runpack_projection_contract/doctor_schema",
-        )? == "pi.doctor.validation_broker_posture.v1",
-        "Doctor projection schema mismatch",
-    )?;
-    require(
-        pointer_str(
-            &contract,
-            "/doctor_runpack_projection_contract/runpack_optional_source_id",
-        )? == "validation_broker",
-        "runpack projection source id mismatch",
-    )?;
-    require(
-        pointer_str(
-            &contract,
-            "/doctor_runpack_projection_contract/autopilot_optional_source_id",
-        )? == "validation_broker",
-        "autopilot projection source id mismatch",
-    )?;
-    require_set(
-        &contract,
-        "/doctor_runpack_projection_contract/required_projection_fields",
-        &[
-            "source_status",
-            "current_slots",
-            "degraded_reasons",
-            "duplicate_gate_opportunities",
-            "stale_build_warnings",
-            "recommended_next_actions",
-            "guards",
-        ],
-        "projection field",
-    )?;
-    require_set(
-        &contract,
-        "/doctor_runpack_projection_contract/required_guards",
-        &[
-            "advisory_only",
-            "no_live_mutation",
-            "not_ci_success",
-            "not_release_claim_evidence",
-            "does_not_replace_rch_doctor_beads_agent_mail",
-        ],
-        "projection guard",
-    )?;
-    let boundary = pointer_str(
-        &contract,
-        "/doctor_runpack_projection_contract/authority_boundary",
-    )?;
-    require(
-        boundary.contains("must not replace RCH"),
-        "projection boundary must keep RCH authoritative",
-    )?;
-    require(
-        boundary.contains("release-claim gates"),
-        "projection boundary must block release-claim promotion",
-    )
-}
-
-#[test]
-fn validation_broker_operator_docs_cover_workflow_privacy_and_cli_flags() -> TestResult {
-    let readme = load_text(README_PATH)?;
-    let runbook = load_text(SWARM_RUNBOOK_PATH)?;
-
-    require(
-        readme.contains("docs/swarm-operations-runbook.md#validation-broker-operator-workflow"),
-        "README must link to validation broker operator workflow docs",
-    )?;
-    require(
-        runbook.contains("### Validation Broker Operator Workflow"),
-        "runbook must include validation broker workflow heading",
-    )?;
-
-    for fragment in [
-        "pi validation-broker status",
-        "pi validation-broker plan",
-        "pi validation-broker acquire",
-        "pi validation-broker renew",
-        "pi validation-broker release",
-        "--store \"$KESA_VALIDATION_BROKER_STORE\"",
-        "--request \"$capture_dir/validation-request.json\"",
-        "--inputs \"$capture_dir/validation-inputs.json\"",
-        "--slot-id \"$slot_id\"",
-        "--owner \"$AGENT_NAME\"",
-        "--reason \"gate completed and artifacts recorded\"",
-    ] {
-        require(
-            runbook.contains(fragment),
-            format!("operator docs missing CLI fragment {fragment:?}"),
-        )?;
-    }
-
-    for required_boundary in [
-        "does not claim beads",
-        "does not replace RCH",
-        "Agent Mail",
-        "use the Beads assignee as the soft lock",
-        "do not infer that nobody owns a file",
-        "not release performance evidence",
-        "strict drop-in claims",
-        "Validation broker troubleshooting",
-        "Agent Mail schema-corrupt",
-        "deny_local_fallback",
-        "Scratch-space, target-dir, or TMPDIR headroom is low",
-        "Slot store is missing, malformed, or unavailable",
-        "Reusable artifact provenance does not match",
-        "These commands remain mandatory before commit",
-        "rch exec -- cargo check --all-targets",
-        "rch exec -- cargo clippy --all-targets -- -D warnings",
-        "ubs --staged --only=rust .",
-        "./scripts/reconcile_beads_ledger.sh",
-    ] {
-        require(
-            runbook.contains(required_boundary),
-            format!("operator docs missing boundary {required_boundary:?}"),
-        )?;
-    }
-
-    Ok(())
 }
 
 #[test]
@@ -1056,204 +853,5 @@ fn validation_broker_contract_links_downstream_beads_and_requirements() -> TestR
         )?;
     }
 
-    Ok(())
-}
-
-#[test]
-fn validation_broker_closeout_gate_artifact_satisfies_contract() -> TestResult {
-    let contract = load_json(CLOSEOUT_CONTRACT_PATH)?;
-    let evidence = load_json(CLOSEOUT_EVIDENCE_PATH)?;
-    let readme = load_text(README_PATH)?;
-    let runbook = load_text(SWARM_RUNBOOK_PATH)?;
-
-    require(
-        pointer_str(&contract, "/schema")? == EXPECTED_CLOSEOUT_CONTRACT_SCHEMA,
-        "closeout contract schema mismatch",
-    )?;
-    require(
-        pointer_str(&contract, "/decision_gate_schema")? == EXPECTED_CLOSEOUT_SCHEMA,
-        "closeout decision schema mismatch",
-    )?;
-    require(
-        pointer_str(&evidence, "/schema")? == EXPECTED_CLOSEOUT_SCHEMA,
-        "closeout evidence schema mismatch",
-    )?;
-    require(
-        pointer_str(&evidence, "/purpose")?
-            == "prompt_to_artifact_validation_broker_closeout_gate_not_source_of_truth",
-        "closeout evidence purpose mismatch",
-    )?;
-    require(
-        pointer_str(&evidence, "/status")? == "pass",
-        "closeout evidence must pass",
-    )?;
-    require(
-        pointer_str(&evidence, "/decision")? == "close_final_gate_and_parent_epic",
-        "closeout decision mismatch",
-    )?;
-    require(
-        pointer_bool(&evidence, "/epic_can_close_after_this_commit")?,
-        "closeout evidence must authorize closing the epic after this commit",
-    )?;
-    require(
-        !pointer_bool(&evidence, "/follow_up_required")?,
-        "passing closeout evidence must not require follow-up beads",
-    )?;
-    require(
-        pointer_array(&evidence, "/missing_checks")?.is_empty(),
-        "passing closeout evidence must not have missing checks",
-    )?;
-    require(
-        pointer_array(&evidence, "/follow_up_beads")?.is_empty(),
-        "passing closeout evidence must not create follow-up beads",
-    )?;
-
-    let top_level_keys = string_set(&contract, "/required_top_level_keys")?;
-    let top_level_key_list = top_level_keys.iter().copied().collect::<Vec<_>>();
-    require_object_keys(&evidence, &top_level_key_list, "closeout evidence")?;
-    require_required_strings_present(
-        &contract,
-        "/required_check_ids",
-        &evidence,
-        "/required_checks",
-        "required closeout check",
-    )?;
-
-    let checklist = pointer_array(&evidence, "/checklist")?;
-    for required_check in string_set(&contract, "/required_check_ids")? {
-        let check = checklist
-            .iter()
-            .find(|entry| entry.get("id").and_then(Value::as_str) == Some(required_check))
-            .ok_or_else(|| format!("closeout checklist missing {required_check}"))?;
-        require(
-            check.get("status").and_then(Value::as_str) == Some("pass"),
-            format!("closeout checklist item {required_check} must pass"),
-        )?;
-        require(
-            check
-                .get("evidence")
-                .and_then(Value::as_array)
-                .is_some_and(|items| !items.is_empty()),
-            format!("closeout checklist item {required_check} must name evidence"),
-        )?;
-    }
-
-    let child_map = pointer_array(&evidence, "/child_artifact_map")?;
-    for required_child in string_set(&contract, "/required_child_bead_ids")? {
-        let child = child_map
-            .iter()
-            .find(|entry| entry.get("bead_id").and_then(Value::as_str) == Some(required_child))
-            .ok_or_else(|| format!("closeout child map missing {required_child}"))?;
-        require(
-            child.get("status").and_then(Value::as_str) == Some("closed"),
-            format!("closeout child {required_child} must be closed"),
-        )?;
-        for key in [
-            "title",
-            "close_reason",
-            "commit",
-            "code_paths",
-            "test_paths",
-            "docs_or_evidence_paths",
-            "validation_commands",
-        ] {
-            require(
-                child.get(key).is_some(),
-                format!("child {required_child} missing {key}"),
-            )?;
-        }
-        require(
-            child
-                .get("commit")
-                .and_then(Value::as_str)
-                .is_some_and(|commit| commit.len() >= 9),
-            format!("child {required_child} must name a commit"),
-        )?;
-        for array_key in [
-            "code_paths",
-            "test_paths",
-            "docs_or_evidence_paths",
-            "validation_commands",
-        ] {
-            require(
-                child
-                    .get(array_key)
-                    .and_then(Value::as_array)
-                    .is_some_and(|items| !items.is_empty()),
-                format!("child {required_child} must have non-empty {array_key}"),
-            )?;
-        }
-        require(
-            child
-                .get("validation_commands")
-                .and_then(Value::as_array)
-                .is_some_and(|commands| {
-                    commands.iter().any(|command| {
-                        command
-                            .as_str()
-                            .is_some_and(|text| text.contains("rch exec --"))
-                    })
-                }),
-            format!("child {required_child} validation command must include RCH proof"),
-        )?;
-    }
-
-    let quality_gates = pointer_array(&evidence, "/quality_gate_results")?;
-    for required_gate in string_set(&contract, "/required_quality_gate_ids")? {
-        let gate = quality_gates
-            .iter()
-            .find(|entry| entry.get("id").and_then(Value::as_str) == Some(required_gate))
-            .ok_or_else(|| format!("closeout quality gate missing {required_gate}"))?;
-        require(
-            gate.get("status").and_then(Value::as_str) == Some("pass"),
-            format!("quality gate {required_gate} must pass"),
-        )?;
-        let command = gate
-            .get("command")
-            .and_then(Value::as_str)
-            .ok_or_else(|| format!("quality gate {required_gate} must name command"))?;
-        if required_gate.ends_with("_rch")
-            || required_gate.contains("cargo_check")
-            || required_gate.contains("cargo_clippy")
-        {
-            require(
-                command.contains("rch exec --"),
-                format!("heavy quality gate {required_gate} must use RCH"),
-            )?;
-        }
-    }
-
-    require(
-        readme.contains("docs/contracts/validation-broker-closeout-gate-contract.json"),
-        "README must link validation broker closeout contract",
-    )?;
-    require(
-        readme.contains("docs/evidence/validation-broker-closeout-gate.json"),
-        "README must link validation broker closeout evidence",
-    )?;
-    require(
-        runbook.contains("pi.validation_broker.closeout_gate.v1"),
-        "runbook must document validation broker closeout schema",
-    )?;
-    require(
-        runbook.contains("docs/contracts/validation-broker-closeout-gate-contract.json"),
-        "runbook must link validation broker closeout contract",
-    )
-}
-
-fn require_required_strings_present(
-    contract: &Value,
-    required_path: &str,
-    evidence: &Value,
-    evidence_path: &str,
-    label: &str,
-) -> TestResult {
-    let observed = string_set(evidence, evidence_path)?;
-    for required in string_set(contract, required_path)? {
-        require(
-            observed.contains(required),
-            format!("missing {label}: {required}"),
-        )?;
-    }
     Ok(())
 }

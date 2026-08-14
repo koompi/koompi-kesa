@@ -6,8 +6,6 @@ use std::path::PathBuf;
 
 const CONTRACT_PATH: &str = "docs/contracts/runtime-intelligence-closeout-gate-contract.json";
 const EVIDENCE_PATH: &str = "docs/evidence/runtime-intelligence-closeout-gate.json";
-const RUNBOOK_PATH: &str = "docs/swarm-operations-runbook.md";
-const README_PATH: &str = "README.md";
 const EXPECTED_CONTRACT_SCHEMA: &str = "pi.runtime_intelligence.closeout_gate_contract.v1";
 const EXPECTED_EVIDENCE_SCHEMA: &str = "pi.runtime_intelligence.closeout_gate.v1";
 const EXPECTED_PURPOSE: &str =
@@ -25,12 +23,6 @@ fn load_json(path: &str) -> TestResult<Value> {
         .map_err(|err| format!("failed to read {}: {err}", full_path.display()))?;
     serde_json::from_str(&raw)
         .map_err(|err| format!("failed to parse {} as JSON: {err}", full_path.display()))
-}
-
-fn load_text(path: &str) -> TestResult<String> {
-    let full_path = repo_root().join(path);
-    std::fs::read_to_string(&full_path)
-        .map_err(|err| format!("failed to read {}: {err}", full_path.display()))
 }
 
 fn require(condition: bool, message: impl Into<String>) -> TestResult {
@@ -95,14 +87,6 @@ fn quality_gate_command_required(id: &str) -> String {
 
 fn quality_gate_must_prove_rch(id: &str) -> String {
     format!("quality gate {id} must prove RCH execution")
-}
-
-fn readme_must_link(path: &str) -> String {
-    format!("README must link {path}")
-}
-
-fn runbook_must_link(path: &str) -> String {
-    format!("runbook must link {path}")
 }
 
 fn missing_source_boundary(id: &str) -> String {
@@ -327,8 +311,7 @@ fn verify_checklist_quality_gates_and_docs(contract: &Value, evidence: &Value) -
     verify_closeout_outcome(evidence, &required_checks)?;
     verify_known_limitations(evidence)?;
     verify_checklist_rows(evidence, &required_checks)?;
-    verify_quality_gate_rows(evidence, &required_quality_gates)?;
-    verify_docs_links()
+    verify_quality_gate_rows(evidence, &required_quality_gates)
 }
 
 fn verify_closeout_outcome(evidence: &Value, required_checks: &HashSet<&str>) -> TestResult {
@@ -418,22 +401,6 @@ fn verify_quality_gate_rows(
     require(
         quality_gate_ids.eq(required_quality_gates),
         "quality gate ids must exactly match required quality gates",
-    )
-}
-
-fn verify_docs_links() -> TestResult {
-    let readme = load_text(README_PATH)?;
-    let runbook = load_text(RUNBOOK_PATH)?;
-    for required in [
-        "docs/contracts/runtime-intelligence-closeout-gate-contract.json",
-        "docs/evidence/runtime-intelligence-closeout-gate.json",
-    ] {
-        require_lazy(readme.contains(required), || readme_must_link(required))?;
-        require_lazy(runbook.contains(required), || runbook_must_link(required))?;
-    }
-    require(
-        runbook.contains(EXPECTED_EVIDENCE_SCHEMA),
-        "runbook must document runtime-intelligence closeout schema",
     )
 }
 

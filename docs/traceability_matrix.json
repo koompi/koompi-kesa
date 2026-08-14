@@ -810,22 +810,6 @@
           "justification": "Classified vcr suite included in the bd-8t27h.3 traceability backfill so CI governance covers all registered tests."
         },
         {
-          "path": "tests/context_intelligence_closeout_gate_contract.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers the context-intelligence closeout contract and evidence guard."
-        },
-        {
-          "path": "tests/fourth_wave_self_healing_closeout_gate_contract.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers the fourth-wave self-healing closeout contract and evidence guard."
-        },
-        {
-          "path": "tests/proof_carrying_swarm_test_fabric_closeout_gate_contract.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers the proof-carrying swarm test-fabric closeout contract and evidence guard."
-        },
-        {
-          "path": "tests/remote_validation_proof_ledger_contract.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers remote validation proof-ledger contract fixtures."
-        },
-        {
           "path": "tests/runtime_intelligence_closeout_gate_contract.rs",
           "justification": "Classified traceability repair suite included so CI governance covers the runtime-intelligence closeout contract and evidence guard."
         },
@@ -842,16 +826,8 @@
           "justification": "Classified traceability repair suite included so CI governance covers the semantic workspace graph contract."
         },
         {
-          "path": "tests/swarm_progress_slo_closeout_gate_contract.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers the swarm progress SLO closeout contract and evidence guard."
-        },
-        {
           "path": "tests/swarm_progress_slo_contract.rs",
           "justification": "Classified traceability repair suite included so CI governance covers the swarm progress SLO contract."
-        },
-        {
-          "path": "tests/swarm_replay_closeout_gate_contract.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers the swarm replay closeout contract and evidence guard."
         },
         {
           "path": "tests/swarm_replay_ingestor.rs",
@@ -860,10 +836,6 @@
         {
           "path": "tests/swarm_replay_trace_contract.rs",
           "justification": "Classified traceability repair suite included so CI governance covers the swarm replay trace contract and fixture inventory."
-        },
-        {
-          "path": "tests/validation_broker_closeout_gate_contract.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers the validation broker closeout contract and evidence guard."
         },
         {
           "path": "tests/validation_broker_contract.rs",
@@ -1526,7 +1498,7 @@
     },
     {
       "id": "bd-f0huc",
-      "title": "SEC-2.1: Extension manifest v2 \u2014 explicit capabilities, behavioral intents, and trust metadata",
+      "title": "SEC-2.1: Extension manifest v2 — explicit capabilities, behavioral intents, and trust metadata",
       "acceptance_criteria": "Manifest v2 parsing, validation, and metadata extraction covered by unit tests.",
       "unit_tests": [
         {
@@ -1761,7 +1733,7 @@
     },
     {
       "id": "bd-3tb30",
-      "title": "SEC-3.4: Enforcement state machine \u2014 allow/harden/prompt/deny/terminate with hysteresis",
+      "title": "SEC-3.4: Enforcement state machine — allow/harden/prompt/deny/terminate with hysteresis",
       "acceptance_criteria": "State transitions, hysteresis logic, and edge cases covered by deterministic tests.",
       "unit_tests": [
         {
