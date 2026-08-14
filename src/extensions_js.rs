@@ -15522,7 +15522,21 @@ export class ArrayEditor {
     remove(idx) { this._arr.splice(idx, 1); return this; }
     toArray() { return this._arr; }
 }
-export function registerSettingsCommand(pi, opts) {}
+export function registerSettingsCommand(pi, opts) {
+    const options = opts || {};
+    const commandName = String(options.commandName || '').trim();
+    if (!commandName) {
+        throw new Error('@aliou/pi-utils-settings: registerSettingsCommand requires options.commandName');
+    }
+    const scope = commandName.split(':')[0] || commandName;
+    const description = options.commandDescription || ('Configure ' + scope + ' (local/global)');
+    pi.registerCommand(commandName, {
+        description,
+        handler: async () => {
+            throw new Error('@aliou/pi-utils-settings: ' + commandName + ' needs the upstream settings UI, which this shim does not carry');
+        },
+    });
+}
 export function getNestedValue(obj, path) {
     const keys = (path || '').split('.');
     let cur = obj;
@@ -26147,6 +26161,28 @@ import { isIPv4 as netIsIpv4 } from "node:net";
                 "unexpected message: {message}"
             );
         });
+    }
+
+    // bd-J44/D20: a shim that takes a registration call and drops it costs the
+    // user the command and raises nothing, which reads as KESA being broken.
+    #[test]
+    fn compat_shims_never_export_a_registration_no_op() {
+        let empty_body = regex::Regex::new(
+            r"export\s+function\s+([A-Za-z_$][\w$]*[Rr]egister[\w$]*|[Rr]egister[\w$]*)\s*\([^)]*\)\s*\{\s*\}",
+        )
+        .expect("valid regex");
+
+        let mut offenders = Vec::new();
+        for (specifier, source) in default_virtual_modules() {
+            for capture in empty_body.captures_iter(&source) {
+                offenders.push(format!("{specifier}::{}", &capture[1]));
+            }
+        }
+
+        assert!(
+            offenders.is_empty(),
+            "compat shims silently swallow registrations: {offenders:?}"
+        );
     }
 
     #[test]

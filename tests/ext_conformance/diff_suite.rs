@@ -2268,3 +2268,28 @@ fn diff_prompt_url_widget() {
     run_differential_test("prompt-url-widget", "prompt-url-widget.ts");
 }
 
+/// D20: `@aliou/pi-utils-settings` is not on disk, so KESA answers the import
+/// from its own compat shim. A shim whose `registerSettingsCommand` accepts the
+/// call and drops it costs the user both settings commands and raises nothing,
+/// which reads as KESA being broken rather than the package.
+#[test]
+fn aliou_settings_commands_are_registered() {
+    let ext_path = artifacts_dir().join("third-party/aliou-pi-extensions/guardrails/index.ts");
+    let snapshot = load_rust_snapshot(&ext_path).expect("load aliou-pi-extensions bundle");
+    let registered: Vec<String> = snapshot["commands"]
+        .as_array()
+        .map(|commands| {
+            commands
+                .iter()
+                .filter_map(|command| command["name"].as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    for expected in ["guardrails:settings", "toolchain:settings"] {
+        assert!(
+            registered.iter().any(|name| name == expected),
+            "{expected} missing from the Rust registration snapshot: {registered:?}"
+        );
+    }
+}
