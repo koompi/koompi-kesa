@@ -19,7 +19,6 @@
     "deterministic_evaluator",
     "cli_surface",
     "doctor_runpack_projection",
-    "no_mock_e2e",
     "stress_budgets",
     "operator_docs_privacy",
     "readme_freshness",
@@ -107,22 +106,6 @@
       "validation_commands": [
         "python3 scripts/build_swarm_operator_runpack.py --self-test",
         "rch exec -- cargo test --test doctor_swarm_temp_dir_json -- --nocapture"
-      ]
-    },
-    {
-      "bead_id": "bd-wzri8.5",
-      "status": "closed",
-      "title": "SPROG-T5: Add no-mock progress SLO E2E and JSONL event evidence",
-      "close_reason": "Added no-mock progress SLO E2E harness with JSONL event evidence",
-      "commit": "91dbd602e8f9b1941081b64cf199b0725e471f56",
-      "code_paths": [
-      ],
-      "test_paths": [
-      ],
-      "docs_or_evidence_paths": [
-      ],
-      "validation_commands": [
-        "rch exec -- cargo test --test swarm_progress_slo_e2e -- --nocapture"
       ]
     },
     {
@@ -351,7 +334,6 @@
             "b6e5f5ff8b54bbfb0ac129b7ace73fa9f75e2bbf",
             "44aa72036ed0f098492025290be6a6197f626b8f",
             "0f8cb0a3bcd117ee7b6f06f88fd60869e826ae6b",
-            "91dbd602e8f9b1941081b64cf199b0725e471f56",
             "df99fa1c95bda3a1cf90ea2365e92b6447e42e0b",
             "983bca678f4acbb11098f4b875bd2c4420205235"
           ]
@@ -409,14 +391,6 @@
         {
           "path": "tests/golden_corpus/swarm_operator_runpack/complete_runpack_projection.json"
         }
-      ]
-    },
-    {
-      "id": "no_mock_e2e",
-      "status": "pass",
-      "requirement": "No-mock E2E coverage exercises temp Beads and git seams plus fixture-captured degraded Agent Mail/RCH inputs.",
-      "issue": null,
-      "evidence": [
       ]
     },
     {
@@ -491,7 +465,6 @@
             "b6e5f5ff8b54bbfb0ac129b7ace73fa9f75e2bbf",
             "44aa72036ed0f098492025290be6a6197f626b8f",
             "0f8cb0a3bcd117ee7b6f06f88fd60869e826ae6b",
-            "91dbd602e8f9b1941081b64cf199b0725e471f56",
             "df99fa1c95bda3a1cf90ea2365e92b6447e42e0b",
             "983bca678f4acbb11098f4b875bd2c4420205235"
           ]

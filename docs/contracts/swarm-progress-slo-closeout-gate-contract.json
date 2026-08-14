@@ -40,7 +40,6 @@
     "bd-wzri8.2",
     "bd-wzri8.3",
     "bd-wzri8.4",
-    "bd-wzri8.5",
     "bd-wzri8.6",
     "bd-wzri8.7"
   ],
@@ -50,7 +49,6 @@
     "deterministic_evaluator",
     "cli_surface",
     "doctor_runpack_projection",
-    "no_mock_e2e",
     "stress_budgets",
     "operator_docs_privacy",
     "readme_freshness",

@@ -537,7 +537,7 @@ fn progress_slo_closeout_rejects_unpushed_or_unmirrored_snapshot() -> TestResult
     let mut unpushed = evidence.clone();
     *pointer_mut(
         &mut unpushed,
-        "/checklist/10/evidence/0/origin_main_before_closeout_commit",
+        "/checklist/9/evidence/0/origin_main_before_closeout_commit",
     )? = Value::String("0000000000000000000000000000000000000000".to_string());
     expect_error(
         verify_source_boundaries_claims_and_push(&contract, &unpushed),
@@ -547,7 +547,7 @@ fn progress_slo_closeout_rejects_unpushed_or_unmirrored_snapshot() -> TestResult
     let mut unmirrored = evidence;
     *pointer_mut(
         &mut unmirrored,
-        "/checklist/10/evidence/0/pushed_remote_refs_equal_head",
+        "/checklist/9/evidence/0/pushed_remote_refs_equal_head",
     )? = Value::Bool(false);
     expect_error(
         verify_source_boundaries_claims_and_push(&contract, &unmirrored),
