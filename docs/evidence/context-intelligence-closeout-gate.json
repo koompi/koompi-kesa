@@ -184,9 +184,6 @@
         },
         {
           "path": "docs/contracts/swarm-operator-runpack-contract.json"
-        },
-        {
-          "path": "tests/doctor_swarm_temp_dir_json.rs"
         }
       ],
       "id": "doctor_runpack",
@@ -568,7 +565,6 @@
       ],
       "status": "closed",
       "test_paths": [
-        "tests/doctor_swarm_temp_dir_json.rs",
         "tests/golden_corpus/swarm_operator_runpack/complete_runpack_projection.json"
       ],
       "title": "[IDEA-WIZARD] Surface context intelligence in doctor and swarm runpacks",

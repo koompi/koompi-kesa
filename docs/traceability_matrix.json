@@ -842,20 +842,12 @@
           "justification": "Classified traceability repair suite included so CI governance covers the semantic workspace graph contract."
         },
         {
-          "path": "tests/swarm_progress_cli.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers swarm progress CLI evidence generation."
-        },
-        {
           "path": "tests/swarm_progress_slo_closeout_gate_contract.rs",
           "justification": "Classified traceability repair suite included so CI governance covers the swarm progress SLO closeout contract and evidence guard."
         },
         {
           "path": "tests/swarm_progress_slo_contract.rs",
           "justification": "Classified traceability repair suite included so CI governance covers the swarm progress SLO contract."
-        },
-        {
-          "path": "tests/swarm_progress_slo_e2e.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers fixture-backed swarm progress SLO end-to-end evidence generation."
         },
         {
           "path": "tests/swarm_replay_closeout_gate_contract.rs",
@@ -866,16 +858,8 @@
           "justification": "Classified traceability repair suite included so CI governance covers swarm replay ingestion, policy, and golden-corpus fixtures."
         },
         {
-          "path": "tests/swarm_replay_preview_cli.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers swarm replay preview CLI output."
-        },
-        {
           "path": "tests/swarm_replay_trace_contract.rs",
           "justification": "Classified traceability repair suite included so CI governance covers the swarm replay trace contract and fixture inventory."
-        },
-        {
-          "path": "tests/validation_broker_cli.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers validation broker CLI plan and status output."
         },
         {
           "path": "tests/validation_broker_closeout_gate_contract.rs",
@@ -902,10 +886,6 @@
         {
           "path": "tests/run_e2e.sh",
           "justification": "Existing E2E invocation wrapper."
-        },
-        {
-          "path": "tests/doctor_swarm_temp_dir_json.rs",
-          "justification": "Classified e2e suite included in the bd-8t27h.3 traceability backfill so CI governance covers all registered tests."
         },
         {
           "path": "tests/dropin_extension_ui_differential.rs",

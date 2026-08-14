@@ -78,8 +78,7 @@
         "src/main.rs"
       ],
       "test_paths": [
-        "tests/conformance/fixture_runner.rs",
-        "tests/swarm_progress_cli.rs"
+        "tests/conformance/fixture_runner.rs"
       ],
       "docs_or_evidence_paths": [
         "README.md"
@@ -117,13 +116,10 @@
       "close_reason": "Added no-mock progress SLO E2E harness with JSONL event evidence",
       "commit": "91dbd602e8f9b1941081b64cf199b0725e471f56",
       "code_paths": [
-        "tests/swarm_progress_slo_e2e.rs"
       ],
       "test_paths": [
-        "tests/swarm_progress_slo_e2e.rs"
       ],
       "docs_or_evidence_paths": [
-        "tests/swarm_progress_slo_e2e.rs"
       ],
       "validation_commands": [
         "rch exec -- cargo test --test swarm_progress_slo_e2e -- --nocapture"
@@ -395,9 +391,6 @@
       "evidence": [
         {
           "path": "src/main.rs"
-        },
-        {
-          "path": "tests/swarm_progress_cli.rs"
         }
       ]
     },
@@ -424,9 +417,6 @@
       "requirement": "No-mock E2E coverage exercises temp Beads and git seams plus fixture-captured degraded Agent Mail/RCH inputs.",
       "issue": null,
       "evidence": [
-        {
-          "path": "tests/swarm_progress_slo_e2e.rs"
-        }
       ]
     },
     {

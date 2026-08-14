@@ -483,23 +483,21 @@
       "replay_command": "./scripts/e2e/run_all.sh --profile ci --suite e2e_interruption_resume_replay"
     },
     {
-      "workflow_id": "wf-doctor-and-golden-corpus-governance",
+      "workflow_id": "wf-golden-corpus-governance",
       "workflow_class": "governance_success_path",
-      "workflow_title": "Doctor JSON temp-dir contract and golden-corpus replay coverage",
+      "workflow_title": "Golden-corpus replay coverage",
       "status": "covered",
       "vcr_mode": "vcr-only",
-      "vcr_mode_rationale": "Doctor JSON and golden-corpus scenarios run against deterministic fixtures and local temp directories.",
+      "vcr_mode_rationale": "Golden-corpus scenarios run against deterministic fixtures and local temp directories.",
       "owner": "bd-8t27h.3",
       "provider_families": [
         "core-runtime",
         "governance"
       ],
       "suite_ids": [
-        "doctor_swarm_temp_dir_json",
         "e2e_golden_corpus"
       ],
       "test_paths": [
-        "tests/doctor_swarm_temp_dir_json.rs",
         "tests/e2e_golden_corpus.rs"
       ],
       "sli_ids": [
@@ -515,7 +513,7 @@
         "environment.json",
         "evidence_contract.json"
       ],
-      "replay_command": "./scripts/e2e/run_all.sh --profile ci --suite doctor_swarm_temp_dir_json --suite e2e_golden_corpus"
+      "replay_command": "./scripts/e2e/run_all.sh --profile ci --suite e2e_golden_corpus"
     },
     {
       "workflow_id": "wf-swarm-flight-recorder-replay",

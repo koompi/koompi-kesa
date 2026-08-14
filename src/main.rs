@@ -68,11 +68,6 @@ const EXIT_CODE_USAGE: i32 = 2;
 const USAGE_ERROR_PATTERNS: &[&str] = &[
     "@file arguments are not supported in rpc mode",
     "--api-key requires a model to be specified via --provider/--model or --models",
-    "context-preview requires",
-    "swarm-progress requires",
-    "swarm-replay-preview requires",
-    "unsupported swarm-progress format",
-    "unsupported swarm-replay-preview policy",
     "unknown --only categories",
     "--only must include at least one category",
     "--fetch-models cannot be combined",
@@ -3571,7 +3566,7 @@ async fn handle_config(
     json_output: bool,
 ) -> Result<()> {
     if json_output && (show || paths) {
-        bail!("`pi config --json` cannot be combined with --show/--paths");
+        bail!("`kesa config --json` cannot be combined with --show/--paths");
     }
 
     let interactive_requested = !show && !paths;
@@ -3717,13 +3712,13 @@ fn handle_doctor(
         }
         if !invalid.is_empty() {
             bail!(
-                "Unknown --only categories: {} (valid: config, dirs, auth, shell, sessions, swarm, extensions)",
+                "Unknown --only categories: {} (valid: config, dirs, auth, shell, sessions, extensions)",
                 invalid.join(", ")
             );
         }
         if parsed.is_empty() {
             bail!(
-                "--only must include at least one category (valid: config, dirs, auth, shell, sessions, swarm, extensions)"
+                "--only must include at least one category (valid: config, dirs, auth, shell, sessions, extensions)"
             );
         }
         Some(parsed)
@@ -3851,7 +3846,7 @@ fn maybe_print_list_models_note<R: ModelTableRow>(rows: &[R], pattern: Option<&s
     let total = PROVIDER_METADATA.len();
 
     if shown < total {
-        println!("Showing {shown} of {total} providers. Run `pi --list-providers` to see all.");
+        println!("Showing {shown} of {total} providers. Run `kesa --list-providers` to see all.");
     }
 }
 

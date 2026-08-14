@@ -229,12 +229,4 @@ git diff --check
 ./scripts/reconcile_beads_ledger.sh
 ```
 
-If examples or CLI flags change, also run the focused CLI test through RCH:
-
-```bash
-env CARGO_TARGET_DIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME:-agent}/target" \
-  TMPDIR="/data/tmp/koompi_code_cli_cargo/${AGENT_NAME:-agent}/tmp" \
-  rch exec -- cargo test --test swarm_replay_preview_cli -- --nocapture
-```
-
 Before closing a replay bead, stage the docs and Beads changes, then run `ubs --staged --only=rust .`. For docs-only commits this should still be recorded; it may report no staged Rust files.

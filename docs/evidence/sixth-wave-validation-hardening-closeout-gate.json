@@ -187,8 +187,7 @@
               ],
               "status": "closed",
               "test_paths": [
-                "src/doctor.rs",
-                "tests/doctor_swarm_temp_dir_json.rs"
+                "src/doctor.rs"
               ],
               "title": "Model cgroup and NUMA-aware swarm validation budgets",
               "validation_commands": [
@@ -334,9 +333,6 @@
       "evidence": [
         {
           "path": "src/doctor.rs"
-        },
-        {
-          "path": "tests/doctor_swarm_temp_dir_json.rs"
         }
       ],
       "id": "resource_budget_model",
@@ -684,8 +680,7 @@
       ],
       "status": "closed",
       "test_paths": [
-        "src/doctor.rs",
-        "tests/doctor_swarm_temp_dir_json.rs"
+        "src/doctor.rs"
       ],
       "title": "Model cgroup and NUMA-aware swarm validation budgets",
       "validation_commands": [

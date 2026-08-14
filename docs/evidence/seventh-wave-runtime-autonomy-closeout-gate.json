@@ -96,7 +96,6 @@
               ],
               "status": "closed",
               "test_paths": [
-                "tests/doctor_swarm_temp_dir_json.rs",
                 "src/doctor.rs"
               ],
               "title": "Add advisory NUMA/cgroup swarm lane placement planner",
@@ -255,9 +254,6 @@
       "evidence": [
         {
           "path": "src/doctor.rs"
-        },
-        {
-          "path": "tests/doctor_swarm_temp_dir_json.rs"
         }
       ],
       "id": "lane_placement_planner",
@@ -550,7 +546,6 @@
       ],
       "status": "closed",
       "test_paths": [
-        "tests/doctor_swarm_temp_dir_json.rs",
         "src/doctor.rs"
       ],
       "title": "Add advisory NUMA/cgroup swarm lane placement planner",

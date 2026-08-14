@@ -182,7 +182,6 @@
         "scripts/build_swarm_operator_runpack.py"
       ],
       "test_paths": [
-        "tests/swarm_replay_preview_cli.rs",
         "tests/conformance/fixture_runner.rs"
       ],
       "docs_or_evidence_paths": [

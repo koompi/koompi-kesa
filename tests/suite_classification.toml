@@ -266,10 +266,7 @@ files = [
     "session_store_v2_contract",
     "sdk_integration",
     "semantic_workspace_graph_builder",
-    "swarm_progress_cli",
-    "swarm_progress_slo_e2e",
     "swarm_replay_ingestor",
-    "swarm_replay_preview_cli",
     "session_sqlite",
     "sse_strict_compliance",
     "streaming_hostcall",
@@ -278,7 +275,6 @@ files = [
     "tools_hardened",
     "tui_snapshot",
     "tui_state",
-    "validation_broker_cli",
     "validation_broker_e2e",
 ]
 
@@ -288,7 +284,6 @@ files = [
     "e2e_auto_repair",
     "e2e_cli",
     "e2e_cross_provider_parity",
-    "doctor_swarm_temp_dir_json",
     "dropin_extension_ui_differential",
     "dropin_rpc_differential",
     "e2e_golden_corpus",

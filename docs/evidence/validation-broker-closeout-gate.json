@@ -120,7 +120,6 @@
         "src/validation_broker.rs"
       ],
       "test_paths": [
-        "tests/validation_broker_cli.rs",
         "tests/conformance/fixture_runner.rs",
         "tests/validation_broker_contract.rs"
       ],
@@ -166,7 +165,6 @@
         "scripts/build_swarm_operator_runpack.py"
       ],
       "test_paths": [
-        "tests/doctor_swarm_temp_dir_json.rs",
         "tests/validation_broker_contract.rs"
       ],
       "docs_or_evidence_paths": [
@@ -191,8 +189,7 @@
         "tests/golden_corpus/validation_broker/e2e"
       ],
       "test_paths": [
-        "tests/validation_broker_e2e.rs",
-        "tests/validation_broker_cli.rs"
+        "tests/validation_broker_e2e.rs"
       ],
       "docs_or_evidence_paths": [
         "tests/golden_corpus/validation_broker/e2e/activity_digest.json",
@@ -489,9 +486,6 @@
         },
         {
           "path": "src/main.rs"
-        },
-        {
-          "path": "tests/validation_broker_cli.rs"
         }
       ],
       "issue": null
@@ -529,9 +523,6 @@
         },
         {
           "path": "docs/contracts/swarm-autopilot-input-pack-contract.json"
-        },
-        {
-          "path": "tests/doctor_swarm_temp_dir_json.rs"
         }
       ],
       "issue": null
