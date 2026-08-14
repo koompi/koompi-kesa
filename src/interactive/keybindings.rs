@@ -362,10 +362,15 @@ impl PiApp {
                     return None;
                 }
 
+                // Under the agent dir, not the system temp dir: the read tools
+                // refuse any path outside cwd or the agent dir, so a /tmp paste
+                // attaches and then fails validation on the very next send.
+                let pastes = crate::config::Config::global_dir().join("pastes");
+                std::fs::create_dir_all(&pastes).ok()?;
                 let mut temp_file = tempfile::Builder::new()
                     .prefix("kesa-paste-")
                     .suffix(".png")
-                    .tempfile()
+                    .tempfile_in(&pastes)
                     .ok()?;
                 let encoder = image::codecs::png::PngEncoder::new(&mut temp_file);
                 if encoder
