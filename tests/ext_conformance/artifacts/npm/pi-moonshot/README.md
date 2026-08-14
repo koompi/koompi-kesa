@@ -22,7 +22,7 @@ Set your Moonshot API key:
 export MOONSHOT_API_KEY="your-api-key"
 ```
 
-Or add to your `~/.kode/agent/settings.json`:
+Or add to your `~/.pi/agent/settings.json`:
 
 ```json
 {

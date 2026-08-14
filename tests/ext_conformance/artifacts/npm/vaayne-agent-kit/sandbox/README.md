@@ -69,14 +69,14 @@ Customize versions during build:
 | `NODE_VERSION` | `23`     | Node.js version            |
 | `UV_VERSION`   | `latest` | uv package manager version |
 | `BUN_VERSION`  | `latest` | Bun runtime version        |
-| `KODE_VERSION`   | `latest` | Pi coding agent version    |
+| `PI_VERSION`   | `latest` | Pi coding agent version    |
 
 Example:
 
 ```bash
 docker build \
   --build-arg NODE_VERSION=22 \
-  --build-arg KODE_VERSION=0.49.0 \
+  --build-arg PI_VERSION=0.49.0 \
   -t vaayne/agent-sandbox:custom .
 ```
 

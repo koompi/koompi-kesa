@@ -18,7 +18,7 @@ Layered permission control for pi-coding-agent.
 ### Interactive Mode
 
 ```bash
-# Extension loads automatically from ~/.kode/agent/extensions/ or .kode/extensions/
+# Extension loads automatically from ~/.pi/agent/extensions/ or .pi/extensions/
 pi
 ```
 
@@ -45,10 +45,10 @@ Permission mode is ignored in print mode; insufficient permissions always block.
 
 ```bash
 # Set level via environment variable
-KODE_PERMISSION_LEVEL=medium pi -p "install deps and run tests"
+PI_PERMISSION_LEVEL=medium pi -p "install deps and run tests"
 
 # Bypass all permission checks (CI/containers - dangerous!)
-KODE_PERMISSION_LEVEL=bypassed pi -p "do anything"
+PI_PERMISSION_LEVEL=bypassed pi -p "do anything"
 ```
 
 **If permission is insufficient:**
@@ -56,7 +56,7 @@ The command is blocked but execution continues. The agent receives:
 ```
 Blocked by permission (minimal). Command: npm install lodash
 Allowed at this level: read-only (cat, ls, grep, git status/diff/log, npm list, version checks)
-User can re-run with: KODE_PERMISSION_LEVEL=medium pi -p "..."
+User can re-run with: PI_PERMISSION_LEVEL=medium pi -p "..."
 ```
 
 The agent can then work around the limitation or inform the user.
@@ -65,11 +65,11 @@ The agent can then work around the limitation or inform the user.
 
 | Variable | Values | Description |
 |----------|--------|-------------|
-| `KODE_PERMISSION_LEVEL` | `minimal`, `low`, `medium`, `high`, `bypassed` | Set permission level |
+| `PI_PERMISSION_LEVEL` | `minimal`, `low`, `medium`, `high`, `bypassed` | Set permission level |
 
 ## Settings
 
-Global settings stored in `~/.kode/agent/settings.json`:
+Global settings stored in `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -82,7 +82,7 @@ Global settings stored in `~/.kode/agent/settings.json`:
 
 ## Custom Configuration
 
-Configure permission overrides and prefix mappings in `~/.kode/agent/settings.json`:
+Configure permission overrides and prefix mappings in `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -177,7 +177,7 @@ View and manage configuration from the CLI:
 /permission config reset   # Reset to default (empty)
 ```
 
-Edit `~/.kode/agent/settings.json` directly for full control.
+Edit `~/.pi/agent/settings.json` directly for full control.
 
 ## Command Classification
 

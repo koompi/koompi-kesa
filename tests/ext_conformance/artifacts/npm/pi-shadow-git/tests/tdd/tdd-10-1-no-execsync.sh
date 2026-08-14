@@ -1,7 +1,7 @@
 #!/bin/bash
 # TDD-10-1: No execSync for git commands (should be async)
 set -e
-EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
 
 # Check for execSync usage with git
 if grep -q 'execSync.*git\|execSync("git' "$EXT"; then

@@ -15,4 +15,4 @@ Exports the current session branch to a markdown file. Presents a toggle UI to c
 - **Tool results** - Include tool output (default: on)
 - **Thinking blocks** - Include model reasoning (default: off)
 
-The exported file is saved to `~/.kode/agent/session-exports/` with YAML frontmatter containing session metadata. The file path is copied to clipboard after export.
+The exported file is saved to `~/.pi/agent/session-exports/` with YAML frontmatter containing session metadata. The file path is copied to clipboard after export.

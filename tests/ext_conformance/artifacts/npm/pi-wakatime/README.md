@@ -42,7 +42,7 @@ You can get your API key from your [WakaTime Settings](https://wakatime.com/sett
 
 ### Check if the extension is loaded
 ```bash
-pi -e ~/.kode/agent/extensions/pi-wakatime/src/index.ts
+pi -e ~/.pi/agent/extensions/pi-wakatime/src/index.ts
 ```
 
 ### View logs

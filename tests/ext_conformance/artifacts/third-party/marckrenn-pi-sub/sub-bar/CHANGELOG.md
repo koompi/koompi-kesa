@@ -13,13 +13,13 @@
   Manual migration (if you want to do it yourself before updating):
 
   ```
-  cp ~/.kode/agent/extensions/sub-core/settings.json ~/.kode/agent/pi-sub-core-settings.json
-  cp ~/.kode/agent/extensions/sub-bar/settings.json ~/.kode/agent/pi-sub-bar-settings.json
+  cp ~/.pi/agent/extensions/sub-core/settings.json ~/.pi/agent/pi-sub-core-settings.json
+  cp ~/.pi/agent/extensions/sub-bar/settings.json ~/.pi/agent/pi-sub-bar-settings.json
   ```
 
   Existing users should move legacy settings from the extension folders to:
-  - `~/.kode/agent/pi-sub-core-settings.json`
-  - `~/.kode/agent/pi-sub-bar-settings.json`
+  - `~/.pi/agent/pi-sub-core-settings.json`
+  - `~/.pi/agent/pi-sub-bar-settings.json`
 
 - [#23](https://github.com/marckrenn/pi-sub/pull/23) [`9c324fc`](https://github.com/marckrenn/pi-sub/commit/9c324fc7daae2a874816f600ac1ea422f3799dd2) Thanks [@marckrenn](https://github.com/marckrenn)! - Auto-post theme share strings when saving, add a “Share theme” menu entry, allow share strings without a name when importing, and post raw share strings (without the `/sub-bar:import` prefix).
 

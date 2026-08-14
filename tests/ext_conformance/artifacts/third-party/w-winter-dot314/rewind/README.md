@@ -21,9 +21,9 @@ npx pi-rewind-hook
 ```
 
 This will:
-1. Create `~/.kode/agent/extensions/rewind/`
+1. Create `~/.pi/agent/extensions/rewind/`
 2. Download the extension files
-3. Add the extension to your `~/.kode/agent/settings.json`
+3. Add the extension to your `~/.pi/agent/settings.json`
 4. Migrate any existing hooks config to extensions (if upgrading from v1.2.0)
 5. Clean up old `hooks/rewind` directory (if present)
 
@@ -38,14 +38,14 @@ curl -fsSL https://raw.githubusercontent.com/nicobailon/pi-rewind-hook/main/inst
 Or clone the repo and configure manually:
 
 ```bash
-git clone https://github.com/nicobailon/pi-rewind-hook ~/.kode/agent/extensions/rewind
+git clone https://github.com/nicobailon/pi-rewind-hook ~/.pi/agent/extensions/rewind
 ```
 
-Then add to `~/.kode/agent/settings.json`:
+Then add to `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "extensions": ["~/.kode/agent/extensions/rewind/index.ts"]
+  "extensions": ["~/.pi/agent/extensions/rewind/index.ts"]
 }
 ```
 
@@ -68,11 +68,11 @@ If you're upgrading from pi-rewind-hook v1.2.0 (which used the hooks system), si
 
 ## Configuration
 
-You can configure the extension by adding settings to `~/.kode/agent/settings.json`:
+You can configure the extension by adding settings to `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "extensions": ["~/.kode/agent/extensions/rewind/index.ts"],
+  "extensions": ["~/.pi/agent/extensions/rewind/index.ts"],
   "rewind": {
     "silentCheckpoints": true
   }
@@ -197,11 +197,11 @@ git for-each-ref --format='%(refname)' refs/pi-checkpoints/ | xargs -n1 git upda
 
 1. Remove the extension directory:
    ```bash
-   rm -rf ~/.kode/agent/extensions/rewind
+   rm -rf ~/.pi/agent/extensions/rewind
    ```
-   On Windows (PowerShell): `Remove-Item -Recurse -Force ~/.kode/agent/extensions/rewind`
+   On Windows (PowerShell): `Remove-Item -Recurse -Force ~/.pi/agent/extensions/rewind`
 
-2. Remove the extension from `~/.kode/agent/settings.json` (delete the line with `rewind/index.ts` from the `extensions` array)
+2. Remove the extension from `~/.pi/agent/settings.json` (delete the line with `rewind/index.ts` from the `extensions` array)
 
 3. Optionally, clean up git refs in each repo where you used the extension:
    ```bash

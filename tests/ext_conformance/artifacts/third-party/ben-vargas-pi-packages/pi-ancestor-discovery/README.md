@@ -14,17 +14,17 @@ pi install npm:@benvargas/pi-ancestor-discovery
 
 - Enabled: skills
 - Disabled: prompts, themes
-- Search paths: `.kode/skills`, `.agents/skills`
+- Search paths: `.pi/skills`, `.agents/skills`
 - Boundary: home directory (`~`)
 
-This means it will look for `.kode/skills` and `.agents/skills` at each ancestor directory from `cwd` up to your home directory.
+This means it will look for `.pi/skills` and `.agents/skills` at each ancestor directory from `cwd` up to your home directory.
 
 ## Configuration
 
 Create a JSON config file in one of these locations:
 
-- Project: `.kode/extensions/pi-ancestor-discovery.json`
-- Global: `~/.kode/agent/extensions/pi-ancestor-discovery.json`
+- Project: `.pi/extensions/pi-ancestor-discovery.json`
+- Global: `~/.pi/agent/extensions/pi-ancestor-discovery.json`
 
 Project config overrides global config.
 If neither exists, the extension writes the default config to the global path on first run.
@@ -37,15 +37,15 @@ If neither exists, the extension writes the default config to the global path on
   "resources": {
     "skills": {
       "enabled": true,
-      "searchPaths": [".kode/skills", ".agents/skills"]
+      "searchPaths": [".pi/skills", ".agents/skills"]
     },
     "prompts": {
       "enabled": true,
-      "searchPaths": [".kode/prompts"]
+      "searchPaths": [".pi/prompts"]
     },
     "themes": {
       "enabled": true,
-      "searchPaths": [".kode/themes"]
+      "searchPaths": [".pi/themes"]
     }
   }
 }
@@ -58,7 +58,7 @@ If neither exists, the extension writes the default config to the global path on
   "resources": {
     "skills": {
       "enabled": true,
-      "searchPaths": [".kode/skills", ".agents/skills", ".claude/skills"]
+      "searchPaths": [".pi/skills", ".agents/skills", ".claude/skills"]
     }
   }
 }

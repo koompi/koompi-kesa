@@ -6,13 +6,13 @@ mkdir -p "$(dirname "$RESULTS")"
 
 echo "=== FUNCTIONAL BASELINE: $(date -Iseconds) ===" | tee "$RESULTS"
 
-EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
 
 # Test 1: audit.jsonl created
 echo -n "TEST: audit.jsonl created... " | tee -a "$RESULTS"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "Say hello" 2>&1 >/dev/null || true
 
@@ -29,7 +29,7 @@ rm -rf "$TEST_WS"
 echo -n "TEST: session_start event logged... " | tee -a "$RESULTS"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "Say hello" 2>&1 >/dev/null || true
 
@@ -46,12 +46,12 @@ rm -rf "$TEST_WS"
 echo -n "TEST: killswitch disables logging... " | tee -a "$RESULTS"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 BEFORE=$(wc -l < "$TEST_WS/agents/test1/audit.jsonl" 2>/dev/null | tr -d ' ' || echo 0)
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" KODE_SHADOW_GIT_DISABLED=1 \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" PI_SHADOW_GIT_DISABLED=1 \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "bye" 2>&1 >/dev/null || true
 AFTER=$(wc -l < "$TEST_WS/agents/test1/audit.jsonl" 2>/dev/null | tr -d ' ' || echo 0)

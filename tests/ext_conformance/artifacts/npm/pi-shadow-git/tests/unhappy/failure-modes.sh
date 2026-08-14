@@ -3,12 +3,12 @@
 set -e
 
 echo "=== UNHAPPY PATH TESTS ==="
-EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
 
-# UP-01: Missing KODE_WORKSPACE_ROOT - graceful handling
-echo "UP-01: Missing KODE_WORKSPACE_ROOT..."
-unset KODE_WORKSPACE_ROOT
-OUTPUT=$(KODE_AGENT_NAME="test1" \
+# UP-01: Missing PI_WORKSPACE_ROOT - graceful handling
+echo "UP-01: Missing PI_WORKSPACE_ROOT..."
+unset PI_WORKSPACE_ROOT
+OUTPUT=$(PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "What is 2+2?" 2>&1 || true)
 
@@ -21,10 +21,10 @@ else
   echo "  ✓ PASS - handled gracefully"
 fi
 
-# UP-02: Missing KODE_AGENT_NAME - graceful handling
-echo "UP-02: Missing KODE_AGENT_NAME..."
+# UP-02: Missing PI_AGENT_NAME - graceful handling
+echo "UP-02: Missing PI_AGENT_NAME..."
 TEST_WS=$(mktemp -d)
-OUTPUT=$(KODE_WORKSPACE_ROOT="$TEST_WS" \
+OUTPUT=$(PI_WORKSPACE_ROOT="$TEST_WS" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "What is 2+2?" 2>&1 || true)
 
@@ -43,7 +43,7 @@ mkdir -p "$TEST_WS/agents/test1"
 echo "this is definitely not valid json" > "$TEST_WS/agents/test1/audit.jsonl"
 echo '{"event":"session_start","ts":123456}' >> "$TEST_WS/agents/test1/audit.jsonl"
 
-OUTPUT=$(KODE_WORKSPACE_ROOT="$TEST_WS" \
+OUTPUT=$(PI_WORKSPACE_ROOT="$TEST_WS" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "/mc" 2>&1 || true)
 
@@ -61,7 +61,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 chmod 555 "$TEST_WS/agents/test1"  # Read-only
 
-OUTPUT=$(KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+OUTPUT=$(PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "What is 2+2?" 2>&1 || true)
 
@@ -88,7 +88,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1/.git"
 touch "$TEST_WS/agents/test1/.git/index.lock"  # Stale lock
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'test' to output/x.txt" 2>&1 >/dev/null || true
 

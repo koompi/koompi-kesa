@@ -28,7 +28,7 @@ sudo apt-get install -y bat git-delta glow
 pi install git:github.com/tmustier/pi-extensions
 ```
 
-Then add to `~/.kode/agent/settings.json`:
+Then add to `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -53,10 +53,10 @@ Add to your Pi extensions list:
 }
 ```
 
-If you prefer symlinking into `~/.kode/agent/extensions`:
+If you prefer symlinking into `~/.pi/agent/extensions`:
 
 ```bash
-ln -sfn ~/pi-extensions/files-widget ~/.kode/agent/extensions/files-widget
+ln -sfn ~/pi-extensions/files-widget ~/.pi/agent/extensions/files-widget
 ```
 
 Then reference it in your settings:
@@ -64,7 +64,7 @@ Then reference it in your settings:
 ```json
 {
   "extensions": [
-    "~/.kode/agent/extensions/files-widget"
+    "~/.pi/agent/extensions/files-widget"
   ]
 }
 ```

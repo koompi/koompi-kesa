@@ -32,8 +32,8 @@ All of this works **inside pi**, driven by the extension. You rarely need to cal
 npm install -g @qualisero/pi-agent-scip
 
 # Create symlink for pi to discover
-mkdir -p ~/.kode/agent/extensions
-ln -s $(npm root -g)/@qualisero/pi-agent-scip/dist/index.js ~/.kode/agent/extensions/pi-agent-scip.js
+mkdir -p ~/.pi/agent/extensions
+ln -s $(npm root -g)/@qualisero/pi-agent-scip/dist/index.js ~/.pi/agent/extensions/pi-agent-scip.js
 ```
 
 ### Project-Local Installation
@@ -43,18 +43,18 @@ ln -s $(npm root -g)/@qualisero/pi-agent-scip/dist/index.js ~/.kode/agent/extens
 npm install --save-dev @qualisero/pi-agent-scip
 
 # Link to local extensions directory
-mkdir -p .kode/extensions
-ln -s $(pwd)/node_modules/@qualisero/pi-agent-scip/dist/index.js .kode/extensions/pi-agent-scip.js
+mkdir -p .pi/extensions
+ln -s $(pwd)/node_modules/@qualisero/pi-agent-scip/dist/index.js .pi/extensions/pi-agent-scip.js
 ```
 
-### One-Time Setup with KODE_INSTRUCTIONS.md
+### One-Time Setup with PI_INSTRUCTIONS.md
 
 Alternatively, you can use the provided instructions:
 
-1. **☢️ Read the local `KODE_INSTRUCTIONS.md` file ☢️** to understand what will be changed in your global pi configuration.
+1. **☢️ Read the local `PI_INSTRUCTIONS.md` file ☢️** to understand what will be changed in your global pi configuration.
 
 2. **Run pi in this repo** and say:
-   > Execute instructions in @KODE_INSTRUCTIONS.md
+   > Execute instructions in @PI_INSTRUCTIONS.md
 
 After this one-time setup, every `pi` session can see and use the SCIP tools automatically.
 
@@ -132,7 +132,7 @@ Version 0.3.0 migrates from the old hook/custom tool system to the new unified *
 **Migration steps:**
 1. Update pi to `>=0.35.0`
 2. Update @qualisero/pi-agent-scip to `>=0.3.0`
-3. Move symlink from `~/.kode/agent/tools/` to `~/.kode/agent/extensions/`
+3. Move symlink from `~/.pi/agent/tools/` to `~/.pi/agent/extensions/`
 4. Remove any `--tool` or `--hook` flags from your pi commands (use `--extension` or `-e` if needed)
 
 The extension will continue to work identically - no functional changes to the tools themselves.

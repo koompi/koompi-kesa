@@ -18,7 +18,7 @@ Run the `send-request.cjs` script with request parameters:
 
 ```bash
 # First, find the script path (use -L to follow symlinks)
-SCRIPT=$(find -L ~/.kode/agent/skills -name "send-request.cjs" 2>/dev/null | head -1)
+SCRIPT=$(find -L ~/.pi/agent/skills -name "send-request.cjs" 2>/dev/null | head -1)
 
 # Then use it
 node "$SCRIPT" <METHOD> "<URL>" [options] 2>&1

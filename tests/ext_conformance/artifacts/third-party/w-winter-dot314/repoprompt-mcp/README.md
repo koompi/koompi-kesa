@@ -49,12 +49,12 @@ If RepoPrompt renames/removes these tools or changes their required parameters/o
 ## Installation
 
 1. Copy this extension into Pi’s extensions directory:
-   - `~/.kode/agent/extensions/repoprompt-mcp/`
+   - `~/.pi/agent/extensions/repoprompt-mcp/`
 
 2. Install dependencies:
 
    ```bash
-   cd ~/.kode/agent/extensions/repoprompt-mcp
+   cd ~/.pi/agent/extensions/repoprompt-mcp
    npm install
    ```
 
@@ -68,7 +68,7 @@ If RepoPrompt renames/removes these tools or changes their required parameters/o
 
 3. Configure the RepoPrompt MCP server (if not auto-detected):
 
-   Create `~/.kode/agent/extensions/repoprompt-mcp.json`:
+   Create `~/.pi/agent/extensions/repoprompt-mcp.json`:
 
    ```json
    {
@@ -77,7 +77,7 @@ If RepoPrompt renames/removes these tools or changes their required parameters/o
    }
    ```
 
-   Or add to `~/.kode/agent/mcp.json`:
+   Or add to `~/.pi/agent/mcp.json`:
 
    ```json
    {
@@ -154,7 +154,7 @@ rp({
 
 ## Configuration
 
-Create `~/.kode/agent/extensions/repoprompt-mcp.json`:
+Create `~/.pi/agent/extensions/repoprompt-mcp.json`:
 
 ```json
 {

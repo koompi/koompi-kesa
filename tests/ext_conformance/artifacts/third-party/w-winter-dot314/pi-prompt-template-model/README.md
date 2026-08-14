@@ -80,7 +80,7 @@ skill: surf
 $@
 ```
 
-Here `skill: surf` loads `~/.kode/agent/skills/surf/SKILL.md` and injects its content directly into the system prompt before the agent even sees your task. No decision-making, no read tool, just immediate expertise. It's a forcing function for when you know exactly what workflow the agent needs.
+Here `skill: surf` loads `~/.pi/agent/skills/surf/SKILL.md` and injects its content directly into the system prompt before the agent even sees your task. No decision-making, no read tool, just immediate expertise. It's a forcing function for when you know exactly what workflow the agent needs.
 
 ## Frontmatter Fields
 
@@ -140,8 +140,8 @@ skill: tmux
 ```
 
 Resolves to (checked in order):
-1. `<cwd>/.kode/skills/tmux/SKILL.md` (project)
-2. `~/.kode/agent/skills/tmux/SKILL.md` (user)
+1. `<cwd>/.pi/skills/tmux/SKILL.md` (project)
+2. `~/.pi/agent/skills/tmux/SKILL.md` (user)
 
 This matches pi's precedence - project skills override user skills.
 
@@ -150,7 +150,7 @@ This matches pi's precedence - project skills override user skills.
 Organize prompts in subdirectories for namespacing:
 
 ```
-~/.kode/agent/prompts/
+~/.pi/agent/prompts/
 ├── quick.md                    → /quick (user)
 ├── debug-python.md             → /debug-python (user)
 └── frontend/

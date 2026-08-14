@@ -2,12 +2,12 @@
 # TDD-01-4: Parallel agents should have ZERO git lock conflicts
 # RED: Should FAIL on current code (shared .git causes locks)
 set -e
-EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents"/{a1,a2,a3}
 
 for agent in a1 a2 a3; do
-  KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="$agent" \
+  PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="$agent" \
     pi --max-turns 1 --no-input -p \
     -e "$EXT" "hi" 2>&1 >/dev/null &
 done

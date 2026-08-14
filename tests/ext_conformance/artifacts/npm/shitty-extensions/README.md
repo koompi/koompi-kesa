@@ -56,7 +56,7 @@ pi -e npm:shitty-extensions
 
 ### Project-local installation
 
-Install to `.kode/` for team sharing (auto-installs for teammates on startup):
+Install to `.pi/` for team sharing (auto-installs for teammates on startup):
 
 ```bash
 pi install -l npm:shitty-extensions
@@ -194,7 +194,7 @@ Save instructions to AGENTS.md files with AI-assisted integration.
   |----------|------|----------|
   | Project Local | `./AGENTS.local.md` | Personal preferences, auto-added to `.gitignore` |
   | Project | `./AGENTS.md` | Shared with team |
-  | Global | `~/.kode/agent/AGENTS.md` | All your projects |
+  | Global | `~/.pi/agent/AGENTS.md` | All your projects |
 
 - **AI-assisted integration**: The current model intelligently integrates instructions
 - **Preview before save**: Review proposed changes before committing

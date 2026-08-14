@@ -142,7 +142,7 @@ interactive_shell({ sessionId: "abc", input: "y", inputKeys: ["enter"] })
 
 ### Changed
 - **autoExitOnQuiet now defaults to false** - Sessions stay alive for multi-turn interaction by default. Enable with `handsFree: { autoExitOnQuiet: true }` for fire-and-forget single-task delegations.
-- **Config documentation** - Fixed incorrect config path in README. Config files are `~/.kode/agent/interactive-shell.json` (global) and `.kode/interactive-shell.json` (project), not under `settings.json`. Added full settings table with all options documented.
+- **Config documentation** - Fixed incorrect config path in README. Config files are `~/.pi/agent/interactive-shell.json` (global) and `.pi/interactive-shell.json` (project), not under `settings.json`. Added full settings table with all options documented.
 - **Detach key** - Changed from double-Escape to Ctrl+Q for more reliable detection.
 
 ## [0.4.6] - 2026-01-18

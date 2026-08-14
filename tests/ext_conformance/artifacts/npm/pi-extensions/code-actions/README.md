@@ -17,7 +17,7 @@ pi install npm:@tmustier/pi-code-actions
 pi install git:github.com/tmustier/pi-extensions
 ```
 
-Then filter to just this extension in `~/.kode/agent/settings.json`:
+Then filter to just this extension in `~/.pi/agent/settings.json`:
 
 ```json
 {

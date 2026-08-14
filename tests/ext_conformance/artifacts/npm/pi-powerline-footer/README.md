@@ -70,7 +70,7 @@ Transform boring "Working..." messages into themed phrases that match your style
 
 ### Configuration
 
-In `~/.kode/agent/settings.json`:
+In `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -93,13 +93,13 @@ In `~/.kode/agent/settings.json`:
 
 **File mode setup:**
 ```bash
-/vibe generate mafia 200    # Generate 200 vibes, save to ~/.kode/agent/vibes/mafia.txt
+/vibe generate mafia 200    # Generate 200 vibes, save to ~/.pi/agent/vibes/mafia.txt
 /vibe mode file             # Switch to file mode
 /vibe mafia                 # Now uses the file
 ```
 
 **How file mode works:**
-1. Vibes are loaded from `~/.kode/agent/vibes/{theme}.txt` into memory
+1. Vibes are loaded from `~/.pi/agent/vibes/{theme}.txt` into memory
 2. Uses seeded shuffle (Mulberry32 PRNG) — cycles through all vibes before repeating
 3. New seed each session — different order every time you restart pi
 4. Zero latency, zero cost, works offline
@@ -137,7 +137,7 @@ The path segment supports three modes:
 |------|---------|-------------|
 | `basename` | `powerline-footer` | Just the directory name (default) |
 | `abbreviated` | `…/extensions/powerline-footer` | Full path with home abbreviated and length limit |
-| `full` | `~/.kode/agent/extensions/powerline-footer` | Complete path with home abbreviated |
+| `full` | `~/.pi/agent/extensions/powerline-footer` | Complete path with home abbreviated |
 
 Configure via preset options: `path: { mode: "full" }`
 
@@ -171,7 +171,7 @@ Colors are configurable via pi's theme system. Each preset defines its own color
 
 ### Custom Theme Override
 
-Create `~/.kode/agent/extensions/powerline-footer/theme.json`:
+Create `~/.pi/agent/extensions/powerline-footer/theme.json`:
 
 ```json
 {

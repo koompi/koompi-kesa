@@ -37,7 +37,7 @@ pi
 
 ### Option 2: JSON Config
 
-Create `~/.kode/agent/extensions/exa-mcp.json`:
+Create `~/.pi/agent/extensions/exa-mcp.json`:
 
 ```json
 {
@@ -101,8 +101,8 @@ Config files are loaded in order (first match wins):
 
 1. Path from `--exa-mcp-config` flag
 2. Path from `EXA_MCP_CONFIG` environment variable
-3. `./.kode/extensions/exa-mcp.json` (project-level)
-4. `~/.kode/agent/extensions/exa-mcp.json` (global)
+3. `./.pi/extensions/exa-mcp.json` (project-level)
+4. `~/.pi/agent/extensions/exa-mcp.json` (global)
 
 If none exist, the extension writes a default config to the global path with `apiKey` set to `null`.
 

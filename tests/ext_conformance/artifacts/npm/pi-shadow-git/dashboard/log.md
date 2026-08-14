@@ -227,7 +227,7 @@ Outcome: PASS
 |------|---------|------|
 | `mission_control.html` | Premium dashboard (Gemini-generated) | 30KB |
 | `dashboard_template.html` | First Gemini dashboard | 15KB |
-| `~/.kode/bin/pi-dashboard-smooth` | Smooth data generator | 21KB |
+| `~/.pi/bin/pi-dashboard-smooth` | Smooth data generator | 21KB |
 | `/tmp/premium-data-gen.sh` | JSON data generator | 2KB |
 
 ## Key Learnings

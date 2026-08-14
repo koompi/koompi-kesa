@@ -60,9 +60,9 @@ git init
 mkdir -p agents/test1/{workspace,output}
 git add -A && git commit -m "init"
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   pi --max-turns 10 --no-input -p \
-  -e ~/.kode/agent/extensions/shadow-git.ts \
+  -e ~/.pi/agent/extensions/shadow-git.ts \
   "Write numbers 1-10 to separate files in output/" 2>&1
 
 COMMIT_COUNT=$(cd "$TEST_WS" && git log --oneline | wc -l)
@@ -79,9 +79,9 @@ git add -A && git commit -m "init"
 
 # Spawn 3 agents in parallel
 for agent in a1 a2 a3; do
-  KODE_WORKSPACE_ROOT="$TEST_WS2" KODE_AGENT_NAME="$agent" \
+  PI_WORKSPACE_ROOT="$TEST_WS2" PI_AGENT_NAME="$agent" \
     pi --max-turns 5 --no-input -p \
-    -e ~/.kode/agent/extensions/shadow-git.ts \
+    -e ~/.pi/agent/extensions/shadow-git.ts \
     "Write 'hello from $agent' to output/greeting.txt" 2>&1 &
 done
 wait
@@ -145,9 +145,9 @@ git add -A && git commit -m "init"
 
 # Test 1: Session start creates audit.jsonl
 echo -n "TEST: session_start creates audit.jsonl... " | tee -a "$RESULTS"
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   pi --max-turns 1 --no-input -p \
-  -e ~/.kode/agent/extensions/shadow-git.ts \
+  -e ~/.pi/agent/extensions/shadow-git.ts \
   "Say hello" 2>&1 >/dev/null
 
 if [ -f "$TEST_WS/agents/test1/audit.jsonl" ]; then
@@ -179,9 +179,9 @@ fi
 # Test 4: Killswitch works
 echo -n "TEST: killswitch disables logging... " | tee -a "$RESULTS"
 BEFORE=$(wc -l < "$TEST_WS/agents/test1/audit.jsonl")
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" KODE_SHADOW_GIT_DISABLED=1 \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" PI_SHADOW_GIT_DISABLED=1 \
   pi --max-turns 1 --no-input -p \
-  -e ~/.kode/agent/extensions/shadow-git.ts \
+  -e ~/.pi/agent/extensions/shadow-git.ts \
   "Say goodbye" 2>&1 >/dev/null
 AFTER=$(wc -l < "$TEST_WS/agents/test1/audit.jsonl")
 if [ "$AFTER" -eq "$BEFORE" ]; then
@@ -227,7 +227,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Call the init function (we'll test via running the extension)
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 
@@ -244,7 +244,7 @@ echo -n "UT-01-02: .gitignore excludes audit.jsonl... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 
@@ -269,7 +269,7 @@ git init  # Root git exists
 mkdir -p agents/test1
 ROOT_COMMITS_BEFORE=$(git log --oneline 2>/dev/null | wc -l || echo 0)
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write hello to output/test.txt" 2>&1 >/dev/null || true
 
@@ -303,7 +303,7 @@ mkdir -p "$TEST_WS/agents"/{a1,a2,a3}
 # Spawn 3 agents simultaneously
 PIDS=""
 for agent in a1 a2 a3; do
-  KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="$agent" \
+  PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="$agent" \
     timeout 60 pi --max-turns 5 --no-input -p \
     -e "$EXT" "Write numbers 1-5 to output/count.txt" 2>&1 > /tmp/agent-$agent.log &
   PIDS="$PIDS $!"
@@ -355,7 +355,7 @@ echo "=== REGRESSION TESTS ==="
 echo -n "RT-01: audit.jsonl created... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 if [ -f "$TEST_WS/agents/test1/audit.jsonl" ]; then
@@ -370,7 +370,7 @@ rm -rf "$TEST_WS"
 echo -n "RT-02: session_start event logged... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 if grep -q '"event":"session_start"' "$TEST_WS/agents/test1/audit.jsonl" 2>/dev/null; then
@@ -385,7 +385,7 @@ rm -rf "$TEST_WS"
 echo -n "RT-03: tool_call events logged... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Read this file: $TEST_WS/agents/test1/audit.jsonl" 2>&1 >/dev/null || true
 if grep -q '"event":"tool_call"' "$TEST_WS/agents/test1/audit.jsonl" 2>/dev/null; then
@@ -400,12 +400,12 @@ rm -rf "$TEST_WS"
 echo -n "RT-04: killswitch disables logging... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 LINES_BEFORE=$(wc -l < "$TEST_WS/agents/test1/audit.jsonl" 2>/dev/null || echo 0)
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" KODE_SHADOW_GIT_DISABLED=1 \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" PI_SHADOW_GIT_DISABLED=1 \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "bye" 2>&1 >/dev/null || true
 LINES_AFTER=$(wc -l < "$TEST_WS/agents/test1/audit.jsonl" 2>/dev/null || echo 0)
@@ -426,7 +426,7 @@ mkdir -p "$TEST_WS/agents"/{a1,a2}
 echo '{"event":"session_start","ts":1234}' > "$TEST_WS/agents/a1/audit.jsonl"
 echo '{"event":"session_start","ts":1234}' > "$TEST_WS/agents/a2/audit.jsonl"
 
-OUTPUT=$(KODE_WORKSPACE_ROOT="$TEST_WS" \
+OUTPUT=$(PI_WORKSPACE_ROOT="$TEST_WS" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "/mc" 2>&1 || true)
 
@@ -462,7 +462,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Run agent with multiple tools in one turn
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 1 --no-input -p \
   -e "$EXT" "Write 'a' to output/a.txt, 'b' to output/b.txt, 'c' to output/c.txt" 2>&1 >/dev/null || true
 
@@ -487,7 +487,7 @@ echo -n "UT-02-02: Commit message has turn number... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'test' to output/test.txt" 2>&1 >/dev/null || true
 
@@ -524,7 +524,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Run agent for 5 turns with multiple tools per turn
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 120 pi --max-turns 5 --no-input -p \
   -e "$EXT" "For each number 1-5: write it to output/num-N.txt. Do one number per turn." 2>&1 >/dev/null || true
 
@@ -611,7 +611,7 @@ echo -n "UT-05-01: audit.jsonl in .gitignore... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 >/dev/null || true
 
@@ -629,7 +629,7 @@ echo -n "UT-05-02: audit.jsonl not tracked by git... "
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write test to output/x.txt" 2>&1 >/dev/null || true
 
@@ -674,7 +674,7 @@ mkdir -p "$TEST_WS/agents/test1"
 
 # Time a simple tool call
 START=$(date +%s%3N)
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "What is 2+2?" 2>&1 >/dev/null || true
 END=$(date +%s%3N)
@@ -697,7 +697,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Run and check audit timestamps
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 60 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write 'test' to output/x.txt" 2>&1 >/dev/null || true
 
@@ -720,7 +720,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 # Start a long-running agent in background
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 120 pi --max-turns 10 --no-input -p \
   -e "$EXT" "Count from 1 to 10, writing each to output/count.txt" 2>&1 >/dev/null &
 AGENT_PID=$!
@@ -765,7 +765,7 @@ mkdir -p "$TEST_WS/agents/test1"
 chmod 555 "$TEST_WS/agents/test1"
 
 # Should still work (fail open)
-OUTPUT=$(KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+OUTPUT=$(PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "What is 2+2?" 2>&1 || true)
 
@@ -795,7 +795,7 @@ mkdir -p "$TEST_WS/agents/test1"
 echo "this is not json" > "$TEST_WS/agents/test1/audit.jsonl"
 echo '{"event":"session_start","ts":123}' >> "$TEST_WS/agents/test1/audit.jsonl"
 
-OUTPUT=$(KODE_WORKSPACE_ROOT="$TEST_WS" \
+OUTPUT=$(PI_WORKSPACE_ROOT="$TEST_WS" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "/mc" 2>&1 || true)
 
@@ -807,9 +807,9 @@ else
 fi
 rm -rf "$TEST_WS"
 
-# UP-04: Missing KODE_WORKSPACE_ROOT → graceful error
+# UP-04: Missing PI_WORKSPACE_ROOT → graceful error
 echo "UP-04: Missing environment variable..."
-OUTPUT=$(KODE_AGENT_NAME="test1" \
+OUTPUT=$(PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 1 --no-input -p \
   -e "$EXT" "hi" 2>&1 || true)
 
@@ -822,7 +822,7 @@ TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1/.git"
 touch "$TEST_WS/agents/test1/.git/index.lock"  # Stale lock
 
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   timeout 30 pi --max-turns 2 --no-input -p \
   -e "$EXT" "Write test to output/x.txt" 2>&1 >/dev/null || true
 
@@ -853,7 +853,7 @@ echo "=== UNHAPPY PATH TESTS COMPLETE ==="
 set -e
 
 # Configuration
-export EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
+export EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
 TESTS_DIR="$(dirname "$0")"
 RESULTS_DIR="$TESTS_DIR/results"
 mkdir -p "$RESULTS_DIR"

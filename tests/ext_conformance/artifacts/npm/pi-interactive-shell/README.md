@@ -28,7 +28,7 @@ Works with any CLI: `vim`, `htop`, `psql`, `ssh`, `docker logs -f`, `npm run dev
 pi install npm:pi-interactive-shell
 ```
 
-The `interactive-shell` skill is automatically symlinked to `~/.kode/agent/skills/interactive-shell/`.
+The `interactive-shell` skill is automatically symlinked to `~/.pi/agent/skills/interactive-shell/`.
 
 **Requires:** Node.js, build tools for `node-pty` (Xcode CLI tools on macOS).
 
@@ -254,8 +254,8 @@ User can also `/attach` or `/attach <id>` to reattach, and `/dismiss` or `/dismi
 ## Config
 
 Configuration files (project overrides global):
-- **Global:** `~/.kode/agent/interactive-shell.json`
-- **Project:** `.kode/interactive-shell.json`
+- **Global:** `~/.pi/agent/interactive-shell.json`
+- **Project:** `.pi/interactive-shell.json`
 
 ```json
 {

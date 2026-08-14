@@ -14,7 +14,7 @@ pi install npm:pi-brave-search
 
 From the dot314 git bundle (filtered install):
 
-Add to `~/.kode/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
+Add to `~/.pi/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
 
 ```json
 {
@@ -53,5 +53,5 @@ Add to `~/.kode/agent/settings.json` (or replace an existing unfiltered `git:git
   - `brave_grounding({ question, enableResearch, enableCitations, enableEntities, maxAnswerChars })`
 
 Notes:
-- With `--content` / `fetchContent=true`, full extracted markdown is saved under `~/.kode/agent/extensions/brave-search/.clips/` and the output includes a `Saved:` path
+- With `--content` / `fetchContent=true`, full extracted markdown is saved under `~/.pi/agent/extensions/brave-search/.clips/` and the output includes a `Saved:` path
 - If `query` is a direct URL (including `raw.githubusercontent.com/...`) and `fetchContent=true`, the tool fetches and clips that URL directly (no search step)

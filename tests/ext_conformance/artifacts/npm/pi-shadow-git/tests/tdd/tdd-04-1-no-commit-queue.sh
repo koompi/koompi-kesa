@@ -1,7 +1,7 @@
 #!/bin/bash
 # TDD-04-1: commitQueue should not exist in source
 set -e
-EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
 
 if grep -q "commitQueue" "$EXT"; then
   echo "FAIL: commitQueue still exists in source"

@@ -76,8 +76,8 @@ Or set as default in settings:
 ## Theme Discovery
 
 Themes are auto-discovered from:
-- Global: `~/.kode/agent/themes/`
-- Project: `.kode/themes/`
+- Global: `~/.pi/agent/themes/`
+- Project: `.pi/themes/`
 - Packages: `pi-themes/` directories
 
 ## Documentation

@@ -11,15 +11,15 @@
   Manual migration (if you want to do it yourself before updating):
 
   ```
-  cp ~/.kode/agent/extensions/sub-core/settings.json ~/.kode/agent/pi-sub-core-settings.json
-  cp ~/.kode/agent/extensions/sub-bar/settings.json ~/.kode/agent/pi-sub-bar-settings.json
+  cp ~/.pi/agent/extensions/sub-core/settings.json ~/.pi/agent/pi-sub-core-settings.json
+  cp ~/.pi/agent/extensions/sub-bar/settings.json ~/.pi/agent/pi-sub-bar-settings.json
   ```
 
   Existing users should move legacy settings from the extension folders to:
-  - `~/.kode/agent/pi-sub-core-settings.json`
-  - `~/.kode/agent/pi-sub-bar-settings.json`
+  - `~/.pi/agent/pi-sub-core-settings.json`
+  - `~/.pi/agent/pi-sub-bar-settings.json`
 
-- [`a6c0d33`](https://github.com/marckrenn/pi-sub/commit/a6c0d33c8d19d2876a4a8a1a0a69302a3c63f5e8) Thanks [@marckrenn](https://github.com/marckrenn)! - Move the shared cache/lock files under `~/.kode/agent/cache/sub-core` so all clients share a single cache directory.
+- [`a6c0d33`](https://github.com/marckrenn/pi-sub/commit/a6c0d33c8d19d2876a4a8a1a0a69302a3c63f5e8) Thanks [@marckrenn](https://github.com/marckrenn)! - Move the shared cache/lock files under `~/.pi/agent/cache/sub-core` so all clients share a single cache directory.
 
 - [`7da1e08`](https://github.com/marckrenn/pi-sub/commit/7da1e082e634f4e4dee2560b4d490527d1543ade) Thanks [@marckrenn](https://github.com/marckrenn)! - Add a minimum refresh interval setting to cap refresh frequency even when refresh is triggered every turn.
 

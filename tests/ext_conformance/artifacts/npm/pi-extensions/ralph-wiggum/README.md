@@ -20,7 +20,7 @@ pi install npm:@tmustier/pi-ralph-wiggum
 pi install git:github.com/tmustier/pi-extensions
 ```
 
-Then filter to just this extension in `~/.kode/agent/settings.json`:
+Then filter to just this extension in `~/.pi/agent/settings.json`:
 
 ```json
 {

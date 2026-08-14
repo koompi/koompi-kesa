@@ -79,7 +79,7 @@ pi install https://github.com/imsus/pi-extension-minimax-coding-plan-mcp
 
 ### Project Installation
 
-Add `-l` flag to install to project settings (`.kode/settings.json`):
+Add `-l` flag to install to project settings (`.pi/settings.json`):
 
 ```bash
 pi install -l npm:@imsus/pi-extension-minimax-coding-plan-mcp
@@ -121,7 +121,7 @@ The extension checks for the API key in this order:
    export MINIMAX_API_HOST="https://api.minimax.io"  # optional, default
    ```
 
-2. **Auth file** (`~/.kode/agent/auth.json`) - persistent across sessions
+2. **Auth file** (`~/.pi/agent/auth.json`) - persistent across sessions
    ```json
    {
      "minimax": {
@@ -142,7 +142,7 @@ pi
 /minimax-configure --key your-api-key-here
 ```
 
-This saves to `~/.kode/agent/auth.json` for permanent storage.
+This saves to `~/.pi/agent/auth.json` for permanent storage.
 
 ### Configuration Commands
 
@@ -361,7 +361,7 @@ npm publish --tag beta
 ### Extension Not Loading
 
 1. Check pi logs for errors
-2. Verify package is in `~/.kode/settings.json`
+2. Verify package is in `~/.pi/settings.json`
 3. Ensure npm install completed successfully
 4. Try restarting pi
 
@@ -387,7 +387,7 @@ understand_image({
 
 ### API Key Not Saved to auth.json
 
-Make sure the `~/.kode/agent/auth.json` file has the correct format:
+Make sure the `~/.pi/agent/auth.json` file has the correct format:
 ```json
 {
   "minimax": {
@@ -405,7 +405,7 @@ If changes don't appear after updating, clear the cached version:
 
 ```bash
 # Remove the cached git repository
-rm -rf ~/.kode/agent/git/github.com/imsus/pi-extension-minimax-coding-plan-mcp
+rm -rf ~/.pi/agent/git/github.com/imsus/pi-extension-minimax-coding-plan-mcp
 
 # Restart pi to re-clone the latest version
 ```

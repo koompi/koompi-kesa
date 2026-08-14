@@ -18,18 +18,18 @@
 ### Option A: Install from npm (recommended)
 
 ```bash
-mkdir -p ~/.kode/packages
-cd ~/.kode/packages
+mkdir -p ~/.pi/packages
+cd ~/.pi/packages
 npm install pi-amplike
 ```
 
-This creates `~/.kode/packages/node_modules/pi-amplike`. Pi will pick it up as a package automatically.
+This creates `~/.pi/packages/node_modules/pi-amplike`. Pi will pick it up as a package automatically.
 
 ### Option B: Install from git
 
 ```bash
-git clone https://github.com/pasky/pi-amplike ~/.kode/packages/pi-amplike
-cd ~/.kode/packages/pi-amplike
+git clone https://github.com/pasky/pi-amplike ~/.pi/packages/pi-amplike
+cd ~/.pi/packages/pi-amplike
 npm install
 ```
 
@@ -77,13 +77,13 @@ session_query("/path/to/session.jsonl", "What approach was chosen?")
 ### Web Search
 
 ```bash
-~/.kode/packages/pi-amplike/skills/web-search/search.py "python async tutorial"
+~/.pi/packages/pi-amplike/skills/web-search/search.py "python async tutorial"
 ```
 
 ### Visit Webpage
 
 ```bash
-~/.kode/packages/pi-amplike/skills/visit-webpage/visit.py https://docs.example.com/api
+~/.pi/packages/pi-amplike/skills/visit-webpage/visit.py https://docs.example.com/api
 ```
 
 ## Components

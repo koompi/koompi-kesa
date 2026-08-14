@@ -64,7 +64,7 @@ These only appear when rust-analyzer is detected:
 
 ## Custom Configuration
 
-Override or add servers via `~/.kode/lsp.json` or `.kode/lsp.json`:
+Override or add servers via `~/.pi/lsp.json` or `.pi/lsp.json`:
 
 ```json
 {

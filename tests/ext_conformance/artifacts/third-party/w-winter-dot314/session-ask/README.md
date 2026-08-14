@@ -68,9 +68,9 @@ Customizing the subagent:
 
 1) Configure models and thinking level directly in `config.json` (`sessionAskModels`, `thinkingLevel`)
 
-2) Point at an agent definition in `~/.kode/agent/agents/` (recommended if you want to tune prompts without touching the ts file):
-- `agentName`: loads `~/.kode/agent/agents/<agentName>.md`
-- `agentPath`: absolute path, or relative to `~/.kode/agent/agents/`
+2) Point at an agent definition in `~/.pi/agent/agents/` (recommended if you want to tune prompts without touching the ts file):
+- `agentName`: loads `~/.pi/agent/agents/<agentName>.md`
+- `agentPath`: absolute path, or relative to `~/.pi/agent/agents/`
 
 Agent files can optionally include frontmatter keys like:
 - `model: <provider>:<id>` (e.g. `openai-codex:gpt-5.1-codex-mini`)

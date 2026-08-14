@@ -12,7 +12,7 @@ No external dependencies.
 
 1. Copy the extension into your pi extensions directory:
    ```bash
-   cp -R /path/to/pi-extensions/skill-picker ~/.kode/agent/extensions/skill-picker
+   cp -R /path/to/pi-extensions/skill-picker ~/.pi/agent/extensions/skill-picker
    ```
 2. Restart pi (or reload extensions).
 
@@ -51,9 +51,9 @@ Skills are loaded from these directories (in order):
 1. `~/.codex/skills/` — Codex user skills (recursive)
 2. `~/.claude/skills/` — Claude user skills (one level deep)
 3. `.claude/skills/` — Claude project skills (one level deep)
-4. `~/.kode/agent/skills/` — Pi user skills (recursive)
-5. `~/.kode/skills/` — Legacy user skills (recursive)
-6. `.kode/skills/` — Pi project skills (recursive)
+4. `~/.pi/agent/skills/` — Pi user skills (recursive)
+5. `~/.pi/skills/` — Legacy user skills (recursive)
+6. `.pi/skills/` — Pi project skills (recursive)
 
 Each skill must live in its own directory with a `SKILL.md` that includes frontmatter:
 
@@ -68,7 +68,7 @@ description: Brief description of what this skill does
 
 ## Theming
 
-Create `~/.kode/agent/extensions/skill-picker/theme.json` to customize colors:
+Create `~/.pi/agent/extensions/skill-picker/theme.json` to customize colors:
 
 ```json
 {

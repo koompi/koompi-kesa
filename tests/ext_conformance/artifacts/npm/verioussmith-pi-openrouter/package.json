@@ -35,6 +35,6 @@
     "LICENSE"
   ],
   "scripts": {
-    "postinstall": "node -e \"const fs=require('fs'),path=require('path'),os=require('os');const src=path.join(__dirname,'openrouter.ts'),dest=path.join(os.homedir(),'.kode','agent','extensions','openrouter.ts');try{fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);console.log('✓ Installed to ~/.kode/agent/extensions/openrouter.ts')}catch(e){console.log('⚠ Manual install: cp',src,dest)}\""
+    "postinstall": "node -e \"const fs=require('fs'),path=require('path'),os=require('os');const src=path.join(__dirname,'openrouter.ts'),dest=path.join(os.homedir(),'.pi','agent','extensions','openrouter.ts');try{fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);console.log('✓ Installed to ~/.pi/agent/extensions/openrouter.ts')}catch(e){console.log('⚠ Manual install: cp',src,dest)}\""
   }
 }

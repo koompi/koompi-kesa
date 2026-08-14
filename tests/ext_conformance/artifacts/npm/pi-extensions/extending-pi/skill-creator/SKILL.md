@@ -21,7 +21,7 @@ Provide guidance for creating effective Pi skills.
 - Optional frontmatter: `license`, `compatibility`, `metadata` (arbitrary key-value pairs for tooling), `allowed-tools` (restrict which tools the skill may invoke).
 - `disable-model-invocation`: when set, Pi won't auto-trigger the skill; the user must invoke it explicitly with `/skill:name`.
 - Paths are relative to the skill directory; `{baseDir}` placeholders are not supported.
-- Skill locations: `~/.kode/agent/skills/`, `.kode/skills/`, `skills/` in a package, settings `skills`, or `--skill <path>`.
+- Skill locations: `~/.pi/agent/skills/`, `.pi/skills/`, `skills/` in a package, settings `skills`, or `--skill <path>`.
 
 ## Recommended structure
 
@@ -52,8 +52,8 @@ For each example, decide if you need:
 A skill needs a directory containing a SKILL.md. Only add resource sub-directories that are actually needed.
 
 ```bash
-mkdir -p ~/.kode/agent/skills/my-skill
-touch ~/.kode/agent/skills/my-skill/SKILL.md
+mkdir -p ~/.pi/agent/skills/my-skill
+touch ~/.pi/agent/skills/my-skill/SKILL.md
 ```
 
 ### 4) Optional: Write README.md (humans + installation)

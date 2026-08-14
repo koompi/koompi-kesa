@@ -2,12 +2,12 @@
 # TDD-HP-1: Tool execution must not be blocked by git operations
 # Behavior: Agent completes simple task in <30s (git shouldn't add latency)
 set -e
-EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
+EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
 TEST_WS=$(mktemp -d)
 mkdir -p "$TEST_WS/agents/test1"
 
 START=$(date +%s)
-KODE_WORKSPACE_ROOT="$TEST_WS" KODE_AGENT_NAME="test1" \
+PI_WORKSPACE_ROOT="$TEST_WS" PI_AGENT_NAME="test1" \
   pi --max-turns 1 --no-input -p \
   -e "$EXT" "What is 2+2? Reply with just the number." 2>&1 >/dev/null || true
 END=$(date +%s)

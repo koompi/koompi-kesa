@@ -14,7 +14,7 @@ pi install npm:pi-voice-of-god
 
 From the dot314 git bundle (filtered install):
 
-Add to `~/.kode/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
+Add to `~/.pi/agent/settings.json` (or replace an existing unfiltered `git:github.com/w-winter/dot314` entry):
 
 ```json
 {
@@ -43,4 +43,4 @@ Forms:
 
 Config is persisted next to the extension as:
 
-- `~/.kode/agent/extensions/vog/vog.json`
+- `~/.pi/agent/extensions/vog/vog.json`

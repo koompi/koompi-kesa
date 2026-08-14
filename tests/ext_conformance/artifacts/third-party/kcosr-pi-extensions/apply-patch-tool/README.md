@@ -7,7 +7,7 @@ Codex-style `apply_patch` tool for pi, plus prompt guidance injection.
 Copy the extension into your pi extensions directory:
 
 ```bash
-cp -R /path/to/pi-extensions/apply-patch-tool ~/.kode/agent/extensions/apply-patch-tool
+cp -R /path/to/pi-extensions/apply-patch-tool ~/.pi/agent/extensions/apply-patch-tool
 ```
 
 Restart pi (or reload extensions).

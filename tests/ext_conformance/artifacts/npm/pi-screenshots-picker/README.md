@@ -81,7 +81,7 @@ By default, the extension auto-detects your screenshot location based on your pl
 
 ### Multiple Sources with Tabs
 
-Configure multiple screenshot sources in `~/.kode/agent/settings.json`. Each source becomes a tab in the picker UI - use **Ctrl+T** to cycle through them:
+Configure multiple screenshot sources in `~/.pi/agent/settings.json`. Each source becomes a tab in the picker UI - use **Ctrl+T** to cycle through them:
 
 ```json
 {
@@ -128,16 +128,16 @@ Glob patterns support:
 
 ### Environment Variable
 
-You can also use the `KODE_SCREENSHOTS_DIR` environment variable as a fallback:
+You can also use the `PI_SCREENSHOTS_DIR` environment variable as a fallback:
 
 ```bash
-export KODE_SCREENSHOTS_DIR="/path/to/screenshots"
+export PI_SCREENSHOTS_DIR="/path/to/screenshots"
 ```
 
 ### Priority
 
-1. Config in `~/.kode/agent/settings.json` (`pi-screenshots.sources`)
-2. Environment variable (`KODE_SCREENSHOTS_DIR`)
+1. Config in `~/.pi/agent/settings.json` (`pi-screenshots.sources`)
+2. Environment variable (`PI_SCREENSHOTS_DIR`)
 3. Platform default (see above)
 
 ## Remote Development

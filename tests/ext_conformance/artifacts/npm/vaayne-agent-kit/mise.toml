@@ -40,23 +40,23 @@ depends = [
 ]
 
 [tasks."sync:pi"]
-description = "Sync Pi components to ~/.kode/agent"
+description = "Sync Pi components to ~/.pi/agent"
 run = """
-mkdir -p ~/.kode/agent
+mkdir -p ~/.pi/agent
 
 # Remove symlinks if they exist (migration from old setup)
 for item in agents prompts skills extensions AGENTS.md; do
-  [ -L ~/.kode/agent/$item ] && rm ~/.kode/agent/$item
+  [ -L ~/.pi/agent/$item ] && rm ~/.pi/agent/$item
 done
 
-rsync -av --delete ./agents/ ~/.kode/agent/agents/
-rsync -av --delete ./prompts/ ~/.kode/agent/prompts/
-# rsync -av --delete ./skills/ ~/.kode/agent/skills/
-rsync -av ./skills/ ~/.kode/agent/skills/
-# rsync -av --delete ./pi/extensions/ ~/.kode/agent/extensions/
-rsync -av ./_AGENTS.md ~/.kode/agent/AGENTS.md
+rsync -av --delete ./agents/ ~/.pi/agent/agents/
+rsync -av --delete ./prompts/ ~/.pi/agent/prompts/
+# rsync -av --delete ./skills/ ~/.pi/agent/skills/
+rsync -av ./skills/ ~/.pi/agent/skills/
+# rsync -av --delete ./pi/extensions/ ~/.pi/agent/extensions/
+rsync -av ./_AGENTS.md ~/.pi/agent/AGENTS.md
 
-echo "Synced Pi components to ~/.kode/agent"
+echo "Synced Pi components to ~/.pi/agent"
 """
 
 [tasks."sync:codex"]

@@ -6,7 +6,7 @@ A [pi](https://github.com/badlogic/pi-mono) extension that provides centralized 
 
 - **`/extension-settings` command** - Interactive UI to configure all registered extension settings
 - **Helpers for reading/writing** - `getSetting()` and `setSetting()` functions
-- **Persistent storage** - Settings stored in `~/.kode/agent/settings-extensions.json`
+- **Persistent storage** - Settings stored in `~/.pi/agent/settings-extensions.json`
 
 ## For Users
 
@@ -102,7 +102,7 @@ const value = getSetting("my-extension", "timeout", "30");
 
 ### `setSetting(extensionName, settingId, value)`
 
-Set a setting value. Writes to `~/.kode/agent/settings-extensions.json`.
+Set a setting value. Writes to `~/.pi/agent/settings-extensions.json`.
 
 ```typescript
 setSetting("my-extension", "debug", "on");
@@ -135,7 +135,7 @@ pi.events.emit("pi-extension-settings:register", {
 
 ## Storage
 
-Settings are stored in `~/.kode/agent/settings-extensions.json`:
+Settings are stored in `~/.pi/agent/settings-extensions.json`:
 
 ```json
 {

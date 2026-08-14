@@ -32,21 +32,21 @@ npm install
 npm run dist
 
 # Deploy (just 2 files: index.js + config.json)
-cp -r dist/* ~/.kode/agent/extensions/toolwatch/
+cp -r dist/* ~/.pi/agent/extensions/toolwatch/
 ```
 
 Or for development (requires npm install):
 
 ```bash
-ln -s ~/pi-extensions/toolwatch/extension ~/.kode/agent/extensions/toolwatch
-cd ~/.kode/agent/extensions/toolwatch && npm install
+ln -s ~/pi-extensions/toolwatch/extension ~/.pi/agent/extensions/toolwatch
+cd ~/.pi/agent/extensions/toolwatch && npm install
 ```
 
 ### Local Rules (No Collector)
 
 For simple use cases where you just need local policy enforcement:
 
-Edit `~/.kode/agent/extensions/toolwatch/config.json`:
+Edit `~/.pi/agent/extensions/toolwatch/config.json`:
 
 ```json
 {
@@ -73,7 +73,7 @@ npm install
 npm run dev
 ```
 
-Edit `~/.kode/agent/extensions/toolwatch/config.json`:
+Edit `~/.pi/agent/extensions/toolwatch/config.json`:
 
 ```json
 {

@@ -50,7 +50,7 @@ pi_messenger({ action: "work", autonomous: true })
 Copy to your extensions directory and restart pi:
 
 ```
-~/.kode/agent/extensions/pi-messenger/
+~/.pi/agent/extensions/pi-messenger/
 ```
 
 After joining, your agent name appears in the status bar:
@@ -181,7 +181,7 @@ pi_messenger({ action: "review", target: "task-1" })
 
 ### Planning Workflow
 
-The `plan` action runs a multi-pass planning loop: the planner drafts tasks, a reviewer checks them against the PRD, and the planner refines until SHIP or `planning.maxPasses` is reached. All passes and feedback are stored in `.kode/messenger/crew/planning-progress.md`.
+The `plan` action runs a multi-pass planning loop: the planner drafts tasks, a reviewer checks them against the PRD, and the planner refines until SHIP or `planning.maxPasses` is reached. All passes and feedback are stored in `.pi/messenger/crew/planning-progress.md`.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -284,7 +284,7 @@ The `/messenger` overlay includes a Crew tab showing task status:
 ### Crew Data Storage
 
 ```
-.kode/messenger/crew/
+.pi/messenger/crew/
 ├── plan.json               # Plan metadata (PRD path, progress)
 ├── plan.md                 # Planner output
 ├── planning-progress.md    # Planning loop history + feedback
@@ -299,7 +299,7 @@ The `/messenger` overlay includes a Crew tab showing task status:
 
 ### Crew Configuration
 
-Add to `~/.kode/agent/pi-messenger.json`:
+Add to `~/.pi/agent/pi-messenger.json`:
 
 ```json
 {
@@ -330,8 +330,8 @@ pi_messenger({ action: "crew.install" })
 ```
 
 **What gets installed:**
-- **5 agents** in `~/.kode/agent/agents/` (planner, worker, reviewer, interview-generator, plan-sync)
-- **1 skill** in `~/.kode/agent/skills/` (pi-messenger-crew quick reference)
+- **5 agents** in `~/.pi/agent/agents/` (planner, worker, reviewer, interview-generator, plan-sync)
+- **1 skill** in `~/.pi/agent/skills/` (pi-messenger-crew quick reference)
 
 To remove:
 ```typescript
@@ -430,7 +430,7 @@ pi_messenger({
 
 ## Configuration
 
-Create `~/.kode/agent/pi-messenger.json`:
+Create `~/.pi/agent/pi-messenger.json`:
 
 ```json
 {
@@ -460,7 +460,7 @@ Create `~/.kode/agent/pi-messenger.json`:
 ## How It Works
 
 ```
-~/.kode/agent/messenger/
+~/.pi/agent/messenger/
 ├── registry/           # Agent registrations (PID, cwd, model, activity, tokens)
 ├── inbox/              # Message delivery
 ├── feed.jsonl          # Activity feed (append-only, pruned on startup)

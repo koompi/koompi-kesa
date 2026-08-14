@@ -63,5 +63,5 @@ Run agents sequentially, passing output to the next step via `{previous}` placeh
 
 Agents are discovered from:
 
-- **User agents:** `~/.kode/agent/agents/`
-- **Project agents:** `.kode/agents/` (in project root)
+- **User agents:** `~/.pi/agent/agents/`
+- **Project agents:** `.pi/agents/` (in project root)

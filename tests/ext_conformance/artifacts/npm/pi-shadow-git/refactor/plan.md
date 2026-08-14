@@ -165,7 +165,7 @@ See `TEST-HARNESS.md` for:
 #### STEP-01: Refactor git initialization to per-agent repos
 
 **Context:**
-Currently, git operations target `KODE_WORKSPACE_ROOT/.git`. After refactor, each agent initializes its own repo at `agents/{name}/.git`.
+Currently, git operations target `PI_WORKSPACE_ROOT/.git`. After refactor, each agent initializes its own repo at `agents/{name}/.git`.
 
 **Files:** `src/shadow-git.ts`
 
@@ -635,13 +635,13 @@ Existing workspaces have shared `.git` at root. Need migration path.
 ## Operational Concerns (Goedecke Checklist)
 
 ### How is it deployed?
-- Copy `shadow-git.ts` and `mission-control.ts` to `~/.kode/agent/extensions/`
+- Copy `shadow-git.ts` and `mission-control.ts` to `~/.pi/agent/extensions/`
 - Or symlink from cloned repo
 - No build step required (TypeScript runs directly in pi)
 
 ### How is it rolled back?
 - Keep backup of old extension files
-- `KODE_SHADOW_GIT_DISABLED=1` killswitch stops all logging immediately
+- `PI_SHADOW_GIT_DISABLED=1` killswitch stops all logging immediately
 - Per-agent repos mean one broken agent doesn't affect others
 
 ### How do you know it's broken?

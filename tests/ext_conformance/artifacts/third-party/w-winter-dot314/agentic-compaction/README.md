@@ -2,7 +2,7 @@
 
 A [pi](https://github.com/badlogic/pi-mono) extension that provides conversation compaction using a virtual filesystem approach.
 
-Original source: [laulauland/dotfiles](https://github.com/laulauland/dotfiles/tree/main/shared/.kode/agent/extensions/file-based-compaction)
+Original source: [laulauland/dotfiles](https://github.com/laulauland/dotfiles/tree/main/shared/.pi/agent/extensions/file-based-compaction)
 
 This version adds:
 
@@ -36,7 +36,7 @@ This version adds:
 
 ### Local development / copied extension
 
-If you copy this extension into `~/.kode/agent/extensions/agentic-compaction/`, Pi will load `index.ts` directly but **won't automatically install npm dependencies**.
+If you copy this extension into `~/.pi/agent/extensions/agentic-compaction/`, Pi will load `index.ts` directly but **won't automatically install npm dependencies**.
 
 From that folder, run:
 
@@ -143,7 +143,7 @@ Configurable parameters:
 - `compactionModels`: models to try in order (first one with an API key wins)
 - `thinkingLevel`: default reasoning/thinking level for the summarizer model (`off`, `minimal`, `low`, `medium`, `high`, `xhigh`)
 - `compactionModels[].thinkingLevel`: optional per-model override (same values)
-- `debugCompactions`: write debug artifacts to `~/.kode/agent/extensions/agentic-compaction/compactions/`
+- `debugCompactions`: write debug artifacts to `~/.pi/agent/extensions/agentic-compaction/compactions/`
 - `toolResultMaxChars`: truncate tool output to keep the summarizer context small
 - `toolCallPreviewChars`: how many characters of the command to show in UI notifications
 - `toolCallConcurrency`: max number of concurrent summarizer shell tool calls per turn

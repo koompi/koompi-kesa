@@ -24,7 +24,7 @@ pi install npm:@tmustier/pi-tab-status
 pi install git:github.com/tmustier/pi-extensions
 ```
 
-Then filter to just this extension in `~/.kode/agent/settings.json`:
+Then filter to just this extension in `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -40,10 +40,10 @@ Then filter to just this extension in `~/.kode/agent/settings.json`:
 ### Local clone
 
 ```bash
-ln -s ~/pi-extensions/tab-status/tab-status.ts ~/.kode/agent/extensions/
+ln -s ~/pi-extensions/tab-status/tab-status.ts ~/.pi/agent/extensions/
 ```
 
-Or add to `~/.kode/agent/settings.json`:
+Or add to `~/.pi/agent/settings.json`:
 
 ```json
 {

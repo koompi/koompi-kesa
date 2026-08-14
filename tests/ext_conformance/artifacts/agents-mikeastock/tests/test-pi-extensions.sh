@@ -12,9 +12,9 @@ trap cleanup EXIT
 log_info "Testing Pi extensions type-checking..."
 
 # Check if there are any Pi extensions to test
-KODE_EXTENSIONS_DIR="$PROJECT_DIR/extensions/pi"
-if [ ! -d "$KODE_EXTENSIONS_DIR" ] || [ -z "$(ls -A "$KODE_EXTENSIONS_DIR" 2>/dev/null)" ]; then
-    log_info "No Pi extensions found in $KODE_EXTENSIONS_DIR, skipping type-check"
+PI_EXTENSIONS_DIR="$PROJECT_DIR/extensions/pi"
+if [ ! -d "$PI_EXTENSIONS_DIR" ] || [ -z "$(ls -A "$PI_EXTENSIONS_DIR" 2>/dev/null)" ]; then
+    log_info "No Pi extensions found in $PI_EXTENSIONS_DIR, skipping type-check"
     print_summary
     exit 0
 fi

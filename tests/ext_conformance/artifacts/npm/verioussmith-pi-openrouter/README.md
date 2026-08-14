@@ -12,7 +12,7 @@ OpenRouter provider extension for [Pi Coding Agent](https://github.com/badlogic/
 - 🤖 Supports Claude, GPT-4, Gemini, Llama, Mistral, DeepSeek, Perplexity
 - 🆓 Free models available (Gemini 2.0 Flash)
 - 📦 One-command installation via npm
-- ⚡ Auto-installs to `~/.kode/agent/extensions/`
+- ⚡ Auto-installs to `~/.pi/agent/extensions/`
 
 ## Installation
 
@@ -22,7 +22,7 @@ OpenRouter provider extension for [Pi Coding Agent](https://github.com/badlogic/
 npm install -g @verioussmith/pi-openrouter
 ```
 
-That's it! The extension automatically installs to `~/.kode/agent/extensions/openrouter.ts`
+That's it! The extension automatically installs to `~/.pi/agent/extensions/openrouter.ts`
 
 ### Alternative Methods
 
@@ -119,7 +119,7 @@ git clone https://github.com/verioussmith/pi-openrouter-extension.git
 cd pi-openrouter-extension
 
 # Install in Pi (development mode)
-ln -s $(pwd)/openrouter.ts ~/.kode/agent/extensions/openrouter.ts
+ln -s $(pwd)/openrouter.ts ~/.pi/agent/extensions/openrouter.ts
 
 # Test
 pi

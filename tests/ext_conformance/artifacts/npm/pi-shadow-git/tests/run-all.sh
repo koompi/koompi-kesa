@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-export EXT="${EXT:-$HOME/.kode/agent/extensions/shadow-git.ts}"
+export EXT="${EXT:-$HOME/.pi/agent/extensions/shadow-git.ts}"
 RESULTS_DIR="$SCRIPT_DIR/results"
 mkdir -p "$RESULTS_DIR"
 

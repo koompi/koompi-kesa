@@ -7,10 +7,10 @@ Emits OpenTelemetry spans for pi agent lifecycle + tool usage to an OTLP/HTTP co
 Install as a **pi package** (recommended):
 
 ```bash
-# Global install (writes ~/.kode/agent/settings.json)
+# Global install (writes ~/.pi/agent/settings.json)
 pi install npm:pi-telemetry-otel
 
-# Project-local install (writes .kode/settings.json)
+# Project-local install (writes .pi/settings.json)
 pi install -l npm:pi-telemetry-otel
 ```
 
@@ -24,16 +24,16 @@ Pi loads the extension from the package’s `pi.extensions` manifest automatical
 
 ## Configuration
 
-All settings accept `PI_` overrides (e.g. `KODE_OTEL_SERVICE_NAME`) and fall back to standard OTEL env vars.
+All settings accept `PI_` overrides (e.g. `PI_OTEL_SERVICE_NAME`) and fall back to standard OTEL env vars.
 
 | Env var                       | Default                           | Purpose                                                                                         |
 | ----------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | OTLP/HTTP endpoint                                                                              |
 | `OTEL_EXPORTER_OTLP_HEADERS`  | _(none)_                          | Comma-separated `k=v` headers                                                                   |
-| `OTEL_SERVICE_NAME`           | `pi-agent`                        | Service name in Jaeger (defaults to agent name from `KODE_AGENT_CHAIN` if present)                |
+| `OTEL_SERVICE_NAME`           | `pi-agent`                        | Service name in Jaeger (defaults to agent name from `PI_AGENT_CHAIN` if present)                |
 | `OTEL_RESOURCE_ATTRIBUTES`    | _(none)_                          | Comma-separated `k=v` attributes                                                                |
-| `KODE_AGENT_TRACE_ID`           | _(generated)_                     | Parent trace ID to reuse; set once and kept for subprocess trace linking                        |
-| `KODE_AGENT_SPAN_ID`            | _(generated)_                     | Parent span ID for subprocess linking; updated to current active span (session/agent/turn/tool) |
+| `PI_AGENT_TRACE_ID`           | _(generated)_                     | Parent trace ID to reuse; set once and kept for subprocess trace linking                        |
+| `PI_AGENT_SPAN_ID`            | _(generated)_                     | Parent span ID for subprocess linking; updated to current active span (session/agent/turn/tool) |
 
 ## Extension interoperability (child spans)
 
@@ -76,7 +76,7 @@ If Tailscale is available, the command also surfaces a Tailscale IP URL for remo
 
 ```bash
 # Run pi (interactive preferred so spans flush)
-KODE_OTEL_SERVICE_NAME=pi-agent-dev pi
+PI_OTEL_SERVICE_NAME=pi-agent-dev pi
 
 # Query traces
 curl -sSf "http://localhost:16686/api/traces?service=pi-agent-dev&limit=5" | jq -r '.data[].traceID'

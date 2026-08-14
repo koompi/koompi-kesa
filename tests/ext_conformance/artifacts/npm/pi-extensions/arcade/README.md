@@ -33,7 +33,7 @@ pi install npm:@tmustier/pi-arcade
 pi install git:github.com/tmustier/pi-extensions
 ```
 
-Then filter to just the games in `~/.kode/agent/settings.json`:
+Then filter to just the games in `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -56,18 +56,18 @@ Then filter to just the games in `~/.kode/agent/settings.json`:
 
 ```bash
 # All games
-ln -s ~/pi-extensions/arcade/*.ts ~/.kode/agent/extensions/
-ln -s ~/pi-extensions/arcade/mario-not/mario-not.ts ~/.kode/agent/extensions/
+ln -s ~/pi-extensions/arcade/*.ts ~/.pi/agent/extensions/
+ln -s ~/pi-extensions/arcade/mario-not/mario-not.ts ~/.pi/agent/extensions/
 
 # Or individual games
-ln -s ~/pi-extensions/arcade/spice-invaders.ts ~/.kode/agent/extensions/
-ln -s ~/pi-extensions/arcade/picman.ts ~/.kode/agent/extensions/
-ln -s ~/pi-extensions/arcade/ping.ts ~/.kode/agent/extensions/
-ln -s ~/pi-extensions/arcade/tetris.ts ~/.kode/agent/extensions/
-ln -s ~/pi-extensions/arcade/mario-not/mario-not.ts ~/.kode/agent/extensions/
+ln -s ~/pi-extensions/arcade/spice-invaders.ts ~/.pi/agent/extensions/
+ln -s ~/pi-extensions/arcade/picman.ts ~/.pi/agent/extensions/
+ln -s ~/pi-extensions/arcade/ping.ts ~/.pi/agent/extensions/
+ln -s ~/pi-extensions/arcade/tetris.ts ~/.pi/agent/extensions/
+ln -s ~/pi-extensions/arcade/mario-not/mario-not.ts ~/.pi/agent/extensions/
 ```
 
-Or add to `~/.kode/agent/settings.json`:
+Or add to `~/.pi/agent/settings.json`:
 
 ```json
 {

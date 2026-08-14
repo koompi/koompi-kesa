@@ -12,7 +12,7 @@ agent prompt via the `/assistant` command.
 
 1. Copy the extension into your pi extensions directory:
    ```bash
-   cp -R /path/to/pi-extensions/assistant ~/.kode/agent/extensions/assistant
+   cp -R /path/to/pi-extensions/assistant ~/.pi/agent/extensions/assistant
    ```
 2. Restart pi (or reload extensions).
 
@@ -35,7 +35,7 @@ Use the List menu to drill into a specific list.
 Set **Instance = All instances** for cross-instance search (type a query to see results).
 
 The picker remembers the last mode, include setting, instance, and list in
-`~/.kode/agent/extensions/assistant/state.json`.
+`~/.pi/agent/extensions/assistant/state.json`.
 
 ## Keyboard Shortcuts
 
@@ -61,7 +61,7 @@ When focus is on the options row, press `Enter` on **List**, **Instance**, or **
 
 ## Configuration
 
-Create `~/.kode/agent/extensions/assistant/config.json`:
+Create `~/.pi/agent/extensions/assistant/config.json`:
 
 ```json
 {
@@ -77,7 +77,7 @@ Environment override:
 
 ## Theming
 
-Create `~/.kode/agent/extensions/assistant/theme.json` to customize colors:
+Create `~/.pi/agent/extensions/assistant/theme.json` to customize colors:
 
 ```json
 {

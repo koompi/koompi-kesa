@@ -92,7 +92,7 @@ Recommend `/dcp-toggle` to disable when:
 Guide users on implementing `PruneRule`:
 
 ```typescript
-import type { PruneRule } from "~/.kode/agent/extensions/pi-dcp/src/types";
+import type { PruneRule } from "~/.pi/agent/extensions/pi-dcp/src/types";
 
 const myRule: PruneRule = {
   name: 'my-rule-name',
@@ -176,7 +176,7 @@ Rules must be registered before use. Built-in rules auto-register when extension
 
 For custom rules, ensure they're registered:
 ```typescript
-import { registerRule } from "~/.kode/agent/extensions/pi-dcp/src/registry";
+import { registerRule } from "~/.pi/agent/extensions/pi-dcp/src/registry";
 registerRule(myRule);
 ```
 

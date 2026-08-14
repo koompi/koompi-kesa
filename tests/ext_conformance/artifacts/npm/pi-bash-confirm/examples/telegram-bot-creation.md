@@ -39,7 +39,7 @@ This guide helps you quickly create a Telegram bot for pi-bash-confirm notificat
 
 ### 3. Configure pi-bash-confirm
 
-Add to `~/.kode/agent/settings.json`:
+Add to `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -61,8 +61,8 @@ Add to `~/.kode/agent/settings.json`:
 Or use environment variables:
 
 ```bash
-export KODE_TELEGRAM_TOKEN="YOUR_BOT_TOKEN"
-export KODE_TELEGRAM_CHAT_ID="YOUR_CHAT_ID"
+export PI_TELEGRAM_TOKEN="YOUR_BOT_TOKEN"
+export PI_TELEGRAM_CHAT_ID="YOUR_CHAT_ID"
 ```
 
 ### 4. Test

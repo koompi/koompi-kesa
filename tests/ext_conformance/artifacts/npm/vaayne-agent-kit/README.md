@@ -22,7 +22,7 @@ pi install git:github.com/vaayne/agent-kit
 git clone https://github.com/vaayne/agent-kit.git
 cd agent-kit
 
-mise run sync:pi            # Sync to ~/.kode/agent
+mise run sync:pi            # Sync to ~/.pi/agent
 mise run sync:claude:skills # Sync to ~/.claude/skills
 mise run sync:codex:skills  # Sync to ~/.codex/skills
 ```

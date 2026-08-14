@@ -15,7 +15,7 @@
   - Multi-select with space bar
   - Fuzzy search by name or description
   - Shows skill source (project/user) and description
-  - Project skills (`.kode/skills/`) override user skills (`~/.kode/agent/skills/`)
+  - Project skills (`.pi/skills/`) override user skills (`~/.pi/agent/skills/`)
 - **Skill display** - Skills shown in TUI, progress tracking, summary, artifacts, and async status
 - **Parallel task skills** - Each parallel task can specify its own skills via `skill` parameter
 

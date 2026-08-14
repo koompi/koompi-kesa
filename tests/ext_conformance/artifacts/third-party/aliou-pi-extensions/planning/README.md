@@ -28,7 +28,7 @@ Run `/plan:list` to see all saved plans. Select a plan to:
 
 ## Configuration
 
-Create `~/.kode/agent/extensions/planning.json` to configure archiving:
+Create `~/.pi/agent/extensions/planning.json` to configure archiving:
 
 ```json
 {

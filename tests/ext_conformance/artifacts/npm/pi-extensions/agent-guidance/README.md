@@ -6,7 +6,7 @@ Loads provider-specific context files (CLAUDE.md, CODEX.md, GEMINI.md) based on 
 
 ```mermaid
 flowchart LR
-    S1["~/.kode/agent/"] --> B
+    S1["~/.pi/agent/"] --> B
     S2["project/"] --> B
     
     subgraph Core ["Pi Core"]
@@ -33,7 +33,7 @@ flowchart LR
 
 ### Pi Core behavior
 
-Pi Core loads `AGENTS.md` from `~/.kode/agent/` and project directories (walking up from cwd). Falls back to `CLAUDE.md` if no `AGENTS.md` exists.
+Pi Core loads `AGENTS.md` from `~/.pi/agent/` and project directories (walking up from cwd). Falls back to `CLAUDE.md` if no `AGENTS.md` exists.
 
 ### What this extension adds
 
@@ -53,7 +53,7 @@ pi install npm:@tmustier/pi-agent-guidance
 pi install git:github.com/tmustier/pi-extensions
 ```
 
-Then filter to just this extension in `~/.kode/agent/settings.json`:
+Then filter to just this extension in `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -72,7 +72,7 @@ Then filter to just this extension in `~/.kode/agent/settings.json`:
 ./setup.sh
 ```
 
-Links the extension to `~/.kode/agent/extensions/` and helps you set up `AGENTS.md`.
+Links the extension to `~/.pi/agent/extensions/` and helps you set up `AGENTS.md`.
 
 ## Templates
 
@@ -83,12 +83,12 @@ Starter templates in `templates/`:
 
 Install with:
 ```bash
-ln -s ~/pi-extensions/agent-guidance/templates/CLAUDE.md ~/.kode/agent/
+ln -s ~/pi-extensions/agent-guidance/templates/CLAUDE.md ~/.pi/agent/
 ```
 
 ## Configuration (Optional)
 
-Create `~/.kode/agent/agent-guidance.json`:
+Create `~/.pi/agent/agent-guidance.json`:
 
 ```json
 {

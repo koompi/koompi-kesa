@@ -62,6 +62,6 @@ Templates can use `{{variable}}` syntax for placeholders. Pass values as argumen
 ## Template Discovery
 
 Templates are auto-discovered from:
-- Global: `~/.kode/agent/prompts/`
-- Project: `.kode/prompts/`
+- Global: `~/.pi/agent/prompts/`
+- Project: `.pi/prompts/`
 - Packages: `prompts/` directories

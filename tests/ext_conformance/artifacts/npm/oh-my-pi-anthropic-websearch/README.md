@@ -15,19 +15,19 @@ omp install @oh-my-pi/anthropic-websearch
 The plugin checks for credentials in this order:
 
 1. **Explicit override**: `ANTHROPIC_SEARCH_API_KEY` / `ANTHROPIC_SEARCH_BASE_URL`
-2. **models.json**: Provider with `api: "anthropic-messages"` in `~/.kode/agent/models.json`
-3. **OAuth**: Anthropic OAuth credentials in `~/.kode/agent/auth.json` (Claude Code tokens supported)
+2. **models.json**: Provider with `api: "anthropic-messages"` in `~/.pi/agent/models.json`
+3. **OAuth**: Anthropic OAuth credentials in `~/.pi/agent/auth.json` (Claude Code tokens supported)
 4. **Fallback**: `ANTHROPIC_API_KEY` / `ANTHROPIC_BASE_URL`
 
 This ordering prevents accidentally charging your console account if you have a proxy or OAuth set up.
 
 ### Using Claude Code OAuth tokens
 
-If you're logged into Claude Code (`pi login`), the plugin will automatically use your OAuth token from `~/.kode/agent/auth.json`. OAuth tokens (`sk-ant-oat01-...`) are fully supported with proper Claude Code identity headers.
+If you're logged into Claude Code (`pi login`), the plugin will automatically use your OAuth token from `~/.pi/agent/auth.json`. OAuth tokens (`sk-ant-oat01-...`) are fully supported with proper Claude Code identity headers.
 
 ### Using a proxy
 
-If your `~/.kode/agent/models.json` has a provider with `api: "anthropic-messages"`:
+If your `~/.pi/agent/models.json` has a provider with `api: "anthropic-messages"`:
 
 ```json
 {
