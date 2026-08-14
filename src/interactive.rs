@@ -1217,9 +1217,11 @@ impl PiApp {
             chrome += 2;
         }
 
-        // Status message: "\n  {status}\n" = 2 rows.
-        if self.status_message.is_some() {
-            chrome += 2;
+        // Status message: a blank row plus however many rows it renders as.
+        // A provider error arrives as a dozen lines of JSON; budgeting the
+        // one-line case pushed the input box off the bottom of the screen.
+        if let Some(status) = &self.status_message {
+            chrome += 1 + view::wrapped_rows(status, self.term_width.saturating_sub(2));
         }
 
         // Capability prompt overlay: ~8 lines (title, ext name, desc, blank, buttons, timer, help, blank).

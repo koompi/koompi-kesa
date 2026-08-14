@@ -190,6 +190,16 @@ fn context_left_percent(window: u32, used: u64) -> Option<u64> {
     Some(window.saturating_sub(used.min(window)) * 100 / window)
 }
 
+/// Terminal rows `text` occupies at `width`, counting the wrap the terminal
+/// does for a line longer than the screen.
+pub(super) fn wrapped_rows(text: &str, width: usize) -> usize {
+    let width = width.max(1);
+    text.lines()
+        .map(|line| line.width().div_ceil(width).max(1))
+        .sum::<usize>()
+        .max(1)
+}
+
 /// Join `hints` with two spaces, dropping them from the left until the line
 /// fits. The last hint is the most useful one, so it is the last to go.
 fn fit_hints(hints: &[String], max_width: usize) -> String {

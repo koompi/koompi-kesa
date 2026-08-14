@@ -472,6 +472,36 @@ fn narrowing_the_terminal_reflows_the_input_instead_of_cutting_it() {
 }
 
 #[test]
+fn a_long_status_message_never_pushes_the_input_box_off_screen() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 24);
+    app.messages = (1..=30)
+        .map(|idx| ConversationMessage {
+            role: MessageRole::User,
+            content: format!("message {idx}"),
+            thinking: None,
+            collapsed: false,
+        })
+        .collect();
+    app.status_message = Some(
+        (1..=10)
+            .map(|idx| format!("provider error line {idx}"))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    );
+    app.scroll_to_bottom();
+
+    let frame = strip_ansi(&app.view());
+
+    assert!(
+        frame.contains("Type a message"),
+        "input box fell off the bottom: {frame}"
+    );
+    assert!(frame.lines().count() <= 24, "frame overflows: {frame}");
+}
+
+#[test]
 fn wrapping_breaks_after_a_space_and_keeps_the_cursor_on_the_typed_row() {
     let layout = super::view::layout_input("hello world again", 17, 8);
     let rows: Vec<&str> = layout
