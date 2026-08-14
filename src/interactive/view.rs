@@ -4,7 +4,6 @@ use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 /// Transcript gutter glyphs. One column each, so every speaker's text starts in
 /// the same place and the transcript reads as a single column.
 const USER_PROMPT_GLYPH: &str = "\u{203a}";
-const ASSISTANT_GLYPH: &str = "\u{25cf}";
 const TOOL_RESULT_GLYPH: &str = "\u{23bf}";
 
 const APP_LABEL: &str = "KESA";
@@ -188,6 +187,29 @@ fn context_left_percent(window: u32, used: u64) -> Option<u64> {
         return None;
     }
     Some(window.saturating_sub(used.min(window)) * 100 / window)
+}
+
+/// Drop the `**` emphasis markers reasoning summaries arrive wrapped in, and
+/// put each summary on its own line.
+///
+/// The block is rendered as muted italic plain text, not markdown, so the
+/// markers reach the screen literally. Consecutive summaries are concatenated
+/// with no separator at all, which shows up as `**one****two**`; the empty
+/// stretch between one run closing and the next opening is the seam.
+fn plain_thinking(text: &str) -> String {
+    let parts: Vec<&str> = text.split("**").collect();
+    let mut out = String::with_capacity(text.len());
+    for (idx, part) in parts.iter().enumerate() {
+        if part.is_empty() {
+            let seam = idx > 0 && idx + 1 < parts.len();
+            if seam && !out.is_empty() && !out.ends_with('\n') {
+                out.push('\n');
+            }
+            continue;
+        }
+        out.push_str(part);
+    }
+    out
 }
 
 /// Terminal rows `text` occupies at `width`, counting the wrap the terminal
@@ -1333,13 +1355,8 @@ impl PiApp {
                     .with_style_config(self.markdown_style.clone())
                     .with_word_wrap(self.term_width.saturating_sub(6).max(40))
                     .render(&msg.content);
-                let bullet = self.styles.success_bold.render(ASSISTANT_GLYPH);
-                for (idx, line) in rendered.lines().enumerate() {
-                    if idx == 0 {
-                        let _ = writeln!(output, "  {bullet} {line}");
-                    } else {
-                        let _ = writeln!(output, "    {line}");
-                    }
+                for line in rendered.lines() {
+                    let _ = writeln!(output, "    {line}");
                 }
             }
             MessageRole::Tool => {
@@ -1466,7 +1483,7 @@ impl PiApp {
     /// cannot swamp the transcript.
     fn render_thinking_into(&self, thinking: &str, output: &mut String) {
         let content_width = self.term_width.saturating_sub(4).max(20);
-        let labelled = format!("Thinking: {}", thinking.trim_end());
+        let labelled = format!("Thinking: {}", plain_thinking(thinking.trim_end()));
         let mut lines = Vec::new();
         for line in labelled.lines() {
             if line.trim().is_empty() {

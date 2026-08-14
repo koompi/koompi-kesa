@@ -5,21 +5,21 @@ expression: view
   KESA (dummy/dummy-model)  <cwd>  mode: default
   ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
 
-  ●
+
       Assistant reply 8
 
 
 
   › User message 9
 
-  ●
+
       Assistant reply 9
 
 
 
   › User message 10
 
-  ●
+
   [77%] PgUp/PgDn or Shift+↑/↓ to scroll
   ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > Type a message... (/help, /exit)                                       │

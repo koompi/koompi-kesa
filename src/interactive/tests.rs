@@ -515,6 +515,28 @@ fn wrapping_breaks_after_a_space_and_keeps_the_cursor_on_the_typed_row() {
 }
 
 #[test]
+fn thinking_summaries_lose_their_markers_and_get_a_line_each() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(120, 40);
+    app.messages.push(ConversationMessage {
+        role: MessageRole::Assistant,
+        content: "answer".to_string(),
+        thinking: Some("**Drafting the reverse function****Finalizing it**".to_string()),
+        collapsed: false,
+    });
+
+    let frame = strip_ansi(&app.view());
+
+    assert!(
+        !frame.contains('*'),
+        "raw markdown reached the screen: {frame}"
+    );
+    assert!(frame.contains("Thinking: Drafting the reverse function"));
+    assert!(frame.contains("Finalizing it"));
+}
+
+#[test]
 fn mouse_capture_is_off_unless_the_user_opts_in() {
     let mut config = Config::default();
     assert!(

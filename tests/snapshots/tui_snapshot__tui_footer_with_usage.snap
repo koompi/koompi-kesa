@@ -6,7 +6,7 @@ expression: view
   ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
 
 
-  ●
+
       Usage sample.
   ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > Type a message... (/help, /exit)                                       │
