@@ -1203,25 +1203,20 @@ impl PiApp {
     /// `conversation_viewport.height` still drives scroll-position management.
     fn view_effective_conversation_height(&self) -> usize {
         // Fixed chrome:
-        // header = title/model + hints + optional resources + spacer line
-        // footer(2) = blank line + footer line
-        let mut chrome: usize = self.header_rows() + 2;
+        // header = title/model + optional hints/resources + spacer line
+        // footer = one row, scroll position included
+        let mut chrome: usize = self.header_rows() + 1;
 
-        // Budget 1 row for the scroll indicator.  Slightly conservative
-        // when content is short, but prevents the off-by-one that triggers
-        // terminal scrolling.
-        chrome += 1;
-
-        // Tool status: "\n  spinner Running {tool} ...\n" = 2 rows.
+        // Tool status: "  spinner Running {tool} ..." = 1 row.
         if self.current_tool.is_some() {
-            chrome += 2;
+            chrome += 1;
         }
 
-        // Status message: a blank row plus however many rows it renders as.
-        // A provider error arrives as a dozen lines of JSON; budgeting the
-        // one-line case pushed the input box off the bottom of the screen.
+        // Status message: however many rows it renders as. A provider error
+        // arrives as a dozen lines of JSON; budgeting the one-line case
+        // pushed the input box off the bottom of the screen.
         if let Some(status) = &self.status_message {
-            chrome += 1 + view::wrapped_rows(status, self.term_width.saturating_sub(2));
+            chrome += view::wrapped_rows(status, self.term_width.saturating_sub(2));
         }
 
         // Capability prompt overlay: ~8 lines (title, ext name, desc, blank, buttons, timer, help, blank).
@@ -1280,8 +1275,8 @@ impl PiApp {
         // Input area and processing spinner can be on screen together: the
         // editor stays live while the agent works.
         if self.show_processing_status_spinner() {
-            // Processing spinner: "\n  spinner Processing...\n" = 2 rows.
-            chrome += 2;
+            // Processing spinner: "  spinner Working ..." = 1 row.
+            chrome += 1;
         }
 
         if self.editor_input_is_available() {

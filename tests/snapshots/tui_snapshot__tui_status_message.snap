@@ -10,9 +10,19 @@ expression: view
   │ Ask for a change, paste an error, or drag files here.                    │
   ╰──────────────────────────────────────────────────────────────────────────╯
 
+
+
+
+
+
+
+
+
+
+
+
   Reloaded resources
   ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
-
   Tokens: 0 in / 0 out  |  Persist: balanced  |  Ctrl+C quit

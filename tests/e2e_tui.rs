@@ -246,12 +246,12 @@ fn build_vcr_system_prompt(workdir: &Path, env_root: &Path) -> String {
 }
 
 fn parse_scroll_percent(pane: &str) -> Option<u32> {
-    let marker = pane
-        .lines()
-        .find(|line| line.contains("PgUp/PgDn") && line.contains("to scroll"))?;
-    let open = marker.find('[')?;
-    let close = marker[open + 1..].find('%')?;
-    marker[open + 1..open + 1 + close].parse::<u32>().ok()
+    pane.lines().find_map(|line| {
+        let idx = line.to_ascii_lowercase().find("scroll ")?;
+        let rest = &line[idx + "scroll ".len()..];
+        let end = rest.find('%')?;
+        rest[..end].trim().parse::<u32>().ok()
+    })
 }
 
 fn wait_for_scroll_percent(
@@ -1916,7 +1916,7 @@ fn e2e_tui_stream_scroll_and_finalize_vcr() {
     );
     let pane = session
         .tmux
-        .wait_for_pane_contains("PgUp/PgDn", COMMAND_TIMEOUT);
+        .wait_for_pane_contains("Scroll ", COMMAND_TIMEOUT);
     let baseline_percent = parse_scroll_percent(&pane).unwrap_or(100);
     assert_eq!(
         baseline_percent, 100,
@@ -1924,19 +1924,19 @@ fn e2e_tui_stream_scroll_and_finalize_vcr() {
     );
 
     session.harness.section("scroll interaction");
-    session.send_key_and_wait("page-up", "PageUp", "PgUp/PgDn", COMMAND_TIMEOUT);
+    session.send_key_and_wait("page-up", "PageUp", "Scroll ", COMMAND_TIMEOUT);
     let (page_up_percent, page_up) =
         wait_for_scroll_percent(&session, COMMAND_TIMEOUT, |percent| percent < 100);
     assert!(
-        page_up.contains("PgUp/PgDn") && page_up.contains("to scroll"),
-        "Expected scroll indicator after PageUp.\nPane:\n{page_up}"
+        page_up.contains("Scroll "),
+        "Expected scroll position in the footer after PageUp.\nPane:\n{page_up}"
     );
     assert!(
         page_up_percent < 100,
         "Expected PageUp to move away from bottom, got {page_up_percent}%"
     );
 
-    session.send_key_and_wait("page-down", "PageDown", "PgUp/PgDn", COMMAND_TIMEOUT);
+    session.send_key_and_wait("page-down", "PageDown", "Scroll ", COMMAND_TIMEOUT);
     let (page_down_percent, _page_down) =
         wait_for_scroll_percent(&session, COMMAND_TIMEOUT, |percent| percent == 100);
     assert_eq!(

@@ -3,14 +3,22 @@ source: tests/tui_snapshot.rs
 expression: view
 ---
   KESA (dummy/dummy-model)  <cwd>  ...
-  ctrl+o: tools  shift+tab: mode  /help
 
 
 
       This is a longer assistant response that
       should wrap across multiple lines.
+
+
+
+
+
+
+
+
+
+
   ╭ think off ─────────────────────────────────╮
   │ > Type a message... (/help, /exit)         │
   ╰────────────────────────────────────────────╯
-
   0/0 tokens  |  Persist: balanced  |  Ctrl+C quit

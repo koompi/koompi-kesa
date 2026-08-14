@@ -3,7 +3,6 @@ source: tests/tui_snapshot.rs
 expression: view
 ---
   KESA (dummy/dummy-model)  <cwd>  mode: default
-  ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
 
 
   › Hi there.
@@ -17,8 +16,13 @@ expression: view
 
 
       Doing great, thanks.
+
+
+
+
+
+
   ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
-
   Tokens: 0 in / 0 out  |  Persist: balanced  |  Ctrl+C quit

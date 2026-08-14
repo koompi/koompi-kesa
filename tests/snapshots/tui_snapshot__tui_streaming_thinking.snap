@@ -9,8 +9,20 @@ expression: view
   Assistant:
   Thinking: Considering options...
   Partial answer.
+
+
+
+
+
+
+
+
+
+
+
+
+
   ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
-
   Tokens: 0 in / 0 out  |  Persist: balanced  |  Ctrl+C quit

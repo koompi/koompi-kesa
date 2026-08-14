@@ -3,13 +3,26 @@ source: tests/tui_snapshot.rs
 expression: view
 ---
   KESA (dummy/dummy-model)  <cwd>  mode: default
-  ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
 
 
 
       Usage sample.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
-
   snapshot-fixture  |  120/45 tokens ($0.0030)  |  Ctrl+C quit

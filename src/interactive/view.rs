@@ -68,6 +68,19 @@ pub(super) fn clamp_to_terminal_height(mut output: String, term_height: usize) -
     output
 }
 
+/// Terminal rows a frame block occupies. Every row is newline-terminated.
+fn block_rows(block: &str) -> usize {
+    memchr::memchr_iter(b'\n', block.as_bytes()).count()
+}
+
+/// Append `count` empty rows, pushing what follows down the screen.
+fn pad_rows(output: &mut String, count: usize) {
+    output.reserve(count);
+    for _ in 0..count {
+        output.push('\n');
+    }
+}
+
 pub(super) fn normalize_raw_terminal_newlines(input: String) -> String {
     if !input.contains('\n') {
         return input;
@@ -599,6 +612,9 @@ const FOOTER_PRIORITY_BRANCH: u8 = 3;
 const FOOTER_PRIORITY_TOKENS: u8 = 4;
 const FOOTER_PRIORITY_QUIT: u8 = 5;
 const FOOTER_PRIORITY_CWD: u8 = 6;
+/// Only present while scrolled back, and the one thing that explains why the
+/// conversation is not showing its tail.
+const FOOTER_PRIORITY_SCROLL: u8 = 6;
 /// Context outranks everything: it is the only field that warns the session is
 /// about to run out of room, so it is never dropped.
 const FOOTER_PRIORITY_CONTEXT: u8 = 7;
@@ -775,11 +791,15 @@ impl PiApp {
         // Header — PERF-7: render directly into output, no intermediate String.
         self.render_header_into(&mut output);
         output.push('\n');
+        let header_rows = block_rows(&output);
 
         // Modal overlays (e.g. /tree) take over the main view.
         if let Some(tree_ui) = &self.tree_ui {
-            output.push_str(&view_tree_ui(tree_ui, &self.styles));
-            self.render_footer_into(&mut output);
+            let tree = view_tree_ui(tree_ui, &self.styles);
+            let body_rows = self.term_height.saturating_sub(header_rows + 1);
+            output.push_str(&tree);
+            pad_rows(&mut output, body_rows.saturating_sub(block_rows(&tree)));
+            self.render_footer_into(&mut output, None);
             return output;
         }
 
@@ -805,11 +825,20 @@ impl PiApp {
             raw
         };
 
-        // Render conversation area (scrollable).
-        // Use the per-frame effective height so that conditional chrome
-        // (scroll indicator, tool status, status message, …) is accounted
-        // for and the total output never exceeds term_height rows.
-        let effective_vp = self.view_effective_conversation_height();
+        // Everything under the conversation is rendered first and measured,
+        // so the conversation can be padded to fill exactly the rows left
+        // over. Estimating that chrome instead let the input box float up
+        // the screen whenever the estimate ran high.
+        let bottom = self.render_below_conversation();
+
+        // Render conversation area (scrollable), filling the gap between the
+        // header and the measured bottom block. One row is reserved for the
+        // footer, which is written last without a trailing newline.
+        let effective_vp = self
+            .term_height
+            .saturating_sub(header_rows + block_rows(&bottom) + 1)
+            .max(1);
+        let mut scroll_percent = None;
         {
             // PERF-7: Use Cow to avoid consuming conversation_content so
             // the reusable buffer is always returned regardless of path.
@@ -835,30 +864,53 @@ impl PiApp {
 
             // Skip `start` lines, then take `end - start` lines — no Vec
             // allocation needed.
-            let mut first = true;
             for line in viewport_content.lines().skip(start).take(end - start) {
-                if first {
-                    first = false;
-                } else {
-                    output.push('\n');
-                }
                 output.push_str(line);
+                output.push('\n');
             }
-            output.push('\n');
+            pad_rows(&mut output, effective_vp.saturating_sub(end - start));
 
-            // Scroll indicator
+            // Scroll position moved into the footer: a dedicated row for it
+            // cost one conversation line on every frame, scrolled or not.
             if total_lines > effective_vp {
                 let total = total_lines.saturating_sub(effective_vp);
-                let percent = (start * 100).checked_div(total).map_or(100, |p| p.min(100));
-                let indicator = format!("  [{percent}%] PgUp/PgDn or Shift+↑/↓ to scroll");
-                output.push_str(&self.styles.muted.render(&indicator));
-                output.push('\n');
+                scroll_percent = Some((start * 100).checked_div(total).map_or(100, |p| p.min(100)));
             }
         }
         // PERF-7: Return the conversation buffer for reuse next frame.
         // Always returned (even when empty) to preserve heap capacity.
         self.render_buffers
             .return_conversation_buffer(conversation_content);
+
+        output.push_str(&bottom);
+
+        // Footer with usage stats — PERF-7: render directly into output.
+        self.render_footer_into(&mut output, scroll_percent);
+
+        // Clamp the output to `term_height` rows so the terminal never
+        // scrolls in the alternate-screen buffer.
+        let output = clamp_to_terminal_height(output, self.term_height);
+        let output = normalize_raw_terminal_newlines(output);
+
+        // PERF-7: Remember this frame's output size so the next frame can
+        // pre-allocate with the right capacity.
+        self.render_buffers.set_view_capacity_hint(output.len());
+
+        if let Some(start) = view_start {
+            self.frame_timing
+                .record_frame(micros_as_u64(start.elapsed().as_micros()));
+            self.tui_pressure_frame_p99_us
+                .store(self.frame_timing.frame_p99_us(), Ordering::Relaxed);
+        }
+
+        output
+    }
+
+    /// Status rows, overlays and the editor: everything between the
+    /// conversation and the footer, rendered as one measurable block.
+    #[allow(clippy::too_many_lines)]
+    fn render_below_conversation(&self) -> String {
+        let mut output = String::new();
 
         // Tool status
         if let Some(tool) = &self.current_tool {
@@ -881,9 +933,9 @@ impl PiApp {
                 }
                 format!(" ({})", parts.join(" \u{2022} "))
             });
-            let _ = write!(
+            let _ = writeln!(
                 output,
-                "\n  {} {}{} ...\n",
+                "  {} {}{} ...",
                 self.spinner.view(),
                 self.styles.warning_bold.render(&format!("Running {tool}")),
                 self.styles.muted.render(&progress_str),
@@ -893,7 +945,7 @@ impl PiApp {
         // Status message (slash command feedback)
         if let Some(status) = &self.status_message {
             let status_style = self.styles.accent.clone().italic();
-            let _ = write!(output, "\n  {}\n", status_style.render(status));
+            let _ = writeln!(output, "  {}", status_style.render(status));
         }
 
         // Session picker overlay (if open)
@@ -941,9 +993,9 @@ impl PiApp {
             if self.show_processing_status_spinner() {
                 // Show spinner while waiting on provider/tool activity, before
                 // we have visible streaming deltas.
-                let _ = write!(
+                let _ = writeln!(
                     output,
-                    "\n  {} {} {}\n",
+                    "  {} {} {}",
                     self.spinner.view(),
                     self.styles.accent.render("Working"),
                     self.styles.muted.render(&self.render_progress_suffix()),
@@ -963,25 +1015,6 @@ impl PiApp {
             if self.autocomplete.open && !self.autocomplete.items.is_empty() {
                 output.push_str(&self.render_autocomplete_dropdown());
             }
-        }
-
-        // Footer with usage stats — PERF-7: render directly into output.
-        self.render_footer_into(&mut output);
-
-        // Clamp the output to `term_height` rows so the terminal never
-        // scrolls in the alternate-screen buffer.
-        let output = clamp_to_terminal_height(output, self.term_height);
-        let output = normalize_raw_terminal_newlines(output);
-
-        // PERF-7: Remember this frame's output size so the next frame can
-        // pre-allocate with the right capacity.
-        self.render_buffers.set_view_capacity_hint(output.len());
-
-        if let Some(start) = view_start {
-            self.frame_timing
-                .record_frame(micros_as_u64(start.elapsed().as_micros()));
-            self.tui_pressure_frame_p99_us
-                .store(self.frame_timing.frame_p99_us(), Ordering::Relaxed);
         }
 
         output
@@ -1032,21 +1065,26 @@ impl PiApp {
         ];
         let hints_line = fit_hints(&hints, max_width);
 
-        let _ = write!(
-            output,
-            "  {}\n  {}\n",
-            self.styles.title.render(&title_line),
-            self.styles.muted.render(&hints_line),
-        );
+        let _ = writeln!(output, "  {}", self.styles.title.render(&title_line));
+        if !self.header_hints_are_earned() {
+            return;
+        }
+        let _ = writeln!(output, "  {}", self.styles.muted.render(&hints_line));
         if let Some(resources_line) = self.resources_line() {
-            let _ = write!(
+            let _ = writeln!(
                 output,
-                "  {}\n",
+                "  {}",
                 self.styles
                     .muted
                     .render(&truncate(&resources_line, max_width)),
             );
         }
+    }
+
+    /// Key hints and the resource inventory are onboarding, not state: they
+    /// stay until the first message, then hand their rows to the conversation.
+    fn header_hints_are_earned(&self) -> bool {
+        self.messages.is_empty()
     }
 
     /// What the resource loader actually found, or nothing at all. A row of
@@ -1071,6 +1109,9 @@ impl PiApp {
 
     /// Rows `render_header_into` writes, including its trailing spacer.
     pub(super) fn header_rows(&self) -> usize {
+        if !self.header_hints_are_earned() {
+            return 2;
+        }
         if self.resources_line().is_some() {
             4
         } else {
@@ -1273,7 +1314,7 @@ impl PiApp {
 
     /// PERF-7: Render the footer directly into `output`, avoiding an
     /// intermediate `String` allocation on the hot path.
-    fn render_footer_into(&self, output: &mut String) {
+    fn render_footer_into(&self, output: &mut String, scroll_percent: Option<usize>) {
         let total_cost = self.total_usage.cost.total;
         let cost_str = if total_cost > 0.0 {
             format!(" (${total_cost:.4})")
@@ -1298,6 +1339,13 @@ impl PiApp {
         // No cwd here: the header already prints it. No key hints either: the
         // input box border carries the ones that apply to what you are typing.
         let mut segments = Vec::new();
+        if let Some(percent) = scroll_percent {
+            segments.push(FooterSegment {
+                long: format!("Scroll {percent}% (PgUp/PgDn)"),
+                short: format!("Scroll {percent}%"),
+                priority: FOOTER_PRIORITY_SCROLL,
+            });
+        }
         if let Some(branch) = branch_str {
             segments.push(FooterSegment::pair(branch, FOOTER_PRIORITY_BRANCH));
         }
@@ -1323,7 +1371,8 @@ impl PiApp {
         ));
 
         let footer = fit_footer(&segments, self.term_width.saturating_sub(2));
-        let _ = write!(output, "\n  {}\n", self.styles.muted.render(&footer));
+        // Last row of the frame: no trailing newline, or the terminal scrolls.
+        let _ = write!(output, "  {}", self.styles.muted.render(&footer));
     }
 
     /// Render a single conversation message to a string (uncached path).
@@ -1569,7 +1618,7 @@ impl PiApp {
         let max_preview = self.term_width.saturating_sub(24).max(20);
 
         let mut out = String::new();
-        out.push_str("\n  ");
+        out.push_str("  ");
         out.push_str(&self.styles.muted_bold.render("Pending:"));
         out.push(' ');
         out.push_str(

@@ -1034,12 +1034,12 @@ fn assistant_msg(text: &str) -> ConversationMessage {
 }
 
 fn parse_scroll_percent(view: &str) -> Option<u32> {
-    let marker = view
-        .lines()
-        .find(|line| line.contains("PgUp/PgDn") && line.contains("to scroll"))?;
-    let open = marker.find('[')?;
-    let close = marker[open + 1..].find('%')?;
-    marker[open + 1..open + 1 + close].parse::<u32>().ok()
+    view.lines().find_map(|line| {
+        let idx = line.to_ascii_lowercase().find("scroll ")?;
+        let rest = &line[idx + "scroll ".len()..];
+        let end = rest.find('%')?;
+        rest[..end].trim().parse::<u32>().ok()
+    })
 }
 
 fn sample_usage(input: u64, output: u64) -> Usage {

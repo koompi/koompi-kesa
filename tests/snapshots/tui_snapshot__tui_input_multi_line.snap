@@ -9,9 +9,20 @@ expression: view
   │ Welcome to KESA!                                                         │
   │ Ask for a change, paste an error, or drag files here.                    │
   ╰──────────────────────────────────────────────────────────────────────────╯
+
+
+
+
+
+
+
+
+
+
+
+
   ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > first line                                                             │
   │   second line                                                            │
   ╰──────────────────────────────────────────────────────────────────────────╯
-
   Tokens: 0 in / 0 out  |  Persist: balanced  |  Ctrl+C quit

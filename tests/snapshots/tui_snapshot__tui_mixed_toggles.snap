@@ -3,8 +3,11 @@ source: tests/tui_snapshot.rs
 expression: view
 ---
   KESA (dummy/dummy-model)  <cwd>  mode: default
-  ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
 
+    line 12
+    line 13
+    line 14
+    line 15
     line 16
     line 17
     line 18
@@ -18,11 +21,8 @@ expression: view
 
 
       Analysis complete.
-  [100%] PgUp/PgDn or Shift+↑/↓ to scroll
-
   Tool output expanded
   ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
-
-  Tokens: 0 in / 0 out  |  Persist: balanced  |  Ctrl+C quit
+  Scroll 100%  |  0/0 tokens  |  Persist: balanced  |  Ctrl+C quit

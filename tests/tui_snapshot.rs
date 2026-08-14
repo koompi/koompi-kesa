@@ -878,3 +878,76 @@ fn tui_snapshot_mixed_tool_and_thinking_toggles() {
     ];
     snapshot(&harness, "tui_mixed_toggles", &app, &context);
 }
+
+/// The editor never floats: whatever is on screen, its bottom border sits one
+/// row above the footer and the footer is the last row of the terminal.
+#[test]
+fn tui_input_box_stays_pinned_to_the_bottom() {
+    let harness = TestHarness::new("tui_input_box_stays_pinned_to_the_bottom");
+    let long: Vec<ConversationMessage> = (1..=12)
+        .flat_map(|idx| {
+            vec![
+                user_msg(&format!("User message {idx}")),
+                assistant_msg(&format!("Assistant reply {idx}"), None),
+            ]
+        })
+        .collect();
+
+    let cases: Vec<(&str, Box<dyn Fn(&mut PiApp)>)> = vec![
+        ("empty", Box::new(|_: &mut PiApp| {})),
+        (
+            "one message",
+            Box::new(|app: &mut PiApp| {
+                set_conversation(app, vec![user_msg("Hello")], Usage::default(), None);
+            }),
+        ),
+        (
+            "status message",
+            Box::new(|app: &mut PiApp| {
+                set_conversation(
+                    app,
+                    vec![user_msg("Hello")],
+                    Usage::default(),
+                    Some("Provider error: line one\nline two\nline three"),
+                );
+            }),
+        ),
+        (
+            "scrolled back",
+            Box::new(move |app: &mut PiApp| {
+                set_conversation(app, long.clone(), Usage::default(), None);
+                send_key(app, KeyMsg::from_type(KeyType::PgUp));
+            }),
+        ),
+        (
+            "multi-line input",
+            Box::new(|app: &mut PiApp| {
+                for ch in "first line".chars() {
+                    send_key(app, KeyMsg::from_char(ch));
+                }
+                send_key(app, KeyMsg::from_type(KeyType::ShiftEnter));
+                for ch in "second line".chars() {
+                    send_key(app, KeyMsg::from_char(ch));
+                }
+            }),
+        ),
+    ];
+
+    for (name, setup) in cases {
+        let mut app = build_app(&harness);
+        setup(&mut app);
+        let view = normalize_snapshot(&BubbleteaModel::view(&app));
+        let rows: Vec<&str> = view.lines().collect();
+        assert_eq!(rows.len(), 24, "{name}: frame must fill the terminal");
+        assert!(
+            rows[23].contains("Ctrl+C quit"),
+            "{name}: footer must be the last row, got {:?}",
+            rows[23]
+        );
+        assert!(
+            rows[22].trim_start().starts_with('\u{2570}'),
+            "{name}: editor bottom border must sit above the footer, got {:?}",
+            rows[22]
+        );
+    }
+}
