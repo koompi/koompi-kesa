@@ -45,7 +45,6 @@ const SWARM_DOCTOR_RESOURCE_PREFLIGHT_SCHEMA: &str = "pi.doctor.swarm_resource_p
 const SWARM_DOCTOR_BUILD_SLOT_SCHEMA: &str = "pi.doctor.agent_mail_build_slots.v1";
 const SWARM_DOCTOR_CONTACTS_SCHEMA: &str = "pi.doctor.agent_mail_contacts.v1";
 const SWARM_DOCTOR_AGENT_MAIL_DEGRADED_SCHEMA: &str = "pi.doctor.agent_mail_degraded_mode.v1";
-const SWARM_DOCTOR_STALLED_REAPER_SCHEMA: &str = "pi.doctor.stalled_bead_reaper.v1";
 const SWARM_DOCTOR_NEXT_ACTION_SCHEMA: &str = "pi.doctor.communication_purgatory_next_action.v1";
 const SWARM_DOCTOR_OPERATIONS_DASHBOARD_SCHEMA: &str = "pi.doctor.swarm_operations_dashboard.v1";
 const SWARM_DOCTOR_CONTEXT_INTELLIGENCE_SCHEMA: &str = "pi.doctor.context_intelligence_posture.v1";
@@ -1131,12 +1130,10 @@ fn is_executable(path: &Path) -> bool {
 
 #[allow(clippy::too_many_lines)]
 fn check_swarm(cwd: &Path, findings: &mut Vec<Finding>) {
-    check_swarm_beads(cwd, findings);
     check_swarm_resource_preflight(findings);
     check_swarm_live_admission(cwd, findings);
     check_swarm_br_status(cwd, findings);
     check_swarm_agent_mail(cwd, findings);
-    check_swarm_stalled_bead_reaper(cwd, findings);
     check_swarm_conflict_predictor(cwd, findings);
     check_swarm_next_action(cwd, findings);
     check_swarm_git(cwd, findings);
@@ -1193,88 +1190,6 @@ struct BeadsIssueRecord {
 struct AgentMailActivity {
     last_active_ts: String,
     age_hours: i64,
-}
-
-fn check_swarm_beads(cwd: &Path, findings: &mut Vec<Finding>) {
-    let cat = CheckCategory::Swarm;
-    let ledger_path = cwd.join(".beads/issues.jsonl");
-    if !ledger_path.is_file() {
-        findings.push(
-            Finding::warn(cat, "Beads ledger not found")
-                .with_detail(format!("Expected {}", ledger_path.display()))
-                .with_remediation("Run from a Beads-backed checkout or initialize Beads first"),
-        );
-        return;
-    }
-
-    let content = match std::fs::read_to_string(&ledger_path) {
-        Ok(content) => content,
-        Err(err) => {
-            findings.push(
-                Finding::fail(cat, "Beads ledger is not readable")
-                    .with_detail(format!("{}: {err}", ledger_path.display()))
-                    .with_remediation("Check ledger permissions before starting more agents"),
-            );
-            return;
-        }
-    };
-
-    let summary = summarize_beads_ledger(&content, Utc::now(), SWARM_STALE_IN_PROGRESS_HOURS);
-    if summary.parse_errors.eq(&0) {
-        findings.push(
-            Finding::pass(cat, "Beads ledger parses").with_detail(format!(
-                "{} issues; {} active ({} open, {} in_progress)",
-                summary.total, summary.active, summary.open, summary.in_progress
-            )),
-        );
-    } else {
-        findings.push(
-            Finding::fail(cat, "Beads ledger has malformed JSONL rows")
-                .with_detail(format!(
-                    "{} parse error(s) in {} rows",
-                    summary.parse_errors, summary.total
-                ))
-                .with_remediation("Run `br doctor --json` and rebuild from healthy issues.jsonl before claiming more work"),
-        );
-    }
-
-    if summary.stale_in_progress.is_empty() {
-        findings.push(Finding::pass(cat, "No stale in_progress beads detected"));
-    } else {
-        findings.push(
-            Finding::warn(cat, "Stale in_progress beads need coordination")
-                .with_detail(format_stale_issues(&summary.stale_in_progress))
-                .with_remediation("Use Agent Mail to contact owners; only reset a bead after confirming the owner is stale"),
-        );
-    }
-}
-
-fn check_swarm_stalled_bead_reaper(cwd: &Path, findings: &mut Vec<Finding>) {
-    let cat = CheckCategory::Swarm;
-    let ledger_path = cwd.join(".beads/issues.jsonl");
-    let content = match std::fs::read_to_string(&ledger_path) {
-        Ok(content) => content,
-        Err(err) => {
-            findings.push(
-                Finding::warn(cat, "Stalled bead reaper audit unavailable")
-                    .with_detail(format!("{}: {err}", ledger_path.display()))
-                    .with_remediation(
-                        "Run `br list --status=in_progress --json` manually before resetting beads",
-                    ),
-            );
-            return;
-        }
-    };
-
-    let (agent_roster, agent_roster_error) = read_agent_mail_agents_roster(cwd);
-    let finding = classify_stalled_bead_reaper(
-        &content,
-        agent_roster.as_ref(),
-        agent_roster_error.as_deref(),
-        Utc::now(),
-        SWARM_STALE_IN_PROGRESS_HOURS,
-    );
-    findings.push(finding);
 }
 
 fn read_agent_mail_health(cwd: &Path) -> (Option<serde_json::Value>, Option<String>) {
@@ -3176,21 +3091,6 @@ fn stale_issue_from_record(
     })
 }
 
-fn format_stale_issues(issues: &[StaleIssue]) -> String {
-    let mut parts: Vec<String> = issues
-        .iter()
-        .take(SWARM_DETAIL_LIMIT)
-        .map(|issue| {
-            let title = truncate_chars(&issue.title, 54);
-            format!("{}: {title} ({}h old)", issue.id, issue.age_hours)
-        })
-        .collect();
-    if issues.len() > SWARM_DETAIL_LIMIT {
-        parts.push(format!("+{} more", issues.len() - SWARM_DETAIL_LIMIT));
-    }
-    parts.join("; ")
-}
-
 #[derive(Default)]
 struct StalledReaperAudit {
     parse_errors: usize,
@@ -3223,66 +3123,6 @@ impl StalledReaperAudit {
             self.unknown_assignee_count
         )
     }
-}
-
-fn classify_stalled_bead_reaper(
-    content: &str,
-    agent_roster: Option<&serde_json::Value>,
-    agent_roster_error: Option<&str>,
-    now: DateTime<Utc>,
-    stale_after_hours: i64,
-) -> Finding {
-    let activities =
-        agent_roster.map_or_else(HashMap::new, |value| agent_mail_activity_index(value, now));
-    let audit = collect_stalled_reaper_audit(content, &activities, now, stale_after_hours);
-    let candidate_count = audit.candidate_count();
-    let detail = audit.detail(candidate_count);
-    let parse_errors = audit.parse_errors;
-    let in_progress_count = audit.in_progress_count;
-    let recently_updated_count = audit.recently_updated_count;
-    let active_agent_count = audit.active_agent_count;
-    let blocked_by_note_count = audit.blocked_by_note_count;
-    let unknown_assignee_count = audit.unknown_assignee_count;
-    let suggestions = audit.suggestions;
-
-    let data = serde_json::json!({
-        "schema": SWARM_DOCTOR_STALLED_REAPER_SCHEMA,
-        "mode": "audit_only",
-        "mutation_performed": false,
-        "requires_explicit_operator_command": true,
-        "stale_after_hours": stale_after_hours,
-        "agent_activity_source": if agent_roster.is_some() { "agent_mail" } else { "unavailable" },
-        "agent_activity_error": agent_roster_error,
-        "parse_errors": parse_errors,
-        "in_progress_count": in_progress_count,
-        "candidate_count": candidate_count,
-        "active_agent_count": active_agent_count,
-        "recently_updated_count": recently_updated_count,
-        "blocked_by_note_count": blocked_by_note_count,
-        "unknown_assignee_count": unknown_assignee_count,
-        "suggestions": suggestions,
-    });
-
-    if parse_errors > 0 {
-        return Finding::warn(CheckCategory::Swarm, "Stalled bead reaper audit degraded")
-            .with_detail(format!("{detail}; parse_errors={parse_errors}"))
-            .with_remediation("Run `br doctor --json` before reopening any in_progress bead")
-            .with_data(data);
-    }
-    if candidate_count > 0 {
-        return Finding::warn(CheckCategory::Swarm, "Stalled bead reaper found reopen candidates")
-            .with_detail(detail)
-            .with_remediation(
-                "Review notification drafts; only run suggested `br update` commands after confirming ownership is stale",
-            )
-            .with_data(data);
-    }
-    Finding::pass(
-        CheckCategory::Swarm,
-        "Stalled bead reaper found no reopen candidates",
-    )
-    .with_detail(detail)
-    .with_data(data)
 }
 
 fn collect_stalled_reaper_audit(
@@ -11159,87 +10999,6 @@ not-json
         assert_eq!(summary.total, 2);
         assert_eq!(summary.open, 1);
         assert_eq!(summary.parse_errors, 1);
-    }
-
-    #[test]
-    fn stalled_bead_reaper_keeps_recent_and_active_work() {
-        let now = DateTime::parse_from_rfc3339("2026-05-09T12:00:00Z")
-            .unwrap()
-            .with_timezone(&Utc);
-        let content = r#"{"id":"bd-active","title":"Active owner","status":"in_progress","assignee":"ActiveAgent","updated_at":"2026-05-08T06:00:00Z"}
-{"id":"bd-recent","title":"Recent work","status":"in_progress","assignee":"QuietAgent","updated_at":"2026-05-09T11:00:00Z"}
-"#;
-        let roster = serde_json::json!({
-            "agents": [
-                {"name": "ActiveAgent", "last_active_ts": "2026-05-09T11:30:00Z"},
-                {"name": "QuietAgent", "last_active_ts": "2026-05-08T00:00:00Z"}
-            ]
-        });
-
-        let finding = classify_stalled_bead_reaper(content, Some(&roster), None, now, 24);
-
-        assert_eq!(finding.severity, Severity::Pass);
-        let data = finding_data(&finding);
-        assert_eq!(data["candidate_count"], serde_json::json!(0));
-        assert_eq!(data["active_agent_count"], serde_json::json!(1));
-        assert_eq!(data["recently_updated_count"], serde_json::json!(1));
-        assert_eq!(data["mutation_performed"], serde_json::json!(false));
-    }
-
-    #[test]
-    fn stalled_bead_reaper_keeps_blocked_notes_as_review_items() {
-        let now = DateTime::parse_from_rfc3339("2026-05-09T12:00:00Z")
-            .unwrap()
-            .with_timezone(&Utc);
-        let content = r#"{"id":"bd-blocked","title":"Blocked work","status":"in_progress","assignee":"OldAgent","notes":"Blocked by bd-prereq; do not reopen until evidence lands.","updated_at":"2026-05-07T00:00:00Z"}
-"#;
-        let roster = serde_json::json!({
-            "agents": [
-                {"name": "OldAgent", "last_active_ts": "2026-05-07T00:00:00Z"}
-            ]
-        });
-
-        let finding = classify_stalled_bead_reaper(content, Some(&roster), None, now, 24);
-
-        assert_eq!(finding.severity, Severity::Pass);
-        let data = finding_data(&finding);
-        assert_eq!(data["candidate_count"], serde_json::json!(0));
-        assert_eq!(data["blocked_by_note_count"], serde_json::json!(1));
-        assert_eq!(
-            data["suggestions"][0]["action"],
-            serde_json::json!("keep_in_progress_and_review_blocker_note")
-        );
-    }
-
-    #[test]
-    fn stalled_bead_reaper_suggests_reopen_for_truly_stalled_work() {
-        let now = DateTime::parse_from_rfc3339("2026-05-09T12:00:00Z")
-            .unwrap()
-            .with_timezone(&Utc);
-        let content = r#"{"id":"bd-stalled","title":"Quiet work","status":"in_progress","assignee":"OldAgent","updated_at":"2026-05-07T00:00:00Z"}
-"#;
-        let roster = serde_json::json!({
-            "agents": [
-                {"name": "OldAgent", "last_active_ts": "2026-05-07T00:00:00Z"}
-            ]
-        });
-
-        let finding = classify_stalled_bead_reaper(content, Some(&roster), None, now, 24);
-
-        assert_eq!(finding.severity, Severity::Warn);
-        assert!(finding.title.contains("reopen candidates"));
-        let data = finding_data(&finding);
-        assert_eq!(data["schema"], SWARM_DOCTOR_STALLED_REAPER_SCHEMA);
-        assert_eq!(data["mode"], serde_json::json!("audit_only"));
-        assert_eq!(data["candidate_count"], serde_json::json!(1));
-        assert_eq!(
-            data["suggestions"][0]["suggested_commands"][0],
-            serde_json::json!("br update bd-stalled --status=open")
-        );
-        assert_eq!(
-            data["suggestions"][0]["notification_draft"]["to"][0],
-            serde_json::json!("OldAgent")
-        );
     }
 
     #[test]
