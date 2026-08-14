@@ -37,9 +37,10 @@ jobs:
         with:
           toolchain: nightly-2026-07-05
       - uses: Swatinem/rust-cache@v2
-      # the grep tool shells out to rg, and the runner image has no ripgrep
-      - name: Install ripgrep
-        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      # grep shells out to rg and find to fd; the runner image carries neither.
+      # fd-find installs as fdfind, which find_fd_binary already accepts.
+      - name: Install ripgrep and fd
+        run: sudo apt-get update && sudo apt-get install -y ripgrep fd-find
       # Two library tests fail on kernels without the filesystem access these
       # fixtures assume. Inherited from upstream, red before the fork existed.
       # The gate is on a third name appearing, not on green.
