@@ -200,6 +200,8 @@ pub mod resource_governor;
 #[doc(hidden)]
 pub mod resources;
 #[doc(hidden)]
+pub mod rewind;
+#[doc(hidden)]
 pub mod rpc;
 pub mod sandbox;
 #[doc(hidden)]

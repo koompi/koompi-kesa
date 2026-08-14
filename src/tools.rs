@@ -2747,7 +2747,7 @@ pub(crate) fn resolve_read_path(file_path: &str, cwd: &Path) -> PathBuf {
     resolved
 }
 
-fn enforce_cwd_scope(path: &Path, cwd: &Path, action: &str) -> Result<PathBuf> {
+pub(crate) fn enforce_cwd_scope(path: &Path, cwd: &Path, action: &str) -> Result<PathBuf> {
     let canonical_path = crate::extensions::safe_canonicalize(path);
     let canonical_cwd = crate::extensions::safe_canonicalize(cwd);
     if !canonical_path.starts_with(&canonical_cwd) {
@@ -4174,6 +4174,10 @@ fn atomic_replace_file_with<F>(
 where
     F: FnOnce(),
 {
+    // every file tool's write funnels through here, so this is the one place a
+    // mutation cannot reach disk without its pre-image being recorded first
+    crate::rewind::capture_pre_image(target)?;
+
     let parent = target.parent().unwrap_or_else(|| Path::new("."));
 
     #[cfg(all(unix, not(any(target_os = "espidf", target_os = "redox"))))]
@@ -6314,6 +6318,10 @@ impl Tool for BashTool {
     ) -> Result<ToolOutput> {
         let input: BashInput =
             serde_json::from_value(input).map_err(|e| Error::validation(e.to_string()))?;
+
+        // rewind cannot undo a command's side effects; record that the turn ran
+        // one so the surface can say the file restore is partial
+        crate::rewind::note_bash();
 
         if input.run_in_background {
             let shell = start_background_bash(
