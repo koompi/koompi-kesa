@@ -171,6 +171,7 @@ files = [
     "ext_conformance_scenarios",
     "ext_conformance_selector",
     "ext_conformance_shapes",
+    "ext_conformance_triage_script",
     "ext_entry_scan",
     "ext_inclusion_list",
     "ext_load_time_benchmark",
@@ -268,7 +269,6 @@ files = [
     "tools_hardened",
     "tui_snapshot",
     "tui_state",
-    "validation_broker_e2e",
 ]
 
 [suite.e2e]

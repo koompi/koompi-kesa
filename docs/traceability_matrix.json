@@ -842,8 +842,8 @@
           "justification": "Classified traceability repair suite included so CI governance covers the validation broker contract."
         },
         {
-          "path": "tests/validation_broker_e2e.rs",
-          "justification": "Classified traceability repair suite included so CI governance covers validation broker fixture-backed end-to-end workflows."
+          "path": "tests/ext_conformance_triage_script.rs",
+          "justification": "Classified traceability repair suite included so CI governance covers the extension conformance triage script self-test."
         },
         {
           "path": "tests/validation_broker_store.rs",
