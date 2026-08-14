@@ -21,7 +21,7 @@ expression: view
 
 
 
-  ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
+  ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
   │ > first line                                                             │
   │   second line                                                            │
   ╰──────────────────────────────────────────────────────────────────────────╯

@@ -1170,9 +1170,9 @@ impl PiApp {
         };
 
         let mode_text = if self.term_width >= 76 {
-            "Enter send · Shift+Enter newline · @file context"
+            "Enter send · \\+Enter newline · @file context"
         } else {
-            "Enter send · Shift+Enter newline"
+            "Enter send · \\+Enter newline"
         };
         let width = box_width(self.term_width);
         let middle_width = width.saturating_sub(2);

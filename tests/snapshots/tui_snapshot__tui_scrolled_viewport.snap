@@ -22,7 +22,7 @@ expression: view
 
 
 
-  ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
+  ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
   Scroll 71%  |  0/0 tokens  |  Persist: balanced  |  Ctrl+C quit

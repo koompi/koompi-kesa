@@ -22,7 +22,7 @@ expression: view
 
 
 
-  ╭ bash · think off · Enter send · Shift+Enter newline · @file context ─────╮
+  ╭ bash · think off · Enter send · \+Enter newline · @file context ─────────╮
   │ > !ls -la                                                                │
   ╰──────────────────────────────────────────────────────────────────────────╯
   Tokens: 0 in / 0 out  |  Persist: balanced  |  Ctrl+C quit

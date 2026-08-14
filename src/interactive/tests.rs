@@ -1013,3 +1013,28 @@ fn tui_degradation_drill_preserves_input_and_semantics_under_pressure() {
     finish_agent_and_preserve_input(&mut app, &mut trace);
     assert_tui_degradation_evidence(&app, &mut trace);
 }
+
+#[test]
+fn a_trailing_backslash_turns_enter_into_a_newline() {
+    use bubbletea::KeyType;
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+
+    type_text(&mut app, "one\\");
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Enter)));
+    type_text(&mut app, "two");
+
+    assert_eq!(app.input.value(), "one\ntwo");
+    assert_eq!(app.input.height(), 2);
+    assert!(app.status_message.is_none(), "nothing was sent");
+
+    // Without the trailing backslash the same key sends.
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Enter)));
+    assert_eq!(app.input.value(), "one\ntwo");
+    assert_eq!(
+        app.status_message.as_deref(),
+        Some("Missing credentials for provider openai. Run /login openai.")
+    );
+}

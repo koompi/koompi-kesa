@@ -690,6 +690,20 @@ impl PiApp {
         quit()
     }
 
+    /// Swap a backslash the cursor sits behind for a newline, so Enter
+    /// continues the message instead of sending it.
+    fn take_line_continuation(&mut self) -> bool {
+        let mut value = self.input.value();
+        if self.input.cursor_byte_offset() != value.len() || !value.ends_with('\\') {
+            return false;
+        }
+        value.pop();
+        value.push('\n');
+        self.input.set_value(&value);
+        self.input.set_cursor_byte_offset(value.len());
+        true
+    }
+
     /// Whether the editor wraps or breaks onto more than one visual row, which
     /// is what decides whether Up and Down move the cursor or walk history.
     fn input_is_multi_row(&self) -> bool {
@@ -885,6 +899,12 @@ impl PiApp {
             // Text input actions
             // =========================================================
             AppAction::Submit => {
+                // A trailing backslash continues the line instead of sending.
+                // Shift+Enter and Alt+Enter do not survive every terminal, so
+                // this is the one way to write a second line that always works.
+                if self.take_line_continuation() {
+                    return None;
+                }
                 // Enter: Submit when idle, queue steering when busy
                 if self.agent_state != AgentState::Idle {
                     self.expand_pasted_blocks_in_editor();

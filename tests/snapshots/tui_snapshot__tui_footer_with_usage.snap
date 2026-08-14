@@ -22,7 +22,7 @@ expression: view
 
 
 
-  ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
+  ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
   snapshot-fixture  |  120/45 tokens ($0.0030)  |  Ctrl+C quit
