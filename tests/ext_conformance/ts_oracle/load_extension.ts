@@ -157,10 +157,18 @@ async function main() {
 		]);
 		if (timeoutHandle) clearTimeout(timeoutHandle);
 
-		if (result.errors.length > 0) {
+		// loadExtensions reports errors per entry and still returns the
+		// extensions that loaded. Only the entry we were asked about is fatal;
+		// treating a failing sibling as a total failure compared a package that
+		// pi-mono had installed against nothing at all.
+		const entryErrors = result.errors.map((e: any) => `${e.path}: ${e.error}`);
+		const primaryFailed = result.errors.some(
+			(e: any) => path.resolve(e.path) === extensionPath,
+		);
+		if (primaryFailed || (result.errors.length > 0 && result.extensions.length === 0)) {
 			const output = {
 				success: false,
-				error: result.errors.map((e: any) => `${e.path}: ${e.error}`).join("; "),
+				error: entryErrors.join("; "),
 				extension: null,
 			};
 			console.log(JSON.stringify(output, null, 2));
@@ -246,6 +254,7 @@ async function main() {
 		const output = {
 			success: true,
 			error: null,
+			entryErrors,
 			extension: {
 				path: primary.path,
 				resolvedPath: primary.resolvedPath,

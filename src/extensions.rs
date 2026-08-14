@@ -13665,10 +13665,20 @@ async fn load_one_extension(
             Err(err) => Err(err),
         };
 
+        // Only the entrypoint the caller named is load-fatal. The rest were
+        // discovered next to it, and pi-mono reports those per entry while
+        // still installing the ones that loaded, so one broken file in a
+        // package cannot cost the user every extension in the batch.
         match load_result {
             Ok(()) => {}
             Err(err) if entry_index == 0 => return Err(err),
-            Err(err) => return Err(err),
+            Err(err) => tracing::warn!(
+                event = "ext.load.entry_failed",
+                extension_id = %spec.extension_id,
+                entry = %entry_path.display(),
+                error = %err,
+                "Skipped a discovered extension entry that failed to load"
+            ),
         }
     }
 

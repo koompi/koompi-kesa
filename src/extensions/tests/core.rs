@@ -2446,8 +2446,13 @@ fn explicit_compat_scan_disable_prevents_static_registration_fallback() {
     });
 }
 
+/// Sibling entrypoints are discovered, not requested: they are usually
+/// separate extensions that happen to sit in adjacent directories. Failing the
+/// extension the caller asked for because a neighbour is broken leaves a user
+/// with one bad file and no extensions at all, and pi-mono reports those
+/// per entry while installing the rest.
 #[test]
-fn multi_entry_loader_fails_closed_on_failing_non_primary_entrypoints() {
+fn multi_entry_loader_keeps_the_primary_when_a_discovered_sibling_fails() {
     let manager = ExtensionManager::new();
     let runtime = asupersync::runtime::RuntimeBuilder::current_thread()
         .build()
@@ -2500,16 +2505,15 @@ fn multi_entry_loader_fails_closed_on_failing_non_primary_entrypoints() {
         manager.set_js_runtime(js_runtime);
 
         let spec = JsExtensionLoadSpec::from_entry_path(&primary_entry).expect("load spec");
-        let err = manager
+        manager
             .load_js_extensions(vec![spec])
             .await
-            .expect_err("secondary entry failure should fail the whole extension load");
+            .expect("a failing sibling must not sink the requested entry");
 
         assert!(
-            err.to_string().contains("secondary entry failed"),
-            "error should preserve the secondary failure context: {err}"
+            manager.has_command("primary-ok"),
+            "the requested entry should still be registered"
         );
-        assert!(!manager.has_command("primary-ok"));
         assert!(!manager.has_command("secondary-should-not-exist"));
     });
 }
