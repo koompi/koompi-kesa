@@ -345,6 +345,30 @@ fn snapshot_turn_latency(
     latency.lock().ok().map(|guard| Box::new(guard.snapshot()))
 }
 
+const REWIND_TURN_LABEL_CHARS: usize = 120;
+
+// rewind turn boundary. session is written after a turn, not during one, so it cannot carry this
+fn open_rewind_turn(message: &Message) {
+    let Message::User(user) = message else {
+        return;
+    };
+    if !crate::rewind::is_active() {
+        return;
+    }
+    crate::rewind::begin_turn(&rewind_turn_label(&user.content));
+}
+
+fn rewind_turn_label(content: &UserContent) -> String {
+    crate::session::user_content_to_text(content)
+        .lines()
+        .find(|line| !line.trim().is_empty())
+        .unwrap_or_default()
+        .trim()
+        .chars()
+        .take(REWIND_TURN_LABEL_CHARS)
+        .collect()
+}
+
 fn record_provider_streaming_latency(latency: &SharedTurnLatencyAccumulator, duration: Duration) {
     if let Ok(mut guard) = latency.lock() {
         guard
@@ -1717,6 +1741,7 @@ impl Agent {
         on_event(agent_start_event);
 
         for prompt in prompts {
+            open_rewind_turn(&prompt);
             self.messages.push(prompt.clone());
             on_event(AgentEvent::MessageStart {
                 message: prompt.clone(),
@@ -1747,6 +1772,7 @@ impl Agent {
                 on_event(turn_start_event);
 
                 for message in std::mem::take(&mut pending_messages) {
+                    open_rewind_turn(&message);
                     self.messages.push(message.clone());
                     on_event(AgentEvent::MessageStart {
                         message: message.clone(),
