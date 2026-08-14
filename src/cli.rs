@@ -120,6 +120,7 @@ fn known_long_option(name: &str) -> Option<LongOptionSpec> {
         | "allow-tool"
         | "deny-tool"
         | "sandbox-write"
+        | "add-dir"
         | "tools"
         | "extension"
         | "extension-policy"
@@ -272,12 +273,8 @@ fn preprocess_extension_flags(raw_args: &[String]) -> (Vec<String>, Vec<Extensio
 
 pub fn parse_with_extension_flags(raw_args: Vec<String>) -> Result<ParsedCli, clap::Error> {
     if raw_args.is_empty() {
-        let mut cli = Cli::try_parse_from(["pi"])?;
-        adopt_legacy_env(&mut cli);
-        return Ok(ParsedCli {
-            cli,
-            extension_flags: Vec::new(),
-        });
+        let cli = Cli::try_parse_from(["pi"])?;
+        return finish_parse(cli, Vec::new());
     }
 
     match Cli::try_parse_from(raw_args.clone()) {
@@ -298,20 +295,50 @@ pub fn parse_with_extension_flags(raw_args: Vec<String>) -> Result<ParsedCli, cl
 
     let (filtered_args, extension_flags) = preprocess_extension_flags(&raw_args);
     if extension_flags.is_empty() {
-        let mut cli = Cli::try_parse_from(raw_args)?;
-        adopt_legacy_env(&mut cli);
-        return Ok(ParsedCli {
-            cli,
-            extension_flags: Vec::new(),
-        });
+        let cli = Cli::try_parse_from(raw_args)?;
+        return finish_parse(cli, Vec::new());
     }
 
-    let mut cli = Cli::try_parse_from(filtered_args)?;
+    let cli = Cli::try_parse_from(filtered_args)?;
+    finish_parse(cli, extension_flags)
+}
+
+fn finish_parse(
+    mut cli: Cli,
+    extension_flags: Vec<ExtensionCliFlag>,
+) -> Result<ParsedCli, clap::Error> {
     adopt_legacy_env(&mut cli);
+    install_workspace_roots(&cli)?;
     Ok(ParsedCli {
         cli,
         extension_flags,
     })
+}
+
+/// Resolve the roots both enforcement layers read, here rather than in `main`,
+/// because the sandbox trampoline re-execs this binary and reaches its landlock
+/// call through the same parse.
+fn install_workspace_roots(cli: &Cli) -> Result<(), clap::Error> {
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let (mut roots, rejected) = crate::config::WorkspaceRoots::resolve(&cwd, &cli.add_dir);
+    if !rejected.is_empty() {
+        return Err(clap::Error::raw(
+            ErrorKind::InvalidValue,
+            format!("--add-dir: {}\n", rejected.join("; ")),
+        ));
+    }
+
+    // The trampoline is handed every resolved root as its own --add-dir, so
+    // re-reading settings there would cost a file read per bash command.
+    if !matches!(cli.command, Some(Commands::SandboxExec { .. })) {
+        let config = crate::config::Config::load().unwrap_or_default();
+        for reason in roots.extend(&crate::config::configured_workspace_roots(&config)) {
+            eprintln!("Warning: ignoring configured additionalDirectories entry {reason}");
+        }
+    }
+
+    crate::config::configure_workspace_roots(roots);
+    Ok(())
 }
 
 /// clap reads `KESA_*` itself, so the pre-rename names have to be applied here
@@ -515,6 +542,11 @@ pub struct Cli {
     /// Extra directory a sandboxed command may write. Repeatable.
     #[arg(long = "sandbox-write", value_name = "PATH")]
     pub sandbox_write: Vec<PathBuf>,
+
+    /// Directory outside the working directory that the file tools and bash
+    /// may both read. Repeatable.
+    #[arg(long = "add-dir", value_name = "DIR")]
+    pub add_dir: Vec<PathBuf>,
 
     // === Tools ===
     /// Disable all built-in tools
@@ -1243,6 +1275,48 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec!["unknown-extension-flag"]
         );
+    }
+
+    #[test]
+    fn add_dir_is_repeatable_and_resolves_every_root() {
+        let first = tempfile::tempdir().expect("tempdir");
+        let second = tempfile::tempdir().expect("tempdir");
+        let parsed = parse_with_extension_flags(vec![
+            "pi".to_string(),
+            "--add-dir".to_string(),
+            first.path().display().to_string(),
+            "--add-dir".to_string(),
+            second.path().display().to_string(),
+            "hello".to_string(),
+        ])
+        .expect("both roots parse");
+
+        assert_eq!(parsed.cli.add_dir.len(), 2);
+        let (roots, rejected) = crate::config::WorkspaceRoots::resolve(
+            &std::env::current_dir().unwrap(),
+            &parsed.cli.add_dir,
+        );
+        assert!(rejected.is_empty(), "{rejected:?}");
+        assert_eq!(
+            roots.additional(),
+            [
+                first.path().canonicalize().unwrap(),
+                second.path().canonicalize().unwrap()
+            ]
+        );
+    }
+
+    /// A root that cannot be resolved has to stop the run. A flag that is
+    /// accepted and then enforces nothing is the failure this table exists for.
+    #[test]
+    fn add_dir_rejects_a_directory_that_is_not_there() {
+        let err = parse_with_extension_flags(vec![
+            "pi".to_string(),
+            "--add-dir".to_string(),
+            "/definitely/not/a/directory/j34".to_string(),
+        ])
+        .expect_err("a missing root must fail the parse");
+        assert!(err.to_string().contains("--add-dir"), "{err}");
     }
 
     #[test]
