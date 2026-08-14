@@ -37,6 +37,9 @@ jobs:
         with:
           toolchain: nightly-2026-07-05
       - uses: Swatinem/rust-cache@v2
+      # the grep tool shells out to rg, and the runner image has no ripgrep
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
       # Two library tests fail on kernels without the filesystem access these
       # fixtures assume. Inherited from upstream, red before the fork existed.
       # The gate is on a third name appearing, not on green.
