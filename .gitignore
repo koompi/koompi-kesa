@@ -219,8 +219,8 @@ src/bin/test_time.rs
 /fix_tools_write.rs
 
 # ACFS ephemeral patterns (auto-generated agent artifacts)
-core
-core.*
+/core
+/core.*
 !src/extensions/tests/core.rs
 cline.mcp.json
 codex.mcp.json
