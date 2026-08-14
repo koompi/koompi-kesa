@@ -1502,6 +1502,9 @@ async fn run(
     let allow_setup_prompt =
         is_interactive && io::stdin().is_terminal() && io::stdout().is_terminal();
     let session = Box::pin(Session::new(&cli, &config)).await?;
+    // an unsaved session gets a fresh id every run, so its store would never be
+    // reopened and never garbage collected
+    let _rewind = (!cli.no_session).then(|| kesa::app::install_rewind(&session.header.id, &cwd));
 
     let (mut selection, mut resolved_key) = match resolve_selection_with_auth(
         &mut cli,

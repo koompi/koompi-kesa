@@ -1231,6 +1231,33 @@ pub fn render_session_html(session: &Session) -> String {
     session.to_html()
 }
 
+/// Uninstalls the process-wide rewind store on every exit path out of `run`,
+/// so retention GC gets its close-side pass.
+pub struct RewindGuard;
+
+impl Drop for RewindGuard {
+    fn drop(&mut self) {
+        if let Some(mut store) = crate::rewind::uninstall()
+            && let Err(err) = store.close()
+        {
+            eprintln!("Warning: rewind store cleanup failed: {err}");
+        }
+    }
+}
+
+/// Keyed on the session id, so `--continue` and `--resume` reattach to the
+/// undo history that session already has.
+#[must_use]
+pub fn install_rewind(session_id: &str, cwd: &Path) -> RewindGuard {
+    match crate::rewind::RewindStore::open(session_id, cwd) {
+        Ok(store) => crate::rewind::install(store),
+        Err(err) => {
+            eprintln!("Warning: rewind is off for this session, /rewind cannot undo edits: {err}")
+        }
+    }
+    RewindGuard
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
