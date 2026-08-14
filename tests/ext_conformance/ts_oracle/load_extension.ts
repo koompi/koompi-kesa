@@ -8,6 +8,7 @@
  * MUST be run from the pi-mono root (for node_modules resolution).
  */
 
+import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,12 +19,24 @@ const PI_MONO_ROOT = path.resolve(__dirname, "../../../legacy_pi_mono_code/pi-mo
 
 // Import directly from the built loader to avoid pulling in the full package
 // (which transitively requires AWS/Smithy/etc)
-const loaderPath = path.join(PI_MONO_ROOT, "packages/coding-agent/dist/core/extensions/loader.js");
+const LOADER_SUBPATH = "dist/core/extensions/loader.js";
+const loaderCandidates = [
+	process.env.KESA_TS_ORACLE_LOADER,
+	path.join(__dirname, "node_modules/@mariozechner/pi-coding-agent", LOADER_SUBPATH),
+	path.join(PI_MONO_ROOT, "packages/coding-agent", LOADER_SUBPATH),
+].filter((candidate): candidate is string => typeof candidate === "string" && candidate.length > 0);
+
+const loaderPath = loaderCandidates.find((candidate) => existsSync(candidate));
+if (!loaderPath) {
+	throw new Error(
+		`TS oracle runtime not installed. Run: cd ${__dirname} && bun install\nLooked in:\n${loaderCandidates.join("\n")}`,
+	);
+}
 const { loadExtensions } = await import(loaderPath);
 
 function applyDeterministicGlobals() {
-	const timeRaw = process.env.PI_DETERMINISTIC_TIME_MS;
-	const stepRaw = process.env.PI_DETERMINISTIC_TIME_STEP_MS;
+	const timeRaw = process.env.KESA_DETERMINISTIC_TIME_MS;
+	const stepRaw = process.env.KESA_DETERMINISTIC_TIME_STEP_MS;
 	if (timeRaw && timeRaw.trim().length > 0) {
 		const base = Number(timeRaw);
 		if (Number.isFinite(base)) {
@@ -54,8 +67,8 @@ function applyDeterministicGlobals() {
 		}
 	}
 
-	const randRaw = process.env.PI_DETERMINISTIC_RANDOM;
-	const randSeedRaw = process.env.PI_DETERMINISTIC_RANDOM_SEED;
+	const randRaw = process.env.KESA_DETERMINISTIC_RANDOM;
+	const randSeedRaw = process.env.KESA_DETERMINISTIC_RANDOM_SEED;
 	if (randRaw && randRaw.trim().length > 0) {
 		const value = Number(randRaw);
 		if (Number.isFinite(value)) {
@@ -72,7 +85,7 @@ function applyDeterministicGlobals() {
 		}
 	}
 
-	const detCwd = process.env.PI_DETERMINISTIC_CWD;
+	const detCwd = process.env.KESA_DETERMINISTIC_CWD;
 	if (detCwd && detCwd.trim().length > 0) {
 		try {
 			Object.defineProperty(process, "cwd", {
@@ -82,7 +95,7 @@ function applyDeterministicGlobals() {
 		} catch {}
 	}
 
-	const detHome = process.env.PI_DETERMINISTIC_HOME;
+	const detHome = process.env.KESA_DETERMINISTIC_HOME;
 	if (detHome && detHome.trim().length > 0) {
 		try {
 			process.env.HOME = detHome;
@@ -100,9 +113,9 @@ async function main() {
 	}
 
 	const extensionPath = path.resolve(args[0]);
-	const envCwd = process.env.PI_DETERMINISTIC_CWD;
+	const envCwd = process.env.KESA_DETERMINISTIC_CWD;
 	const cwd = args[1] ? path.resolve(args[1]) : envCwd ? path.resolve(envCwd) : process.cwd();
-	const timeoutMs = Number(process.env.PI_TS_ORACLE_TIMEOUT_MS ?? "20000");
+	const timeoutMs = Number(process.env.KESA_TS_ORACLE_TIMEOUT_MS ?? "20000");
 
 	try {
 		let timeoutHandle: ReturnType<typeof setTimeout> | undefined;

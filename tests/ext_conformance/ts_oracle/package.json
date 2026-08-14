@@ -1,0 +1,9 @@
+{
+	"name": "kesa-ts-oracle",
+	"private": true,
+	"version": "0.0.0",
+	"description": "Pinned upstream runtime the differential conformance oracle compares against.",
+	"dependencies": {
+		"@mariozechner/pi-coding-agent": "0.51.0"
+	}
+}

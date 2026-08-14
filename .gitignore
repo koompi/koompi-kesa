@@ -24,6 +24,7 @@ rustc-ice-*.txt
 
 # Model-catalog generator (scripts/gen-model-catalog.mjs, gh #117)
 /scripts/node_modules
+/tests/ext_conformance/ts_oracle/node_modules
 /scripts/models.generated.candidate.ts
 
 # generated test artifacts

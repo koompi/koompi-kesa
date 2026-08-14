@@ -84,7 +84,7 @@ fn event_payloads_path() -> PathBuf {
 }
 
 fn bun_command() -> Command {
-    Command::new("/home/ubuntu/.bun/bin/bun")
+    Command::new(std::env::var("KESA_BUN").unwrap_or_else(|_| "bun".to_string()))
 }
 
 const DEFAULT_DETERMINISTIC_TIME_MS: &str = "1700000000000";
