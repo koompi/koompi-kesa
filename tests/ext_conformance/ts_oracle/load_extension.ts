@@ -104,6 +104,27 @@ function applyDeterministicGlobals() {
 	}
 }
 
+// pi.events.on subscriptions never reach ext.handlers, so without recording them
+// the oracle under-reports every channel the Rust snapshot lists in event_hooks.
+const eventBusChannels: string[] = [];
+const busHandlers = new Map<string, Array<(data: unknown) => void>>();
+const recordingEventBus = {
+	emit(channel: string, data: unknown) {
+		for (const handler of busHandlers.get(channel) ?? []) handler(data);
+	},
+	on(channel: string, handler: (data: unknown) => void) {
+		eventBusChannels.push(channel);
+		const handlers = busHandlers.get(channel) ?? [];
+		handlers.push(handler);
+		busHandlers.set(channel, handlers);
+		return () => {
+			const current = busHandlers.get(channel) ?? [];
+			const index = current.indexOf(handler);
+			if (index >= 0) current.splice(index, 1);
+		};
+	},
+};
+
 async function main() {
 	applyDeterministicGlobals();
 	const args = process.argv.slice(2);
@@ -125,7 +146,10 @@ async function main() {
 			}, timeoutMs);
 		});
 
-		const result = await Promise.race([loadExtensions([extensionPath], cwd), timeout]);
+		const result = await Promise.race([
+			loadExtensions([extensionPath], cwd, recordingEventBus),
+			timeout,
+		]);
 		if (timeoutHandle) clearTimeout(timeoutHandle);
 
 		if (result.errors.length > 0) {
@@ -228,6 +252,7 @@ async function main() {
 				path: ext.path,
 				resolvedPath: ext.resolvedPath,
 				handlers,
+				eventBusChannels,
 				tools,
 				commands,
 				shortcuts,

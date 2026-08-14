@@ -55,28 +55,17 @@ fn ts_input_transform_event_mock_spec() -> PathBuf {
     project_root().join("tests/ext_conformance/mock_specs/mock_spec_input_transform_events.json")
 }
 
-fn pi_mono_root() -> PathBuf {
-    project_root().join("legacy_pi_mono_code/pi-mono")
-}
-
-fn pi_mono_packages() -> PathBuf {
-    pi_mono_root().join("packages")
-}
-
-fn pi_mono_node_modules() -> PathBuf {
-    pi_mono_root().join("node_modules")
-}
-
 fn manifest_path() -> PathBuf {
     project_root().join("tests/ext_conformance/VALIDATED_MANIFEST.json")
 }
 
 fn determinism_extension_path() -> PathBuf {
-    project_root().join("tests/fixtures/determinism_extension.ts")
+    project_root().join("tests/fixtures/determinism_extension/determinism_extension.ts")
 }
 
 fn event_dispatch_bench_extension_path() -> PathBuf {
-    project_root().join("tests/fixtures/event_dispatch_bench_extension.ts")
+    project_root()
+        .join("tests/fixtures/event_dispatch_bench_extension/event_dispatch_bench_extension.ts")
 }
 
 fn event_payloads_path() -> PathBuf {
@@ -231,43 +220,15 @@ fn deterministic_random_label(settings: &DeterministicSettings) -> String {
     format!("{rand:.6}")
 }
 
-fn ts_oracle_node_path() -> &'static Path {
-    static NODE_PATH: OnceLock<PathBuf> = OnceLock::new();
-    NODE_PATH.get_or_init(|| {
-        #[cfg(unix)]
-        fn symlink_pkg(scope_dir: &Path, name: &str, target: &Path) {
-            use std::os::unix::fs::symlink;
+// Extensions import @mariozechner/* by name. Resolving those to the pinned
+// snapshot's packages/ hands them an unbuilt tree with no dist/, so they must
+// come from the same published runtime the oracle loads.
+fn ts_oracle_dir() -> PathBuf {
+    project_root().join("tests/ext_conformance/ts_oracle")
+}
 
-            let link = scope_dir.join(name);
-            if link.exists() {
-                return;
-            }
-            symlink(target, &link).expect("create ts oracle package symlink");
-        }
-
-        #[cfg(not(unix))]
-        fn symlink_pkg(_scope_dir: &Path, _name: &str, _target: &Path) {}
-
-        let base = PathBuf::from(format!(
-            "/tmp/koompi_code_cli_ts_oracle_node_path-{}",
-            std::process::id()
-        ));
-
-        let scope_dir = base.join("@mariozechner");
-        std::fs::create_dir_all(&scope_dir).expect("create ts oracle node_path scope dir");
-
-        let packages_dir = pi_mono_packages();
-        symlink_pkg(
-            &scope_dir,
-            "pi-coding-agent",
-            &packages_dir.join("coding-agent"),
-        );
-        symlink_pkg(&scope_dir, "pi-ai", &packages_dir.join("ai"));
-        symlink_pkg(&scope_dir, "pi-tui", &packages_dir.join("tui"));
-        symlink_pkg(&scope_dir, "pi-agent-core", &packages_dir.join("agent"));
-
-        base
-    })
+fn ts_oracle_node_path() -> PathBuf {
+    ts_oracle_dir().join("node_modules")
 }
 
 /// Get extensions filtered by source tier.
@@ -369,17 +330,10 @@ fn run_ts_oracle_result(extension_path: &Path) -> Result<Value, String> {
     let settings = deterministic_settings_for(extension_path);
     ensure_deterministic_dirs(&settings);
     let node_path: Cow<'_, str> = match std::env::var("NODE_PATH") {
-        Ok(existing) if !existing.trim().is_empty() => Cow::Owned(format!(
-            "{}:{}:{}",
-            ts_oracle_node_path().display(),
-            pi_mono_node_modules().display(),
-            existing
-        )),
-        _ => Cow::Owned(format!(
-            "{}:{}",
-            ts_oracle_node_path().display(),
-            pi_mono_node_modules().display()
-        )),
+        Ok(existing) if !existing.trim().is_empty() => {
+            Cow::Owned(format!("{}:{}", ts_oracle_node_path().display(), existing))
+        }
+        _ => Cow::Owned(ts_oracle_node_path().display().to_string()),
     };
 
     let mut cmd = bun_command();
@@ -387,7 +341,7 @@ fn run_ts_oracle_result(extension_path: &Path) -> Result<Value, String> {
         .arg(ts_oracle_script())
         .arg(extension_path)
         .arg(&settings.cwd)
-        .current_dir(pi_mono_root())
+        .current_dir(ts_oracle_dir())
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -489,17 +443,10 @@ fn run_ts_harness_with_mock_spec_result(
     let settings = deterministic_settings_for(extension_path);
     ensure_deterministic_dirs(&settings);
     let node_path: Cow<'_, str> = match std::env::var("NODE_PATH") {
-        Ok(existing) if !existing.trim().is_empty() => Cow::Owned(format!(
-            "{}:{}:{}",
-            ts_oracle_node_path().display(),
-            pi_mono_node_modules().display(),
-            existing
-        )),
-        _ => Cow::Owned(format!(
-            "{}:{}",
-            ts_oracle_node_path().display(),
-            pi_mono_node_modules().display()
-        )),
+        Ok(existing) if !existing.trim().is_empty() => {
+            Cow::Owned(format!("{}:{}", ts_oracle_node_path().display(), existing))
+        }
+        _ => Cow::Owned(ts_oracle_node_path().display().to_string()),
     };
 
     let mut cmd = bun_command();
@@ -508,7 +455,7 @@ fn run_ts_harness_with_mock_spec_result(
         .arg(extension_path)
         .arg(mock_spec_path)
         .arg(&settings.cwd)
-        .current_dir(pi_mono_root())
+        .current_dir(ts_oracle_dir())
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -596,17 +543,10 @@ fn run_ts_event_dispatch_bench_result(
     let settings = deterministic_settings_for(extension_path);
     ensure_deterministic_dirs(&settings);
     let node_path: Cow<'_, str> = match std::env::var("NODE_PATH") {
-        Ok(existing) if !existing.trim().is_empty() => Cow::Owned(format!(
-            "{}:{}:{}",
-            ts_oracle_node_path().display(),
-            pi_mono_node_modules().display(),
-            existing
-        )),
-        _ => Cow::Owned(format!(
-            "{}:{}",
-            ts_oracle_node_path().display(),
-            pi_mono_node_modules().display()
-        )),
+        Ok(existing) if !existing.trim().is_empty() => {
+            Cow::Owned(format!("{}:{}", ts_oracle_node_path().display(), existing))
+        }
+        _ => Cow::Owned(ts_oracle_node_path().display().to_string()),
     };
 
     let mut cmd = bun_command();
@@ -615,7 +555,7 @@ fn run_ts_event_dispatch_bench_result(
         .arg(extension_path)
         .arg(payloads_path)
         .arg(&settings.cwd)
-        .current_dir(pi_mono_root())
+        .current_dir(ts_oracle_dir())
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -937,9 +877,12 @@ fn load_rust_snapshot_timed(extension_path: &Path) -> Result<(Value, u64), Strin
             settings.random_seed.clone(),
         );
     }
+    // deny_env defaults to true, which hides the KESA_DETERMINISTIC_* keys this
+    // harness just injected. env here holds only those keys plus HOME.
     let js_config = PiJsRuntimeConfig {
         cwd: settings.cwd.clone(),
         env,
+        deny_env: false,
         ..Default::default()
     };
 
@@ -1302,9 +1245,20 @@ fn diff_snapshots(ts_oracle: &Value, rust_snapshot: &Value) -> Vec<String> {
                 .collect()
         })
         .unwrap_or_default();
-    let ts_event_names: Vec<String> = ts_handlers.keys().cloned().collect();
-    let mut ts_sorted = ts_event_names;
+    let mut ts_sorted: Vec<String> = ts_handlers.keys().cloned().collect();
+    ts_sorted.extend(
+        ts_ext
+            .get("eventBusChannels")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default(),
+    );
     ts_sorted.sort();
+    ts_sorted.dedup();
     let mut rust_sorted = rust_event_hooks;
     rust_sorted.sort();
     if ts_sorted != rust_sorted {
