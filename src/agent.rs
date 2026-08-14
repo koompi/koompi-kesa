@@ -1161,8 +1161,17 @@ pub struct Agent {
     /// Cached tool definitions. Invalidated when tools change via `extend_tools`.
     cached_tool_defs: Option<Vec<ToolDef>>,
 
-    /// User shell hooks, read from settings on the first tool call.
+    /// User shell hooks, read from settings on the first turn.
     shell_hooks: OnceLock<Arc<crate::hooks::HookRunner>>,
+
+    /// Where this agent's input comes from. Only an interactive one has a user
+    /// waiting on a notification.
+    input_source: InputSource,
+
+    /// `SessionStart` on the first turn, `SessionEnd` on the way out. Held here
+    /// rather than on `AgentSession` because the interactive loop takes the
+    /// agent and never builds one.
+    lifecycle: OnceLock<crate::hooks::SessionLifecycle>,
 
     /// Active model's context window, the source the per-result byte budget is
     /// derived from. Same value the footer and compaction resolve.
@@ -1275,6 +1284,8 @@ impl Agent {
             message_queue: MessageQueue::new(QueueMode::OneAtATime, QueueMode::OneAtATime),
             cached_tool_defs: None,
             shell_hooks: OnceLock::new(),
+            input_source: InputSource::Interactive,
+            lifecycle: OnceLock::new(),
             context_window_tokens: ResolvedCompactionSettings::default().context_window_tokens,
         }
     }
@@ -1306,6 +1317,10 @@ impl Agent {
             is_error,
             timestamp: Utc::now().timestamp_millis(),
         })
+    }
+
+    pub const fn set_input_source(&mut self, source: InputSource) {
+        self.input_source = source;
     }
 
     /// Shell hooks for this session. Empty unless the user configured any.
@@ -1609,9 +1624,71 @@ impl Agent {
         message
     }
 
+    async fn run_loop(
+        &mut self,
+        prompts: Vec<Message>,
+        on_event: AgentEventHandler,
+        abort: Option<AbortSignal>,
+    ) -> Result<AssistantMessage> {
+        self.begin_session().await;
+        let result = self.run_loop_inner(prompts, on_event, abort).await;
+        if result.is_ok() {
+            self.end_turn().await;
+        }
+        result
+    }
+
+    /// Fire `SessionStart` and start watching for the end of the session.
+    ///
+    /// On the first turn rather than on construction: the RPC, ACP and print
+    /// modes install their own `SIGINT` handler after building the agent, and
+    /// `arm_interrupt` must not take it out from under them.
+    async fn begin_session(&self) {
+        let session_id = self
+            .config
+            .stream_options
+            .session_id
+            .clone()
+            .unwrap_or_default();
+
+        if self.lifecycle.get().is_none() {
+            let source = if self.messages.is_empty() {
+                "startup"
+            } else {
+                "resume"
+            };
+            self.shell_hooks().session_start(&session_id, source).await;
+            let _ = self.lifecycle.set(crate::hooks::SessionLifecycle::watch(
+                Arc::clone(self.shell_hooks()),
+                session_id,
+            ));
+        }
+
+        if let Some(lifecycle) = self.lifecycle.get() {
+            lifecycle.arm_interrupt();
+        }
+    }
+
+    /// The turn is over: tell the subagent's parent, or tell the user.
+    async fn end_turn(&self) {
+        let hooks = Arc::clone(self.shell_hooks());
+        if is_subagent() {
+            hooks.subagent_stop(false).await;
+            return;
+        }
+        if self.input_source != InputSource::Interactive {
+            return;
+        }
+
+        let message = turn_end_message();
+        if crate::notify::emit(&message).emitted() {
+            hooks.notification(&message).await;
+        }
+    }
+
     /// The main agent loop.
     #[allow(clippy::too_many_lines)]
-    async fn run_loop(
+    async fn run_loop_inner(
         &mut self,
         prompts: Vec<Message>,
         on_event: AgentEventHandler,
@@ -8480,6 +8557,7 @@ impl AgentSession {
 
     pub const fn set_input_source(&mut self, source: InputSource) {
         self.input_source = source;
+        self.agent.set_input_source(source);
     }
 
     #[must_use]
@@ -8980,6 +9058,9 @@ impl AgentSession {
                 reason: format!("threshold;admission={}", admission.reason.as_str()),
             });
 
+            // Before compaction discards anything: afterwards the history the
+            // hook came to look at is already gone.
+            self.agent.shell_hooks().pre_compact("auto", None).await;
             let before_outcome = self.dispatch_before_compact(&prep, &entries, None).await;
             if before_outcome.cancel {
                 on_event(AgentEvent::AutoCompactionEnd {
@@ -9199,6 +9280,7 @@ impl AgentSession {
                 reason: "threshold".to_string(),
             });
 
+            self.agent.shell_hooks().pre_compact("manual", None).await;
             let before_outcome = self.dispatch_before_compact(&prep, &entries, None).await;
             if before_outcome.cancel {
                 on_event(AgentEvent::AutoCompactionEnd {
@@ -10456,6 +10538,24 @@ impl AgentSession {
             }
         }
         Ok(())
+    }
+}
+
+/// A subagent is a child `kesa` process, so its own turn end is a
+/// `SubagentStop` rather than the parent's `Stop`.
+fn is_subagent() -> bool {
+    crate::env::var("SUBAGENT_DEPTH")
+        .and_then(|depth| depth.parse::<usize>().ok())
+        .is_some_and(|depth| depth > 0)
+}
+
+fn turn_end_message() -> String {
+    let here = std::env::current_dir()
+        .ok()
+        .and_then(|cwd| cwd.file_name().map(|name| name.to_string_lossy().into_owned()));
+    match here {
+        Some(here) => format!("KESA finished a turn in {here}"),
+        None => "KESA finished a turn".to_string(),
     }
 }
 
