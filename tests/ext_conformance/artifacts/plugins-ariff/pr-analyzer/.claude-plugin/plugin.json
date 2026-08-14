@@ -1,8 +1,0 @@
-{
-  "name": "pr-analyzer",
-  "version": "1.0.0",
-  "type": "skill",
-  "skills": [
-    "skills/pr-analyzer.skill.md"
-  ]
-}

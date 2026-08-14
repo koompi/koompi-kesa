@@ -1,8 +1,0 @@
-{
-  "name": "test-writer",
-  "version": "1.0.0",
-  "type": "skill",
-  "skills": [
-    "skills/test-writer.skill.md"
-  ]
-}

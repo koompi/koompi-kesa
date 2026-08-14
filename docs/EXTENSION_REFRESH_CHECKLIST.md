@@ -68,10 +68,14 @@ Place sources under the appropriate corpus directory:
 
 | Source tier | Directory |
 |---|---|
-| `official-pi-mono` | `tests/ext_conformance/artifacts/plugins-official/` |
+| `official-pi-mono` | `tests/ext_conformance/artifacts/<extension-id>/` |
 | `community` | `tests/ext_conformance/artifacts/community/` |
 | `npm-registry` | `tests/ext_conformance/artifacts/npm/` |
-| `third-party-github` | `tests/ext_conformance/artifacts/plugins-community/` |
+| `third-party-github` | `tests/ext_conformance/artifacts/third-party/` |
+| `agents-mikeastock` | `tests/ext_conformance/artifacts/agents-mikeastock/` |
+
+These are the five directories `VALIDATED_MANIFEST.json` actually covers. An extension
+placed anywhere else is not certified by any suite.
 
 ### 2.2 Record provenance
 

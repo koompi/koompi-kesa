@@ -1,4 +1,0 @@
-{
-  "description": "Sugar task management - hooks disabled pending schema migration. Original hooks used unsupported features (filters, conditions, throttling). Plugin skills and MCP server still functional.",
-  "hooks": {}
-}

@@ -1,8 +1,0 @@
-{
-  "name": "performance-optimizer",
-  "version": "1.0.0",
-  "type": "skill",
-  "skills": [
-    "skills/performance-optimizer.skill.md"
-  ]
-}
