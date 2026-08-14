@@ -1,6 +1,14 @@
 use super::commands::model_entry_matches;
 use super::*;
 
+/// Outcome of a ctrl+V image paste. `Empty` and `Unsupported` are different
+/// failures and used to be the same silent `None`.
+pub(super) enum ImagePaste {
+    Attached(PathBuf),
+    Empty,
+    Unsupported,
+}
+
 impl PiApp {
     pub(super) fn handle_custom_extension_key(&mut self, key: &KeyMsg) -> bool {
         if !self.custom_overlay_input_is_available() {
@@ -335,43 +343,46 @@ impl PiApp {
     }
 
     #[allow(clippy::missing_const_for_fn)]
-    pub(super) fn paste_image_from_clipboard() -> Option<PathBuf> {
+    pub(super) fn paste_image_from_clipboard() -> ImagePaste {
         #[cfg(all(feature = "clipboard", feature = "image-resize"))]
         {
-            use image::ImageEncoder;
+            let decode = || -> Option<PathBuf> {
+                use image::ImageEncoder;
 
-            let mut clipboard = ArboardClipboard::new().ok()?;
-            let image = clipboard.get_image().ok()?;
+                let mut clipboard = ArboardClipboard::new().ok()?;
+                let image = clipboard.get_image().ok()?;
 
-            let width = u32::try_from(image.width).ok()?;
-            let height = u32::try_from(image.height).ok()?;
-            let bytes = image.bytes.into_owned();
-            let width_usize = usize::try_from(width).ok()?;
-            let height_usize = usize::try_from(height).ok()?;
-            let expected = width_usize.checked_mul(height_usize)?.checked_mul(4)?;
-            if bytes.len() != expected {
-                return None;
-            }
+                let width = u32::try_from(image.width).ok()?;
+                let height = u32::try_from(image.height).ok()?;
+                let bytes = image.bytes.into_owned();
+                let width_usize = usize::try_from(width).ok()?;
+                let height_usize = usize::try_from(height).ok()?;
+                let expected = width_usize.checked_mul(height_usize)?.checked_mul(4)?;
+                if bytes.len() != expected {
+                    return None;
+                }
 
-            let mut temp_file = tempfile::Builder::new()
-                .prefix("pi-paste-")
-                .suffix(".png")
-                .tempfile()
-                .ok()?;
-            let encoder = image::codecs::png::PngEncoder::new(&mut temp_file);
-            if encoder
-                .write_image(&bytes, width, height, image::ExtendedColorType::Rgba8)
-                .is_err()
-            {
-                return None;
-            }
-            let (_file, path) = temp_file.keep().ok()?;
-            Some(path)
+                let mut temp_file = tempfile::Builder::new()
+                    .prefix("kesa-paste-")
+                    .suffix(".png")
+                    .tempfile()
+                    .ok()?;
+                let encoder = image::codecs::png::PngEncoder::new(&mut temp_file);
+                if encoder
+                    .write_image(&bytes, width, height, image::ExtendedColorType::Rgba8)
+                    .is_err()
+                {
+                    return None;
+                }
+                let (_file, path) = temp_file.keep().ok()?;
+                Some(path)
+            };
+            decode().map_or(ImagePaste::Empty, ImagePaste::Attached)
         }
 
         #[cfg(not(all(feature = "clipboard", feature = "image-resize")))]
         {
-            None
+            ImagePaste::Unsupported
         }
     }
 
@@ -756,9 +767,20 @@ impl PiApp {
                 None
             }
             AppAction::PasteImage => {
-                if let Some(path) = Self::paste_image_from_clipboard() {
-                    self.insert_file_ref_path(&path);
-                    self.status_message = Some("Image attached".to_string());
+                match Self::paste_image_from_clipboard() {
+                    ImagePaste::Attached(path) => {
+                        self.insert_file_ref_path(&path);
+                        self.status_message = Some("Image attached".to_string());
+                    }
+                    ImagePaste::Empty => {
+                        self.status_message = Some("No image in the clipboard".to_string());
+                    }
+                    ImagePaste::Unsupported => {
+                        self.status_message = Some(
+                            "This build has no clipboard support. Attach the file instead: @path/to/image.png"
+                                .to_string(),
+                        );
+                    }
                 }
                 None
             }

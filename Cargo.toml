@@ -341,7 +341,7 @@ rquickjs = { version = "0.11", features = ["futures", "loader", "bindgen"] }
 rquickjs = { version = "0.11", features = ["futures", "loader", "bindgen"] }
 
 [features]
-default = ["sqlite-sessions", "tui", "syntax-highlighting"]
+default = ["sqlite-sessions", "tui", "syntax-highlighting", "image-resize"]
 full = [
     "image-resize",
     "jemalloc",
