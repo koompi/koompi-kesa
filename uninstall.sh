@@ -2,7 +2,7 @@
 #
 # KOOMPI KESA uninstaller.
 #
-#   curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/uninstall.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/koompi/koompi-kesa/main/uninstall.sh | bash
 #
 # Removes the `kesa` binary. Config, sessions and credentials under ~/.kesa are
 # left alone unless you pass --purge.

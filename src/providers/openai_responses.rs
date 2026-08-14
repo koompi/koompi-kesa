@@ -284,7 +284,7 @@ impl Provider for OpenAIResponsesProvider {
                 .header("chatgpt-account-id", account_id)
                 .header("OpenAI-Beta", "responses=experimental")
                 .header("originator", "pi")
-                .header("User-Agent", "koompi-code-cli");
+                .header("User-Agent", "koompi-kesa");
             if let Some(session_id) = &options.session_id {
                 request = request.header("session_id", session_id);
             }
@@ -2621,7 +2621,7 @@ mod tests {
         assert_eq!(captured.header_count("authorization"), 1);
         assert_eq!(
             captured.headers.get("user-agent").map(String::as_str),
-            Some("koompi-code-cli")
+            Some("koompi-kesa")
         );
         assert_eq!(captured.header_count("user-agent"), 1);
         assert_eq!(

@@ -12,7 +12,7 @@
 </p>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/koompi/koompi-kesa/main/install.sh | bash
 ```
 
 Then run `kesa` in any project directory.
@@ -82,7 +82,7 @@ unavailable and the same refusal applies.
 
 ```bash
 # Latest release
-curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/koompi/koompi-kesa/main/install.sh | bash
 
 # A specific version, or a different directory
 curl -fsSL .../install.sh | bash -s -- --version v0.2.0 --dest /usr/local/bin
@@ -94,15 +94,15 @@ installing anything. `KESA_DOWNLOAD_BASE` points it at a mirror.
 From source, with the pinned nightly in `rust-toolchain.toml`:
 
 ```bash
-git clone https://github.com/koompi/koompi-code-cli.git
-cd koompi-code-cli
+git clone https://github.com/koompi/koompi-kesa.git
+cd koompi-kesa
 cargo install --path .
 ```
 
 Uninstall:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/koompi/koompi-kesa/main/uninstall.sh | bash
 ```
 
 ## Use

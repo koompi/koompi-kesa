@@ -15,7 +15,7 @@ pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 /// How long to cache the version check result (24 hours).
 const CACHE_TTL_SECS: u64 = 24 * 60 * 60;
 const RELEASE_CHECK_TIMEOUT: Duration = Duration::from_secs(10);
-const RELEASES_URL: &str = "https://api.github.com/repos/koompi/koompi-code-cli/releases/latest";
+const RELEASES_URL: &str = "https://api.github.com/repos/koompi/koompi-kesa/releases/latest";
 
 /// Result of a version check.
 #[derive(Debug, Clone)]

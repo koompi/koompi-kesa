@@ -2,7 +2,7 @@
 #
 # KOOMPI KESA installer.
 #
-#   curl -fsSL https://raw.githubusercontent.com/koompi/koompi-code-cli/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/koompi/koompi-kesa/main/install.sh | bash
 #
 # Downloads the release binary for this machine, checks it against the
 # release's SHA256SUMS, and drops `kesa` in ~/.local/bin.
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 OWNER="${OWNER:-koompi}"
-REPO="${REPO:-koompi-code-cli}"
+REPO="${REPO:-koompi-kesa}"
 VERSION="${VERSION:-}"
 DEST="${DEST:-$HOME/.local/bin}"
 NO_VERIFY="${KESA_NO_VERIFY:-0}"
