@@ -288,10 +288,6 @@
         "evidence": "scripts/check_readme_evidence_freshness.py and docs/evidence artifacts already encode claim freshness checks."
       },
       {
-        "surface": "swarm_runpack",
-        "evidence": "docs/swarm-operations-runbook.md and runpack contracts already collect Beads, RCH, Agent Mail, and doctor source statuses."
-      },
-      {
         "surface": "resource_governor",
         "evidence": "src/resource_governor.rs already models swarm admission, memory pressure replay, and activity-ledger alignment."
       },

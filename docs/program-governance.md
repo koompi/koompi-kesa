@@ -224,7 +224,7 @@ Next provider rollup checkpoint: `2026-02-13` (UTC), focused on `bd-3uqg.3.8.4` 
 
 ### Adding New Extensions
 
-1. Extension passes `pi doctor` with PASS verdict.
+1. Extension passes `kesa doctor` with PASS verdict.
 2. License is permissive (MIT, Apache-2.0, BSD).
 3. Provenance is pinnable (git commit hash or npm version).
 4. No per-extension patches required (unmodified compatibility).

@@ -71,22 +71,6 @@ missing, saturated, or unhealthy for a heavy command, the wrapper returns a
 machine-readable `backoff` decision instead of silently starting a broad local
 Cargo run.
 
-Before starting a swarm or a heavyweight all-target gate, inspect the host
-resource budget:
-
-```bash
-pi doctor --only swarm --format json
-```
-
-The `pi.doctor.swarm_resource_preflight.v1` finding reports cgroup CPU quota,
-cpuset size, NUMA nodes, cgroup memory limits, and scratch headroom for
-`CARGO_TARGET_DIR` and `TMPDIR`. Treat any `status = fail` or non-empty
-`critical_failures` list as a hard stop until both directories point under
-`/data/tmp/koompi_code_cli_cargo/<agent>/` with enough free space. When the check
-passes, use `recommended_budgets` as the operator ceiling for agent fanout, tool
-concurrency, extension hostcall lanes, RCH verification fanout, queue depth, and
-RSS budget.
-
 Before an RCH-backed gate consumes checked-in test artifacts or emits report
 bundles, run the artifact sync preflight:
 

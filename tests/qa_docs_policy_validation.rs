@@ -50,7 +50,6 @@ const TEST_DOUBLE_INVENTORY_PATH: &str = "docs/test_double_inventory.json";
 const FULL_SUITE_GATE_PATH: &str = "tests/ci_full_suite_gate.rs";
 const COVERAGE_BASELINE_PATH: &str = "docs/coverage-baseline-map.json";
 const RUNTIME_HOSTCALL_TELEMETRY_SCHEMA_PATH: &str = "docs/schema/runtime_hostcall_telemetry.json";
-const SWARM_OPERATIONS_RUNBOOK_PATH: &str = "docs/swarm-operations-runbook.md";
 
 fn load_json(path: &str) -> Value {
     let content = std::fs::read_to_string(path).expect("should read JSON fixture");
@@ -1120,23 +1119,6 @@ fn perf_sli_responsiveness_workflows_keep_primary_latency_sli() {
         "workflow_sli_mapping missing responsiveness workflows: {}",
         missing_workflow_mappings.join(", ")
     );
-}
-
-#[test]
-fn swarm_runbook_threads_agent_mail_health_into_empty_queue_convergence() {
-    let runbook = load_text(SWARM_OPERATIONS_RUNBOOK_PATH);
-    for required in [
-        "agent-mail-health.json",
-        "--agent-mail-health-json",
-        "use_beads_fallback",
-        "agent_mail_status=unavailable",
-        "Beads claim as the soft lock",
-    ] {
-        assert!(
-            runbook.contains(required),
-            "swarm operations startup checklist must preserve Agent Mail health diagnostic `{required}`"
-        );
-    }
 }
 
 fn contains_ascii_case_insensitive(haystack: &str, needle: &str) -> bool {

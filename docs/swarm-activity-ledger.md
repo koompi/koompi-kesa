@@ -99,58 +99,7 @@ Each report includes a decision timeline, the dominant capacity pressure for eve
 
 When the digest is saturated, replay must show backpressure, denial, or a fail-closed replay status before operators treat the run as unsafe to expand. When the digest has no saturation signal, replay must stay safe before operators treat the transcript and admission evidence as aligned. Any mismatch emits `status = fail_closed` with an actionable assertion such as pausing new agent launches, inspecting digest evidence, or refreshing captured replay samples before changing fanout budgets. This keeps the replay schema backwards-compatible while giving fixtures a deterministic bridge from transcript saturation to admission expectations.
 
-## No-mock swarm smoke harness
-
-`scripts/run_swarm_smoke_harness.py` exercises the operator workflow against real local coordination surfaces in a retained temp project. It creates a disposable Beads workspace, verifies claim-to-close status transitions, initializes a temp git repo with unrelated dirty files, runs concurrent simulated agents against assigned files, checks that dirty files are not removed or mutated, registers three Agent Mail identities through the MCP HTTP endpoint, sends a fixture thread message, reserves and releases a real file reservation, forces a reservation conflict, scans an in-progress bead as stale, and records `scripts/cargo_headroom.sh --admit-only` decisions for the live RCH posture plus an isolated PATH where RCH is unavailable.
-
-Safe self-test:
-
-```bash
-python3 scripts/run_swarm_smoke_harness.py --self-test
-```
-
-Operator run with a fixed artifact directory:
-
-```bash
-python3 scripts/run_swarm_smoke_harness.py \
-  --correlation-id bd-2zcs5.26-smoke \
-  --out-dir /data/tmp/pi_swarm_smoke_artifacts/bd-2zcs5.26
-```
-
-The harness writes schema `pi.swarm.smoke_harness.v1` summaries and `pi.swarm.smoke_harness.event.v1` JSONL events. Every event includes the correlation ID, command timing when a command ran, redaction metadata, and the relevant agent names, bead IDs, reservation IDs, or RCH admission decision. Agent Mail registration tokens and sensitive-looking command output are redacted before they reach the artifact bundle. The smoke fixture treats any in-progress temp bead as stale by default; pass `--stale-after-seconds` to test a longer operator threshold. Dirty-worktree scenarios fail if protected unrelated files disappear, change unexpectedly, lose their dirty git status, or if the harness command log contains stash/reset/clean/restore-style worktree mutation commands. If `events.jsonl` or `summary.json` already exists in the requested output directory, the harness fails rather than overwriting evidence.
-
-The harness does not delete or reset production files. Generated fixture projects and artifacts are intentionally left under `TMPDIR` or `/data/tmp` so operators can inspect them after a failed smoke run. If the live RCH posture is degraded, the RCH admission scenario records the backoff decision instead of forcing a local heavy cargo fallback.
-
-## Operator runpack wrapper
-
-`scripts/build_swarm_operator_runpack.py` assembles schema `pi.swarm.operator_runpack.v1` from existing source artifacts for a single operator handoff view. It accepts captured JSON from `pi doctor --only swarm --format json`, `scripts/report_swarm_claim_readiness.py`, `scripts/run_swarm_smoke_harness.py`, `scripts/cargo_headroom.sh --admit-only`, Beads JSON, git porcelain output, and the latest `pi.swarm.activity_digest.v1` digest. The script reads only the files passed to it, redacts sensitive fields and token-shaped values, and refuses malformed provided sources instead of emitting partial optimistic evidence.
-
-The runpack includes schema `pi.swarm.safety_scorecard.v1` as `swarm_scale_safety_scorecard`. Its seven dimensions cover coordination health, cargo/RCH posture, perf evidence freshness, dirty-worktree tolerance, stalled-Bead hygiene, resource-governor readiness, and smoke-test coverage. A dimension cannot score green unless the required source artifacts loaded successfully and the dimension retains dotted evidence paths back to the summarized runpack fields.
-
-Safe self-test:
-
-```bash
-python3 scripts/build_swarm_operator_runpack.py --self-test
-```
-
-Example operator capture:
-
-```bash
-python3 scripts/build_swarm_operator_runpack.py \
-  --doctor-json /data/tmp/pi_swarm_runpack/doctor.json \
-  --claim-readiness-json /data/tmp/pi_swarm_runpack/claim-readiness.json \
-  --smoke-summary-json /data/tmp/pi_swarm_runpack/smoke-summary.json \
-  --activity-digest-json tests/full_suite_gate/swarm_activity_digest.json \
-  --cargo-admission-json /data/tmp/pi_swarm_runpack/cargo-admission.json \
-  --beads-json /data/tmp/pi_swarm_runpack/beads.json \
-  --git-status-file /data/tmp/pi_swarm_runpack/git-status.txt \
-  --out-json /data/tmp/pi_swarm_runpack/operator-runpack.json \
-  --out-md /data/tmp/pi_swarm_runpack/operator-runpack.md
-```
-
-The runpack is deliberately not a new source of truth. Beads remains authoritative for task ownership, Agent Mail remains authoritative for reservations and messages, doctor remains authoritative for live swarm diagnostics, and claim-readiness remains authoritative for release-facing evidence status. Treat the runpack as a bounded, redacted index that tells the next operator which source artifacts to inspect first.
-
-Example row:
+## Example row
 
 ```json
 {"schema":"pi.swarm.activity_ledger.v1","sequence":0,"timestamp_ms":1778223600000,"kind":"verification","summary":"cargo check completed","ids":{"correlation_id":"bd-2zcs5.17:verify:1","bead_id":"bd-2zcs5.17","agent_name":"CopperOx","rch_job_id":"29832517041259999","verification_id":"check-all-targets"},"details":{"command":"cargo check --all-targets","status":"passed"},"redaction":{"redacted_count":0}}
