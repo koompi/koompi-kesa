@@ -5,6 +5,15 @@ expression: view
   KESA (dummy/dummy-model)  <cwd>  mode: default
 
 
+
+
+
+
+
+
+
+
+
   › Read the file.
 
   ⎿ Tool read output:
@@ -12,15 +21,6 @@ expression: view
 
 
       Done.
-
-
-
-
-
-
-
-
-
   Tool output expanded
   ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
   │ > Type a message... (/help, /exit)                                       │

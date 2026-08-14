@@ -862,13 +862,17 @@ impl PiApp {
             };
             let end = (start + effective_vp).min(total_lines);
 
+            // Short conversations grow up from the editor rather than down
+            // from the header, so the newest line is always the one closest
+            // to the box you are typing into.
+            pad_rows(&mut output, effective_vp.saturating_sub(end - start));
+
             // Skip `start` lines, then take `end - start` lines — no Vec
             // allocation needed.
             for line in viewport_content.lines().skip(start).take(end - start) {
                 output.push_str(line);
                 output.push('\n');
             }
-            pad_rows(&mut output, effective_vp.saturating_sub(end - start));
 
             // Scroll position moved into the footer: a dedicated row for it
             // cost one conversation line on every frame, scrolled or not.

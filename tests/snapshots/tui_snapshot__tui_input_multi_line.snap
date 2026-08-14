@@ -5,22 +5,22 @@ expression: view
   KESA (dummy/dummy-model)  <cwd>  mode: default
   ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
 
+
+
+
+
+
+
+
+
+
+
+
+
   ╭──────────────────────────────────────────────────────────────────────────╮
   │ Welcome to KESA!                                                         │
   │ Ask for a change, paste an error, or drag files here.                    │
   ╰──────────────────────────────────────────────────────────────────────────╯
-
-
-
-
-
-
-
-
-
-
-
-
   ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
   │ > first line                                                             │
   │   second line                                                            │

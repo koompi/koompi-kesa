@@ -6,22 +6,22 @@ expression: view
   ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   Assistant:
   Streaming response...
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯

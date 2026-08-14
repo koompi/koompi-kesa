@@ -6,18 +6,18 @@ expression: view
 
 
 
+
+
+
+
+
+
+
+
+
+
       This is a longer assistant response that
       should wrap across multiple lines.
-
-
-
-
-
-
-
-
-
-
   ╭ think off · Enter send · \+Enter newline ──╮
   │ > Type a message... (/help, /exit)         │
   ╰────────────────────────────────────────────╯

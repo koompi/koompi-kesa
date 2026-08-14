@@ -6,22 +6,22 @@ expression: view
   ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   Assistant:
   Thinking: Considering options...
   Partial answer.
-
-
-
-
-
-
-
-
-
-
-
-
-
   ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
