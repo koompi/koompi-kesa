@@ -933,7 +933,7 @@ def run_self_test() -> int:
                         "freshness_reasons": ["expired"],
                         "required": True,
                         "value": "critical",
-                        "selected_command": "python3 scripts/check_swarm_runpack_freshness.py docs/evidence/session-artifact.json --json",
+                        "selected_command": "python3 scripts/check_readme_evidence_freshness.py docs/evidence/session-artifact.json --json",
                         "requires_headroom": False,
                         "requires_clean_worktree": False,
                         "strict_evidence_refresh": True,

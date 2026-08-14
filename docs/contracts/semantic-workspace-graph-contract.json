@@ -260,7 +260,6 @@
       "kind": "operator_handoff",
       "authoritative_for": "read-only swarm operator handoff summaries and degraded-source reporting",
       "paths": [
-        "scripts/build_swarm_operator_runpack.py",
         "docs/contracts/swarm-operator-runpack-contract.json",
         "docs/contracts/swarm-autopilot-input-pack-contract.json",
         "docs/contracts/swarm-autopilot-plan-contract.json",
@@ -822,7 +821,6 @@
     {
       "system_id": "swarm_operator_runpack",
       "paths": [
-        "scripts/build_swarm_operator_runpack.py",
         "docs/contracts/swarm-operator-runpack-contract.json"
       ],
       "relationship": "The graph can consume runpack source statuses and degraded reasons as advisory evidence, but operator runpacks remain the handoff artifact and source-status authority.",
