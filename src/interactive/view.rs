@@ -618,6 +618,8 @@ const FOOTER_PRIORITY_SCROLL: u8 = 6;
 /// Context outranks everything: it is the only field that warns the session is
 /// about to run out of room, so it is never dropped.
 const FOOTER_PRIORITY_CONTEXT: u8 = 7;
+/// Extension status: dropped only once the footer is genuinely out of room.
+const FOOTER_PRIORITY_EXT_STATUS: u8 = 6;
 
 struct FooterSegment {
     long: String,
@@ -856,9 +858,11 @@ impl PiApp {
             let start = if self.follow_stream_tail {
                 total_lines.saturating_sub(effective_vp)
             } else {
+                // Clamp to the last full page, not to the last line: past that
+                // the screen fills with padding and shows a single row of text.
                 self.conversation_viewport
                     .y_offset()
-                    .min(total_lines.saturating_sub(1))
+                    .min(total_lines.saturating_sub(effective_vp))
             };
             let end = (start + effective_vp).min(total_lines);
 
@@ -1009,6 +1013,10 @@ impl PiApp {
             if let Some(pending_queue) = self.render_pending_message_queue() {
                 output.push_str(&pending_queue);
             }
+        }
+
+        if let Some(panel) = self.render_todo_panel() {
+            output.push_str(&panel);
         }
 
         // Input area (hidden only while an overlay owns the keyboard)
@@ -1350,6 +1358,12 @@ impl PiApp {
                 priority: FOOTER_PRIORITY_SCROLL,
             });
         }
+        for text in self.extension_statuses.values() {
+            segments.push(FooterSegment::pair(
+                text.clone(),
+                FOOTER_PRIORITY_EXT_STATUS,
+            ));
+        }
         if let Some(branch) = branch_str {
             segments.push(FooterSegment::pair(branch, FOOTER_PRIORITY_BRANCH));
         }
@@ -1602,6 +1616,34 @@ impl PiApp {
                 );
             }
         }
+    }
+
+    /// The plan, on the row above the editor. Collapsed it is the item in
+    /// progress and a count; expanded it is every item. Absent when the agent
+    /// has not written a plan.
+    pub(super) fn render_todo_panel(&self) -> Option<String> {
+        let mut out = String::new();
+        if self.todo_panel_expanded {
+            for item in &self.todos {
+                let line = item.display_line();
+                out.push_str("  ");
+                if item.status == crate::todo::TodoStatus::InProgress {
+                    out.push_str(&self.styles.accent_bold.render(&line));
+                } else {
+                    out.push_str(&self.styles.muted.render(&line));
+                }
+                out.push('\n');
+            }
+            if out.is_empty() {
+                return None;
+            }
+        } else {
+            let summary = crate::todo::summary_line(&self.todos)?;
+            out.push_str("  ");
+            out.push_str(&self.styles.accent_bold.render(&summary));
+            out.push('\n');
+        }
+        Some(out)
     }
 
     pub(super) fn render_pending_message_queue(&self) -> Option<String> {

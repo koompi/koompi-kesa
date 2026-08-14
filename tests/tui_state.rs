@@ -1408,6 +1408,41 @@ fn tui_state_pagedown_restores_scroll_percent_when_scrollable() {
 }
 
 #[test]
+fn tui_state_resize_keeps_the_place_the_user_scrolled_to() {
+    let harness = TestHarness::new("tui_state_resize_keeps_the_place_the_user_scrolled_to");
+    let mut app = build_app(&harness, Vec::new());
+    log_initial_state(&harness, &app);
+
+    let messages = (0..40)
+        .map(|idx| user_msg(&format!("line {idx}")))
+        .collect::<Vec<_>>();
+    apply_pi(
+        &harness,
+        &mut app,
+        "PiMsg::ConversationReset(many)",
+        PiMsg::ConversationReset {
+            messages,
+            usage: Usage::default(),
+            status: None,
+        },
+    );
+
+    let step = press_pgup(&harness, &mut app);
+    let scrolled = parse_scroll_percent(&step.after).expect("no percent");
+    assert!(scrolled < 100, "PgUp did not scroll away from the bottom");
+
+    // Anything that reflows the input box lands here, which is most of a turn:
+    // a slash command, a queued message, the agent finishing.
+    app.set_terminal_size(80, 24);
+    let after = parse_scroll_percent(&normalize_view(&BubbleteaModel::view(&app)))
+        .expect("no percent after resize");
+    assert!(
+        after < 100,
+        "Resize snapped the viewport back to the tail ({after}%), losing the user's place"
+    );
+}
+
+#[test]
 fn tui_state_agent_start_enters_processing() {
     let harness = TestHarness::new("tui_state_agent_start_enters_processing");
     let mut app = build_app(&harness, Vec::new());
@@ -1713,6 +1748,44 @@ fn tui_state_second_todo_write_replaces_the_first_block() {
     let second = write(&mut app, "tool-2", "in_progress");
     assert_after_contains(&harness, &second, "▣ Running the tests");
     assert_after_not_contains(&harness, &second, "☐ Run the tests");
+}
+
+#[test]
+fn tui_state_todo_panel_collapses_to_one_row_and_expands_on_f3() {
+    let harness = TestHarness::new("tui_state_todo_panel_collapses_to_one_row_and_expands_on_f3");
+    let mut app = build_app(&harness, Vec::new());
+    log_initial_state(&harness, &app);
+
+    apply_pi(
+        &harness,
+        &mut app,
+        "PiMsg::ToolUpdate(todo)",
+        PiMsg::ToolUpdate {
+            name: "todo".to_string(),
+            tool_id: "tool-1".to_string(),
+            content: vec![ContentBlock::Text(TextContent::new("ignored"))],
+            details: Some(serde_json::json!({
+                "schema": "kesa.todo.list.v1",
+                "todos": [
+                    {"content": "Read the file", "status": "completed", "active_form": "Reading the file"},
+                    {"content": "Run the tests", "status": "in_progress", "active_form": "Running the tests"},
+                    {"content": "Write it up", "status": "pending", "active_form": "Writing it up"},
+                ],
+            })),
+        },
+    );
+
+    // Collapsed: the row above the editor carries the count, and the item the
+    // agent is not working on yet stays out of it.
+    let collapsed = normalize_view(&BubbleteaModel::view(&app));
+    assert!(
+        collapsed.contains("▣ Running the tests (1/3)"),
+        "collapsed panel missing its summary row:\n{collapsed}"
+    );
+
+    let expanded = apply_key(&harness, &mut app, "key:F3", KeyMsg::from_type(KeyType::F3));
+    assert_after_contains(&harness, &expanded, "☐ Write it up");
+    assert_after_not_contains(&harness, &expanded, "▣ Running the tests (1/3)");
 }
 
 #[test]
@@ -4390,6 +4463,45 @@ fn tui_state_extension_ui_notify_adds_system_message() {
         PiMsg::ExtensionUiRequest(request),
     );
     assert_after_contains(&harness, &step, "Extension notify (info): Heads up hello");
+}
+
+#[test]
+fn tui_state_extension_status_is_keyed_and_survives_a_keypress() {
+    let harness = TestHarness::new("tui_state_extension_status_is_keyed_and_survives_a_keypress");
+    let mut app = build_app(&harness, Vec::new());
+    log_initial_state(&harness, &app);
+
+    let set = |app: &mut PiApp, id: &str, key: &str, text: &str| {
+        apply_pi(
+            &harness,
+            app,
+            "PiMsg::ExtensionUiRequest(setStatus)",
+            PiMsg::ExtensionUiRequest(ExtensionUiRequest::new(
+                id,
+                "setStatus",
+                json!({ "statusKey": key, "statusText": text }),
+            )),
+        )
+    };
+
+    let first = set(&mut app, "req-1", "status-demo", "Ready");
+    assert_after_contains(&harness, &first, "Ready");
+    // The key names the segment, it is not part of what the user reads.
+    assert_after_not_contains(&harness, &first, "status-demo: Ready");
+
+    // A second extension gets its own segment instead of evicting the first.
+    let second = set(&mut app, "req-2", "other-ext", "Indexing");
+    assert_after_contains(&harness, &second, "Ready");
+    assert_after_contains(&harness, &second, "Indexing");
+
+    // Persistent until replaced: a keypress used to wipe it.
+    let typed = type_text(&harness, &mut app, "x");
+    assert_after_contains(&harness, &typed, "Ready");
+
+    // Empty text is how an extension removes its own segment.
+    let cleared = set(&mut app, "req-3", "status-demo", "");
+    assert_after_not_contains(&harness, &cleared, "Ready");
+    assert_after_contains(&harness, &cleared, "Indexing");
 }
 
 #[test]

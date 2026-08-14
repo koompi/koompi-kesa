@@ -69,6 +69,28 @@ pub fn render_todo_list(todos: &[TodoItem]) -> String {
         .join("\n")
 }
 
+/// One row for the panel above the editor: what is happening now, and how far
+/// through the list it is. `None` when there is no plan to show.
+#[must_use]
+pub fn summary_line(todos: &[TodoItem]) -> Option<String> {
+    if todos.is_empty() {
+        return None;
+    }
+    let done = todos
+        .iter()
+        .filter(|item| item.status == TodoStatus::Completed)
+        .count();
+    let current = todos
+        .iter()
+        .find(|item| item.status == TodoStatus::InProgress)
+        .or_else(|| todos.iter().find(|item| item.status == TodoStatus::Pending));
+    let head = current.map_or_else(
+        || format!("{} All done", TodoStatus::Completed.glyph()),
+        TodoItem::display_line,
+    );
+    Some(format!("{head} ({done}/{})", todos.len()))
+}
+
 fn store() -> &'static Mutex<Vec<TodoItem>> {
     static STORE: OnceLock<Mutex<Vec<TodoItem>>> = OnceLock::new();
     STORE.get_or_init(|| Mutex::new(Vec::new()))
@@ -259,6 +281,36 @@ mod tests {
         )
         .expect("activeForm alias");
         assert_eq!(parsed.active_form, "Running the tests");
+    }
+
+    #[test]
+    fn summary_leads_with_the_item_in_progress() {
+        let todos = vec![
+            item("Read the file", TodoStatus::Completed),
+            item("Run the tests", TodoStatus::InProgress),
+            item("Write the report", TodoStatus::Pending),
+        ];
+        assert_eq!(
+            summary_line(&todos).as_deref(),
+            Some("▣ Run the testsing (1/3)")
+        );
+    }
+
+    #[test]
+    fn summary_falls_back_to_the_next_pending_item() {
+        let todos = vec![
+            item("Read the file", TodoStatus::Completed),
+            item("Run the tests", TodoStatus::Pending),
+        ];
+        assert_eq!(
+            summary_line(&todos).as_deref(),
+            Some("☐ Run the tests (1/2)")
+        );
+    }
+
+    #[test]
+    fn summary_is_absent_for_an_empty_plan() {
+        assert_eq!(summary_line(&[]), None);
     }
 
     #[test]

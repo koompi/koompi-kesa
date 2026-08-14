@@ -268,6 +268,7 @@ pub enum AppAction {
     // Display
     ExpandTools,
     ToggleThinking,
+    ToggleTodoPanel,
 
     // Message Queue
     FollowUp,
@@ -361,6 +362,7 @@ impl AppAction {
             // Display
             Self::ExpandTools => "Collapse/expand tool output",
             Self::ToggleThinking => "Collapse/expand thinking blocks",
+            Self::ToggleTodoPanel => "Collapse/expand the todo panel",
 
             // Message Queue
             Self::FollowUp => "Queue follow-up message",
@@ -437,7 +439,9 @@ impl AppAction {
 
             Self::CyclePermissionMode => ActionCategory::Application,
 
-            Self::ExpandTools | Self::ToggleThinking => ActionCategory::Display,
+            Self::ExpandTools | Self::ToggleThinking | Self::ToggleTodoPanel => {
+                ActionCategory::Display
+            }
 
             Self::FollowUp | Self::Dequeue => ActionCategory::MessageQueue,
 
@@ -528,6 +532,7 @@ impl AppAction {
             // Display
             Self::ExpandTools,
             Self::ToggleThinking,
+            Self::ToggleTodoPanel,
             // Message Queue
             Self::FollowUp,
             Self::Dequeue,
@@ -1503,6 +1508,7 @@ impl KeyBindings {
         // Display
         m.insert(AppAction::ExpandTools, vec![KeyBinding::ctrl("o")]);
         m.insert(AppAction::ToggleThinking, vec![KeyBinding::ctrl("t")]);
+        m.insert(AppAction::ToggleTodoPanel, vec![KeyBinding::plain("f3")]);
 
         // Message Queue
         m.insert(AppAction::FollowUp, vec![KeyBinding::alt("enter")]);

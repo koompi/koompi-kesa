@@ -72,17 +72,22 @@ fn format_tool_result_body(
     }
 }
 
-/// A todo write carries the whole list in `details`; show it as checkboxes rather
-/// than the raw payload.
-fn todo_checkbox_block(details: &Value) -> Option<String> {
+/// The list carried by a todo write, or `None` for any other tool's payload.
+/// An empty list is a real value here: it is how the agent clears the plan.
+pub(super) fn todos_from_details(details: &Value) -> Option<Vec<crate::todo::TodoItem>> {
     if !matches!(
         details.get("schema").and_then(Value::as_str)?,
         crate::todo::TODO_LIST_SCHEMA | crate::todo::LEGACY_TODO_LIST_SCHEMA
     ) {
         return None;
     }
-    let todos: Vec<crate::todo::TodoItem> =
-        serde_json::from_value(details.get("todos")?.clone()).ok()?;
+    serde_json::from_value(details.get("todos")?.clone()).ok()
+}
+
+/// A todo write carries the whole list in `details`; show it as checkboxes rather
+/// than the raw payload.
+fn todo_checkbox_block(details: &Value) -> Option<String> {
+    let todos = todos_from_details(details)?;
     if todos.is_empty() {
         return None;
     }

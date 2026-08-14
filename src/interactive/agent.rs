@@ -485,6 +485,12 @@ impl PiApp {
                     progress.update_from_details(details.as_ref());
                     self.tool_progress = Some(progress);
                 }
+                if let Some(todos) = details
+                    .as_ref()
+                    .and_then(super::tool_render::todos_from_details)
+                {
+                    self.todos = todos;
+                }
                 if let Some(output) = format_tool_output(
                     &content,
                     details.as_ref(),
@@ -1149,9 +1155,6 @@ After approving access in the browser, press Enter in Pi to complete login."
             .or_else(|| request.payload.get("status_text").and_then(Value::as_str))
             .or_else(|| request.payload.get("text").and_then(Value::as_str))
             .unwrap_or("");
-        if status_text.is_empty() {
-            return;
-        }
 
         let status_key = request
             .payload
@@ -1160,11 +1163,13 @@ After approving access in the browser, press Enter in Pi to complete login."
             .or_else(|| request.payload.get("status_key").and_then(Value::as_str))
             .unwrap_or("");
 
-        self.status_message = Some(if status_key.is_empty() {
-            status_text.to_string()
-        } else {
-            format!("{status_key}: {status_text}")
-        });
+        // Empty text is how an extension takes its segment back down.
+        if status_text.is_empty() {
+            self.extension_statuses.remove(status_key);
+            return;
+        }
+        self.extension_statuses
+            .insert(status_key.to_string(), status_text.to_string());
     }
 
     fn apply_extension_widget_effect(&mut self, request: &ExtensionUiRequest) {

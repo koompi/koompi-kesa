@@ -1298,6 +1298,12 @@ impl PiApp {
             }
         }
 
+        if self.todo_panel_expanded {
+            chrome += self.todos.len();
+        } else if !self.todos.is_empty() {
+            chrome += 1;
+        }
+
         self.term_height.saturating_sub(chrome)
     }
 
@@ -1330,12 +1336,24 @@ impl PiApp {
     /// Rebuild the conversation viewport after a height change (terminal resize or
     /// input area growth). Preserves mouse-wheel settings and scroll position.
     fn resize_conversation_viewport(&mut self) {
+        let saved_offset = self.conversation_viewport.y_offset();
         let viewport_height = self.conversation_viewport_height();
         let mut viewport = Viewport::new(self.term_width.saturating_sub(2), viewport_height);
         viewport.mouse_wheel_enabled = true;
         viewport.mouse_wheel_delta = 1;
         self.conversation_viewport = viewport;
-        self.scroll_to_bottom();
+
+        if self.follow_stream_tail {
+            self.scroll_to_bottom();
+            return;
+        }
+        // The offset only survives once the fresh viewport has content: an
+        // empty one clamps every offset to zero.
+        let content = self.build_conversation_content();
+        let effective = self.view_effective_conversation_height().max(1);
+        self.conversation_viewport.height = effective;
+        self.conversation_viewport.set_content(content.trim_end());
+        self.conversation_viewport.set_y_offset(saved_offset);
     }
 
     pub fn set_terminal_size(&mut self, width: usize, height: usize) {
@@ -2496,6 +2514,14 @@ pub struct PiApp {
     current_thinking: String,
     thinking_visible: bool,
     tools_expanded: bool,
+    /// Collapsed shows one row: the item in progress and how far through the
+    /// list it is. Expanded shows every item.
+    todo_panel_expanded: bool,
+    /// The plan as of the last todo write in this conversation.
+    todos: Vec<crate::todo::TodoItem>,
+    /// `ctx.ui.setStatus(key, text)` from extensions. Keyed, so two extensions
+    /// do not overwrite one another, and ordered so the footer is stable.
+    extension_statuses: std::collections::BTreeMap<String, String>,
     current_tool: Option<String>,
     tool_progress: Option<ToolProgress>,
     pending_tool_output: Option<String>,
@@ -2868,6 +2894,9 @@ impl PiApp {
             current_thinking: String::new(),
             thinking_visible,
             tools_expanded: true,
+            todo_panel_expanded: false,
+            todos: Vec::new(),
+            extension_statuses: std::collections::BTreeMap::new(),
             current_tool: None,
             tool_progress: None,
             pending_tool_output: None,

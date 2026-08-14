@@ -1067,6 +1067,22 @@ impl PiApp {
                 });
                 None
             }
+            AppAction::ToggleTodoPanel => {
+                self.todo_panel_expanded = !self.todo_panel_expanded;
+                // The panel takes rows from the conversation, so the viewport
+                // has to be re-measured or paging drifts by the panel's height.
+                let saved_offset = self.conversation_viewport.y_offset();
+                let content = self.build_conversation_content();
+                let effective = self.view_effective_conversation_height().max(1);
+                self.conversation_viewport.height = effective;
+                self.conversation_viewport.set_content(content.trim_end());
+                if self.follow_stream_tail {
+                    self.conversation_viewport.goto_bottom();
+                } else {
+                    self.conversation_viewport.set_y_offset(saved_offset);
+                }
+                None
+            }
             AppAction::ExpandTools => {
                 let has_collapsed = self
                     .messages
@@ -1144,6 +1160,7 @@ impl PiApp {
             | AppAction::CycleThinkingLevel
             | AppAction::CyclePermissionMode
             | AppAction::ToggleThinking
+            | AppAction::ToggleTodoPanel
             | AppAction::ExpandTools
             | AppAction::FollowUp
             | AppAction::NewLine
