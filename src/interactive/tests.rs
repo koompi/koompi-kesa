@@ -271,17 +271,232 @@ fn read_vcs_info_falls_back_to_git_when_no_jj() {
     assert_eq!(vcs.as_deref(), Some("feature/jj-demo"));
 }
 
+fn strip_ansi(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    let mut chars = input.chars();
+    while let Some(ch) = chars.next() {
+        if ch != '\u{1b}' {
+            if ch != '\r' {
+                out.push(ch);
+            }
+            continue;
+        }
+        for escape in chars.by_ref() {
+            if escape.is_ascii_alphabetic() {
+                break;
+            }
+        }
+    }
+    out
+}
+
 #[test]
-fn render_header_uses_cycle_thinking_binding_hint() {
+fn render_header_hints_fit_and_never_truncate() {
     let dir = tempdir();
     let mut app = build_test_app(dir.path().to_path_buf());
-    app.set_terminal_size(200, 40);
 
-    let header = app.render_header();
+    for width in [30usize, 50, 60, 88, 184, 200] {
+        app.set_terminal_size(width, 40);
+        let header = strip_ansi(&app.render_header());
+        let hints = header.lines().nth(1).unwrap_or_default();
 
-    assert!(header.contains("alt+t: thinking"), "header: {header}");
-    assert!(header.contains("shift+tab: mode"), "header: {header}");
-    assert!(!header.contains("shift+tab: thinking"), "header: {header}");
+        assert!(hints.contains("/help"), "header: {header}");
+        assert!(
+            !hints.ends_with("..."),
+            "hints truncated at {width}: {hints}"
+        );
+    }
+}
+
+#[test]
+fn render_header_drops_the_resource_row_until_something_loads() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(120, 40);
+
+    let header = strip_ansi(&app.render_header());
+
+    assert!(!header.contains("resources ready"), "header: {header}");
+    assert!(!header.contains("0 skills"), "header: {header}");
+    assert_eq!(app.header_rows(), 3, "header: {header}");
+}
+
+/// Type `text` one key at a time, the way the terminal delivers it.
+fn type_text(app: &mut PiApp, text: &str) {
+    for ch in text.chars() {
+        let _ = app.update(Message::new(KeyMsg::from_runes(vec![ch])));
+    }
+}
+
+/// The editor rows drawn inside the input frame, borders and padding stripped.
+fn input_rows(app: &PiApp) -> Vec<String> {
+    strip_ansi(&app.render_input())
+        .lines()
+        .filter(|line| line.trim_start().starts_with('│'))
+        .map(|line| {
+            let inner = line.trim().trim_start_matches('│').trim_end_matches('│');
+            inner.trim_end().to_string()
+        })
+        .collect()
+}
+
+#[test]
+fn long_prompt_wraps_into_rows_instead_of_clipping() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+    let typed = "x".repeat(200);
+
+    type_text(&mut app, &typed);
+
+    let rows = input_rows(&app);
+    let shown: usize = rows.iter().map(|row| row.matches('x').count()).sum();
+    assert_eq!(shown, 200, "input box clipped the prompt: {rows:#?}");
+    assert!(rows.len() > 1, "input box did not grow: {rows:#?}");
+    assert_eq!(app.input.height(), rows.len());
+}
+
+#[test]
+fn input_box_stops_growing_at_a_third_of_the_screen_and_scrolls() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 30);
+    let cap = super::view::input_max_rows(30);
+
+    type_text(&mut app, &"y".repeat(cap * 200));
+
+    let rows = input_rows(&app);
+    assert_eq!(rows.len(), cap, "box grew past its cap: {rows:#?}");
+    // Scrolled to the tail: the cursor is on the last row, so the first row
+    // shown is no longer the start of the text.
+    let layout = app.input_layout();
+    assert!(layout.rows.len() > cap);
+    assert_eq!(layout.cursor_row, layout.rows.len() - 1);
+}
+
+#[test]
+fn shift_enter_and_alt_enter_insert_newlines_and_enter_sends() {
+    use bubbletea::KeyType;
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+
+    type_text(&mut app, "one");
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::ShiftEnter)));
+    type_text(&mut app, "two");
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Enter).with_alt()));
+    type_text(&mut app, "three");
+
+    assert_eq!(app.input.value(), "one\ntwo\nthree");
+    assert_eq!(app.input.height(), 3);
+
+    // Enter takes the submit path, which this credential-less test app then
+    // refuses. What matters is that it submitted instead of adding a line.
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Enter)));
+    assert_eq!(app.input.value(), "one\ntwo\nthree");
+    assert_eq!(
+        app.status_message.as_deref(),
+        Some("Missing credentials for provider openai. Run /login openai.")
+    );
+}
+
+#[test]
+fn editing_a_middle_line_and_deleting_one_leaves_the_rest_intact() {
+    use bubbletea::KeyType;
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+
+    type_text(&mut app, "alpha");
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::ShiftEnter)));
+    type_text(&mut app, "beta");
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::ShiftEnter)));
+    type_text(&mut app, "gamma");
+
+    // Up onto the middle row, then edit it in place.
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Up)));
+    assert_eq!(app.input_layout().cursor_row, 1);
+    type_text(&mut app, "!");
+    assert_eq!(app.input.value(), "alpha\nbeta!\ngamma");
+
+    // Backspace through the middle line and its break: two rows are left.
+    for _ in 0..6 {
+        let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Backspace)));
+    }
+    assert_eq!(app.input.value(), "alpha\ngamma");
+    assert_eq!(app.input.height(), 2);
+}
+
+#[test]
+fn cursor_walks_wrapped_rows_before_it_reaches_history() {
+    use bubbletea::KeyType;
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(100, 40);
+    let width = super::view::editor_width(100, 0);
+
+    type_text(&mut app, &"z".repeat(width * 2));
+    let end = app.input.cursor_byte_offset();
+
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Up)));
+
+    assert_eq!(app.input_layout().cursor_row, 1);
+    assert_ne!(app.input.cursor_byte_offset(), end);
+    assert_eq!(
+        app.input.value().len(),
+        width * 2,
+        "history navigation must not replace a wrapped draft"
+    );
+
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Down)));
+    assert_eq!(app.input.cursor_byte_offset(), end);
+}
+
+#[test]
+fn narrowing_the_terminal_reflows_the_input_instead_of_cutting_it() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(184, 40);
+    type_text(&mut app, &"w".repeat(200));
+    let wide_rows = app.input.height();
+
+    app.set_terminal_size(60, 40);
+
+    let narrow = input_rows(&app);
+    let shown: usize = narrow.iter().map(|row| row.matches('w').count()).sum();
+    assert!(narrow.len() > wide_rows, "no reflow: {narrow:#?}");
+    assert_eq!(shown, 200, "reflow clipped the prompt: {narrow:#?}");
+}
+
+#[test]
+fn wrapping_breaks_after_a_space_and_keeps_the_cursor_on_the_typed_row() {
+    let layout = super::view::layout_input("hello world again", 17, 8);
+    let rows: Vec<&str> = layout
+        .rows
+        .iter()
+        .map(|row| &"hello world again"[row.clone()])
+        .collect();
+
+    assert_eq!(rows, vec!["hello ", "world ", "again"]);
+    assert_eq!((layout.cursor_row, layout.cursor_col), (2, 5));
+}
+
+#[test]
+fn mouse_capture_is_off_unless_the_user_opts_in() {
+    let mut config = Config::default();
+    assert!(
+        !super::mouse_capture_enabled(&config),
+        "capture must default off so drag-select reaches the terminal"
+    );
+
+    config.disable_mouse_capture = Some(false);
+    assert!(super::mouse_capture_enabled(&config));
+
+    config.disable_mouse_capture = Some(true);
+    assert!(!super::mouse_capture_enabled(&config));
 }
 
 #[test]

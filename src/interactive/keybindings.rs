@@ -685,6 +685,28 @@ impl PiApp {
         quit()
     }
 
+    /// Whether the editor wraps or breaks onto more than one visual row, which
+    /// is what decides whether Up and Down move the cursor or walk history.
+    fn input_is_multi_row(&self) -> bool {
+        self.input_layout().rows.len() > 1
+    }
+
+    /// Move the cursor one visual row up or down, wrapped rows included.
+    fn move_cursor_by_row(&mut self, up: bool) {
+        let value = self.input.value();
+        let layout = self.input_layout();
+        let target = if up {
+            layout.cursor_row.checked_sub(1)
+        } else {
+            (layout.cursor_row + 1 < layout.rows.len()).then_some(layout.cursor_row + 1)
+        };
+        let Some(target) = target else {
+            return;
+        };
+        let offset = view::input_byte_at_column(&value, &layout.rows[target], layout.cursor_col);
+        self.input.set_cursor_byte_offset(offset);
+    }
+
     /// Handle an action dispatched from the keybindings layer.
     ///
     /// Returns `Some(Cmd)` if a command should be executed,
@@ -715,12 +737,6 @@ impl PiApp {
                     if triggered {
                         return cmd;
                     }
-                }
-                // When idle, Escape exits multi-line mode (but does NOT quit)
-                if key.key_type == KeyType::Esc && self.input_mode == InputMode::MultiLine {
-                    self.input_mode = InputMode::SingleLine;
-                    self.set_input_height(INPUT_DEFAULT_HEIGHT);
-                    self.status_message = Some("Single-line mode".to_string());
                 }
                 // Legacy behavior: Escape when idle does nothing (no quit)
                 None
@@ -870,11 +886,6 @@ impl PiApp {
                     self.queue_input(QueuedMessageKind::Steering);
                     return None;
                 }
-                if self.input_mode == InputMode::MultiLine {
-                    // In multi-line mode, Enter inserts a newline (Alt+Enter submits).
-                    self.input.insert_rune('\n');
-                    return None;
-                }
                 let value = self.input.value();
                 if !value.trim().is_empty() {
                     let message = self.expand_pasted_blocks(value.trim());
@@ -884,47 +895,36 @@ impl PiApp {
                 None
             }
             AppAction::FollowUp => {
-                // Alt+Enter: queue follow-up when busy. When idle, toggles multi-line mode if the
-                // editor is empty; otherwise it submits like Enter.
+                // Alt+Enter: queue a follow-up when busy, insert a newline when
+                // idle. Enter is the only key that sends.
                 if self.agent_state != AgentState::Idle {
                     self.expand_pasted_blocks_in_editor();
                     self.queue_input(QueuedMessageKind::FollowUp);
                     return None;
                 }
-                let value = self.input.value();
-                if self.input_mode == InputMode::SingleLine && value.trim().is_empty() {
-                    self.input_mode = InputMode::MultiLine;
-                    self.set_input_height(6);
-                    self.status_message = Some("Multi-line mode".to_string());
-                    return None;
-                }
-                if !value.trim().is_empty() {
-                    let message = self.expand_pasted_blocks(value.trim());
-                    return self.submit_message(&message);
-                }
+                self.input.insert_rune('\n');
                 None
             }
             AppAction::NewLine => {
                 self.input.insert_rune('\n');
-                self.input_mode = InputMode::MultiLine;
-                self.set_input_height(6);
                 None
             }
 
             // =========================================================
-            // Cursor movement (history navigation in single-line mode)
+            // Cursor movement (history when the box holds a single row)
             // =========================================================
             AppAction::CursorUp => {
-                if self.agent_state == AgentState::Idle && self.input_mode == InputMode::SingleLine
-                {
+                if self.input_is_multi_row() {
+                    self.move_cursor_by_row(true);
+                } else if self.agent_state == AgentState::Idle {
                     self.navigate_history_back();
                 }
-                // In multi-line mode, let TextArea handle cursor movement
                 None
             }
             AppAction::CursorDown => {
-                if self.agent_state == AgentState::Idle && self.input_mode == InputMode::SingleLine
-                {
+                if self.input_is_multi_row() {
+                    self.move_cursor_by_row(false);
+                } else if self.agent_state == AgentState::Idle {
                     self.navigate_history_forward();
                 }
                 None
@@ -1096,11 +1096,9 @@ impl PiApp {
     /// to prevent the TextArea from also handling the key.
     pub(super) fn should_consume_action(&self, action: AppAction) -> bool {
         match action {
-            // History navigation and Submit consume in single-line mode (otherwise TextArea
-            // handles arrow keys or inserts a newline on Enter)
-            AppAction::CursorUp | AppAction::CursorDown => {
-                self.agent_state == AgentState::Idle && self.input_mode == InputMode::SingleLine
-            }
+            // Up/Down move by visual row or walk history; either way the
+            // TextArea must not also move by logical line.
+            AppAction::CursorUp | AppAction::CursorDown => true,
 
             // Exit (Ctrl+D) only consumed when editor is empty (otherwise deleteCharForward)
             AppAction::Exit => {

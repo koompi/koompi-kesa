@@ -190,6 +190,116 @@ fn context_left_percent(window: u32, used: u64) -> Option<u64> {
     Some(window.saturating_sub(used.min(window)) * 100 / window)
 }
 
+/// Join `hints` with two spaces, dropping them from the left until the line
+/// fits. The last hint is the most useful one, so it is the last to go.
+fn fit_hints(hints: &[String], max_width: usize) -> String {
+    for start in 0..hints.len() {
+        let line = hints[start..].join("  ");
+        if line.width() <= max_width {
+            return line;
+        }
+    }
+    truncate(hints.last().map_or("", String::as_str), max_width)
+}
+
+/// Visual rows the input box is allowed to occupy before it scrolls inside
+/// itself: about a third of the terminal, so the transcript keeps the rest.
+pub(super) const fn input_max_rows(term_height: usize) -> usize {
+    let rows = term_height / 3;
+    if rows == 0 { 1 } else { rows }
+}
+
+/// One editor value laid out as visual rows of at most `width` cells.
+///
+/// `rows` are byte ranges into the value and cover it end to end, so a byte
+/// offset maps to a row and back without consulting the text again.
+pub(super) struct InputLayout {
+    pub rows: Vec<std::ops::Range<usize>>,
+    pub cursor_row: usize,
+    pub cursor_col: usize,
+}
+
+pub(super) fn layout_input(value: &str, cursor_byte: usize, width: usize) -> InputLayout {
+    let width = width.max(1);
+    let mut rows = Vec::new();
+    let mut base = 0usize;
+    for line in value.split('\n') {
+        wrap_input_line(line, width, base, &mut rows);
+        base += line.len() + 1;
+    }
+
+    let cursor_row = rows
+        .iter()
+        .rposition(|row| row.start <= cursor_byte)
+        .unwrap_or(0);
+    let row = rows.get(cursor_row).cloned().unwrap_or(0..0);
+    let cursor_col = value
+        .get(row.start..cursor_byte.min(row.end))
+        .map_or(0, UnicodeWidthStr::width);
+
+    InputLayout {
+        rows,
+        cursor_row,
+        cursor_col,
+    }
+}
+
+/// Byte offset of display column `col` within `row`, clamped to the row's end.
+pub(super) fn input_byte_at_column(value: &str, row: &std::ops::Range<usize>, col: usize) -> usize {
+    let mut width = 0usize;
+    for (idx, ch) in value[row.clone()].char_indices() {
+        if width >= col {
+            return row.start + idx;
+        }
+        width += UnicodeWidthChar::width(ch).unwrap_or(0);
+    }
+    row.end
+}
+
+/// Break one logical line into rows of at most `width` cells, preferring a
+/// break after a space and keeping that space on the row it ends.
+fn wrap_input_line(line: &str, width: usize, base: usize, rows: &mut Vec<std::ops::Range<usize>>) {
+    if line.is_empty() {
+        rows.push(base..base);
+        return;
+    }
+
+    let mut start = 0usize;
+    while start < line.len() {
+        let rest = &line[start..];
+        let mut used = 0usize;
+        let mut overflow = None;
+        let mut after_space = None;
+        for (idx, ch) in rest.char_indices() {
+            let cell = UnicodeWidthChar::width(ch).unwrap_or(0);
+            if used + cell > width {
+                overflow = Some(idx);
+                break;
+            }
+            used += cell;
+            if ch == ' ' {
+                after_space = Some(idx + ch.len_utf8());
+            }
+        }
+        match overflow {
+            Some(cut) => {
+                let cut = after_space.filter(|space| *space < cut).unwrap_or(cut);
+                rows.push(base + start..base + start + cut);
+                start += cut;
+            }
+            None => {
+                rows.push(base + start..base + line.len());
+                // A row filled to the last cell leaves the cursor nowhere to
+                // sit, so the next cell gets its own row.
+                if used == width {
+                    rows.push(base + line.len()..base + line.len());
+                }
+                return;
+            }
+        }
+    }
+}
+
 fn wrapped_line_segments(line: &str, max_width: usize) -> Vec<&str> {
     if max_width == 0 || line.is_empty() {
         return vec![line];
@@ -581,11 +691,6 @@ impl PiApp {
                     .accent_bold
                     .render("Ask for a change, paste an error, or drag files here."),
             );
-            rows.push(
-                self.styles.muted.render(
-                    "/help commands   @file attach context   Shift+Tab mode   Ctrl+L model",
-                ),
-            );
             for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
                 let _ = writeln!(output, "  {line}");
             }
@@ -713,7 +818,7 @@ impl PiApp {
             if total_lines > effective_vp {
                 let total = total_lines.saturating_sub(effective_vp);
                 let percent = (start * 100).checked_div(total).map_or(100, |p| p.min(100));
-                let indicator = format!("  [{percent}%] ↑/↓ PgUp/PgDn Shift+Up/Down to scroll");
+                let indicator = format!("  [{percent}%] PgUp/PgDn or Shift+↑/↓ to scroll");
                 output.push_str(&self.styles.muted.render(&indicator));
                 output.push('\n');
             }
@@ -877,11 +982,7 @@ impl PiApp {
             .unwrap_or_default();
 
         let model_key = self.header_binding_hint(AppAction::SelectModel, "ctrl+l");
-        let next_model_key = self.header_binding_hint(AppAction::CycleModelForward, "ctrl+p");
-        let prev_model_key =
-            self.header_binding_hint(AppAction::CycleModelBackward, "ctrl+shift+p");
         let tools_key = self.header_binding_hint(AppAction::ExpandTools, "ctrl+o");
-        let thinking_key = self.header_binding_hint(AppAction::CycleThinkingLevel, "alt+t");
         let mode_key = self.header_binding_hint(AppAction::CyclePermissionMode, "shift+tab");
         let max_width = self.term_width.saturating_sub(2);
         let title_line = truncate(
@@ -889,38 +990,60 @@ impl PiApp {
             max_width,
         );
 
-        let hints_line = if self.term_width >= 88 {
-            format!(
-                "{model_key}: model  {next_model_key}: next  {prev_model_key}: prev  \
-                 {tools_key}: tools  {thinking_key}: thinking  {mode_key}: mode"
-            )
-        } else {
-            format!("{model_key}: model  {tools_key}: tools  {mode_key}: mode  /help")
-        };
-        let hints_line = truncate(&hints_line, max_width);
-
-        let resource_count = self.resources.skills().len()
-            + self.resources.prompts().len()
-            + self.resources.themes().len()
-            + self.resources.extensions().len();
-        let resources_line = truncate(
-            &format!(
-                "{} skills  {} prompts  {} themes  {} extensions  ({resource_count} resources ready)",
-                self.resources.skills().len(),
-                self.resources.prompts().len(),
-                self.resources.themes().len(),
-                self.resources.extensions().len()
-            ),
-            max_width,
-        );
+        // The four bindings a new user needs. Narrow terminals lose whole
+        // hints from the left rather than a cut word on the right.
+        let hints = [
+            format!("{model_key}: model"),
+            format!("{tools_key}: tools"),
+            format!("{mode_key}: mode"),
+            "/help".to_string(),
+        ];
+        let hints_line = fit_hints(&hints, max_width);
 
         let _ = write!(
             output,
-            "  {}\n  {}\n  {}\n",
+            "  {}\n  {}\n",
             self.styles.title.render(&title_line),
             self.styles.muted.render(&hints_line),
-            self.styles.muted.render(&resources_line),
         );
+        if let Some(resources_line) = self.resources_line() {
+            let _ = write!(
+                output,
+                "  {}\n",
+                self.styles
+                    .muted
+                    .render(&truncate(&resources_line, max_width)),
+            );
+        }
+    }
+
+    /// What the resource loader actually found, or nothing at all. A row of
+    /// zeroes tells the user less than an absent row does.
+    fn resources_line(&self) -> Option<String> {
+        let counts = [
+            (self.resources.skills().len(), "skills"),
+            (self.resources.prompts().len(), "prompts"),
+            (self.resources.themes().len(), "themes"),
+            (self.resources.extensions().len(), "extensions"),
+        ];
+        let parts: Vec<String> = counts
+            .iter()
+            .filter(|(count, _)| *count > 0)
+            .map(|(count, label)| format!("{count} {label}"))
+            .collect();
+        if parts.is_empty() {
+            return None;
+        }
+        Some(parts.join("  "))
+    }
+
+    /// Rows `render_header_into` writes, including its trailing spacer.
+    pub(super) fn header_rows(&self) -> usize {
+        if self.resources_line().is_some() {
+            4
+        } else {
+            3
+        }
     }
 
     #[cfg(test)]
@@ -973,15 +1096,10 @@ impl PiApp {
             thinking_border_style
         };
 
-        let mode_text = match self.input_mode {
-            InputMode::SingleLine if self.term_width >= 76 => {
-                "Enter send · Shift+Enter newline · Alt+Enter multi-line · @file context"
-            }
-            InputMode::SingleLine => "Enter send · Shift+Enter newline · @file",
-            InputMode::MultiLine if self.term_width >= 76 => {
-                "Alt+Enter send · Enter newline · Esc single-line · @file context"
-            }
-            InputMode::MultiLine => "Alt+Enter send · Enter newline · Esc",
+        let mode_text = if self.term_width >= 76 {
+            "Enter send · Shift+Enter newline · @file context"
+        } else {
+            "Enter send · Shift+Enter newline"
         };
         let width = box_width(self.term_width);
         let middle_width = width.saturating_sub(2);
@@ -1022,8 +1140,7 @@ impl PiApp {
         let right = border_style.render("│");
         let padding = " ".repeat(self.editor_padding_x);
         let prompt = self.styles.accent_bold.render(INPUT_PROMPT_GLYPH);
-        let editor = self.input.view();
-        for (idx, line) in editor.lines().enumerate() {
+        for (idx, line) in self.editor_rows().into_iter().enumerate() {
             let row = if idx == 0 {
                 format!("{padding}{prompt} {line}")
             } else {
@@ -1035,6 +1152,46 @@ impl PiApp {
         let _ = writeln!(output, "  {}", border_style.render(&format!("╰{rule}╯")));
 
         output
+    }
+
+    /// The editor's visible rows, wrapped to the box and scrolled so the
+    /// cursor is always on one of them.
+    fn editor_rows(&self) -> Vec<String> {
+        let value = self.input.value();
+        let width = editor_width(self.term_width, self.editor_padding_x);
+        if value.is_empty() && !self.input.placeholder.is_empty() {
+            return vec![
+                self.styles
+                    .muted
+                    .render(&truncate(&self.input.placeholder, width)),
+            ];
+        }
+
+        let layout = layout_input(&value, self.input.cursor_byte_offset(), width);
+        let visible = self.input.height().clamp(1, layout.rows.len());
+        let offset = layout
+            .cursor_row
+            .saturating_sub(visible - 1)
+            .min(layout.rows.len() - visible);
+        let focused = self.input.focused();
+
+        layout.rows[offset..offset + visible]
+            .iter()
+            .enumerate()
+            .map(|(idx, row)| {
+                let text = &value[row.clone()];
+                if !focused || offset + idx != layout.cursor_row {
+                    return text.to_string();
+                }
+                let split = input_byte_at_column(&value, row, layout.cursor_col) - row.start;
+                let (before, rest) = text.split_at(split);
+                let under = rest.chars().next();
+                let mut cursor = self.input.cursor.clone();
+                cursor.set_char(&under.map_or_else(|| " ".to_string(), |ch| ch.to_string()));
+                let after = under.map_or("", |ch| &rest[ch.len_utf8()..]);
+                format!("{before}{}{after}", cursor.view())
+            })
+            .collect()
     }
 
     /// Percent of the active model's context window still free.
@@ -1104,14 +1261,11 @@ impl PiApp {
             },
         );
         let branch_str = self.vcs_info.clone();
-        let cwd_str = format_path_label(&self.cwd);
-        let mode_hint = match self.input_mode {
-            InputMode::SingleLine => "Shift+Enter: newline  |  Alt+Enter: multi-line",
-            InputMode::MultiLine => "Enter: newline  |  Alt+Enter: send  |  Esc: single-line",
-        };
         let percent = self.context_left_percent();
 
-        let mut segments = vec![FooterSegment::pair(cwd_str, FOOTER_PRIORITY_CWD)];
+        // No cwd here: the header already prints it. No key hints either: the
+        // input box border carries the ones that apply to what you are typing.
+        let mut segments = Vec::new();
         if let Some(branch) = branch_str {
             segments.push(FooterSegment::pair(branch, FOOTER_PRIORITY_BRANCH));
         }
@@ -1130,15 +1284,6 @@ impl PiApp {
         segments.push(FooterSegment::pair(
             persistence_str,
             FOOTER_PRIORITY_PERSISTENCE,
-        ));
-        segments.push(FooterSegment {
-            long: mode_hint.to_string(),
-            short: String::new(),
-            priority: FOOTER_PRIORITY_MODE_HINT,
-        });
-        segments.push(FooterSegment::pair(
-            "/help".to_string(),
-            FOOTER_PRIORITY_HELP,
         ));
         segments.push(FooterSegment::pair(
             "Ctrl+C quit".to_string(),
@@ -1438,9 +1583,9 @@ impl PiApp {
         // Constrain visible items to available terminal space.
         // Dropdown chrome uses ~5 rows (borders, help, pagination, description).
         let max_dropdown_rows = self.term_height.saturating_sub(
-            // header(4) + min conversation(1) + scroll indicator(1)
+            // header + min conversation(1) + scroll indicator(1)
             // + input(4 + height) + footer(2) + dropdown chrome(5)
-            4 + 1 + 1 + 4 + self.input.height() + 2 + 5,
+            self.header_rows() + 1 + 1 + 4 + self.input.height() + 2 + 5,
         );
         let visible_count = self
             .autocomplete

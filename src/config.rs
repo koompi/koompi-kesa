@@ -29,19 +29,18 @@ pub struct Config {
     pub hide_thinking_block: Option<bool>,
     #[serde(alias = "showHardwareCursor")]
     pub show_hardware_cursor: Option<bool>,
-    /// Disable terminal mouse capture in the interactive TUI.
+    /// Disable terminal mouse capture in the interactive TUI. Defaults to
+    /// `true`: the TUI does not call `with_mouse_all_motion`.
     ///
-    /// When `true`, the TUI does not call `with_mouse_all_motion`, so the
-    /// terminal's native click-to-select / right-click-paste / Shift-Insert
-    /// behaviour keeps working — at the cost of in-app mouse-wheel scrolling.
-    /// Default `false` preserves the existing behaviour.
+    /// Capturing all mouse motion hides click-and-drag from the terminal
+    /// emulator, which is how anyone selects and copies text out of it, and
+    /// the app offers no substitute. It buys in-app wheel scrolling, which the
+    /// keyboard already does (PgUp/PgDn, Shift+Up/Down).
     ///
-    /// Motivated by Windows users (CMD.exe + Windows Terminal) where mouse
-    /// capture blocks copy/paste — particularly the OAuth flow's ~600-char
-    /// authorization URL, which becomes effectively impossible to copy out
-    /// when the TUI captures every mouse event. See pi_agent_rust#78.
+    /// Set to `false` to take the wheel back and give up drag-select.
     ///
-    /// Env override: `KESA_NO_MOUSE_CAPTURE=1`.
+    /// Env override: `KESA_NO_MOUSE_CAPTURE=1` forces capture off even when
+    /// this is `false`.
     #[serde(alias = "disableMouseCapture", alias = "noMouseCapture")]
     pub disable_mouse_capture: Option<bool>,
 

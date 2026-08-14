@@ -3,8 +3,7 @@ source: tests/tui_snapshot.rs
 expression: view
 ---
   KESA (dummy/dummy-model)  <cwd>  ...
-  ctrl+l: model  ctrl+o: tools  shift+tab: mode...
-  0 skills  0 prompts  0 themes  0 extensions  ...
+  ctrl+o: tools  shift+tab: mode  /help
 
 
   ●
@@ -14,4 +13,4 @@ expression: view
   │ > Type a message... (/help, /exit)         │
   ╰────────────────────────────────────────────╯
 
-  <cwd>  |  0/0 tokens  |  Ctrl+C quit
+  0/0 tokens  |  Persist: balanced  |  Ctrl+C quit

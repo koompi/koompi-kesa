@@ -4,13 +4,12 @@ expression: view
 ---
   KESA (dummy/dummy-model)  <cwd>  mode: default
   ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
-  0 skills  0 prompts  0 themes  0 extensions  (0 resources ready)
 
 
   ●
       Usage sample.
-  ╭ think off ───────────────────────────────────────────────────────────────╮
+  ╭ think off · Enter send · Shift+Enter newline · @file context ────────────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
 
-  <cwd>  |  120/45 tokens ($0.0030)  |  Ctrl+C quit
+  snapshot-fixture  |  120/45 tokens ($0.0030)  |  Ctrl+C quit

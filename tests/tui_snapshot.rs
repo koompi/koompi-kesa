@@ -185,13 +185,12 @@ fn set_input_text(app: &mut PiApp, text: &str) {
 }
 
 fn set_multiline_input(app: &mut PiApp, lines: &[&str]) {
-    send_key(app, KeyMsg::from_type(KeyType::Enter).with_alt());
     for (idx, line) in lines.iter().enumerate() {
         if !line.is_empty() {
             send_key(app, KeyMsg::from_runes(line.chars().collect()));
         }
         if idx + 1 < lines.len() {
-            send_key(app, KeyMsg::from_type(KeyType::Enter));
+            send_key(app, KeyMsg::from_type(KeyType::ShiftEnter));
         }
     }
 }

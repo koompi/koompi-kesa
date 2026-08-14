@@ -1203,9 +1203,9 @@ impl PiApp {
     /// `conversation_viewport.height` still drives scroll-position management.
     fn view_effective_conversation_height(&self) -> usize {
         // Fixed chrome:
-        // header(4) = title/model + hints + resources + spacer line
+        // header = title/model + hints + optional resources + spacer line
         // footer(2) = blank line + footer line
-        let mut chrome: usize = 4 + 2;
+        let mut chrome: usize = self.header_rows() + 2;
 
         // Budget 1 row for the scroll indicator.  Slightly conservative
         // when content is short, but prevents the off-by-one that triggers
@@ -1311,6 +1311,25 @@ impl PiApp {
         self.resize_conversation_viewport();
     }
 
+    /// Grow or shrink the input box to the rows its text wraps to, capped at a
+    /// third of the terminal, after which the box scrolls inside itself.
+    fn sync_input_height(&mut self) {
+        let rows = self.input_layout().rows.len();
+        let height = rows.clamp(1, view::input_max_rows(self.term_height));
+        if height != self.input.height() {
+            self.input.set_height(height);
+            self.refresh_conversation_viewport(self.follow_stream_tail);
+        }
+    }
+
+    fn input_layout(&self) -> view::InputLayout {
+        view::layout_input(
+            &self.input.value(),
+            self.input.cursor_byte_offset(),
+            view::editor_width(self.term_width, self.editor_padding_x),
+        )
+    }
+
     /// Rebuild the conversation viewport after a height change (terminal resize or
     /// input area growth). Preserves mouse-wheel settings and scroll position.
     fn resize_conversation_viewport(&mut self) {
@@ -1342,6 +1361,8 @@ impl PiApp {
 
         self.message_render_cache.invalidate_all();
         self.resize_conversation_viewport();
+        // The box reflows to the new width, so it may need more or fewer rows.
+        self.sync_input_height();
 
         // Adapt open overlay pickers to the new terminal height.
         let max_vis = overlay_max_visible(self.term_height);
@@ -1733,6 +1754,13 @@ fn install_raw_mode_panic_hook() {
     }));
 }
 
+/// Whether to capture every mouse event, which costs drag-select and buys the
+/// wheel. Off unless the user asked for it: see `Config::disable_mouse_capture`.
+fn mouse_capture_enabled(config: &Config) -> bool {
+    !config.disable_mouse_capture.unwrap_or(true)
+        && !crate::env::var("NO_MOUSE_CAPTURE").is_some_and(|val| val == "1")
+}
+
 /// Run the interactive mode.
 #[allow(clippy::too_many_arguments)]
 pub async fn run_interactive(
@@ -1756,15 +1784,7 @@ pub async fn run_interactive(
     let show_hardware_cursor = config
         .show_hardware_cursor
         .unwrap_or_else(|| crate::env::var("HARDWARE_CURSOR").is_some_and(|val| val == "1"));
-    // Mouse capture defaults ON (preserves existing in-app wheel-scroll
-    // behaviour). Users on Windows/CMD/Windows Terminal can opt out via
-    // `--no-mouse-capture`, `disable_mouse_capture: true` in settings, or
-    // `KESA_NO_MOUSE_CAPTURE=1` env var to restore terminal-native click-to-
-    // select / right-click-paste / Shift-Insert. See pi_agent_rust#78 for
-    // the OAuth-flow copy-out problem this solves.
-    let disable_mouse_capture = config
-        .disable_mouse_capture
-        .unwrap_or_else(|| crate::env::var("NO_MOUSE_CAPTURE").is_some_and(|val| val == "1"));
+    let capture_mouse = mouse_capture_enabled(&config);
     let mut stdout = std::io::stdout();
     if show_hardware_cursor {
         let _ = crossterm::execute!(stdout, cursor::Show);
@@ -1883,7 +1903,7 @@ pub async fn run_interactive(
             .with_alt_screen()
             .with_custom_io()
             .with_input_receiver(ui_rx);
-        if !disable_mouse_capture {
+        if capture_mouse {
             program = program.with_mouse_all_motion();
         }
 
@@ -2712,7 +2732,10 @@ impl PiApp {
         input.blurred_style.placeholder = styles.muted.clone();
         input.set_height(INPUT_DEFAULT_HEIGHT);
         input.set_width(view::editor_width(term_width, editor_padding_x));
-        input.max_height = 8; // Allow expansion without taking over the screen.
+        // 0 = no cap. How many rows the box may occupy is decided per frame
+        // from the wrapped text (sync_input_height); a cap here would also cap
+        // how many lines the user is allowed to type.
+        input.max_height = 0;
         input.focus();
 
         let spinner = SpinnerModel::with_spinner(spinners::dot()).style(styles.accent.clone());
@@ -3082,6 +3105,7 @@ impl PiApp {
         let was_busy = !matches!(self.agent_state, AgentState::Idle);
         let was_spinner_visible = self.spinner_visible();
         let result = self.update_inner(msg);
+        self.sync_input_height();
         let became_busy = !was_busy && !matches!(self.agent_state, AgentState::Idle);
         let spinner_became_visible = !was_spinner_visible && self.spinner_visible();
         if became_busy {
