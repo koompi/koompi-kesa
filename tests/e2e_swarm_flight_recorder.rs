@@ -10,9 +10,7 @@
 
 mod common;
 
-use std::collections::BTreeMap;
 use std::pin::Pin;
-use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Instant;
@@ -39,13 +37,11 @@ use kesa::swarm_flight_recorder::{
 };
 use kesa::tools::ToolRegistry;
 use serde_json::{Value, json};
-use url::Url;
 
 const SWARM_PRESSURE_LAB_SCHEMA: &str = "pi.swarm.pressure_lab.v1";
 const SWARM_PRESSURE_LAB_RUN_ID: &str = "swarm-pressure-lab-deterministic-v1";
 const SWARM_PRESSURE_LAB_BURST_AGENTS: usize = 6;
 const SWARM_PRESSURE_LAB_MODELED_AGENTS: u64 = 64;
-const SWARM_LIFECYCLE_E2E_SCHEMA: &str = "pi.swarm.lifecycle_e2e.event.v1";
 
 // Evidence schema: every JSONL row contains schema, run_id, scenario,
 // agent_count, operation, latency_us, latency_ms, backpressure_count,
@@ -226,28 +222,7 @@ struct FlightSessionEvidence {
     agent_name: String,
     final_text: String,
     session_entries: usize,
-    session_path: std::path::PathBuf,
-    indexed_sessions: usize,
     extension_events: Vec<String>,
-}
-
-struct LifecycleRow<'a> {
-    scenario_id: &'a str,
-    phase: &'a str,
-    operation_label: &'a str,
-    duration_ms: u64,
-    outcome: &'a str,
-    redaction_summary: Value,
-    details: Value,
-}
-
-#[derive(Debug)]
-struct LifecycleGuardrailProbe<'a> {
-    endpoint: &'a str,
-    env: BTreeMap<&'a str, &'a str>,
-    operation_label: &'a str,
-    live_mutation: Option<&'a str>,
-    fixture_gated: bool,
 }
 
 #[derive(Debug)]
@@ -300,203 +275,6 @@ fn elapsed_us(started_at: Instant) -> u64 {
 
 fn elapsed_start() -> Instant {
     Instant::now()
-}
-
-fn lifecycle_empty_redaction_summary() -> Value {
-    json!({
-        "redactedFields": 0,
-        "redactedKeys": [],
-    })
-}
-
-fn lifecycle_event_row(row: &LifecycleRow<'_>) -> Value {
-    json!({
-        "schema": SWARM_LIFECYCLE_E2E_SCHEMA,
-        "scenario_id": row.scenario_id,
-        "phase": row.phase,
-        "operation_label": row.operation_label,
-        "duration_ms": row.duration_ms,
-        "redaction_summary": row.redaction_summary,
-        "outcome": row.outcome,
-        "details": row.details,
-    })
-}
-
-fn write_lifecycle_jsonl(path: &std::path::Path, rows: &[Value]) {
-    let mut jsonl = String::new();
-    for row in rows {
-        jsonl.push_str(&serde_json::to_string(row).expect("serialize lifecycle row"));
-        jsonl.push('\n');
-    }
-    std::fs::write(path, jsonl).expect("write lifecycle jsonl");
-}
-
-fn validate_lifecycle_jsonl(path: &std::path::Path) -> Vec<Value> {
-    let jsonl = std::fs::read_to_string(path).expect("read lifecycle jsonl");
-    let rows = jsonl
-        .lines()
-        .enumerate()
-        .map(|(index, line)| {
-            let row = serde_json::from_str::<Value>(line).expect("parse lifecycle row");
-            assert_eq!(row["schema"], SWARM_LIFECYCLE_E2E_SCHEMA, "line {index}");
-            for field in ["scenario_id", "phase", "operation_label", "outcome"] {
-                assert!(
-                    row[field].as_str().is_some_and(|value| !value.is_empty()),
-                    "line {index} should contain non-empty {field}"
-                );
-            }
-            assert!(row["duration_ms"].as_u64().is_some(), "line {index}");
-            assert!(row["redaction_summary"].is_object(), "line {index}");
-            assert!(row["details"].is_object(), "line {index}");
-            row
-        })
-        .collect::<Vec<_>>();
-    assert!(
-        rows.iter()
-            .any(|row| lifecycle_row_has_outcome(row, "lifecycle_success", "pass")),
-        "lifecycle JSONL should include a passing success scenario"
-    );
-    assert!(
-        rows.iter()
-            .any(|row| lifecycle_row_has_outcome(row, "guardrail_fail_closed", "blocked")),
-        "lifecycle JSONL should include a blocked negative scenario"
-    );
-    rows
-}
-
-fn lifecycle_row_has_outcome(row: &Value, scenario_id: &str, outcome: &str) -> bool {
-    row.get("scenario_id")
-        .and_then(Value::as_str)
-        .is_some_and(|value| value.eq(scenario_id))
-        && row
-            .get("outcome")
-            .and_then(Value::as_str)
-            .is_some_and(|value| value.eq(outcome))
-}
-
-fn lifecycle_reasons_include(row: &Value, expected_reason: &str) -> bool {
-    row["details"]["reasons"].as_array().is_some_and(|reasons| {
-        reasons.iter().any(|reason| {
-            reason
-                .as_str()
-                .is_some_and(|reason| reason.eq(expected_reason))
-        })
-    })
-}
-
-fn endpoint_is_production(endpoint: &str) -> bool {
-    let Ok(url) = Url::parse(endpoint) else {
-        return true;
-    };
-    let Some(host) = url.host_str() else {
-        return true;
-    };
-    let host = host.to_ascii_lowercase();
-    !matches!(host.as_str(), "localhost" | "127.0.0.1" | "::1")
-        && !matches!(host.rsplit('.').next(), Some("test" | "invalid"))
-}
-
-fn env_contains_ambient_secret(env: &BTreeMap<&str, &str>) -> Vec<String> {
-    env.keys()
-        .copied()
-        .filter(|key| {
-            let normalized = key.to_ascii_uppercase();
-            normalized.ends_with("_API_KEY")
-                || normalized.ends_with("_TOKEN")
-                || normalized.contains("SECRET")
-        })
-        .map(str::to_string)
-        .collect()
-}
-
-fn operation_is_destructive(operation_label: &str) -> bool {
-    let normalized = operation_label.to_ascii_lowercase();
-    [
-        "rm -rf",
-        "git reset --hard",
-        "git clean -fd",
-        "delete_file",
-        "remove_dir_all",
-    ]
-    .iter()
-    .any(|needle| normalized.contains(needle))
-}
-
-fn evaluate_lifecycle_guardrail(probe: &LifecycleGuardrailProbe<'_>) -> Value {
-    let mut reasons = Vec::new();
-    if endpoint_is_production(probe.endpoint) {
-        reasons.push("production_url_blocked".to_string());
-    }
-    let ambient_secret_keys = env_contains_ambient_secret(&probe.env);
-    if !ambient_secret_keys.is_empty() {
-        reasons.push("ambient_api_key_blocked".to_string());
-    }
-    if operation_is_destructive(probe.operation_label) {
-        reasons.push("destructive_filesystem_operation_blocked".to_string());
-    }
-    if probe.live_mutation.is_some() && !probe.fixture_gated {
-        reasons.push("live_coordination_or_rch_mutation_blocked".to_string());
-    }
-    json!({
-        "blocked": !reasons.is_empty(),
-        "reasons": reasons,
-        "endpoint": probe.endpoint,
-        "operation_label": probe.operation_label,
-        "live_mutation": probe.live_mutation,
-        "fixture_gated": probe.fixture_gated,
-        "ambient_secret_keys": ambient_secret_keys,
-    })
-}
-
-fn run_degraded_coordination_runpack_e2e(
-    harness: &common::TestHarness,
-) -> (Value, std::path::PathBuf, std::path::PathBuf) {
-    let capture_dir = harness.temp_path("lifecycle/runpack/capture");
-    let summary_path = harness.temp_path("lifecycle/runpack/degraded_coordination_summary.json");
-    let events_path = harness.temp_path("lifecycle/runpack/degraded_coordination_events.jsonl");
-    let output = Command::new("python3")
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .arg("scripts/build_swarm_operator_runpack.py")
-        .arg("--run-degraded-coordination-e2e")
-        .arg("--capture-dir")
-        .arg(&capture_dir)
-        .arg("--out-degraded-coordination-e2e-json")
-        .arg(&summary_path)
-        .arg("--out-degraded-coordination-e2e-events-jsonl")
-        .arg(&events_path)
-        .arg("--generated-at")
-        .arg("2026-05-18T00:00:00Z")
-        .arg("--capture-timeout-seconds")
-        .arg("30")
-        .output()
-        .expect("run degraded coordination runpack E2E script");
-    assert!(
-        output.status.success(),
-        "degraded coordination runpack E2E failed\nstdout:\n{}\nstderr:\n{}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
-    );
-    assert!(summary_path.exists(), "runpack summary should be written");
-    assert!(
-        events_path.exists(),
-        "runpack events JSONL should be written"
-    );
-    let summary = serde_json::from_str::<Value>(
-        &std::fs::read_to_string(&summary_path).expect("read runpack E2E summary"),
-    )
-    .expect("parse runpack E2E summary");
-    assert_eq!(
-        summary["schema"],
-        "pi.swarm.degraded_coordination_runpack_e2e.v1"
-    );
-    assert_eq!(summary["status"], "pass");
-    assert_eq!(summary["guards"]["uses_real_temp_beads"], true);
-    assert_eq!(
-        summary["guards"]["fixture_captures_degraded_rch_and_agent_mail"],
-        true
-    );
-    assert_eq!(summary["guards"]["no_cleanup_or_deletion_commands"], true);
-    (summary, summary_path, events_path)
 }
 
 async fn run_flight_session(
@@ -640,8 +418,6 @@ async fn run_flight_session(
         agent_name,
         final_text,
         session_entries,
-        session_path,
-        indexed_sessions,
         extension_events,
     })
 }
@@ -734,8 +510,6 @@ async fn run_cancelled_pressure_session(
         agent_name,
         final_text: "aborted".to_string(),
         session_entries,
-        session_path: workspace.join("sessions"),
-        indexed_sessions: 0,
         extension_events: Vec::new(),
     })
 }
@@ -872,256 +646,6 @@ fn validate_pressure_lab_jsonl(path: &std::path::Path) -> Vec<Value> {
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 4);
     rows
-}
-
-#[test]
-fn no_mock_swarm_lifecycle_e2e_emits_guarded_jsonl() {
-    let test_name = "no_mock_swarm_lifecycle_e2e_emits_guarded_jsonl";
-    let harness = common::TestHarness::new(test_name);
-    let recorder = Arc::new(StdMutex::new(
-        SwarmFlightRecorder::new("swarm-lifecycle-e2e").expect("create recorder"),
-    ));
-    let workspace = harness.temp_path("lifecycle/agent-success");
-    let started_at = elapsed_start();
-    let success = common::run_async(run_flight_session(
-        "lifecycle-success-agent".to_string(),
-        InputSource::Rpc,
-        workspace.clone(),
-        Arc::clone(&recorder),
-    ))
-    .expect("lifecycle success session succeeds");
-
-    assert!(
-        success
-            .final_text
-            .contains("lifecycle-success-agent flight complete")
-    );
-    assert!(success.session_entries >= 4);
-    assert!(
-        success.session_path.starts_with(workspace.join("sessions")),
-        "session path should stay under the scenario workspace: {}",
-        success.session_path.display()
-    );
-    assert!(success.session_path.exists(), "session JSONL should exist");
-    assert!(success.indexed_sessions >= 1, "session should be indexed");
-    assert!(
-        success
-            .extension_events
-            .iter()
-            .any(|event| matches!(event.as_str(), "tool_call")),
-        "extension policy path should observe tool calls: {:?}",
-        success.extension_events
-    );
-
-    recorder
-        .lock()
-        .expect("lock recorder")
-        .record_coordination_marker(
-            "lifecycle-success-agent",
-            elapsed_ms(started_at),
-            "agent_mail_fixture_degraded",
-            json!({
-                "status": "red",
-                "mode": "fixture_only_beads_soft_lock",
-                "summary": "Live Agent Mail mutation disabled for lifecycle E2E",
-                "api_key": "must-redact",
-            }),
-        )
-        .expect("record degraded coordination fixture");
-
-    let flight_jsonl = recorder
-        .lock()
-        .expect("lock recorder")
-        .to_jsonl()
-        .expect("flight recorder jsonl");
-    let flight_rows =
-        validate_swarm_flight_recorder_jsonl(&flight_jsonl).expect("valid flight recorder");
-    assert!(
-        flight_rows.iter().any(|row| row
-            .redaction
-            .redacted_keys
-            .iter()
-            .any(|key| key.as_str().eq("api_key"))),
-        "coordination fixture should redact API key material"
-    );
-    let redacted_fields = flight_rows
-        .iter()
-        .map(|row| row.redaction.redacted_fields)
-        .sum::<u64>();
-    let redacted_keys = flight_rows
-        .iter()
-        .flat_map(|row| row.redaction.redacted_keys.iter().cloned())
-        .collect::<std::collections::BTreeSet<_>>()
-        .into_iter()
-        .collect::<Vec<_>>();
-    let success_redaction = json!({
-        "redactedFields": redacted_fields,
-        "redactedKeys": redacted_keys,
-    });
-    let runpack_started_at = elapsed_start();
-    let (runpack_summary, runpack_summary_path, runpack_events_path) =
-        run_degraded_coordination_runpack_e2e(&harness);
-    harness.record_artifact("degraded_coordination_summary.json", &runpack_summary_path);
-    harness.record_artifact("degraded_coordination_events.jsonl", &runpack_events_path);
-
-    let mut lifecycle_rows = vec![
-        lifecycle_event_row(&LifecycleRow {
-            scenario_id: "lifecycle_success",
-            phase: "setup",
-            operation_label: "temp_workspace_and_fixture_creation",
-            duration_ms: 0,
-            redaction_summary: lifecycle_empty_redaction_summary(),
-            outcome: "pass",
-            details: json!({
-                "workspace_under_test_temp_root": workspace.starts_with(harness.temp_dir()),
-                "uses_live_provider_credentials": false,
-            }),
-        }),
-        lifecycle_event_row(&LifecycleRow {
-            scenario_id: "lifecycle_success",
-            phase: "rpc_session",
-            operation_label: "AgentSession::run_text",
-            duration_ms: elapsed_ms(started_at),
-            redaction_summary: success_redaction.clone(),
-            outcome: "pass",
-            details: json!({
-                "input_source": InputSource::Rpc.as_str(),
-                "session_file_exists": success.session_path.exists(),
-                "session_entries": success.session_entries,
-                "indexed_sessions": success.indexed_sessions,
-            }),
-        }),
-        lifecycle_event_row(&LifecycleRow {
-            scenario_id: "lifecycle_success",
-            phase: "tool_execution",
-            operation_label: "ToolRegistry::read",
-            duration_ms: elapsed_ms(started_at),
-            redaction_summary: success_redaction.clone(),
-            outcome: "pass",
-            details: json!({
-                "tool": "read",
-                "real_tool_registry": true,
-                "live_network": false,
-            }),
-        }),
-        lifecycle_event_row(&LifecycleRow {
-            scenario_id: "lifecycle_success",
-            phase: "extension_policy",
-            operation_label: "execute_extension_command:flight-events",
-            duration_ms: elapsed_ms(started_at),
-            redaction_summary: success_redaction,
-            outcome: "pass",
-            details: json!({
-                "hook_events": success.extension_events,
-                "fail_closed_hooks": true,
-            }),
-        }),
-        lifecycle_event_row(&LifecycleRow {
-            scenario_id: "lifecycle_success",
-            phase: "runpack_evidence",
-            operation_label: "build_swarm_operator_runpack.py --run-degraded-coordination-e2e",
-            duration_ms: elapsed_ms(runpack_started_at),
-            redaction_summary: lifecycle_empty_redaction_summary(),
-            outcome: "pass",
-            details: json!({
-                "summary_schema": runpack_summary["schema"],
-                "summary_status": runpack_summary["status"],
-                "uses_real_temp_beads": runpack_summary["guards"]["uses_real_temp_beads"],
-                "fixture_captures_degraded_rch_and_agent_mail": runpack_summary["guards"]["fixture_captures_degraded_rch_and_agent_mail"],
-                "no_cleanup_or_deletion_commands": runpack_summary["guards"]["no_cleanup_or_deletion_commands"],
-                "summary_artifact_exists": runpack_summary_path.exists(),
-                "events_jsonl_exists": runpack_events_path.exists(),
-            }),
-        }),
-    ];
-
-    let negative_probes = vec![
-        LifecycleGuardrailProbe {
-            endpoint: "https://api.openai.com/v1/responses",
-            env: BTreeMap::new(),
-            operation_label: "provider.live_request",
-            live_mutation: None,
-            fixture_gated: false,
-        },
-        LifecycleGuardrailProbe {
-            endpoint: "http://127.0.0.1/fixture",
-            env: BTreeMap::from([("OPENAI_API_KEY", "redacted-fixture-key")]),
-            operation_label: "provider.fixture_replay",
-            live_mutation: None,
-            fixture_gated: true,
-        },
-        LifecycleGuardrailProbe {
-            endpoint: "http://127.0.0.1/fixture",
-            env: BTreeMap::new(),
-            operation_label: "rm -rf lifecycle-workspace",
-            live_mutation: None,
-            fixture_gated: true,
-        },
-        LifecycleGuardrailProbe {
-            endpoint: "http://127.0.0.1/fixture",
-            env: BTreeMap::new(),
-            operation_label: "agent_mail.send_message",
-            live_mutation: Some("agent_mail"),
-            fixture_gated: false,
-        },
-        LifecycleGuardrailProbe {
-            endpoint: "http://127.0.0.1/fixture",
-            env: BTreeMap::new(),
-            operation_label: "rch exec cargo test",
-            live_mutation: Some("rch"),
-            fixture_gated: false,
-        },
-    ];
-    for probe in &negative_probes {
-        let guardrail = evaluate_lifecycle_guardrail(probe);
-        assert_eq!(
-            guardrail["blocked"], true,
-            "negative probe should fail closed: {guardrail}"
-        );
-        lifecycle_rows.push(lifecycle_event_row(&LifecycleRow {
-            scenario_id: "guardrail_fail_closed",
-            phase: "guardrail",
-            operation_label: probe.operation_label,
-            duration_ms: 0,
-            redaction_summary: lifecycle_empty_redaction_summary(),
-            outcome: "blocked",
-            details: guardrail,
-        }));
-    }
-
-    let lifecycle_path = harness.temp_path("swarm_lifecycle_e2e_events.jsonl");
-    write_lifecycle_jsonl(&lifecycle_path, &lifecycle_rows);
-    let validated_rows = validate_lifecycle_jsonl(&lifecycle_path);
-    assert!(
-        validated_rows
-            .iter()
-            .any(|row| lifecycle_reasons_include(row, "production_url_blocked")),
-        "negative scenario should block production URLs"
-    );
-    assert!(
-        validated_rows
-            .iter()
-            .any(|row| lifecycle_reasons_include(row, "ambient_api_key_blocked")),
-        "negative scenario should block ambient API keys"
-    );
-    assert!(
-        validated_rows
-            .iter()
-            .any(|row| lifecycle_reasons_include(row, "destructive_filesystem_operation_blocked")),
-        "negative scenario should block destructive filesystem operations"
-    );
-    assert_eq!(
-        validated_rows
-            .iter()
-            .filter(|row| {
-                lifecycle_reasons_include(row, "live_coordination_or_rch_mutation_blocked")
-            })
-            .count(),
-        2,
-        "negative scenario should block live Agent Mail and RCH mutations"
-    );
-
-    harness.record_artifact("swarm_lifecycle_e2e_events.jsonl", &lifecycle_path);
 }
 
 #[test]

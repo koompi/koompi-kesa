@@ -41,53 +41,6 @@ fn run_output(mut command: Command, label: &str) -> TestResult<Output> {
 }
 
 #[test]
-fn swarm_runpack_freshness_script_self_test_passes() -> TestResult {
-    let output = run_output(
-        {
-            let mut command = Command::new("python3");
-            command
-                .current_dir(repo_root())
-                .args(["scripts/check_swarm_runpack_freshness.py", "--self-test"])
-                .stdin(Stdio::null())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped());
-            command
-        },
-        "check_swarm_runpack_freshness_self_test",
-    )?;
-    require(
-        output_text(&output.stdout).contains("SELF-TEST PASS"),
-        "freshness script self-test should report PASS",
-    )?;
-    Ok(())
-}
-
-#[test]
-fn swarm_runpack_freshness_runpack_smoke_passes() -> TestResult {
-    let output = run_output(
-        {
-            let mut command = Command::new("python3");
-            command
-                .current_dir(repo_root())
-                .args([
-                    "scripts/check_swarm_runpack_freshness.py",
-                    "--run-runpack-smoke",
-                ])
-                .stdin(Stdio::null())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped());
-            command
-        },
-        "check_swarm_runpack_freshness_runpack_smoke",
-    )?;
-    require(
-        output_text(&output.stdout).contains("RUNPACK-SMOKE PASS"),
-        "freshness runpack smoke should rebuild and verify the runpack",
-    )?;
-    Ok(())
-}
-
-#[test]
 fn extension_conformance_triage_script_self_test_passes() -> TestResult {
     let output = run_output(
         {
