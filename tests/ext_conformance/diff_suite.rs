@@ -7,7 +7,7 @@ use kesa::extensions_js::PiJsRuntimeConfig;
 use kesa::tools::ToolRegistry;
 use serde_json::Value;
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -1311,6 +1311,79 @@ fn diff_snapshots(ts_oracle: &Value, rust_snapshot: &Value) -> Vec<String> {
     all_diffs
 }
 
+/// A difference from pi-mono that has been reviewed and is expected to stay.
+///
+/// `diffs` is the exact set `diff_snapshots` produces for that extension. An
+/// undeclared difference fails, and so does a declared one whose shape moved,
+/// because an entry that matches loosely is a mute button rather than a record.
+struct DeclaredDivergence {
+    extension: &'static str,
+    reason: &'static str,
+    diffs: &'static [&'static str],
+}
+
+const DECLARED_DIVERGENCES: &[DeclaredDivergence] = &[
+    DeclaredDivergence {
+        extension: "base_fixtures/minimal_command/index.ts",
+        reason: "KESA validates tool and shortcut registrations where pi-mono \
+                 does not: it rejects the nameless tool and the handler-less \
+                 tool this fixture registers on purpose, and it keeps the 'v' \
+                 shortcut pi-mono drops. Settled as deliberate strictness, so \
+                 the loader stays as it is and the divergence is recorded here.",
+        diffs: &[
+            "tools count mismatch: TS=5 Rust=3",
+            "tools '<unknown>': present in TS, missing in Rust",
+            "tools 'no-handler': present in TS, missing in Rust",
+            "shortcuts '<unknown>': present in TS, missing in Rust",
+            "shortcuts 'v': present in Rust, missing in TS",
+        ],
+    },
+    DeclaredDivergence {
+        extension: "third-party/cv-pi-ssh-remote/src/index.ts",
+        reason: "The extension wraps the host bash tool and inherits its \
+                 description, which quotes the output truncation cap. Upstream \
+                 raised that cap from 50KB to 1MB in c96f0466, before the fork. \
+                 Same upstream divergence mask_truncation_limit already covers; \
+                 this wording carries no ' (whichever is hit first)' marker for \
+                 the mask to anchor on.",
+        diffs: &[
+            "tools 'bash'.description: TS=\"Execute a bash command. When --ssh-host is configured, executes on the remote host. Returns stdout and stderr. Output is truncated to 2000 lines or 50.0KB.\" Rust=\"Execute a bash command. When --ssh-host is configured, executes on the remote host. Returns stdout and stderr. Output is truncated to 2000 lines or 976.6KB.\"",
+        ],
+    },
+];
+
+#[derive(Debug, PartialEq, Eq)]
+enum DivergenceVerdict {
+    Clean,
+    Declared(&'static str),
+    Rejected(String),
+}
+
+fn classify_divergence(extension: &str, diffs: &[String]) -> DivergenceVerdict {
+    if diffs.is_empty() {
+        return DivergenceVerdict::Clean;
+    }
+
+    let Some(declared) = DECLARED_DIVERGENCES
+        .iter()
+        .find(|entry| entry.extension == extension)
+    else {
+        return DivergenceVerdict::Rejected(format!("undeclared: {}", diffs.join("; ")));
+    };
+
+    let observed: BTreeSet<&str> = diffs.iter().map(String::as_str).collect();
+    let expected: BTreeSet<&str> = declared.diffs.iter().copied().collect();
+    if observed == expected {
+        return DivergenceVerdict::Declared(declared.reason);
+    }
+
+    let unexpected: Vec<&str> = observed.difference(&expected).copied().collect();
+    let resolved: Vec<&str> = expected.difference(&observed).copied().collect();
+    DivergenceVerdict::Rejected(format!(
+        "declared divergence changed shape: new={unexpected:?} no longer seen (update DECLARED_DIVERGENCES)={resolved:?}"
+    ))
+}
+
 // ─── Test runner ─────────────────────────────────────────────────────────────
 
 /// Run the differential test for a single extension file.
@@ -1344,23 +1417,31 @@ fn run_differential_test(extension_name: &str, entry_file: &str) {
 
     // Compare
     let diffs = diff_snapshots(&ts_result, &rust_result);
-    if !diffs.is_empty() {
-        eprintln!("=== Differential test failed for {extension_name} ===");
-        for diff in &diffs {
-            eprintln!("  {diff}");
+    let key = format!("{extension_name}/{entry_file}");
+    match classify_divergence(&key, &diffs) {
+        DivergenceVerdict::Clean => return,
+        DivergenceVerdict::Declared(reason) => {
+            eprintln!("[{key}] declared divergence waived: {reason}");
+            return;
         }
-        eprintln!(
-            "\nTS snapshot:\n{}",
-            serde_json::to_string_pretty(&ts_result).unwrap()
-        );
-        eprintln!(
-            "\nRust snapshot:\n{}",
-            serde_json::to_string_pretty(&rust_result).unwrap()
-        );
-        unreachable!(
-            "Differential conformance failed for {extension_name}: {} differences",
-            diffs.len()
-        );
+        DivergenceVerdict::Rejected(detail) => {
+            eprintln!("=== Differential test failed for {extension_name}: {detail} ===");
+            for diff in &diffs {
+                eprintln!("  {diff}");
+            }
+            eprintln!(
+                "\nTS snapshot:\n{}",
+                serde_json::to_string_pretty(&ts_result).unwrap()
+            );
+            eprintln!(
+                "\nRust snapshot:\n{}",
+                serde_json::to_string_pretty(&rust_result).unwrap()
+            );
+            unreachable!(
+                "Differential conformance failed for {extension_name}: {} differences",
+                diffs.len()
+            );
+        }
     }
 }
 
@@ -1409,10 +1490,14 @@ fn run_differential_test_strict(extension_name: &str, entry_file: &str) -> Resul
     let rust_snapshot =
         load_rust_snapshot(&ext_path).map_err(|err| format!("rust_runtime_failed: {err}"))?;
     let diffs = diff_snapshots(&ts_result, &rust_snapshot);
-    if diffs.is_empty() {
-        Ok(())
-    } else {
-        Err(format!("diffs: {}", diffs.join("; ")))
+    let key = format!("{extension_name}/{entry_file}");
+    match classify_divergence(&key, &diffs) {
+        DivergenceVerdict::Clean => Ok(()),
+        DivergenceVerdict::Declared(reason) => {
+            eprintln!("[{key}] declared divergence waived: {reason}");
+            Ok(())
+        }
+        DivergenceVerdict::Rejected(detail) => Err(format!("diffs: {detail}")),
     }
 }
 
@@ -2292,4 +2377,40 @@ fn aliou_settings_commands_are_registered() {
             "{expected} missing from the Rust registration snapshot: {registered:?}"
         );
     }
+}
+
+#[test]
+fn declared_divergence_is_waived_with_its_reason() {
+    let declared = &DECLARED_DIVERGENCES[0];
+    let observed: Vec<String> = declared.diffs.iter().map(|d| (*d).to_string()).collect();
+    assert_eq!(
+        classify_divergence(declared.extension, &observed),
+        DivergenceVerdict::Declared(declared.reason)
+    );
+}
+
+#[test]
+fn undeclared_divergence_is_rejected() {
+    let undeclared = vec!["commands 'ping': present in TS, missing in Rust".to_string()];
+    assert_eq!(
+        classify_divergence("hello/hello.ts", &undeclared),
+        DivergenceVerdict::Rejected(
+            "undeclared: commands 'ping': present in TS, missing in Rust".to_string()
+        )
+    );
+}
+
+#[test]
+fn declared_divergence_that_grew_is_rejected() {
+    let declared = &DECLARED_DIVERGENCES[0];
+    let mut observed: Vec<String> = declared.diffs.iter().map(|d| (*d).to_string()).collect();
+    observed.push("commands 'ping': present in TS, missing in Rust".to_string());
+    let verdict = classify_divergence(declared.extension, &observed);
+    let DivergenceVerdict::Rejected(detail) = verdict else {
+        unreachable!("a grown divergence must not be waived: {verdict:?}");
+    };
+    assert!(
+        detail.contains("declared divergence changed shape") && detail.contains("'ping'"),
+        "unexpected detail: {detail}"
+    );
 }
