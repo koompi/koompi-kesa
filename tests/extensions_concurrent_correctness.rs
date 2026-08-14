@@ -89,7 +89,7 @@ fn load_inline_extensions<I, P>(
     harness: &common::TestHarness,
     manager: &ExtensionManager,
     entries: I,
-) -> bool
+) -> Result<(), String>
 where
     I: IntoIterator<Item = (P, String)>,
     P: AsRef<std::path::Path>,
@@ -104,7 +104,12 @@ where
 
     common::run_async({
         let manager = manager.clone();
-        async move { manager.load_js_extensions(specs).await.is_ok() }
+        async move {
+            manager
+                .load_js_extensions(specs)
+                .await
+                .map_err(|e| e.to_string())
+        }
     })
 }
 
@@ -200,14 +205,11 @@ fn tool_registrations_from_multiple_extensions_are_namespaced() {
     let ext_ids = ["alpha", "beta", "gamma", "delta", "epsilon"];
     let entries = ext_ids.iter().enumerate().map(|(i, ext_id)| {
         (
-            format!("extensions/ext_{i}.mjs"),
+            format!("extensions/ext_{i}/ext_{i}.mjs"),
             stateful_extension_source(ext_id),
         )
     });
-    assert!(
-        load_inline_extensions(&harness, &manager, entries),
-        "extensions should load"
-    );
+    load_inline_extensions(&harness, &manager, entries).expect("extensions should load");
 
     // Verify all tools are registered with distinct names.
     let runtime = manager.js_runtime().expect("js runtime");
@@ -329,14 +331,11 @@ fn stateful_extensions_maintain_isolated_call_counts() {
     let ext_ids = ["iso_a", "iso_b", "iso_c"];
     let entries = ext_ids.iter().enumerate().map(|(i, ext_id)| {
         (
-            format!("extensions/iso_{i}.mjs"),
+            format!("extensions/iso_{i}/iso_{i}.mjs"),
             stateful_extension_source(ext_id),
         )
     });
-    assert!(
-        load_inline_extensions(&harness, &manager, entries),
-        "extensions should load"
-    );
+    load_inline_extensions(&harness, &manager, entries).expect("extensions should load");
 
     let ctx = json!({ "hasUI": false, "cwd": cwd.display().to_string() });
 
@@ -420,14 +419,11 @@ fn multi_thread_dispatch_completes_without_deadlock() {
     let ext_ids = ["mt_a", "mt_b", "mt_c"];
     let entries = ext_ids.iter().enumerate().map(|(i, ext_id)| {
         (
-            format!("extensions/mt_{i}.mjs"),
+            format!("extensions/mt_{i}/mt_{i}.mjs"),
             stateful_extension_source(ext_id),
         )
     });
-    assert!(
-        load_inline_extensions(&harness, &manager, entries),
-        "extensions should load"
-    );
+    load_inline_extensions(&harness, &manager, entries).expect("extensions should load");
 
     // Spawn threads that each dispatch events.
     let n_threads = 4;
