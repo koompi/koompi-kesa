@@ -596,6 +596,8 @@ mod tests {
                 dir in "[a-z]{1,10}",
                 binary in "[a-z_]{1,10}",
             ) {
+                // deps and examples are cargo layout dirs, profile is their parent
+                prop_assume!(!matches!(dir.as_str(), "deps" | "examples"));
                 let path_str = format!("/{dir}/{binary}");
                 let path = Path::new(&path_str);
                 assert!(
