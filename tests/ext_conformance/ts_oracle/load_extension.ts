@@ -136,6 +136,9 @@ async function main() {
 	const extensionPath = path.resolve(args[0]);
 	const envCwd = process.env.KESA_DETERMINISTIC_CWD;
 	const cwd = args[1] ? path.resolve(args[1]) : envCwd ? path.resolve(envCwd) : process.cwd();
+	// Anything past cwd is a sibling the Rust loader resolves from the package
+	// manifest. Loading only args[0] compares a package against a single file.
+	const entryPaths = [extensionPath, ...args.slice(2).map((arg) => path.resolve(arg))];
 	const timeoutMs = Number(process.env.KESA_TS_ORACLE_TIMEOUT_MS ?? "20000");
 
 	try {
@@ -147,7 +150,7 @@ async function main() {
 		});
 
 		const result = await Promise.race([
-			loadExtensions([extensionPath], cwd, recordingEventBus),
+			loadExtensions(entryPaths, cwd, recordingEventBus),
 			timeout,
 		]);
 		if (timeoutHandle) clearTimeout(timeoutHandle);
@@ -172,61 +175,54 @@ async function main() {
 			process.exit(0);
 		}
 
-		const ext = result.extensions[0];
+		const primary = result.extensions[0];
 
-		// Serialize handlers: event name -> handler count
 		const handlers: Record<string, number> = {};
-		for (const [event, fns] of ext.handlers) {
-			handlers[event] = fns.length;
-		}
-
-		// Serialize tools
 		const tools = [];
-		for (const [, registered] of ext.tools) {
-			const def = registered.definition;
-			tools.push({
-				name: def.name,
-				label: (def as any).label ?? null,
-				description: def.description ?? null,
-				parameters: def.parameters ?? null,
-				hasExecute: typeof def.execute === "function",
-			});
-		}
-
-		// Serialize commands
 		const commands = [];
-		for (const [, cmd] of ext.commands) {
-			commands.push({
-				name: cmd.name,
-				description: cmd.description ?? null,
-				userFacing: (cmd as any).userFacing ?? false,
-				hasHandler: typeof cmd.handler === "function",
-			});
-		}
-
-		// Serialize shortcuts
 		const shortcuts = [];
-		for (const [, sc] of ext.shortcuts) {
-			shortcuts.push({
-				shortcut: sc.shortcut,
-				description: sc.description ?? null,
-				hasHandler: typeof sc.handler === "function",
-			});
-		}
-
-		// Serialize flags
 		const flags = [];
-		for (const [, flag] of ext.flags) {
-			flags.push({
-				name: flag.name,
-				type: flag.type,
-				default: (flag as any).default ?? null,
-				description: flag.description ?? null,
-			});
-		}
+		const messageRenderers: string[] = [];
 
-		// Message renderers
-		const messageRenderers = Array.from(ext.messageRenderers.keys());
+		for (const ext of result.extensions) {
+			for (const [event, fns] of ext.handlers) {
+				handlers[event] = (handlers[event] ?? 0) + fns.length;
+			}
+			for (const [, registered] of ext.tools) {
+				const def = registered.definition;
+				tools.push({
+					name: def.name,
+					label: (def as any).label ?? null,
+					description: def.description ?? null,
+					parameters: def.parameters ?? null,
+					hasExecute: typeof def.execute === "function",
+				});
+			}
+			for (const [, cmd] of ext.commands) {
+				commands.push({
+					name: cmd.name,
+					description: cmd.description ?? null,
+					userFacing: (cmd as any).userFacing ?? false,
+					hasHandler: typeof cmd.handler === "function",
+				});
+			}
+			for (const [, sc] of ext.shortcuts) {
+				shortcuts.push({
+					shortcut: sc.shortcut,
+					description: sc.description ?? null,
+					hasHandler: typeof sc.handler === "function",
+				});
+			}
+			for (const [, flag] of ext.flags) {
+				flags.push({
+					name: flag.name,
+					type: flag.type,
+					default: (flag as any).default ?? null,
+					description: flag.description ?? null,
+				});
+			}
+			messageRenderers.push(...ext.messageRenderers.keys());
+		}
 
 		// Providers from runtime
 		const providers = result.runtime.pendingProviderRegistrations.map((p: any) => ({
@@ -249,8 +245,8 @@ async function main() {
 			success: true,
 			error: null,
 			extension: {
-				path: ext.path,
-				resolvedPath: ext.resolvedPath,
+				path: primary.path,
+				resolvedPath: primary.resolvedPath,
 				handlers,
 				eventBusChannels,
 				tools,

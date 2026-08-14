@@ -13,7 +13,10 @@
 mod common;
 
 use chrono::{SecondsFormat, Utc};
-use kesa::extensions::{ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle};
+use kesa::extensions::{
+    ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle, related_extension_entries,
+    safe_canonicalize,
+};
 use kesa::extensions_js::PiJsRuntimeConfig;
 use kesa::tools::ToolRegistry;
 use serde_json::Value;
@@ -336,11 +339,19 @@ fn run_ts_oracle_result(extension_path: &Path) -> Result<Value, String> {
         _ => Cow::Owned(ts_oracle_node_path().display().to_string()),
     };
 
+    let siblings = related_extension_entries(extension_path)
+        .map_err(|err| format!("resolve related entries: {err}"))?;
+
     let mut cmd = bun_command();
     cmd.arg("run")
         .arg(ts_oracle_script())
         .arg(extension_path)
         .arg(&settings.cwd)
+        .args(
+            siblings
+                .iter()
+                .filter(|path| path.as_path() != safe_canonicalize(extension_path)),
+        )
         .current_dir(ts_oracle_dir())
         .stdin(Stdio::null())
         .stdout(Stdio::piped())

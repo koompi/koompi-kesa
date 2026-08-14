@@ -13303,6 +13303,14 @@ fn discover_related_extension_entries(primary: &Path) -> Result<Vec<PathBuf>> {
     Ok(out)
 }
 
+/// Every entry loading `primary` actually pulls in, including the siblings a
+/// package declares. The differential oracle needs this to hand the TypeScript
+/// runtime the same file set rather than the one file it was asked for.
+#[cfg(feature = "ext-conformance")]
+pub fn related_extension_entries(primary: &Path) -> Result<Vec<PathBuf>> {
+    discover_related_extension_entries(primary)
+}
+
 type GroupedJsExtensionSpecs<'a> = Vec<(String, Vec<(&'a JsExtensionLoadSpec, Vec<PathBuf>)>)>;
 
 fn group_js_extension_specs<'a>(
