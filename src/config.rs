@@ -1405,38 +1405,15 @@ pub(crate) fn drop_untrusted_project_hooks(
     *project = None;
 }
 
-/// Concatenates hook lists per event: a settings file that adds one hook must
-/// not drop the hooks the other file installed.
 fn merge_hooks(
     base: Option<crate::hooks::HooksConfig>,
     other: Option<crate::hooks::HooksConfig>,
 ) -> Option<crate::hooks::HooksConfig> {
     match (base, other) {
-        (Some(base), Some(other)) => Some(crate::hooks::HooksConfig {
-            pre_tool_use: merge_hook_list(base.pre_tool_use, other.pre_tool_use),
-            post_tool_use: merge_hook_list(base.post_tool_use, other.post_tool_use),
-            user_prompt_submit: merge_hook_list(base.user_prompt_submit, other.user_prompt_submit),
-            stop: merge_hook_list(base.stop, other.stop),
-            trust_project_hooks: other.trust_project_hooks.or(base.trust_project_hooks),
-        }),
+        (Some(base), Some(other)) => Some(crate::hooks::HooksConfig::merged(base, other)),
         (None, Some(other)) => Some(other),
         (Some(base), None) => Some(base),
         (None, None) => None,
-    }
-}
-
-fn merge_hook_list(
-    base: Option<Vec<crate::hooks::HookEntry>>,
-    other: Option<Vec<crate::hooks::HookEntry>>,
-) -> Option<Vec<crate::hooks::HookEntry>> {
-    match (base, other) {
-        (Some(base), Some(other)) => {
-            let mut merged = base;
-            merged.extend(other);
-            Some(merged)
-        }
-        (None, other) => other,
-        (base, None) => base,
     }
 }
 
