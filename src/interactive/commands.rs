@@ -33,6 +33,7 @@ pub enum SlashCommand {
     Changelog,
     Tree,
     Fork,
+    Rewind,
     Compact,
     Reload,
     Template,
@@ -72,6 +73,7 @@ impl SlashCommand {
             "/changelog" => Self::Changelog,
             "/tree" => Self::Tree,
             "/fork" => Self::Fork,
+            "/rewind" | "/undo" => Self::Rewind,
             "/compact" => Self::Compact,
             "/reload" => Self::Reload,
             "/template" => Self::Template,
@@ -106,6 +108,7 @@ impl SlashCommand {
   /changelog         - Show changelog entries
   /tree              - Show session branch tree summary
   /fork [id|index]   - Fork from a user message (default: last on current path)
+  /rewind, /undo     - Undo a turn's file edits, its transcript, or both (also Esc Esc)
   /compact [notes]   - Compact older context with optional instructions
   /reload            - Reload skills/prompts from disk
   /template <name> [args] - Expand a prompt template by name
@@ -2238,6 +2241,7 @@ impl PiApp {
                 None
             }
             SlashCommand::Fork => self.handle_slash_fork(args),
+            SlashCommand::Rewind => self.open_rewind_overlay(),
             SlashCommand::Compact => self.handle_slash_compact(args),
             SlashCommand::Reload => self.handle_slash_reload(),
             SlashCommand::Template => self.handle_slash_template(args),
@@ -3102,11 +3106,198 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         let display = super::conversation::content_blocks_to_text(&content);
         self.submit_content_with_display(content, &display)
     }
+
+    pub(super) fn open_rewind_overlay(&mut self) -> Option<Cmd> {
+        if self.agent_state != AgentState::Idle {
+            self.status_message = Some("Cannot rewind while processing".to_string());
+            return None;
+        }
+        if !crate::rewind::is_active() {
+            self.status_message =
+                Some("Rewind is off for this session; nothing was checkpointed".to_string());
+            return None;
+        }
+        self.rewind_overlay = Some(RewindOverlay::new(crate::rewind::summaries()));
+        None
+    }
+
+    /// Apply the choice the overlay collected. Undoes `turn` and every turn
+    /// after it, which is what [`crate::rewind::RewindStore::restore`] means.
+    pub(super) fn apply_rewind(&mut self, turn: u64, scope: RewindScope) -> Option<Cmd> {
+        let mut lines = vec![format!("Rewound to before turn {turn}.")];
+
+        // the cut is read from the store, so it has to be taken before restore
+        // forgets the turns it applied
+        let conversation = scope
+            .touches_conversation()
+            .then(|| self.rewind_conversation_cut(turn));
+
+        if scope.touches_files() {
+            match crate::rewind::restore(turn) {
+                None => lines.push("Files: rewind is not active for this session.".to_string()),
+                Some(Err(err)) => lines.push(format!("Files: restore failed: {err}")),
+                Some(Ok(report)) => {
+                    lines.push(format!(
+                        "Files: {} changed ({} restored, {} deleted).",
+                        report.changed(),
+                        report.restored.len(),
+                        report.deleted.len()
+                    ));
+                    for path in report.restored.iter().chain(report.deleted.iter()) {
+                        lines.push(format!("  {}", self.display_path(path)));
+                    }
+                    for refusal in &report.refused {
+                        lines.push(format!(
+                            "  refused {}: {} (left as it was)",
+                            refusal.entry, refusal.reason
+                        ));
+                    }
+                }
+            }
+        } else {
+            lines.push("Files: untouched, by your choice.".to_string());
+        }
+
+        match conversation {
+            None => lines.push("Conversation: untouched, by your choice.".to_string()),
+            Some(Err(reason)) => lines.push(format!("Conversation: not rolled back, {reason}")),
+            Some(Ok(cut)) => {
+                let dropped = self.truncate_conversation_at(cut);
+                lines.push(format!(
+                    "Conversation: rolled back, {dropped} message{} dropped.",
+                    if dropped == 1 { "" } else { "s" }
+                ));
+            }
+        }
+
+        self.messages.push(ConversationMessage {
+            role: MessageRole::System,
+            // the transcript gutters only a system message's first line
+            content: lines.join("\n  "),
+            thinking: None,
+            collapsed: false,
+        });
+        self.scroll_to_bottom();
+        None
+    }
+
+    fn display_path(&self, path: &Path) -> String {
+        path.strip_prefix(&self.cwd)
+            .unwrap_or(path)
+            .display()
+            .to_string()
+    }
+
+    /// Which user message in the conversation opened `turn`, as an ordinal over
+    /// user messages only.
+    fn rewind_conversation_cut(&self, turn: u64) -> std::result::Result<usize, String> {
+        let Ok(agent) = self.agent.try_lock() else {
+            return Err("the agent is busy; try again".to_string());
+        };
+        let labels: Vec<String> = agent
+            .messages()
+            .iter()
+            .filter_map(|message| match message {
+                ModelMessage::User(user) => Some(rewind_turn_label(
+                    &crate::session::user_content_to_text(&user.content),
+                )),
+                _ => None,
+            })
+            .collect();
+        drop(agent);
+
+        rewind_user_ordinal(&labels, &crate::rewind::summaries(), turn).ok_or_else(|| {
+            "no user message in this conversation carries that turn's label (a subagent turn, \
+             or one that compaction has already dropped)"
+                .to_string()
+        })
+    }
+
+    /// Drop the `ordinal`-th user message and everything after it, from both the
+    /// agent's history and the transcript on screen.
+    fn truncate_conversation_at(&mut self, ordinal: usize) -> usize {
+        if let Ok(mut agent) = self.agent.try_lock()
+            && let Some(cut) = nth_user_message(agent.messages(), ordinal, |message| {
+                matches!(message, ModelMessage::User(_))
+            })
+        {
+            let kept = agent.messages()[..cut].to_vec();
+            agent.replace_messages(kept);
+        }
+
+        let Some(cut) = nth_user_message(&self.messages, ordinal, |message| {
+            message.role == MessageRole::User
+        }) else {
+            return 0;
+        };
+        let dropped = self.messages.len() - cut;
+        self.messages.truncate(cut);
+        self.current_response.clear();
+        self.current_thinking.clear();
+        self.message_render_cache.clear();
+        dropped
+    }
+}
+
+const REWIND_LABEL_CHARS: usize = 120;
+
+// mirrors agent::rewind_turn_label, which writes the labels this matches against
+fn rewind_turn_label(text: &str) -> String {
+    text.lines()
+        .find(|line| !line.trim().is_empty())
+        .unwrap_or_default()
+        .trim()
+        .chars()
+        .take(REWIND_LABEL_CHARS)
+        .collect()
+}
+
+fn nth_user_message<T>(items: &[T], ordinal: usize, is_user: impl Fn(&T) -> bool) -> Option<usize> {
+    items
+        .iter()
+        .enumerate()
+        .filter(|(_, item)| is_user(item))
+        .map(|(index, _)| index)
+        .nth(ordinal)
+}
+
+/// Walk the store's turns against the conversation's user messages in order,
+/// so duplicate prompts land on the right one and a turn a subagent opened -
+/// whose label matches no user message here - is skipped rather than
+/// swallowing the next real turn's slot.
+fn rewind_user_ordinal(
+    labels: &[String],
+    summaries: &[crate::rewind::TurnSummary],
+    turn: u64,
+) -> Option<usize> {
+    let mut cursor = 0usize;
+    for summary in summaries {
+        let hit = labels
+            .get(cursor..)
+            .and_then(|rest| rest.iter().position(|label| *label == summary.message));
+        match hit {
+            Some(offset) => {
+                let index = cursor + offset;
+                if summary.turn == turn {
+                    return Some(index);
+                }
+                cursor = index + 1;
+            }
+            None => {
+                if summary.turn == turn {
+                    return None;
+                }
+            }
+        }
+    }
+    None
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_bash_command, parse_extension_command, should_show_startup_oauth_hint};
+    use super::{
+        SlashCommand, parse_bash_command, parse_extension_command, should_show_startup_oauth_hint,
+    };
     use crate::auth::{AuthCredential, AuthStorage};
     use crate::models::ModelEntry;
     use crate::provider::{InputType, Model, ModelCost};
@@ -3437,6 +3628,68 @@ mod tests {
         assert_eq!(
             super::resolve_model_key_with_auth(&auth, &entry).as_deref(),
             Some("inline-model-sample")
+        );
+    }
+
+    fn summary(turn: u64, message: &str) -> crate::rewind::TurnSummary {
+        crate::rewind::TurnSummary {
+            turn,
+            message: message.to_string(),
+            files_changed: 0,
+            ran_bash: false,
+        }
+    }
+
+    fn labels(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| (*value).to_string()).collect()
+    }
+
+    #[test]
+    fn rewind_user_ordinal_walks_duplicate_prompts_in_order() {
+        let labels = labels(&["fix it", "fix it", "ship it"]);
+        let summaries = [
+            summary(1, "fix it"),
+            summary(2, "fix it"),
+            summary(3, "ship it"),
+        ];
+
+        assert_eq!(super::rewind_user_ordinal(&labels, &summaries, 1), Some(0));
+        assert_eq!(super::rewind_user_ordinal(&labels, &summaries, 2), Some(1));
+        assert_eq!(super::rewind_user_ordinal(&labels, &summaries, 3), Some(2));
+    }
+
+    /// The store is process-global, so a subagent's turn sits between the
+    /// parent's. It matches no user message here and must not consume the
+    /// slot belonging to the next real turn.
+    #[test]
+    fn rewind_user_ordinal_skips_a_turn_no_user_message_carries() {
+        let labels = labels(&["first", "second"]);
+        let summaries = [
+            summary(1, "first"),
+            summary(2, "search the tree for callers"),
+            summary(3, "second"),
+        ];
+
+        assert_eq!(super::rewind_user_ordinal(&labels, &summaries, 1), Some(0));
+        assert_eq!(super::rewind_user_ordinal(&labels, &summaries, 2), None);
+        assert_eq!(super::rewind_user_ordinal(&labels, &summaries, 3), Some(1));
+    }
+
+    #[test]
+    fn rewind_turn_label_takes_the_first_non_blank_line_capped() {
+        assert_eq!(super::rewind_turn_label("\n\n  hello \nworld"), "hello");
+        assert_eq!(super::rewind_turn_label(&"x".repeat(200)).len(), 120);
+    }
+
+    #[test]
+    fn rewind_parses_from_both_spellings() {
+        assert_eq!(
+            SlashCommand::parse("/rewind"),
+            Some((SlashCommand::Rewind, ""))
+        );
+        assert_eq!(
+            SlashCommand::parse("/undo"),
+            Some((SlashCommand::Rewind, ""))
         );
     }
 

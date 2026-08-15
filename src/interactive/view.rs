@@ -991,6 +991,11 @@ impl PiApp {
             output.push_str(&self.render_branch_picker(picker));
         }
 
+        // Rewind overlay (if open)
+        if let Some(ref overlay) = self.rewind_overlay {
+            output.push_str(&self.render_rewind_overlay(overlay));
+        }
+
         // Model selector overlay (if open)
         if let Some(ref selector) = self.model_selector {
             output.push_str(&self.render_model_selector(selector));
@@ -1951,13 +1956,9 @@ impl PiApp {
                         "showHardwareCursor: {}",
                         bool_label(self.effective_show_hardware_cursor())
                     ),
-                    SettingsUiEntry::DoubleEscapeAction => format!(
-                        "doubleEscapeAction: {}",
-                        self.config
-                            .double_escape_action
-                            .as_deref()
-                            .unwrap_or("tree")
-                    ),
+                    SettingsUiEntry::DoubleEscapeAction => {
+                        format!("doubleEscapeAction: {}", self.double_escape_action())
+                    }
                     SettingsUiEntry::EditorPaddingX => {
                         format!("editorPaddingX: {}", self.editor_padding_x)
                     }
@@ -2266,6 +2267,150 @@ impl PiApp {
             self.styles
                 .muted_italic
                 .render("↑/↓/j/k/PgUp/PgDn: navigate  Enter: switch  Esc: cancel  * = current")
+        );
+        output
+    }
+
+    pub(super) fn render_rewind_overlay(&self, overlay: &RewindOverlay) -> String {
+        let mut output = String::new();
+
+        let _ = writeln!(output, "\n  {}", self.styles.title.render("Rewind a turn"));
+        let _ = writeln!(
+            output,
+            "  {}",
+            self.styles
+                .muted
+                .render("-------------------------------------------")
+        );
+
+        if overlay.turns.is_empty() {
+            let _ = writeln!(
+                output,
+                "  {}",
+                self.styles
+                    .muted_italic
+                    .render("Nothing to rewind: no turn has changed a file yet.")
+            );
+            let _ = writeln!(
+                output,
+                "\n  {}",
+                self.styles.muted_italic.render("Esc: close")
+            );
+            return output;
+        }
+
+        if overlay.picking_scope() {
+            output.push_str(&self.render_rewind_scope(overlay));
+            return output;
+        }
+
+        let label_width = self.term_width.saturating_sub(32).clamp(12, 60);
+        let offset = overlay.scroll_offset();
+        let end = (offset + overlay.max_visible).min(overlay.turns.len());
+        for (index, turn) in overlay.turns[offset..end].iter().enumerate() {
+            let global = offset + index;
+            let selected = global == overlay.selected;
+            let label = if turn.message.trim().is_empty() {
+                "(no message recorded)".to_string()
+            } else {
+                truncate(turn.message.trim(), label_width)
+            };
+            let files = format!(
+                "{} file{}",
+                turn.files_changed,
+                if turn.files_changed == 1 { "" } else { "s" }
+            );
+            let bash = if turn.ran_bash { "bash" } else { "" };
+            let row = format!(
+                "{} {:>3}  {label:<label_width$}  {files:>9}  {bash:<4}",
+                if selected { ">" } else { " " },
+                turn.turn,
+            );
+            let rendered = if selected {
+                self.styles.accent_bold.render(&row)
+            } else if turn.ran_bash {
+                self.styles.warning.render(&row)
+            } else {
+                self.styles.muted.render(&row)
+            };
+            let _ = writeln!(output, "  {rendered}");
+        }
+
+        let _ = writeln!(
+            output,
+            "\n  {}",
+            self.styles
+                .muted_italic
+                .render("↑/↓/j/k/PgUp/PgDn: navigate  Enter: choose what to restore  Esc: cancel")
+        );
+        let _ = writeln!(
+            output,
+            "  {}",
+            self.styles
+                .muted_italic
+                .render("bash = the turn ran a command, so a file restore is only partial")
+        );
+        output
+    }
+
+    fn render_rewind_scope(&self, overlay: &RewindOverlay) -> String {
+        let mut output = String::new();
+        let Some(target) = overlay.selected_turn() else {
+            return output;
+        };
+
+        let label = if target.message.trim().is_empty() {
+            "(no message recorded)".to_string()
+        } else {
+            truncate(
+                target.message.trim(),
+                self.term_width.saturating_sub(40).max(20),
+            )
+        };
+        let undone = overlay.selected + 1;
+        let files: usize = overlay.turns[..undone]
+            .iter()
+            .map(|turn| turn.files_changed)
+            .sum();
+        let _ = writeln!(
+            output,
+            "  {}",
+            self.styles.accent.render(&format!(
+                "Undo turn {} \"{label}\" and the {} turn{} after it ({files} file change{})",
+                target.turn,
+                undone - 1,
+                if undone == 2 { "" } else { "s" },
+                if files == 1 { "" } else { "s" },
+            ))
+        );
+        if overlay.bash_in_restore_range() {
+            let _ = writeln!(
+                output,
+                "  {}",
+                self.styles.warning_bold.render(
+                    "A turn in that range ran bash. Command side effects cannot be undone, \
+                     so the file restore is partial."
+                )
+            );
+        }
+        let _ = writeln!(output);
+
+        for (index, scope) in RewindScope::ALL.iter().enumerate() {
+            let row = format!("{}. {}", index + 1, scope.label());
+            let rendered = if overlay.scope == Some(index) {
+                self.styles.selection.render(&format!("\u{276f} {row}"))
+            } else {
+                self.styles.muted.render(&format!("  {row}"))
+            };
+            let _ = writeln!(output, "  {rendered}");
+        }
+
+        let _ = writeln!(
+            output,
+            "\n  {}",
+            self.styles
+                .muted_italic
+                .render("1-3 choose  ↑/↓ navigate  Enter: rewind  Esc: back")
         );
         output
     }

@@ -223,6 +223,56 @@ impl PiApp {
         self.tool_approval = next.map(ToolApprovalOverlay::new);
     }
 
+    pub(super) fn handle_rewind_overlay_key(&mut self, key: &KeyMsg) -> Option<Cmd> {
+        let rune = (key.key_type == KeyType::Runes && key.runes.len() == 1).then(|| key.runes[0]);
+        let overlay = self.rewind_overlay.as_mut()?;
+        let mut close = false;
+        let mut commit = false;
+
+        if overlay.picking_scope() {
+            match (key.key_type, rune) {
+                (KeyType::Up, _) | (_, Some('k')) => overlay.scope_prev(),
+                (KeyType::Down, _) | (_, Some('j')) => overlay.scope_next(),
+                (_, Some(digit @ '1'..='3')) => {
+                    overlay.scope = Some(digit as usize - '1' as usize);
+                    commit = true;
+                }
+                (KeyType::Enter, _) => commit = true,
+                (KeyType::Esc, _) => overlay.scope = None,
+                _ => {}
+            }
+        } else {
+            match (key.key_type, rune) {
+                (KeyType::Up, _) | (_, Some('k')) => overlay.select_prev(),
+                (KeyType::Down, _) | (_, Some('j')) => overlay.select_next(),
+                (KeyType::PgUp, _) => overlay.select_page_up(),
+                (KeyType::PgDown, _) => overlay.select_page_down(),
+                (KeyType::Enter, _) => {
+                    if overlay.turns.is_empty() {
+                        close = true;
+                    } else {
+                        overlay.scope = Some(0);
+                    }
+                }
+                (KeyType::Esc, _) => close = true,
+                _ => {}
+            }
+        }
+
+        if close {
+            self.rewind_overlay = None;
+            return None;
+        }
+        if !commit {
+            return None;
+        }
+
+        let overlay = self.rewind_overlay.take()?;
+        let target = overlay.selected_turn()?.turn;
+        let scope = overlay.selected_scope()?;
+        self.apply_rewind(target, scope)
+    }
+
     pub(super) fn handle_paste_event(&mut self, key: &KeyMsg) -> bool {
         if key.key_type != KeyType::Runes || key.runes.is_empty() {
             return false;
@@ -480,13 +530,19 @@ impl PiApp {
         }
     }
 
+    /// The configured value wins. Unconfigured, the chord opens rewind when a
+    /// checkpoint store is running, because undo is what Esc Esc is for; with
+    /// rewind off there is nothing to open, so the old default stands.
+    pub(super) fn double_escape_action(&self) -> &str {
+        match self.config.double_escape_action.as_deref().map(str::trim) {
+            Some(configured) if !configured.is_empty() => configured,
+            _ if crate::rewind::is_active() => "rewind",
+            _ => "tree",
+        }
+    }
+
     fn handle_double_escape_action(&mut self) -> (bool, Option<Cmd>) {
-        let action = self
-            .config
-            .double_escape_action
-            .as_deref()
-            .unwrap_or("tree")
-            .trim();
+        let action = self.double_escape_action();
         if action.eq_ignore_ascii_case("none") {
             self.last_escape_time = None;
             return (false, None);
@@ -503,20 +559,15 @@ impl PiApp {
     }
 
     fn trigger_double_escape_action(&mut self) -> Option<Cmd> {
-        let raw_action = self
-            .config
-            .double_escape_action
-            .as_deref()
-            .unwrap_or("tree")
-            .trim();
-        let action = raw_action.to_ascii_lowercase();
-        match action.as_str() {
+        let raw_action = self.double_escape_action().to_string();
+        match raw_action.to_ascii_lowercase().as_str() {
             "none" => None,
             "tree" => self.handle_slash_command(SlashCommand::Tree, ""),
             "fork" => self.handle_slash_command(SlashCommand::Fork, ""),
+            "rewind" | "undo" => self.handle_slash_command(SlashCommand::Rewind, ""),
             _ => {
                 self.status_message = Some(format!(
-                    "Unknown doubleEscapeAction: {raw_action} (expected tree, fork, or none)"
+                    "Unknown doubleEscapeAction: {raw_action} (expected rewind, tree, fork, or none)"
                 ));
                 self.handle_slash_command(SlashCommand::Tree, "")
             }
