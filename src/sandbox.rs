@@ -811,12 +811,14 @@ mod tests {
         );
     }
 
+    /// Runs on both CI platforms, so it names neither backend: on a Mac the old
+    /// landlock wording sent a reader to /sys on a kernel that has no /sys.
     #[test]
-    fn landlock_is_available_on_this_kernel() {
+    fn this_machine_has_an_enforcing_backend() {
+        let status = backend_status();
         assert!(
-            backend_status().is_enforcing(),
-            "this machine reports landlock in /sys/kernel/security/lsm, got {:?}",
-            backend_status()
+            status.is_enforcing(),
+            "this machine is expected to enforce a sandbox, got {status:?}"
         );
     }
 
