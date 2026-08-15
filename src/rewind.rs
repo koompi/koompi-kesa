@@ -976,15 +976,22 @@ mod tests {
         });
 
         let mut store = uninstall().expect("store still installed");
-        let manifest = &store.turns()[0];
-        println!(
-            "[hook] entries = {:?}, ran_bash = {}",
-            manifest.entries.keys().collect::<Vec<_>>(),
-            manifest.ran_bash
+        // store is process-global, so a concurrent agent test can open a turn
+        // underneath this one and split the entries. the hook is what is under test
+        let (entries, ran_bash) = store.turns().iter().fold(
+            (BTreeMap::new(), false),
+            |(mut entries, ran_bash), manifest| {
+                entries.extend(manifest.entries.clone());
+                (entries, ran_bash | manifest.ran_bash)
+            },
         );
-        assert_eq!(manifest.entries.get("created.txt"), Some(&None));
-        assert!(manifest.entries.get("existing.txt").expect("entry").is_some());
-        assert!(manifest.ran_bash);
+        println!(
+            "[hook] entries = {:?}, ran_bash = {ran_bash}",
+            entries.keys().collect::<Vec<_>>()
+        );
+        assert_eq!(entries.get("created.txt"), Some(&None));
+        assert!(entries.get("existing.txt").expect("entry").is_some());
+        assert!(ran_bash);
 
         let report = store.restore(1).expect("restore");
         assert!(report.refused.is_empty());
