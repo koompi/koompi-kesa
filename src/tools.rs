@@ -4323,10 +4323,15 @@ where
             Err(err) if err == rustix::io::Errno::NOENT => None,
             Err(err) => return Err(std::io::Error::from(err)),
         };
+        // raw mode_t is u16 on darwin, u32 on linux; the bound proves the widening lossless
+        fn widen_mode<M: Into<u32>>(mode: M) -> u32 {
+            mode.into()
+        }
+
         let original_permissions = expected_target_identity.map(|(_, _, mode)| {
             use std::os::unix::fs::PermissionsExt as _;
 
-            std::fs::Permissions::from_mode(mode)
+            std::fs::Permissions::from_mode(widen_mode(mode))
         });
 
         // The pathname stored by `NamedTempFile` is not descriptor-relative.
@@ -4422,9 +4427,12 @@ where
                 .map_err(std::io::Error::from)?;
                 let source_file = std::fs::File::from(source_descriptor);
                 let source_metadata = source_file.metadata()?;
+                // same fd, raw stat both sides: darwin dev_t is signed and narrower than the
+                // u64 std normalises it to, so only raw-to-raw compares without a lossy cast
+                let source_identity = rustix::fs::fstat(&source_file)?;
                 if !source_metadata.is_file()
-                    || source_metadata.dev() != expected_dev
-                    || source_metadata.ino() != expected_ino
+                    || source_identity.st_dev != expected_dev
+                    || source_identity.st_ino != expected_ino
                 {
                     return Err(std::io::Error::other(
                         "file changed since it was read; re-read it and retry the edit",
