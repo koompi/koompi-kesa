@@ -1159,6 +1159,7 @@ impl PiApp {
             && self.extension_custom_overlay.is_none()
             && self.branch_picker.is_none()
             && self.rewind_overlay.is_none()
+            && self.context_overlay.is_none()
             && self.model_selector.is_none()
     }
 
@@ -1240,6 +1241,12 @@ impl PiApp {
             chrome += 4 + visible + 2;
         }
 
+        // Context overlay: title + separator + model + bar + blank + 6 category
+        // rows + separator + sum + total + optional estimate note + help.
+        if let Some(ref overlay) = self.context_overlay {
+            chrome += 14 + usize::from(overlay.breakdown.estimated) + 2;
+        }
+
         // Model selector overlay: title + config-only hint + search + separator + items + detail + help + padding.
         if let Some(ref selector) = self.model_selector {
             let visible = selector.max_visible().min(selector.filtered_len().max(1));
@@ -1275,6 +1282,7 @@ impl PiApp {
             || self.extension_custom_overlay.is_some()
             || self.branch_picker.is_some()
             || self.rewind_overlay.is_some()
+            || self.context_overlay.is_some()
             || self.model_selector.is_some();
         if any_overlay {
             chrome += 2;
@@ -2632,6 +2640,9 @@ pub struct PiApp {
     // Rewind overlay (Esc Esc, /rewind)
     rewind_overlay: Option<RewindOverlay>,
 
+    // Context breakdown overlay (/context)
+    context_overlay: Option<view::ContextOverlay>,
+
     // Model selector overlay (Ctrl+L)
     model_selector: Option<crate::model_selector::ModelSelectorOverlay>,
 
@@ -2959,6 +2970,7 @@ impl PiApp {
             capability_prompt: None,
             branch_picker: None,
             rewind_overlay: None,
+            context_overlay: None,
             model_selector: None,
             frame_timing: FrameTimingStats::new(),
             tui_pressure_frame_p99_us: Arc::new(AtomicU64::new(0)),
@@ -3251,6 +3263,11 @@ impl PiApp {
             // Rewind modal captures all input while active.
             if self.rewind_overlay.is_some() {
                 return self.handle_rewind_overlay_key(key);
+            }
+
+            // Context modal captures all input while active.
+            if self.context_overlay.is_some() {
+                return self.handle_context_overlay_key(key);
             }
 
             // Model selector modal captures all input while active.

@@ -34,6 +34,7 @@ pub enum SlashCommand {
     Tree,
     Fork,
     Rewind,
+    Context,
     Compact,
     Reload,
     Template,
@@ -74,6 +75,7 @@ impl SlashCommand {
             "/tree" => Self::Tree,
             "/fork" => Self::Fork,
             "/rewind" | "/undo" => Self::Rewind,
+            "/context" | "/ctx" => Self::Context,
             "/compact" => Self::Compact,
             "/reload" => Self::Reload,
             "/template" => Self::Template,
@@ -109,6 +111,7 @@ impl SlashCommand {
   /tree              - Show session branch tree summary
   /fork [id|index]   - Fork from a user message (default: last on current path)
   /rewind, /undo     - Undo a turn's file edits, its transcript, or both (also Esc Esc)
+  /context, /ctx     - Break the context window down by what is filling it
   /compact [notes]   - Compact older context with optional instructions
   /reload            - Reload skills/prompts from disk
   /template <name> [args] - Expand a prompt template by name
@@ -2242,6 +2245,7 @@ impl PiApp {
             }
             SlashCommand::Fork => self.handle_slash_fork(args),
             SlashCommand::Rewind => self.open_rewind_overlay(),
+            SlashCommand::Context => self.open_context_overlay(),
             SlashCommand::Compact => self.handle_slash_compact(args),
             SlashCommand::Reload => self.handle_slash_reload(),
             SlashCommand::Template => self.handle_slash_template(args),
@@ -3121,6 +3125,43 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         None
     }
 
+    /// Snapshot the context breakdown and put it on screen.
+    ///
+    /// Taken once at open rather than per frame: the totals come from the
+    /// agent and the session, and neither lock is free to take while a turn is
+    /// streaming.
+    pub(super) fn open_context_overlay(&mut self) -> Option<Cmd> {
+        let Ok(agent) = self.agent.try_lock() else {
+            self.status_message =
+                Some("Cannot break down the context while a turn is running".to_string());
+            return None;
+        };
+        let weights = prompt_weights(agent.system_prompt(), &agent.tool_defs());
+        drop(agent);
+
+        let Ok(session) = self.session.try_lock() else {
+            self.status_message = Some("Session is busy; try /context again".to_string());
+            return None;
+        };
+        let breakdown = session.context_breakdown(&weights);
+        drop(session);
+
+        self.context_overlay = Some(super::view::ContextOverlay {
+            breakdown,
+            window: self.model_entry.model.context_window,
+            model: self.model.clone(),
+        });
+        None
+    }
+
+    pub(super) fn handle_context_overlay_key(&mut self, key: &KeyMsg) -> Option<Cmd> {
+        let quit = key.key_type == KeyType::Runes && key.runes == ['q'];
+        if quit || matches!(key.key_type, KeyType::Esc | KeyType::Enter) {
+            self.context_overlay = None;
+        }
+        None
+    }
+
     /// Apply the choice the overlay collected. Undoes `turn` and every turn
     /// after it, which is what [`crate::rewind::RewindStore::restore`] means.
     pub(super) fn apply_rewind(&mut self, turn: u64, scope: RewindScope) -> Option<Cmd> {
@@ -3293,16 +3334,90 @@ fn rewind_user_ordinal(
     None
 }
 
+/// Header `app::build_system_prompt` writes before the AGENTS.md/CLAUDE.md
+/// block, and the two things that can follow it.
+const MEMORY_HEADER: &str = "\n\n# Project Context\n\n";
+const SKILLS_HEADER: &str = "\n\nThe following skills provide specialized instructions";
+const DATE_HEADER: &str = "\nCurrent date and time: ";
+
+/// Wire sizes of the request parts the session does not store.
+///
+/// Project memory is carved out of the system prompt by the header above. If
+/// that header ever moves, memory folds back into the system-prompt row and
+/// the total is still exact: no category can be lost, only merged.
+fn prompt_weights(
+    system_prompt: Option<&str>,
+    tool_defs: &[crate::provider::ToolDef],
+) -> crate::session::PromptWeights {
+    let tool_schema_bytes = tool_defs
+        .iter()
+        .map(|def| {
+            let schema = serde_json::to_vec(&def.parameters).map_or(0, |bytes| bytes.len());
+            (def.name.len() + def.description.len() + schema) as u64
+        })
+        .fold(0u64, u64::saturating_add);
+
+    let Some(prompt) = system_prompt else {
+        return crate::session::PromptWeights {
+            tool_schema_bytes,
+            ..Default::default()
+        };
+    };
+
+    let memory_bytes = prompt.find(MEMORY_HEADER).map_or(0, |start| {
+        let tail = &prompt[start + MEMORY_HEADER.len()..];
+        let end = tail
+            .find(SKILLS_HEADER)
+            .or_else(|| tail.find(DATE_HEADER))
+            .unwrap_or(tail.len());
+        MEMORY_HEADER.len() + end
+    });
+
+    crate::session::PromptWeights {
+        system_bytes: (prompt.len() - memory_bytes) as u64,
+        project_memory_bytes: memory_bytes as u64,
+        tool_schema_bytes,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
-        SlashCommand, parse_bash_command, parse_extension_command, should_show_startup_oauth_hint,
+        DATE_HEADER, MEMORY_HEADER, SKILLS_HEADER, SlashCommand, parse_bash_command,
+        parse_extension_command, prompt_weights, should_show_startup_oauth_hint,
     };
     use crate::auth::{AuthCredential, AuthStorage};
     use crate::models::ModelEntry;
     use crate::provider::{InputType, Model, ModelCost};
     use std::collections::{HashMap, HashSet};
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn prompt_weights_split_project_memory_out_of_the_system_prompt() {
+        let prompt = format!(
+            "base rules{MEMORY_HEADER}## /repo/AGENTS.md\n\nno em dashes\n\n{SKILLS_HEADER} for tasks.{DATE_HEADER}Friday"
+        );
+        let weights = prompt_weights(Some(&prompt), &[]);
+
+        assert_eq!(
+            weights.system_bytes + weights.project_memory_bytes,
+            prompt.len() as u64,
+            "the split must not lose or invent bytes"
+        );
+        let memory_block = "## /repo/AGENTS.md\n\nno em dashes\n\n";
+        assert_eq!(
+            weights.project_memory_bytes,
+            (MEMORY_HEADER.len() + memory_block.len()) as u64,
+            "memory stops where the skills block starts"
+        );
+    }
+
+    #[test]
+    fn prompt_weights_fold_memory_into_the_system_prompt_when_the_header_is_absent() {
+        let weights = prompt_weights(Some("just the base prompt"), &[]);
+        assert_eq!(weights.system_bytes, 20);
+        assert_eq!(weights.project_memory_bytes, 0);
+    }
 
     fn empty_auth_storage() -> AuthStorage {
         let nonce = SystemTime::now()

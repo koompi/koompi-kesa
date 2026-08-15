@@ -1209,6 +1209,18 @@ const TOOL_RESULT_BUDGET_PERCENT: usize = 15;
 /// model something usable to read.
 const TOOL_RESULT_BUDGET_MIN_BYTES: usize = 16 * 1024;
 
+fn build_tool_defs(tools: &ToolRegistry) -> Vec<ToolDef> {
+    tools
+        .tools()
+        .iter()
+        .map(|tool| ToolDef {
+            name: tool.name().to_string(),
+            description: tool.description().to_string(),
+            parameters: tool.parameters(),
+        })
+        .collect()
+}
+
 fn tool_result_budget_bytes(context_window_tokens: u32) -> usize {
     let budget = (context_window_tokens as usize)
         .saturating_mul(crate::compaction::CHARS_PER_TOKEN_ESTIMATE)
@@ -1460,6 +1472,14 @@ impl Agent {
         self.config.system_prompt = system_prompt;
     }
 
+    /// Tool definitions exactly as the next request will carry them.
+    ///
+    /// Same builder the request path uses, so a context breakdown measured off
+    /// this cannot drift from what goes on the wire.
+    pub fn tool_defs(&self) -> Vec<ToolDef> {
+        build_tool_defs(&self.tools)
+    }
+
     /// Build context for a completion request.
     fn build_context(&mut self) -> Context<'_> {
         let messages: Cow<'_, [Message]> = if self.config.block_images {
@@ -1499,17 +1519,7 @@ impl Agent {
 
         // Borrow cached tool defs if available; otherwise build + cache + borrow.
         if self.cached_tool_defs.is_none() {
-            let defs: Vec<ToolDef> = self
-                .tools
-                .tools()
-                .iter()
-                .map(|t| ToolDef {
-                    name: t.name().to_string(),
-                    description: t.description().to_string(),
-                    parameters: t.parameters(),
-                })
-                .collect();
-            self.cached_tool_defs = Some(defs);
+            self.cached_tool_defs = Some(build_tool_defs(&self.tools));
         }
         let tools = Cow::Borrowed(self.cached_tool_defs.as_deref().unwrap());
 

@@ -8074,6 +8074,209 @@ fn ensure_entry_ids(entries: &mut [SessionEntry]) {
     }
 }
 
+// ============================================================================
+// Context accounting
+// ============================================================================
+
+/// Where a slice of the context window came from.
+///
+/// The tag travels with the size, so compaction can later pick a category to
+/// drop instead of only a cut point in time.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ContextOrigin {
+    SystemPrompt,
+    ToolSchemas,
+    ProjectMemory,
+    Conversation,
+    FileReads,
+    ToolOutputs,
+}
+
+impl ContextOrigin {
+    pub const ALL: [Self; 6] = [
+        Self::SystemPrompt,
+        Self::ToolSchemas,
+        Self::ProjectMemory,
+        Self::Conversation,
+        Self::FileReads,
+        Self::ToolOutputs,
+    ];
+
+    const fn index(self) -> usize {
+        match self {
+            Self::SystemPrompt => 0,
+            Self::ToolSchemas => 1,
+            Self::ProjectMemory => 2,
+            Self::Conversation => 3,
+            Self::FileReads => 4,
+            Self::ToolOutputs => 5,
+        }
+    }
+
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::SystemPrompt => "System prompt",
+            Self::ToolSchemas => "Tool schemas",
+            Self::ProjectMemory => "Project memory",
+            Self::Conversation => "Conversation",
+            Self::FileReads => "File reads",
+            Self::ToolOutputs => "Tool outputs",
+        }
+    }
+}
+
+/// Sizes, in wire bytes, of the request parts the session does not store.
+///
+/// The caller measures these off the agent, which holds the system prompt and
+/// the tool definitions that go out with every request.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PromptWeights {
+    pub system_bytes: u64,
+    pub project_memory_bytes: u64,
+    pub tool_schema_bytes: u64,
+}
+
+/// The context window split across the parts that filled it.
+///
+/// `total` is the same number the footer renders. The per-origin figures are
+/// `total` divided by measured wire size, so they sum back to it exactly.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ContextBreakdown {
+    /// Occupancy the footer reports.
+    pub total: u64,
+    /// `true` when no turn has reported usage and `total` is a local estimate,
+    /// so a reader is not shown a guess dressed as a measurement.
+    pub estimated: bool,
+    tokens: [u64; 6],
+    bytes: [u64; 6],
+}
+
+impl ContextBreakdown {
+    pub const fn tokens(&self, origin: ContextOrigin) -> u64 {
+        self.tokens[origin.index()]
+    }
+
+    pub const fn bytes(&self, origin: ContextOrigin) -> u64 {
+        self.bytes[origin.index()]
+    }
+
+    /// Sum of the parts. Equal to `total` by construction, rendered so a reader
+    /// can check it rather than trust it.
+    pub fn sum(&self) -> u64 {
+        self.tokens.iter().copied().fold(0, u64::saturating_add)
+    }
+}
+
+/// Wire size of one outbound message, used only as an apportionment weight.
+fn message_wire_bytes(message: &Message) -> u64 {
+    serde_json::to_vec(message).map_or(0, |bytes| bytes.len() as u64)
+}
+
+fn message_origin(message: &Message) -> ContextOrigin {
+    match message {
+        Message::ToolResult(result) if result.tool_name == "read" => ContextOrigin::FileReads,
+        Message::ToolResult(_) => ContextOrigin::ToolOutputs,
+        _ => ContextOrigin::Conversation,
+    }
+}
+
+/// Split `total` across `weights` so the parts sum to exactly `total`.
+///
+/// Largest remainder: floor every share, then hand the leftover out one token
+/// at a time to the biggest fractional parts. Plain rounding loses or invents
+/// tokens, and a breakdown that does not add up is worse than no breakdown.
+fn apportion(total: u64, weights: &[u64; 6]) -> [u64; 6] {
+    let sum: u128 = weights.iter().map(|weight| u128::from(*weight)).sum();
+    if sum == 0 || total == 0 {
+        return [0; 6];
+    }
+
+    let total = u128::from(total);
+    let mut shares = [0u64; 6];
+    let mut remainders: Vec<(u128, usize)> = Vec::with_capacity(weights.len());
+    let mut assigned: u128 = 0;
+    for (idx, weight) in weights.iter().enumerate() {
+        let scaled = total * u128::from(*weight);
+        let share = scaled / sum;
+        shares[idx] = u64::try_from(share).unwrap_or(u64::MAX);
+        assigned += share;
+        remainders.push((scaled % sum, idx));
+    }
+
+    remainders.sort_unstable_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)));
+    let mut leftover = total.saturating_sub(assigned);
+    for (_, idx) in remainders {
+        if leftover == 0 {
+            break;
+        }
+        shares[idx] = shares[idx].saturating_add(1);
+        leftover -= 1;
+    }
+    shares
+}
+
+impl Session {
+    /// Tokens the session currently occupies, from the newest assistant turn
+    /// that reported usage. `0` means no turn has reported any yet.
+    ///
+    /// The one figure the footer renders and the one the `/context` breakdown
+    /// divides up. Two renderings, one number.
+    pub fn context_total_tokens(&self) -> u64 {
+        self.entries_for_current_path()
+            .iter()
+            .rev()
+            .find_map(|entry| {
+                let SessionEntry::Message(entry) = entry else {
+                    return None;
+                };
+                let SessionMessage::Assistant { message } = &entry.message else {
+                    return None;
+                };
+                let usage = &message.usage;
+                let tokens = if usage.total_tokens > 0 {
+                    usage.total_tokens
+                } else {
+                    usage.input.saturating_add(usage.output)
+                };
+                (tokens > 0).then_some(tokens)
+            })
+            .unwrap_or(0)
+    }
+
+    /// [`Self::context_total_tokens`] split across the parts that produced it.
+    ///
+    /// Weighted by outbound wire size over the compaction-aware message list
+    /// the provider actually receives, so a compaction shrinks the conversation
+    /// share on the next render with no extra bookkeeping.
+    pub fn context_breakdown(&self, prompt: &PromptWeights) -> ContextBreakdown {
+        let mut bytes = [0u64; 6];
+        bytes[ContextOrigin::SystemPrompt.index()] = prompt.system_bytes;
+        bytes[ContextOrigin::ToolSchemas.index()] = prompt.tool_schema_bytes;
+        bytes[ContextOrigin::ProjectMemory.index()] = prompt.project_memory_bytes;
+
+        for message in &self.to_messages_for_current_path() {
+            let slot = message_origin(message).index();
+            bytes[slot] = bytes[slot].saturating_add(message_wire_bytes(message));
+        }
+
+        let reported = self.context_total_tokens();
+        let estimated = reported == 0;
+        let total = if estimated {
+            let total_bytes = bytes.iter().copied().fold(0u64, u64::saturating_add);
+            total_bytes.div_ceil(crate::compaction::CHARS_PER_TOKEN_ESTIMATE as u64)
+        } else {
+            reported
+        };
+
+        ContextBreakdown {
+            total,
+            estimated,
+            tokens: apportion(total, &bytes),
+            bytes,
+        }
+    }
+}
+
 /// Generate a unique entry ID (8 hex characters), falling back to UUID on collision.
 fn generate_entry_id(existing: &HashSet<String>) -> String {
     for _ in 0..100 {
@@ -9993,6 +10196,91 @@ mod tests {
         let root_children = session.get_children(None);
         assert_eq!(root_children.len(), 1);
         assert_eq!(root_children[0], id_a);
+    }
+
+    fn assistant_with_total(total_tokens: u64) -> SessionMessage {
+        SessionMessage::Assistant {
+            message: AssistantMessage {
+                usage: Usage {
+                    total_tokens,
+                    ..Usage::default()
+                },
+                ..AssistantMessage::default()
+            },
+        }
+    }
+
+    fn read_result(bytes: usize) -> SessionMessage {
+        SessionMessage::ToolResult {
+            tool_call_id: "call-1".to_string(),
+            tool_name: "read".to_string(),
+            content: vec![ContentBlock::Text(TextContent::new("x".repeat(bytes)))],
+            details: None,
+            is_error: false,
+            timestamp: Some(0),
+        }
+    }
+
+    #[test]
+    fn apportion_parts_always_sum_to_the_total() {
+        // 7 divides none of these cleanly, which is the case plain rounding loses.
+        for total in [1u64, 7, 999, 45_501, 200_000] {
+            for weights in [
+                [1u64, 1, 1, 1, 1, 1],
+                [3, 5, 7, 11, 13, 17],
+                [1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0],
+            ] {
+                let shares = apportion(total, &weights);
+                let sum: u64 = shares.iter().sum();
+                let expected = if weights.iter().all(|w| *w == 0) {
+                    0
+                } else {
+                    total
+                };
+                assert_eq!(sum, expected, "total={total} weights={weights:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn context_breakdown_sums_to_the_total_the_footer_reports() {
+        let mut session = Session::in_memory();
+        session.append_message(make_test_message("hello"));
+        session.append_message(read_result(4_000));
+        session.append_message(assistant_with_total(45_500));
+
+        let weights = PromptWeights {
+            system_bytes: 9_000,
+            project_memory_bytes: 3_000,
+            tool_schema_bytes: 6_000,
+        };
+        let breakdown = session.context_breakdown(&weights);
+
+        assert_eq!(breakdown.total, session.context_total_tokens());
+        assert_eq!(breakdown.total, 45_500);
+        assert!(!breakdown.estimated);
+        assert_eq!(breakdown.sum(), breakdown.total);
+        assert!(breakdown.tokens(ContextOrigin::FileReads) > 0);
+        assert!(breakdown.tokens(ContextOrigin::SystemPrompt) > 0);
+        assert!(breakdown.tokens(ContextOrigin::ToolSchemas) > 0);
+        assert!(breakdown.tokens(ContextOrigin::ProjectMemory) > 0);
+    }
+
+    #[test]
+    fn context_breakdown_flags_an_estimate_before_any_turn_reports_usage() {
+        let mut session = Session::in_memory();
+        session.append_message(make_test_message("hello"));
+
+        let breakdown = session.context_breakdown(&PromptWeights {
+            system_bytes: 300,
+            ..PromptWeights::default()
+        });
+
+        assert!(breakdown.estimated);
+        assert_eq!(session.context_total_tokens(), 0);
+        assert!(breakdown.total > 0);
+        assert_eq!(breakdown.sum(), breakdown.total);
     }
 
     #[test]
