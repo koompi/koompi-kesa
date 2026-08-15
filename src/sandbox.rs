@@ -289,19 +289,27 @@ pub const fn system_writable_paths() -> &'static [&'static str] {
 /// Process-wide opt-in: refuse to run at all rather than run unconfined.
 static REQUIRE_BACKEND: RwLock<Option<bool>> = RwLock::new(None);
 
-/// Install the opt-in from a settings file. Unset falls back to the
-/// `KESA_REQUIRE_SANDBOX` environment variable.
+/// Install the opt-in from a settings file. Called once from `main`.
 pub fn configure_require_backend(required: bool) {
     *REQUIRE_BACKEND.write().expect("require sandbox lock") = Some(required);
 }
 
+/// The opt-in a loaded settings file asks for.
+#[must_use]
+pub fn required_by_settings(config: &crate::config::Config) -> bool {
+    config.require_sandbox.unwrap_or(false)
+}
+
 #[must_use]
 pub fn require_backend() -> bool {
-    if let Some(configured) = *REQUIRE_BACKEND.read().expect("require sandbox lock") {
-        return configured;
-    }
-    crate::env::var("REQUIRE_SANDBOX")
-        .is_some_and(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+    // either source arms it: a settings file without the key must not disarm
+    // the environment variable
+    REQUIRE_BACKEND
+        .read()
+        .expect("require sandbox lock")
+        .unwrap_or(false)
+        || crate::env::var("REQUIRE_SANDBOX")
+            .is_some_and(|value| value == "1" || value.eq_ignore_ascii_case("true"))
 }
 
 /// The refusal a degraded sandbox earns when the user asked never to run
@@ -311,7 +319,7 @@ pub(crate) fn unconfined_refusal(status: &SandboxStatus, required: bool) -> Opti
         return None;
     }
     Some(format!(
-        "refusing to run this command unconfined: {}. {}=1 is set, which trades running for not running unsandboxed; unset it to allow unconfined commands.",
+        "refusing to run this command unconfined: {}. A confined sandbox is required (settings key requireSandbox, or {}=1), which trades running for not running unsandboxed; clear it to allow unconfined commands.",
         status.describe(),
         crate::env::name("REQUIRE_SANDBOX"),
     ))
@@ -557,6 +565,50 @@ mod tests {
             assert!(refusal.contains("refusing to run"));
             assert!(refusal.contains("KESA_REQUIRE_SANDBOX"));
         }
+    }
+
+    /// The settings key is the only way to arm the refusal without an
+    /// environment variable, so the name, the default and the refusal it earns
+    /// are all load-bearing.
+    #[test]
+    fn the_settings_key_arms_the_hard_refusal_and_its_absence_does_not() {
+        let degraded = SandboxStatus::no_backend("macos");
+
+        let armed: crate::config::Config =
+            serde_json::from_str(r#"{"requireSandbox": true}"#).expect("settings parse");
+        assert!(required_by_settings(&armed));
+        let refusal = unconfined_refusal(&degraded, required_by_settings(&armed))
+            .expect("requireSandbox must refuse a degraded sandbox");
+        println!("{refusal}");
+        assert!(refusal.contains("requireSandbox"));
+
+        let snake: crate::config::Config =
+            serde_json::from_str(r#"{"require_sandbox": true}"#).expect("settings parse");
+        assert!(required_by_settings(&snake));
+
+        for absent in ["{}", r#"{"requireSandbox": false}"#] {
+            let config: crate::config::Config =
+                serde_json::from_str(absent).expect("settings parse");
+            assert!(!required_by_settings(&config), "{absent}");
+            assert_eq!(
+                unconfined_refusal(&degraded, required_by_settings(&config)),
+                None,
+                "{absent} must leave the default alone"
+            );
+        }
+    }
+
+    /// A cloned repository carries `.kesa/settings.json`, so a project file
+    /// must not be able to switch off a refusal the machine's owner armed.
+    #[test]
+    fn a_project_settings_file_cannot_disarm_the_global_hard_refusal() {
+        let global: crate::config::Config =
+            serde_json::from_str(r#"{"requireSandbox": true}"#).expect("settings parse");
+        let project: crate::config::Config =
+            serde_json::from_str(r#"{"requireSandbox": false}"#).expect("settings parse");
+        assert!(required_by_settings(&crate::config::Config::merge(
+            global, project
+        )));
     }
 
     /// A sandboxed shell reaches paths the file tools refuse. The status has to

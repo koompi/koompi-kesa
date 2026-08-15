@@ -168,6 +168,16 @@ pub struct Config {
     #[serde(alias = "additionalDirectories", alias = "addDir")]
     pub additional_directories: Option<Vec<String>>,
 
+    // Sandbox
+    /// Refuse to run a command at all when the sandbox is degraded, rather than
+    /// running it unconfined. Unset means run, which is what every install does
+    /// today.
+    ///
+    /// `KESA_REQUIRE_SANDBOX=1` arms the same refusal; either source is enough
+    /// and neither disarms the other.
+    #[serde(alias = "requireSandbox")]
+    pub require_sandbox: Option<bool>,
+
     // Tool Permissions
     pub permissions: Option<PermissionsConfig>,
 
@@ -654,6 +664,9 @@ impl Config {
                 base.additional_directories,
                 other.additional_directories,
             ),
+
+            // Sandbox
+            require_sandbox: merge_require_sandbox(base.require_sandbox, other.require_sandbox),
 
             // Tool Permissions
             permissions: merge_permissions(base.permissions, other.permissions),
@@ -1506,6 +1519,16 @@ fn merge_extension_policy(
         (Some(base), None) => Some(base),
         (None, None) => None,
     }
+}
+
+/// Either file may arm the hard refusal and neither may disarm the other's:
+/// `.kesa/settings.json` travels with a cloned repository, so a project must
+/// not be able to switch off a sandbox the machine's owner demanded.
+fn merge_require_sandbox(base: Option<bool>, other: Option<bool>) -> Option<bool> {
+    if base == Some(true) || other == Some(true) {
+        return Some(true);
+    }
+    other.or(base)
 }
 
 /// Concatenates rule lists instead of overriding: a project settings file that
