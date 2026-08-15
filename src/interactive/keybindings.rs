@@ -932,11 +932,18 @@ impl PiApp {
                 None
             }
             AppAction::CyclePermissionMode => {
-                self.permission_mode = self.permission_mode.next();
+                // exit_plan_mode moves the policy behind the cached field's back
+                let next = self
+                    .tool_policy
+                    .read()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .mode()
+                    .next();
                 self.tool_policy
                     .write()
                     .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .set_mode(self.permission_mode);
+                    .set_mode(next);
+                self.permission_mode = next;
                 self.status_message = Some(format!("Permission mode: {}", self.permission_mode));
                 self.resize_conversation_viewport();
                 None
@@ -2267,6 +2274,59 @@ mod tests {
                 Message::new(ctrl_c_event())
             )),
             "idle Ctrl+C must keep its double-tap quit"
+        );
+    }
+
+    #[test]
+    fn shift_tab_after_exit_plan_mode_advances_from_the_policy_not_the_stale_field() {
+        let policy: SharedToolPolicy = {
+            let mut policy = crate::tool_policy::ToolPolicy::default();
+            policy.set_mode(PermissionMode::Plan);
+            Arc::new(std::sync::RwLock::new(policy))
+        };
+
+        let current = model_entry("openai", "gpt-4o-mini", Some("key"), HashMap::new());
+        let mut app = build_test_app(current.clone(), vec![current]);
+        app.set_terminal_size(80, 24);
+        app.attach_tool_policy(Arc::clone(&policy), Arc::default());
+        assert_eq!(app.permission_mode, PermissionMode::Plan);
+
+        runtime().block_on({
+            let policy = Arc::clone(&policy);
+            async move {
+                let registry = ToolRegistry::new(&["exit_plan_mode"], Path::new("."), None);
+                registry.bind_permission_mode(policy);
+                registry
+                    .get("exit_plan_mode")
+                    .expect("exit_plan_mode is registered")
+                    .execute("call-1", serde_json::json!({ "plan": "ship it" }), None)
+                    .await
+                    .expect("approved exit leaves plan mode");
+            }
+        });
+        assert_eq!(
+            policy
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .mode(),
+            PermissionMode::Default
+        );
+
+        let _ =
+            BubbleteaModel::update(&mut app, Message::new(KeyMsg::from_type(KeyType::ShiftTab)));
+
+        assert_eq!(
+            app.permission_mode,
+            PermissionMode::AcceptEdits,
+            "shift+tab must step off the mode the policy holds, not the cached one"
+        );
+        assert_eq!(
+            policy
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .mode(),
+            PermissionMode::AcceptEdits,
+            "the cycle must not write a tighter mode into the policy that gates tool calls"
         );
     }
 
