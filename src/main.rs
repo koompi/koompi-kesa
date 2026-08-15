@@ -1586,6 +1586,7 @@ async fn run(
     };
 
     let tools = ToolRegistry::new(&enabled_tools, &cwd, Some(&config));
+    tools.bind_permission_mode(Arc::clone(&tool_policy));
     let session_arc = Arc::new(Mutex::new(session));
     let compaction_settings = ResolvedCompactionSettings {
         enabled: config.compaction_enabled(),

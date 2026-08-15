@@ -265,6 +265,10 @@ fn default_system_prompt(enabled_tools: &[&str], package_dir: &Path) -> String {
             "web_search",
             "Search the web for ranked title/url/snippet results; follow up with web_fetch to read one",
         ),
+        (
+            "exit_plan_mode",
+            "Ask the user to approve your plan and leave plan mode; only works while in plan mode, approval switches to default mode and rejection returns their reason",
+        ),
     ];
 
     let mut tools = Vec::new();
@@ -318,6 +322,12 @@ fn default_system_prompt(enabled_tools: &[&str], package_dir: &Path) -> String {
     if has_edit || has_write {
         guidelines_list.push(
             "When summarizing your actions, output plain text directly - do NOT use cat or bash to display what you did",
+        );
+    }
+
+    if has_tool("exit_plan_mode") {
+        guidelines_list.push(
+            "Plan mode denies every tool that changes anything. When you hit that denial, stop retrying: finish researching, write the plan out in your reply, and then always call exit_plan_mode with that same plan. Writing the plan is not enough - the tool call is the only way to ask the user to approve it, and until you make it the session stays in plan mode and you can do nothing",
         );
     }
 
@@ -1272,6 +1282,7 @@ mod tests {
     #[test]
     fn system_prompt_describes_every_default_tool() {
         let tools: Vec<&str> = crate::cli::DEFAULT_TOOLS.split(',').collect();
+        assert!(tools.contains(&"exit_plan_mode"), "{tools:?}");
         let prompt = default_system_prompt(&tools, Path::new("."));
         let missing: Vec<&&str> = tools
             .iter()
@@ -1280,6 +1291,21 @@ mod tests {
         assert!(
             missing.is_empty(),
             "enabled but absent from the system prompt's tool list: {missing:?}"
+        );
+    }
+
+    /// A tool the registry can build but the prompt cannot describe is invisible
+    /// to the model, which is how `bash_output` and `kill_shell` shipped dark.
+    #[test]
+    fn system_prompt_describes_every_registered_tool() {
+        let prompt = default_system_prompt(crate::cli::REGISTERED_TOOLS, Path::new("."));
+        let missing: Vec<&&str> = crate::cli::REGISTERED_TOOLS
+            .iter()
+            .filter(|tool| !prompt.contains(&format!("- {tool}: ")))
+            .collect();
+        assert!(
+            missing.is_empty(),
+            "registerable but absent from the system prompt's tool list: {missing:?}"
         );
     }
 
