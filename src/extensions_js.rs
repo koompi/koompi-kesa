@@ -16662,6 +16662,9 @@ pub struct PiJsRuntime<C: SchedulerClock = WallClock> {
     /// Additional filesystem roots that `readFileSync` may access (e.g.
     /// extension directories).  Populated lazily as extensions are loaded.
     allowed_read_roots: Arc<std::sync::Mutex<Vec<PathBuf>>>,
+    /// Editor text for the synchronous `ctx.ui.getEditorText()`.  `None` means
+    /// no host has published it; the getter throws rather than answering "".
+    editor_text: Arc<std::sync::Mutex<Option<String>>>,
     /// Accumulated auto-repair events.  Use [`Self::record_repair`] to append
     /// and [`Self::drain_repair_events`] to retrieve and clear.
     repair_events: Arc<std::sync::Mutex<Vec<ExtensionRepairEvent>>>,
@@ -16909,6 +16912,7 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
             interrupt_budget,
             config,
             allowed_read_roots: Arc::new(std::sync::Mutex::new(Vec::new())),
+            editor_text: Arc::new(std::sync::Mutex::new(None)),
             repair_events,
             module_state,
             policy,
@@ -17763,6 +17767,17 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
     /// 2. JS wrappers (`pi.*`) that create Promises and register them
     ///
     /// This avoids lifetime issues with returning Promises from Rust closures.
+    /// Publish the input editor's current text for `ctx.ui.getEditorText()`.
+    ///
+    /// Pi returns a `string` synchronously (`types.ts:168`), so the value has to
+    /// be here before the call rather than fetched during it.  Until a host
+    /// calls this, the getter throws instead of inventing an empty string.
+    pub fn set_editor_text(&self, text: impl Into<String>) {
+        if let Ok(mut slot) = self.editor_text.lock() {
+            *slot = Some(text.into());
+        }
+    }
+
     /// Register an additional filesystem root that `readFileSync` is allowed
     /// to access.  Called before loading each extension so it can read its own
     /// bundled assets (HTML templates, markdown docs, etc.).
@@ -17914,6 +17929,7 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
         let repair_events = Arc::clone(&self.repair_events);
         let allow_unsafe_sync_exec = self.config.allow_unsafe_sync_exec;
         let allowed_read_roots = Arc::clone(&self.allowed_read_roots);
+        let editor_text = Arc::clone(&self.editor_text);
         let module_state = Rc::clone(&self.module_state);
         let policy = self.policy.clone();
         let owner_extension_id = self.owner_extension_id.clone();
@@ -18600,6 +18616,25 @@ impl<C: SchedulerClock + 'static> PiJsRuntime<C> {
                             Ok(())
                         },
                     ),
+                )?;
+
+                // __pi_host_editor_text() -> string (throws when unpublished)
+                // Backs the synchronous ctx.ui.getEditorText(). Throwing beats
+                // returning "" for a host that never called set_editor_text.
+                global.set(
+                    "__pi_host_editor_text",
+                    Func::from({
+                        let editor_text = Arc::clone(&editor_text);
+                        move |ctx: Ctx<'_>| -> rquickjs::Result<String> {
+                            match editor_text.lock().ok().and_then(|slot| slot.clone()) {
+                                Some(text) => Ok(text),
+                                None => Err(rquickjs::Exception::throw_message(
+                                    &ctx,
+                                    "getEditorText: no editor text published by the host",
+                                )),
+                            }
+                        }
+                    }),
                 )?;
 
                 // __pi_host_is_registered_fs_path(path) -> bool
@@ -20018,10 +20053,28 @@ function __pi_get_or_create_extension(extension_id, meta) {
             flagValues: new Map(),
             messageRenderers: new Map(),
             activeTools: null,
+            unsupported: new Map(),
         });
     }
 
     return __pi_extensions.get(id);
+}
+
+// A surface KESA accepts but does not honour. Recorded on the extension so the
+// registration snapshot carries it, and warned once so it is not only data.
+function __pi_declare_unsupported(surface, detail) {
+    const id = __pi_get_current_extension_id();
+    const ext = id ? __pi_extensions.get(id) : undefined;
+    const key = String(surface || '');
+    const message = String(detail || '');
+    if (!ext) {
+        console.warn('[kesa] ' + key + ': ' + message);
+        return;
+    }
+    if (!ext.unsupported) ext.unsupported = new Map();
+    if (ext.unsupported.has(key)) return;
+    ext.unsupported.set(key, message);
+    console.warn('[kesa] ' + ext.id + ': ' + key + ': ' + message);
 }
 
 function __pi_begin_extension(extension_id, meta) {
@@ -20581,6 +20634,12 @@ function __pi_register_message_renderer(customType, renderer) {
     };
     ext.messageRenderers.set(typeId, record);
     __pi_message_renderer_index.set(typeId, record);
+    __pi_declare_unsupported(
+        'registerMessageRenderer',
+        'accepted and never called. Rendering a custom message needs a TUI component across the ' +
+            'QuickJS boundary, which KESA does not expose. The message renders with the built-in ' +
+            'renderer instead.',
+    );
 }
 
 	function __pi_register_hook(event_name, handler) {
@@ -20860,6 +20919,12 @@ function __pi_snapshot_extensions() {
             flags: flags,
             event_hooks: Array.from(event_hooks),
             active_tools: Array.isArray(ext.activeTools) ? ext.activeTools.slice() : null,
+            unsupported: ext.unsupported
+                ? Array.from(ext.unsupported.entries()).map(([surface, detail]) => ({
+                      surface: surface,
+                      detail: detail,
+                  }))
+                : [],
         });
     }
     return out;
@@ -20876,12 +20941,92 @@ function __pi_make_extension_theme() {
     return Object.create(__pi_extension_theme_template);
 }
 
-const __pi_extension_theme_template = {
-    // Minimal theme shim. Legacy emits ANSI; conformance harness should normalize ANSI away.
-    fg: (_style, text) => String(text === undefined || text === null ? '' : text),
-    bold: (text) => String(text === undefined || text === null ? '' : text),
-    strikethrough: (text) => String(text === undefined || text === null ? '' : text),
+// Pi's ThemeColor union (theme.ts:98-143). fg() throws on any name outside it,
+// so the set has to be complete even where KESA maps several names to one colour.
+const __pi_theme_palette = {
+    accent: '#007acc',
+    border: '#3c3c3c',
+    borderAccent: '#007acc',
+    borderMuted: '#6a6a6a',
+    success: '#4ec9b0',
+    error: '#f44747',
+    warning: '#ce9178',
+    muted: '#6a6a6a',
+    dim: '#6a6a6a',
+    text: '#d4d4d4',
+    thinkingText: '#6a6a6a',
+    userMessageText: '#d4d4d4',
+    customMessageText: '#d4d4d4',
+    customMessageLabel: '#007acc',
+    toolTitle: '#dcdcaa',
+    toolOutput: '#d4d4d4',
+    mdHeading: '#007acc',
+    mdLink: '#007acc',
+    mdLinkUrl: '#6a6a6a',
+    mdCode: '#ce9178',
+    mdCodeBlock: '#ce9178',
+    mdCodeBlockBorder: '#3c3c3c',
+    mdQuote: '#6a6a6a',
+    mdQuoteBorder: '#3c3c3c',
+    mdHr: '#3c3c3c',
+    mdListBullet: '#007acc',
+    toolDiffAdded: '#4ec9b0',
+    toolDiffRemoved: '#f44747',
+    toolDiffContext: '#6a6a6a',
+    syntaxComment: '#6a9955',
+    syntaxKeyword: '#569cd6',
+    syntaxFunction: '#dcdcaa',
+    syntaxVariable: '#d4d4d4',
+    syntaxString: '#ce9178',
+    syntaxNumber: '#b5cea8',
+    syntaxType: '#4ec9b0',
+    syntaxOperator: '#d4d4d4',
+    syntaxPunctuation: '#d4d4d4',
+    thinkingOff: '#6a6a6a',
+    thinkingMinimal: '#6a6a6a',
+    thinkingLow: '#569cd6',
+    thinkingMedium: '#007acc',
+    thinkingHigh: '#ce9178',
+    thinkingXhigh: '#f44747',
+    bashMode: '#dcdcaa',
 };
+
+function __pi_theme_ansi_prefix(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return '\x1b[38;2;' + r + ';' + g + ';' + b + 'm';
+}
+
+const __pi_extension_theme_template = {
+    fg: (color, text) => {
+        const name = String(color === undefined || color === null ? '' : color);
+        const hex = Object.prototype.hasOwnProperty.call(__pi_theme_palette, name)
+            ? __pi_theme_palette[name]
+            : undefined;
+        if (!hex) throw new Error('Unknown theme color: ' + name);
+        const body = String(text === undefined || text === null ? '' : text);
+        return __pi_theme_ansi_prefix(hex) + body + '\x1b[39m';
+    },
+    bold: (text) => '\x1b[1m' + String(text === undefined || text === null ? '' : text) + '\x1b[22m',
+    strikethrough: (text) =>
+        '\x1b[9m' + String(text === undefined || text === null ? '' : text) + '\x1b[29m',
+};
+
+const __pi_no_ui_detail =
+    'no-op in this mode. hasUI is false in print and RPC mode, and the host has no UI sender ' +
+    '(extension_manager_impl.rs:4027), so UI calls are discarded rather than reported.';
+
+const __pi_dialog_opts_detail =
+    'the options argument is dropped. Pi passes ExtensionUIDialogOptions (types.ts:104-110); ' +
+    'KESA sends only the leading arguments.';
+
+// The effect-style members swallowed every rejection, so a mode with no UI sender
+// looked identical to a working one.
+function __pi_ui_effect_failed(err) {
+    const reason = err && err.message ? String(err.message) : String(err);
+    __pi_declare_unsupported('ui', __pi_no_ui_detail + ' Host said: ' + reason);
+}
 
 function __pi_build_extension_ui_template(hasUI) {
     const toUiText = (value) => {
@@ -20893,21 +21038,43 @@ function __pi_build_extension_ui_template(hasUI) {
         return String(value === undefined || value === null ? '' : value);
     };
     return {
-        select: (title, options) => {
-            if (!hasUI) return Promise.resolve(undefined);
+        select: (title, options, opts) => {
+            if (opts !== undefined && opts !== null) {
+                __pi_declare_unsupported('ui.select', __pi_dialog_opts_detail);
+            }
+            if (!hasUI) {
+                __pi_declare_unsupported('ui.select', __pi_no_ui_detail);
+                return Promise.resolve(undefined);
+            }
             const list = Array.isArray(options) ? options : [];
             const mapped = list.map((v) => String(v));
             return pi.ui('select', { title: String(title === undefined || title === null ? '' : title), options: mapped });
         },
-        confirm: (title, message) => {
-            if (!hasUI) return Promise.resolve(false);
+        confirm: (title, message, opts) => {
+            if (opts !== undefined && opts !== null) {
+                __pi_declare_unsupported('ui.confirm', __pi_dialog_opts_detail);
+            }
+            if (!hasUI) {
+                __pi_declare_unsupported('ui.confirm', __pi_no_ui_detail);
+                return Promise.resolve(false);
+            }
             return pi.ui('confirm', {
                 title: String(title === undefined || title === null ? '' : title),
                 message: String(message === undefined || message === null ? '' : message),
             });
         },
         input: (title, placeholder, def) => {
-            if (!hasUI) return Promise.resolve(undefined);
+            if (def !== undefined && def !== null) {
+                __pi_declare_unsupported(
+                    'ui.input',
+                    'the third argument is read as a default value, not as ' +
+                        'ExtensionUIDialogOptions (types.ts:110).',
+                );
+            }
+            if (!hasUI) {
+                __pi_declare_unsupported('ui.input', __pi_no_ui_detail);
+                return Promise.resolve(undefined);
+            }
             // Legacy extensions typically call input(title, placeholder?, default?)
             let payloadDefault = def;
             let payloadPlaceholder = placeholder;
@@ -20939,7 +21106,7 @@ function __pi_build_extension_ui_template(hasUI) {
                 payload.level = notifyType;
                 payload.notifyType = notifyType; // legacy field
             }
-            void pi.ui('notify', payload).catch(() => {});
+            void pi.ui('notify', payload).catch(__pi_ui_effect_failed);
         },
         setStatus: (statusKey, statusText) => {
             const key = String(statusKey === undefined || statusKey === null ? '' : statusKey);
@@ -20948,22 +21115,44 @@ function __pi_build_extension_ui_template(hasUI) {
                 statusKey: key,
                 statusText: text,
                 text: text, // compat: some UI surfaces only consume `text`
-            }).catch(() => {});
+            }).catch(__pi_ui_effect_failed);
         },
         setFooter: (text) => {
+            if (typeof text === 'function') {
+                __pi_declare_unsupported(
+                    'ui.setFooter',
+                    'ignored. Pi takes a component factory (types.ts:135) and has no string form; ' +
+                        'KESA has no component boundary, so the footer is unchanged rather than ' +
+                        'painted with the source of your function. Use ui.setStatus(key, text).',
+                );
+                return;
+            }
             const value = toUiText(text);
             void pi.ui('setStatus', {
                 statusKey: 'footer',
                 statusText: value,
                 text: value,
-            }).catch(() => {});
+            }).catch(__pi_ui_effect_failed);
         },
         setHeader: (text) => {
+            if (typeof text === 'function') {
+                __pi_declare_unsupported(
+                    'ui.setHeader',
+                    'ignored. Pi takes a component factory (types.ts:142) for a header above the ' +
+                        'chat; KESA has no component boundary.',
+                );
+                return;
+            }
+            __pi_declare_unsupported(
+                'ui.setHeader',
+                'sets the terminal window title, not a header above the chat. It is the same ' +
+                    'surface as ui.setTitle.',
+            );
             const value = toUiText(text);
             void pi.ui('setTitle', {
                 title: value,
                 text: value,
-            }).catch(() => {});
+            }).catch(__pi_ui_effect_failed);
         },
         setWorkingMessage: (text) => {
             const value = toUiText(text);
@@ -20971,31 +21160,54 @@ function __pi_build_extension_ui_template(hasUI) {
                 statusKey: 'working',
                 statusText: value,
                 text: value,
-            }).catch(() => {});
+            }).catch(__pi_ui_effect_failed);
         },
-        setWidget: (widgetKey, lines) => {
-            if (!hasUI) return;
+        setWidget: (widgetKey, lines, options) => {
+            if (typeof lines === 'function') {
+                __pi_declare_unsupported(
+                    'ui.setWidget(factory)',
+                    'ignored. The component-factory overload (types.ts:123) needs a component ' +
+                        'boundary KESA does not have. The string[] overload works.',
+                );
+                return;
+            }
+            if (options !== undefined && options !== null) {
+                __pi_declare_unsupported(
+                    'ui.setWidget(options)',
+                    'dropped, not merely unrendered: placement above or below the editor is never ' +
+                        'sent to the host.',
+                );
+            }
+            if (!hasUI) {
+                __pi_declare_unsupported('ui.setWidget', __pi_no_ui_detail);
+                return;
+            }
             const payload = { widgetKey: String(widgetKey === undefined || widgetKey === null ? '' : widgetKey) };
             if (Array.isArray(lines)) {
                 payload.lines = lines.map((v) => String(v));
                 payload.widgetLines = payload.lines; // compat with pi-mono RPC naming
                 payload.content = payload.lines.join('\n'); // compat: some UI surfaces expect a single string
             }
-            void pi.ui('setWidget', payload).catch(() => {});
+            void pi.ui('setWidget', payload).catch(__pi_ui_effect_failed);
         },
         setTitle: (title) => {
             void pi.ui('setTitle', {
                 title: String(title === undefined || title === null ? '' : title),
-            }).catch(() => {});
+            }).catch(__pi_ui_effect_failed);
         },
         setEditorText: (text) => {
             void pi.ui('set_editor_text', {
                 text: String(text === undefined || text === null ? '' : text),
-            }).catch(() => {});
+            }).catch(__pi_ui_effect_failed);
         },
+        // Pi returns a string, not a promise (types.ts:168). An extension doing
+        // .length on a promise gets undefined, so this cannot be async.
         getEditorText: () => {
-            if (!hasUI) return Promise.resolve('');
-            return pi.ui('getEditorText', {});
+            if (!hasUI) return '';
+            if (typeof globalThis.__pi_host_editor_text !== 'function') {
+                throw new Error('getEditorText: host does not expose the editor');
+            }
+            return String(globalThis.__pi_host_editor_text());
         },
         custom: async (componentFactory, options) => {
             if (!hasUI) return undefined;
@@ -24400,10 +24612,10 @@ mod tests {
                 sha256_hex(source.as_bytes())
             );
         }
-        assert_eq!(bridge.len(), 193_382);
+        assert_eq!(bridge.len(), 200_651);
         assert_eq!(
             sha256_hex(bridge.as_bytes()),
-            "760efaf8eebb760c8ceb38f78c6f6356ac4beb5f0eb6a3fbf1a5eee1bd1aac24"
+            "a99b15b4195198148e115a772139a83710eafcb297971bd8315b80616e6dba83"
         );
 
         for (name, expected_len, expected_sha256) in [
@@ -27492,6 +27704,106 @@ export const bundled = globalThis.__doomWadFinderProbe.bundled;
 
             let stats = runtime.tick().await.expect("tick");
             assert!(stats.ran_macrotask);
+        });
+    }
+
+    #[test]
+    fn extension_theme_emits_ansi_like_pi_rather_than_bare_text() {
+        futures::executor::block_on(async {
+            let runtime = PiJsRuntime::new().await.expect("create runtime");
+            runtime
+                .eval(&privileged_test_script(
+                    &runtime,
+                    r"
+                    const ui = __pi_make_extension_ui(__pi_test_secret, true);
+                    const painted = ui.theme.fg('accent', 'hi');
+                    if (painted === 'hi') throw new Error('fg is still the identity function');
+                    if (!painted.startsWith('\x1b[38;2;')) throw new Error('fg: ' + JSON.stringify(painted));
+                    if (!painted.endsWith('\x1b[39m')) throw new Error('fg reset: ' + JSON.stringify(painted));
+                    if (ui.theme.bold('hi') !== '\x1b[1mhi\x1b[22m') throw new Error('bold');
+                    if (ui.theme.strikethrough('hi') !== '\x1b[9mhi\x1b[29m') throw new Error('strikethrough');
+
+                    let threw = false;
+                    try { ui.theme.fg('notAColor', 'hi'); } catch (e) { threw = true; }
+                    if (!threw) throw new Error('unknown colour must throw like Pi');
+                    ",
+                ))
+                .await
+                .expect("theme returns ansi");
+        });
+    }
+
+    #[test]
+    fn get_editor_text_answers_with_a_string_not_a_promise() {
+        futures::executor::block_on(async {
+            let runtime = PiJsRuntime::new().await.expect("create runtime");
+            runtime.set_editor_text("fix the parser");
+
+            runtime
+                .eval(&privileged_test_script(
+                    &runtime,
+                    r"
+                    const ui = __pi_make_extension_ui(__pi_test_secret, true);
+                    const text = ui.getEditorText();
+                    if (typeof text !== 'string') throw new Error('typeof ' + typeof text);
+                    if (text.length !== 14) throw new Error('length ' + text.length);
+                    ",
+                ))
+                .await
+                .expect("editor text is synchronous");
+        });
+    }
+
+    #[test]
+    fn an_accepted_but_unhonoured_surface_is_declared_on_the_snapshot() {
+        futures::executor::block_on(async {
+            let runtime = PiJsRuntime::new().await.expect("create runtime");
+            runtime
+                .eval(&privileged_test_script(
+                    &runtime,
+                    r"
+                    __pi_begin_extension(__pi_test_secret, 'demo', { name: 'demo' });
+                    pi.registerMessageRenderer('note', () => undefined);
+                    const ui = __pi_make_extension_ui(__pi_test_secret, true);
+                    ui.setFooter((_tui, _theme) => ({ render: () => ['custom'] }));
+                    __pi_end_extension(__pi_test_secret);
+
+                    const snapshot = __pi_snapshot_extensions(__pi_test_secret);
+                    const demo = snapshot.find((entry) => entry.id === 'demo');
+                    if (!demo) throw new Error('extension missing from snapshot');
+                    const surfaces = demo.unsupported.map((entry) => entry.surface).sort();
+                    if (surfaces.join(',') !== 'registerMessageRenderer,ui.setFooter') {
+                        throw new Error('declared: ' + JSON.stringify(surfaces));
+                    }
+                    if (demo.message_renderers.length !== 1) {
+                        throw new Error('the renderer should still register, just not silently');
+                    }
+                    ",
+                ))
+                .await
+                .expect("unsupported surfaces are declared");
+        });
+    }
+
+    #[test]
+    fn set_footer_with_a_factory_is_ignored_rather_than_stringified() {
+        futures::executor::block_on(async {
+            let runtime = PiJsRuntime::new().await.expect("create runtime");
+            runtime
+                .eval(&privileged_test_script(
+                    &runtime,
+                    r"
+                    const ui = __pi_make_extension_ui(__pi_test_secret, true);
+                    ui.setFooter((_tui, _theme) => ({ render: () => ['custom'] }));
+                    ",
+                ))
+                .await
+                .expect("setFooter with a factory");
+
+            assert!(
+                runtime.drain_hostcall_requests().is_empty(),
+                "a factory footer must not reach the host as a stringified status line"
+            );
         });
     }
 
