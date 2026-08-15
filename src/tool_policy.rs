@@ -420,6 +420,12 @@ fn mode_default(mode: PermissionMode, tool_name: &str, effects: ToolEffects) -> 
         ))
     };
 
+    if effects.changes_permissions() {
+        return match mode {
+            PermissionMode::Plan => Decision::Ask,
+            _ => denied("only applies while the session is in plan mode"),
+        };
+    }
     if effects.processes() {
         return match mode {
             PermissionMode::Plan | PermissionMode::ReadOnly => denied("starts a process"),
@@ -486,6 +492,28 @@ mod tests {
             PermissionMode::AcceptEdits.indicator(),
             Some("\u{23f5}\u{23f5} accept edits on")
         );
+    }
+
+    /// The only decision that reaches the approval modal from plan mode. Every
+    /// other row of the table denies there, so a mode-exit tool that inherited
+    /// one of them would be unreachable.
+    #[test]
+    fn leaving_plan_mode_asks_in_plan_mode_and_is_denied_everywhere_else() {
+        let effects = ToolEffects::permission();
+        let decide =
+            |mode| policy(&[], &[], &[], mode).decide("exit_plan_mode", effects, &json!({}));
+
+        assert_eq!(decide(PermissionMode::Plan), Decision::Ask);
+        for mode in [
+            PermissionMode::Default,
+            PermissionMode::AcceptEdits,
+            PermissionMode::ReadOnly,
+        ] {
+            assert!(
+                matches!(decide(mode), Decision::Deny { .. }),
+                "{mode} must not offer an exit from plan mode"
+            );
+        }
     }
 
     #[test]

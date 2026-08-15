@@ -6,6 +6,7 @@
 //! locally by the agent loop. Each tool returns structured [`ContentBlock`] output suitable for
 //! rendering in the TUI and for inclusion in provider messages as tool results.
 
+use crate::agent::SharedToolPolicy;
 use crate::agent_cx::AgentCx;
 use crate::config::Config;
 use crate::error::{Error, Result};
@@ -15,6 +16,7 @@ use crate::platform::{
     EffectiveModeAccessContext, UNIX_ACCESS_READ, UNIX_ACCESS_SEARCH, UNIX_ACCESS_WRITE,
     ensure_effective_mode_access,
 };
+use crate::tool_policy::PermissionMode;
 use asupersync::io::{AsyncRead, AsyncReadExt, AsyncWriteExt, ReadBuf, SeekFrom};
 use asupersync::time::{sleep, wall_now};
 use async_trait::async_trait;
@@ -49,7 +51,8 @@ impl ToolEffects {
     const APPEND: u8 = 1 << 2;
     const NETWORK: u8 = 1 << 3;
     const PROCESS: u8 = 1 << 4;
-    const BARRIER: u8 = Self::WRITE | Self::APPEND | Self::PROCESS;
+    const PERMISSION: u8 = 1 << 5;
+    const BARRIER: u8 = Self::WRITE | Self::APPEND | Self::PROCESS | Self::PERMISSION;
 
     /// Tool reads local state without mutating it.
     #[must_use]
@@ -82,6 +85,15 @@ impl ToolEffects {
     pub const fn process() -> Self {
         Self {
             bits: Self::PROCESS,
+        }
+    }
+
+    /// Tool changes the session's permission mode. A barrier: every other call
+    /// in the batch was decided under the mode this one replaces.
+    #[must_use]
+    pub const fn permission() -> Self {
+        Self {
+            bits: Self::PERMISSION,
         }
     }
 
@@ -123,10 +135,16 @@ impl ToolEffects {
         self.bits & Self::PROCESS != 0
     }
 
+    /// Whether this declaration changes the session's permission mode.
+    #[must_use]
+    pub const fn changes_permissions(self) -> bool {
+        self.bits & Self::PERMISSION != 0
+    }
+
     /// Stable labels for machine-readable scheduling evidence.
     #[must_use]
     pub fn labels(self) -> Vec<&'static str> {
-        let mut labels = Vec::with_capacity(5);
+        let mut labels = Vec::with_capacity(6);
         if self.reads() {
             labels.push("read");
         }
@@ -141,6 +159,9 @@ impl ToolEffects {
         }
         if self.processes() {
             labels.push("process");
+        }
+        if self.changes_permissions() {
+            labels.push("permission");
         }
         labels
     }
@@ -5031,6 +5052,113 @@ pub(crate) fn resize_image_if_needed(
 }
 
 // ============================================================================
+// Exit Plan Mode Tool
+// ============================================================================
+
+/// The live policy `exit_plan_mode` flips, bound after the registry is built
+/// because `ToolPolicy` is assembled from flags the registry never sees.
+#[derive(Clone, Default)]
+pub struct PermissionModeGate {
+    policy: Arc<OnceLock<SharedToolPolicy>>,
+}
+
+impl PermissionModeGate {
+    fn bind(&self, policy: SharedToolPolicy) {
+        let _ = self.policy.set(policy);
+    }
+
+    fn leave_plan_mode(&self) -> Result<PermissionMode> {
+        let policy = self.policy.get().ok_or_else(|| {
+            Error::tool(
+                "exit_plan_mode",
+                "this session has no permission policy, so there is no plan mode to leave",
+            )
+        })?;
+        let mut policy = policy
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if policy.mode() != PermissionMode::Plan {
+            return Err(Error::tool(
+                "exit_plan_mode",
+                format!("the session is in {} mode, not plan mode", policy.mode()),
+            ));
+        }
+        policy.set_mode(PermissionMode::Default);
+        Ok(PermissionMode::Default)
+    }
+}
+
+/// Lets the agent propose leaving plan mode. Approving the call is the exit;
+/// rejecting it leaves the mode alone and hands the reason back as context.
+pub struct ExitPlanModeTool {
+    gate: PermissionModeGate,
+}
+
+#[derive(Debug, Deserialize)]
+struct ExitPlanModeInput {
+    plan: String,
+}
+
+#[async_trait]
+#[allow(clippy::unnecessary_literal_bound)]
+impl Tool for ExitPlanModeTool {
+    fn name(&self) -> &str {
+        "exit_plan_mode"
+    }
+    fn label(&self) -> &str {
+        "exit plan mode"
+    }
+    fn description(&self) -> &str {
+        "Ask the user to approve your plan and leave plan mode. Only usable while the session is in plan mode, where every file-modifying tool is denied. Write the plan out in your reply first, then call this with the same plan: approval switches the session to default mode so you can carry it out, rejection leaves you in plan mode with the user's reason so you can revise."
+    }
+
+    fn parameters(&self) -> serde_json::Value {
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "plan": {
+                    "type": "string",
+                    "description": "The plan you want approved, in markdown"
+                }
+            },
+            "required": ["plan"]
+        })
+    }
+
+    fn effects(&self) -> ToolEffects {
+        ToolEffects::permission()
+    }
+
+    async fn execute(
+        &self,
+        _tool_call_id: &str,
+        input: serde_json::Value,
+        _on_update: Option<Box<dyn Fn(ToolUpdate) + Send + Sync>>,
+    ) -> Result<ToolOutput> {
+        let input: ExitPlanModeInput =
+            serde_json::from_value(input).map_err(|e| Error::validation(e.to_string()))?;
+        if input.plan.trim().is_empty() {
+            return Err(Error::validation(
+                "exit_plan_mode needs the plan the user just approved",
+            ));
+        }
+
+        let mode = self.gate.leave_plan_mode()?;
+
+        Ok(ToolOutput {
+            content: vec![ContentBlock::Text(TextContent::new(format!(
+                "Plan approved. Permission mode is now {mode}; carry the plan out."
+            )))],
+            details: Some(serde_json::json!({
+                "permissionMode": mode.to_string(),
+                "plan": input.plan,
+            })),
+            is_error: false,
+        })
+    }
+}
+
+// ============================================================================
 // Tool Registry
 // ============================================================================
 
@@ -5041,11 +5169,13 @@ pub(crate) fn resize_image_if_needed(
 /// - Enumerating tool schemas when building provider requests.
 pub struct ToolRegistry {
     tools: Vec<Box<dyn Tool>>,
+    permission_mode: PermissionModeGate,
 }
 
 impl ToolRegistry {
     /// Create a new registry with the specified tools enabled.
     pub fn new(enabled: &[&str], cwd: &Path, config: Option<&Config>) -> Self {
+        let permission_mode = PermissionModeGate::default();
         let mut tools: Vec<Box<dyn Tool>> = Vec::new();
         let shell_path = config.and_then(|c| c.shell_path.clone());
         let shell_command_prefix = config.and_then(|c| c.shell_command_prefix.clone());
@@ -5096,16 +5226,31 @@ impl ToolRegistry {
                 "todo" => tools.push(Box::new(crate::todo::TodoTool)),
                 "web_fetch" => tools.push(Box::new(crate::web_tools::WebFetchTool)),
                 "web_search" => tools.push(Box::new(crate::web_tools::WebSearchTool)),
+                "exit_plan_mode" => tools.push(Box::new(ExitPlanModeTool {
+                    gate: permission_mode.clone(),
+                })),
                 _ => {}
             }
         }
 
-        Self { tools }
+        Self {
+            tools,
+            permission_mode,
+        }
     }
 
     /// Construct a registry from a pre-built tool list.
     pub fn from_tools(tools: Vec<Box<dyn Tool>>) -> Self {
-        Self { tools }
+        Self {
+            tools,
+            permission_mode: PermissionModeGate::default(),
+        }
+    }
+
+    /// Hand `exit_plan_mode` the policy it flips. Without this the tool is
+    /// registered and inert, so bind it wherever the policy is built.
+    pub fn bind_permission_mode(&self, policy: SharedToolPolicy) {
+        self.permission_mode.bind(policy);
     }
 
     /// Convert the registry into the owned tool list.
@@ -13583,6 +13728,50 @@ mod tests {
             ),
             "write, edit, and bash must not consult or populate the read-only output cache"
         );
+    }
+
+    #[test]
+    fn approved_exit_plan_mode_moves_the_session_out_of_plan_mode() {
+        asupersync::test_utils::run_test(|| async {
+            let mut policy = crate::tool_policy::ToolPolicy::default();
+            policy.set_mode(PermissionMode::Plan);
+            let policy = Arc::new(std::sync::RwLock::new(policy));
+
+            let registry = ToolRegistry::new(&["exit_plan_mode"], Path::new("."), None);
+            registry.bind_permission_mode(Arc::clone(&policy));
+            let tool = registry.get("exit_plan_mode").expect("tool is registered");
+
+            tool.execute("call-1", serde_json::json!({ "plan": "ship it" }), None)
+                .await
+                .expect("approved exit leaves plan mode");
+            assert_eq!(
+                policy.read().expect("policy lock").mode(),
+                PermissionMode::Default
+            );
+
+            let repeat = tool
+                .execute("call-2", serde_json::json!({ "plan": "ship it" }), None)
+                .await
+                .expect_err("there is no second plan mode to leave");
+            assert!(repeat.to_string().contains("not plan mode"), "{repeat}");
+        });
+    }
+
+    #[test]
+    fn exit_plan_mode_without_a_bound_policy_reports_it_instead_of_claiming_success() {
+        asupersync::test_utils::run_test(|| async {
+            let registry = ToolRegistry::new(&["exit_plan_mode"], Path::new("."), None);
+            let error = registry
+                .get("exit_plan_mode")
+                .expect("tool is registered")
+                .execute("call-1", serde_json::json!({ "plan": "ship it" }), None)
+                .await
+                .expect_err("an unbound gate cannot change any mode");
+            assert!(
+                error.to_string().contains("no permission policy"),
+                "{error}"
+            );
+        });
     }
 
     #[test]
