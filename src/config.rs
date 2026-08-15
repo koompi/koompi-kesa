@@ -157,6 +157,17 @@ pub struct Config {
     #[serde(alias = "extensionRisk")]
     pub extension_risk: Option<ExtensionRiskConfig>,
 
+    // Workspace roots
+    /// Directories outside the working directory that the file tools may read
+    /// and sandboxed commands may reach. Same set as `--add-dir`.
+    ///
+    /// Read from the global settings file only. `.kesa/settings.json` is a
+    /// file a cloned repository carries, and a repository that can name its
+    /// own extra roots can widen the agent's read scope over the machine it
+    /// was cloned onto. Same reasoning as [`drop_untrusted_project_hooks`].
+    #[serde(alias = "additionalDirectories", alias = "addDir")]
+    pub additional_directories: Option<Vec<String>>,
+
     // Tool Permissions
     pub permissions: Option<PermissionsConfig>,
 
@@ -525,6 +536,7 @@ impl Config {
         let global = Self::load_from_path(&global_dir.join("settings.json"))?;
         let mut project = Self::load_from_path(&Self::project_dir_in(&cwd).join("settings.json"))?;
         drop_untrusted_project_hooks(global.hooks.as_ref(), &mut project.hooks);
+        drop_project_workspace_roots(&mut project.additional_directories);
         let merged = Self::merge(global, project);
         merged.emit_queue_mode_diagnostics();
         Ok(merged)
@@ -636,6 +648,12 @@ impl Config {
 
             // Runtime Risk Controller
             extension_risk: merge_extension_risk(base.extension_risk, other.extension_risk),
+
+            // Workspace roots
+            additional_directories: merge_rule_list(
+                base.additional_directories,
+                other.additional_directories,
+            ),
 
             // Tool Permissions
             permissions: merge_permissions(base.permissions, other.permissions),
@@ -1071,6 +1089,146 @@ impl Config {
 #[must_use]
 pub fn home_dir() -> PathBuf {
     dirs::home_dir().unwrap_or_else(|| PathBuf::from("."))
+}
+
+/// A root widens what both enforcement layers allow, and the project settings
+/// file ships inside the repository. `--add-dir` is how a project declares one
+/// per run; the global settings file is how a user declares one for good.
+pub(crate) fn drop_project_workspace_roots(project: &mut Option<Vec<String>>) {
+    let Some(dirs) = project else { return };
+    if !dirs.is_empty() {
+        tracing::warn!(
+            "ignoring additionalDirectories from the project settings file; declare extra roots in the global settings file or pass --add-dir"
+        );
+    }
+    *project = None;
+}
+
+/// The part of the filesystem the agent may reach, resolved once at startup.
+///
+/// KESA enforces this twice from separate code: the `allowed_roots` checks in
+/// [`crate::tools`] constrain the file tools, and the landlock ruleset in
+/// [`crate::sandbox`] constrains bash. Both read this one value, because a
+/// root fed to one layer and not the other makes `read` and `bash` disagree
+/// about the filesystem in the permissive direction.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WorkspaceRoots {
+    workspace: PathBuf,
+    additional: Vec<PathBuf>,
+}
+
+impl WorkspaceRoots {
+    #[must_use]
+    pub fn for_workspace(workspace: &Path) -> Self {
+        Self {
+            workspace: crate::extensions::safe_canonicalize(workspace),
+            additional: Vec::new(),
+        }
+    }
+
+    /// Resolve `requested` against `workspace`. Returns the roots and a
+    /// rejection reason per directory that could not become one.
+    #[must_use]
+    pub fn resolve(workspace: &Path, requested: &[PathBuf]) -> (Self, Vec<String>) {
+        let mut roots = Self::for_workspace(workspace);
+        let rejected = roots.extend(requested);
+        (roots, rejected)
+    }
+
+    /// Every root is canonicalised before it is stored, and every comparison
+    /// runs against canonical paths. A lexical prefix test would accept
+    /// `<workspace>/link/passwd` where `link` points at `/etc`.
+    pub fn extend(&mut self, requested: &[PathBuf]) -> Vec<String> {
+        let mut rejected = Vec::new();
+        for dir in requested {
+            match std::fs::canonicalize(dir) {
+                Ok(canonical) if canonical.is_dir() => {
+                    if !self.contains(&canonical) {
+                        self.additional.push(canonical);
+                    }
+                }
+                Ok(canonical) => rejected.push(format!(
+                    "{} is not a directory (resolved: {})",
+                    dir.display(),
+                    canonical.display()
+                )),
+                Err(err) => rejected.push(format!("{}: {err}", dir.display())),
+            }
+        }
+        rejected
+    }
+
+    #[must_use]
+    pub fn workspace(&self) -> &Path {
+        &self.workspace
+    }
+
+    /// The roots beyond the workspace. Read access only: nothing here widens
+    /// what may be written.
+    #[must_use]
+    pub fn additional(&self) -> &[PathBuf] {
+        &self.additional
+    }
+
+    /// Workspace first, then the extra roots.
+    #[must_use]
+    pub fn read_roots(&self) -> Vec<PathBuf> {
+        let mut roots = Vec::with_capacity(self.additional.len() + 1);
+        roots.push(self.workspace.clone());
+        roots.extend(self.additional.iter().cloned());
+        roots
+    }
+
+    /// `canonical` must already be canonical; callers resolve symlinks first.
+    #[must_use]
+    pub fn contains(&self, canonical: &Path) -> bool {
+        self.read_roots()
+            .iter()
+            .any(|root| canonical.starts_with(root))
+    }
+}
+
+static WORKSPACE_ROOTS: std::sync::RwLock<Option<WorkspaceRoots>> = std::sync::RwLock::new(None);
+
+/// Install the process-wide roots. Called from CLI parsing, which is the one
+/// point both the agent process and the sandbox trampoline pass through.
+pub fn configure_workspace_roots(roots: WorkspaceRoots) {
+    *WORKSPACE_ROOTS.write().expect("workspace roots lock") = Some(roots);
+}
+
+/// Unconfigured means the working directory and nothing else, so a library
+/// embedder that never called [`configure_workspace_roots`] keeps the scope it
+/// had before extra roots existed.
+#[must_use]
+pub fn workspace_roots() -> WorkspaceRoots {
+    WORKSPACE_ROOTS
+        .read()
+        .expect("workspace roots lock")
+        .clone()
+        .unwrap_or_else(|| default_workspace_roots().clone())
+}
+
+fn default_workspace_roots() -> &'static WorkspaceRoots {
+    static DEFAULT: OnceLock<WorkspaceRoots> = OnceLock::new();
+    DEFAULT.get_or_init(|| {
+        WorkspaceRoots::for_workspace(
+            &std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
+        )
+    })
+}
+
+/// Extra roots declared in the global settings file, tilde expanded.
+#[must_use]
+pub fn configured_workspace_roots(config: &Config) -> Vec<PathBuf> {
+    config
+        .additional_directories
+        .iter()
+        .flatten()
+        .map(|dir| match dir.strip_prefix("~/") {
+            Some(rest) => home_dir().join(rest),
+            None => PathBuf::from(dir),
+        })
+        .collect()
 }
 
 fn warn_legacy_project_dir_once(legacy: &Path) {

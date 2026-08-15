@@ -105,19 +105,23 @@ mod imp {
         }
     }
 
-    pub fn restrict(workspace: &Path, extra_writable: &[PathBuf]) -> Result<(), String> {
+    pub fn restrict(
+        workspace: &Path,
+        extra_writable: &[PathBuf],
+        extra_readable: &[PathBuf],
+    ) -> Result<(), String> {
         let mut writable: Vec<PathBuf> = SYSTEM_WRITE_PATHS.iter().map(PathBuf::from).collect();
         writable.push(workspace.to_path_buf());
         writable.extend(extra_writable.iter().cloned());
+
+        let mut readable: Vec<PathBuf> = SYSTEM_READ_PATHS.iter().map(PathBuf::from).collect();
+        readable.extend(extra_readable.iter().cloned());
 
         let build = || -> Result<RulesetStatus, landlock::RulesetError> {
             Ok(Ruleset::default()
                 .handle_access(AccessFs::from_all(FS_ABI))?
                 .create()?
-                .add_rules(path_beneath_rules(
-                    SYSTEM_READ_PATHS,
-                    AccessFs::from_read(FS_ABI),
-                ))?
+                .add_rules(path_beneath_rules(&readable, AccessFs::from_read(FS_ABI)))?
                 .add_rules(path_beneath_rules(&writable, AccessFs::from_all(FS_ABI)))?
                 .restrict_self()?
                 .ruleset)
@@ -144,7 +148,11 @@ mod imp {
         ))
     }
 
-    pub fn restrict(_workspace: &Path, _extra_writable: &[PathBuf]) -> Result<(), String> {
+    pub fn restrict(
+        _workspace: &Path,
+        _extra_writable: &[PathBuf],
+        _extra_readable: &[PathBuf],
+    ) -> Result<(), String> {
         Err(availability().describe())
     }
 }
@@ -165,7 +173,10 @@ pub fn restrict_self_and_exec(
         return Err("no command given to sandbox".to_string());
     };
 
-    imp::restrict(workspace, extra_writable)?;
+    // The same value the file tools read. This process parsed the --add-dir
+    // arguments `wrap_command` put on its own command line.
+    let roots = crate::config::workspace_roots();
+    imp::restrict(workspace, extra_writable, roots.additional())?;
 
     #[cfg(unix)]
     {
@@ -189,11 +200,17 @@ pub fn restrict_self_and_exec(
 /// Returns the command untouched when the sandbox is off. Returns an error,
 /// rather than an unsandboxed command, when the sandbox is on but unavailable.
 pub fn wrap_command(command: Command, workspace: &Path) -> std::io::Result<Command> {
-    wrap_command_with(&settings(), command, workspace)
+    wrap_command_with(
+        &settings(),
+        &crate::config::workspace_roots(),
+        command,
+        workspace,
+    )
 }
 
-fn wrap_command_with(
+pub(crate) fn wrap_command_with(
     settings: &SandboxSettings,
+    roots: &crate::config::WorkspaceRoots,
     command: Command,
     workspace: &Path,
 ) -> std::io::Result<Command> {
@@ -214,6 +231,11 @@ fn wrap_command_with(
         .unwrap_or_else(|_| workspace.to_path_buf());
     let exe = std::env::current_exe()?;
     let mut wrapped = Command::new(exe);
+    // Root flags precede the subcommand: the trampoline resolves them through
+    // the same CLI parse the agent process did, so both layers see one set.
+    for root in roots.additional() {
+        wrapped.arg("--add-dir").arg(root);
+    }
     wrapped.arg(SANDBOX_EXEC_SUBCOMMAND);
     wrapped.arg("--workspace").arg(&workspace);
     for path in &settings.extra_writable {
@@ -237,7 +259,13 @@ mod tests {
             mode: SandboxMode::Off,
             extra_writable: Vec::new(),
         };
-        let wrapped = wrap_command_with(&settings, command, Path::new("/tmp")).expect("no-op wrap");
+        let wrapped = wrap_command_with(
+            &settings,
+            &crate::config::WorkspaceRoots::for_workspace(Path::new("/tmp")),
+            command,
+            Path::new("/tmp"),
+        )
+        .expect("no-op wrap");
         assert_eq!(wrapped.get_program(), "/bin/echo");
         assert_eq!(wrapped.get_args().count(), 1);
     }
@@ -250,8 +278,13 @@ mod tests {
             mode: SandboxMode::Enforce,
             extra_writable: vec![PathBuf::from("/var/cache")],
         };
-        let wrapped = wrap_command_with(&settings, command, Path::new("/work"))
-            .expect("sandbox is available here");
+        let wrapped = wrap_command_with(
+            &settings,
+            &crate::config::WorkspaceRoots::for_workspace(Path::new("/work")),
+            command,
+            Path::new("/work"),
+        )
+        .expect("sandbox is available here");
         let args: Vec<String> = wrapped
             .get_args()
             .map(|a| a.to_string_lossy().into_owned())

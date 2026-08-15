@@ -3937,7 +3937,12 @@ async fn ensure_parent_allows_creation(path: &Path) -> std::io::Result<()> {
 /// symlinks before the prefix check, so e.g. `~/.kesa/agent/skills/foo/SKILL.md`
 /// pointing at `/etc/passwd` resolves to `/etc/passwd` and fails the prefix
 /// test against both cwd and agent dir.
-fn enforce_read_scope_with_roots(path: &Path, cwd: &Path, agent_dir: &Path) -> Result<PathBuf> {
+fn enforce_read_scope_with_roots(
+    path: &Path,
+    cwd: &Path,
+    agent_dir: &Path,
+    additional_roots: &[PathBuf],
+) -> Result<PathBuf> {
     let canonical_path = crate::extensions::safe_canonicalize(path);
     let canonical_cwd = crate::extensions::safe_canonicalize(cwd);
     if canonical_path.starts_with(&canonical_cwd) {
@@ -3949,19 +3954,53 @@ fn enforce_read_scope_with_roots(path: &Path, cwd: &Path, agent_dir: &Path) -> R
         return Ok(canonical_path);
     }
 
+    if additional_roots
+        .iter()
+        .any(|root| canonical_path.starts_with(root))
+    {
+        return Ok(canonical_path);
+    }
+
     Err(Error::validation(format!(
         "Cannot read outside the working directory or agent dir \
-         (resolved: {}, cwd: {}, agent dir: {})",
+         (resolved: {}, cwd: {}, agent dir: {}, added roots: {})",
         canonical_path.display(),
         canonical_cwd.display(),
         canonical_agent.display(),
+        describe_roots(additional_roots),
     )))
 }
 
-/// Convenience wrapper that pulls the agent dir from the active config.
+fn describe_roots(roots: &[PathBuf]) -> String {
+    if roots.is_empty() {
+        return "none".to_string();
+    }
+    roots
+        .iter()
+        .map(|root| root.display().to_string())
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// Convenience wrapper that pulls the agent dir from the active config and the
+/// added roots from the value the bash sandbox reads.
 fn enforce_read_scope(path: &Path, cwd: &Path) -> Result<PathBuf> {
     let agent_dir = crate::config::Config::global_dir();
-    enforce_read_scope_with_roots(path, cwd, &agent_dir)
+    let roots = crate::config::workspace_roots();
+    enforce_read_scope_with_roots(path, cwd, &agent_dir, roots.additional())
+}
+
+/// Every root a file read may land in: the tool's own cwd, the agent dir, and
+/// the added roots the landlock ruleset is built from.
+fn read_allowed_roots(cwd: &Path) -> Vec<PathBuf> {
+    let mut roots = vec![cwd.to_path_buf(), Config::global_dir()];
+    roots.extend(
+        crate::config::workspace_roots()
+            .additional()
+            .iter()
+            .cloned(),
+    );
+    roots
 }
 
 // ============================================================================
@@ -4711,7 +4750,7 @@ pub fn process_file_arguments(
             continue;
         }
 
-        let allowed_roots = [cwd.to_path_buf(), Config::global_dir()];
+        let allowed_roots = read_allowed_roots(cwd);
         let bytes =
             read_file_capped_within_roots_sync(&absolute_path, &allowed_roots, READ_TOOL_MAX_BYTES)
                 .map_err(|e| {
@@ -5378,7 +5417,7 @@ impl Tool for ReadTool {
         let path = enforce_read_scope(&path, &self.cwd)?;
 
         let path_for_open = path.clone();
-        let allowed_roots = vec![self.cwd.clone(), Config::global_dir()];
+        let allowed_roots = read_allowed_roots(&self.cwd);
         #[cfg(test)]
         let after_open_hook = self.after_open_hook.clone();
         let (std_file, cache_file, meta, cache_deps) =
@@ -14133,7 +14172,7 @@ mod tests {
         std::fs::write(&skill_path, "---\nname: test\n---\n# body\n").unwrap();
 
         let resolved =
-            enforce_read_scope_with_roots(&skill_path, cwd.path(), agent_dir.path()).unwrap();
+            enforce_read_scope_with_roots(&skill_path, cwd.path(), agent_dir.path(), &[]).unwrap();
         assert!(
             resolved.starts_with(
                 agent_dir
@@ -14154,8 +14193,8 @@ mod tests {
         std::fs::write(unrelated.path().join("secret.txt"), "secret").unwrap();
         let secret_path = unrelated.path().join("secret.txt");
 
-        let err =
-            enforce_read_scope_with_roots(&secret_path, cwd.path(), agent_dir.path()).unwrap_err();
+        let err = enforce_read_scope_with_roots(&secret_path, cwd.path(), agent_dir.path(), &[])
+            .unwrap_err();
         let msg = err.to_string();
         assert!(
             msg.contains("outside the working directory") && msg.contains("agent dir"),
@@ -14171,15 +14210,94 @@ mod tests {
         let agent_dir = tempfile::tempdir().unwrap();
         std::fs::write(cwd.path().join("a.txt"), "in cwd").unwrap();
 
-        let resolved =
-            enforce_read_scope_with_roots(&cwd.path().join("a.txt"), cwd.path(), agent_dir.path())
-                .unwrap();
+        let resolved = enforce_read_scope_with_roots(
+            &cwd.path().join("a.txt"),
+            cwd.path(),
+            agent_dir.path(),
+            &[],
+        )
+        .unwrap();
         assert!(
             resolved.starts_with(
                 cwd.path()
                     .canonicalize()
                     .unwrap_or_else(|_| cwd.path().to_path_buf())
             )
+        );
+    }
+
+    /// D08. The file tools and the bash sandbox are separate enforcement code,
+    /// so the check that matters is that one `WorkspaceRoots` value moves both:
+    /// a root the read scope accepts must also reach the landlock trampoline,
+    /// or bash and `read` disagree about the filesystem.
+    #[test]
+    fn added_root_reaches_the_read_scope_and_the_sandbox_argv() {
+        let cwd = tempfile::tempdir().unwrap();
+        let agent_dir = tempfile::tempdir().unwrap();
+        let extra = tempfile::tempdir().unwrap();
+        let file = extra.path().join("shared.txt");
+        std::fs::write(&file, "agreed").unwrap();
+
+        let (roots, rejected) = crate::config::WorkspaceRoots::resolve(
+            cwd.path(),
+            std::slice::from_ref(&extra.path().to_path_buf()),
+        );
+        assert!(rejected.is_empty(), "{rejected:?}");
+
+        enforce_read_scope_with_roots(&file, cwd.path(), agent_dir.path(), roots.additional())
+            .expect("read scope must accept a file under an added root");
+
+        let wrapped = crate::sandbox::wrap_command_with(
+            &crate::sandbox::SandboxSettings {
+                mode: crate::sandbox::SandboxMode::Enforce,
+                extra_writable: Vec::new(),
+            },
+            &roots,
+            std::process::Command::new("/bin/cat"),
+            cwd.path(),
+        )
+        .expect("sandbox is available here");
+        let args: Vec<String> = wrapped
+            .get_args()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect();
+        let canonical_extra = extra.path().canonicalize().unwrap();
+        let position = args
+            .iter()
+            .position(|arg| arg == "--add-dir")
+            .expect("the trampoline must be told about the added root");
+        assert_eq!(args[position + 1], canonical_extra.display().to_string());
+        assert!(
+            position < args.iter().position(|arg| arg == "__sandbox-exec").unwrap(),
+            "root flags belong before the subcommand or clap will not see them"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_scope_rejects_a_symlink_that_leaves_every_root() {
+        let cwd = tempfile::tempdir().unwrap();
+        let agent_dir = tempfile::tempdir().unwrap();
+        let extra = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::fs::write(outside.path().join("secret.txt"), "secret").unwrap();
+
+        std::os::unix::fs::symlink(outside.path(), cwd.path().join("escape")).unwrap();
+
+        let (roots, _) = crate::config::WorkspaceRoots::resolve(
+            cwd.path(),
+            std::slice::from_ref(&extra.path().to_path_buf()),
+        );
+        let err = enforce_read_scope_with_roots(
+            &cwd.path().join("escape").join("secret.txt"),
+            cwd.path(),
+            agent_dir.path(),
+            roots.additional(),
+        )
+        .unwrap_err();
+        assert!(
+            err.to_string().contains("outside the working directory"),
+            "a symlink out of the workspace must not pass the prefix test: {err}"
         );
     }
 
