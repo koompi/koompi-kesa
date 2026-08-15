@@ -1195,6 +1195,7 @@ async fn run(
     }
 
     let mut config = Config::load()?;
+    kesa::sandbox::configure_require_backend(kesa::sandbox::required_by_settings(&config));
     if let Some(theme_spec) = cli.theme.as_deref() {
         // Theme already validated above
         config.theme = Some(theme_spec.to_string());
@@ -3737,6 +3738,12 @@ fn handle_doctor(
         fix,
         only: only_set,
     };
+
+    // doctor returns before the startup config load, and a sandbox row that
+    // ignored the user's own settings file would be the lie it exists to stop
+    kesa::sandbox::configure_require_backend(kesa::sandbox::required_by_settings(
+        &Config::load().unwrap_or_default(),
+    ));
 
     let report = kesa::doctor::run_doctor(&opts)?;
 

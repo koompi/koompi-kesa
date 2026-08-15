@@ -15,6 +15,7 @@ use crate::autocomplete::{
 use crate::extensions::ExtensionUiRequest;
 use crate::model::{ContentBlock, Message as ModelMessage};
 use crate::models::OAuthConfig;
+use crate::sandbox::SandboxStatus;
 use crate::session::SiblingBranch;
 use crate::session_index::{SessionIndex, SessionMeta};
 use crate::session_picker::delete_session_file;
@@ -612,10 +613,14 @@ impl ApprovalAction {
 #[derive(Debug)]
 pub(super) struct ToolApprovalOverlay {
     pub(super) tool_name: String,
-    /// One-line rendering of the arguments, e.g. the command for `bash`.
+    /// One-line rendering of the arguments, e.g. the command for `bash`,
+    /// carrying [`Self::sandbox_warning`] when there is one to carry.
     pub(super) summary: String,
     /// Rule installed when the user picks [`ApprovalAction::Session`].
     pub(super) session_rule: String,
+    /// Sandbox state at the moment the modal opened, for a tool that spawns a
+    /// process. `None` for tools that never leave the agent.
+    pub(super) sandbox: Option<SandboxStatus>,
     pub(super) reply: Option<oneshot::Sender<ToolApprovalDecision>>,
     pub(super) focused: usize,
 }
@@ -623,13 +628,28 @@ pub(super) struct ToolApprovalOverlay {
 impl ToolApprovalOverlay {
     pub(super) fn new(prompt: ToolApprovalPrompt) -> Self {
         let tool_name = prompt.request.tool_name.clone();
-        Self {
+        let mut overlay = Self {
             summary: summarize_tool_arguments(&tool_name, &prompt.request.arguments),
             session_rule: session_rule_for(&tool_name, &prompt.request.arguments),
+            sandbox: spawns_a_process(&tool_name).then(crate::sandbox::status),
             tool_name,
             reply: Some(prompt.reply),
             focused: 0,
+        };
+        if let Some(warning) = overlay.sandbox_warning() {
+            overlay.summary = format!("{}   [{warning}]", overlay.summary);
         }
+        overlay
+    }
+
+    /// Why this command will run unconfined. `None` when it will be confined,
+    /// or when the tool spawns no process for the sandbox to confine.
+    pub(super) fn sandbox_warning(&self) -> Option<String> {
+        let status = self
+            .sandbox
+            .as_ref()
+            .filter(|status| status.is_degraded())?;
+        Some(format!("{}: {}", status.short_label(), status.describe()))
     }
 
     pub(super) const fn focus_next(&mut self) {
@@ -647,23 +667,47 @@ impl ToolApprovalOverlay {
         ApprovalAction::ALL[self.focused]
     }
 
+    /// The words on the buttons, so a user approving a command reads how it
+    /// will run before they read what it does.
     pub(super) fn label(&self, action: ApprovalAction) -> String {
-        match action {
-            ApprovalAction::Once => "Yes".to_string(),
-            ApprovalAction::Session => {
-                format!("Yes, and don't ask again for `{}`", self.session_rule)
+        let confinement = self.sandbox.as_ref().map(|status| {
+            if status.is_enforcing() {
+                "sandboxed"
+            } else {
+                "unconfined"
             }
+        });
+        match action {
+            ApprovalAction::Once => {
+                confinement.map_or_else(|| "Yes".to_string(), |word| format!("Yes, run it {word}"))
+            }
+            ApprovalAction::Session => confinement.map_or_else(
+                || format!("Yes, and don't ask again for `{}`", self.session_rule),
+                |word| {
+                    format!(
+                        "Yes, run it {word}, and don't ask again for `{}`",
+                        self.session_rule
+                    )
+                },
+            ),
             ApprovalAction::Reject => "No, and tell the agent what to do instead".to_string(),
         }
     }
 }
 
+/// Tools whose approval sends a command to a shell, which is the only approval
+/// the sandbox has anything to say about.
+fn spawns_a_process(tool_name: &str) -> bool {
+    matches!(tool_name.to_ascii_lowercase().as_str(), "bash" | "shell")
+}
+
 /// The argument worth showing: the command for a shell, the path for a file
 /// tool, and the whole object only when neither is present.
 fn summarize_tool_arguments(tool_name: &str, arguments: &Value) -> String {
-    let field = match tool_name.to_ascii_lowercase().as_str() {
-        "bash" | "shell" => "command",
-        _ => "path",
+    let field = if spawns_a_process(tool_name) {
+        "command"
+    } else {
+        "path"
     };
     arguments
         .get(field)
@@ -678,7 +722,7 @@ fn summarize_tool_arguments(tool_name: &str, arguments: &Value) -> String {
 /// not also approve `rm`. Everything else grants the whole tool, which is what
 /// a file-edit approval already means in practice.
 fn session_rule_for(tool_name: &str, arguments: &Value) -> String {
-    if !matches!(tool_name.to_ascii_lowercase().as_str(), "bash" | "shell") {
+    if !spawns_a_process(tool_name) {
         return tool_name.to_string();
     }
     let command = arguments
@@ -1451,6 +1495,73 @@ pub(super) fn format_count(n: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn approval_overlay(tool_name: &str, arguments: Value) -> ToolApprovalOverlay {
+        let (reply, _answer) = oneshot::channel();
+        ToolApprovalOverlay::new(ToolApprovalPrompt {
+            request: crate::agent::ToolApprovalRequest {
+                tool_call_id: "call-1".to_string(),
+                tool_name: tool_name.to_string(),
+                arguments,
+            },
+            reply,
+        })
+    }
+
+    /// Approving a command is the one moment the sandbox's state changes an
+    /// outcome, so the modal has to carry it rather than assume the statusline
+    /// was read.
+    #[test]
+    fn the_approval_modal_says_how_the_command_will_run() {
+        let overlay = approval_overlay("bash", serde_json::json!({"command": "ls -la"}));
+        let status = overlay.sandbox.clone().expect("bash spawns a process");
+        println!("{}", overlay.summary);
+        println!("{}", overlay.label(ApprovalAction::Once));
+
+        assert!(overlay.summary.starts_with("ls -la"));
+        let word = if status.is_enforcing() {
+            assert_eq!(overlay.sandbox_warning(), None);
+            assert_eq!(overlay.summary, "ls -la");
+            "sandboxed"
+        } else {
+            let warning = overlay.sandbox_warning().expect("degraded owes a reason");
+            assert!(warning.contains(status.short_label()));
+            assert!(warning.contains(&status.describe()));
+            assert!(overlay.summary.contains(&warning));
+            "unconfined"
+        };
+        for action in [ApprovalAction::Once, ApprovalAction::Session] {
+            assert!(
+                overlay.label(action).contains(word),
+                "{:?} must say how the command runs: {}",
+                action,
+                overlay.label(action)
+            );
+        }
+    }
+
+    /// Constructed rather than probed, because this box's sandbox is enforcing
+    /// and the reason only has to appear when it is not.
+    #[test]
+    fn a_degraded_sandbox_puts_its_reason_in_front_of_the_approval() {
+        let mut overlay = approval_overlay("bash", serde_json::json!({"command": "ls -la"}));
+        overlay.sandbox = Some(SandboxStatus::no_backend("macos"));
+
+        let warning = overlay.sandbox_warning().expect("degraded owes a reason");
+        println!("{warning}");
+        assert!(warning.contains("NO SANDBOX"));
+        assert!(warning.contains("macos"));
+        assert!(overlay.label(ApprovalAction::Once).contains("unconfined"));
+    }
+
+    #[test]
+    fn a_tool_that_spawns_nothing_makes_no_sandbox_claim() {
+        let overlay = approval_overlay("write", serde_json::json!({"path": "src/main.rs"}));
+        assert!(overlay.sandbox.is_none());
+        assert_eq!(overlay.sandbox_warning(), None);
+        assert_eq!(overlay.summary, "src/main.rs");
+        assert_eq!(overlay.label(ApprovalAction::Once), "Yes");
+    }
 
     fn model_item(id: &str) -> AutocompleteItem {
         AutocompleteItem {

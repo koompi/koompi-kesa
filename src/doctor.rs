@@ -571,6 +571,8 @@ fn is_known_config_key(key: &str) -> bool {
             | "check_for_updates"
             | "sessionDurability"
             | "session_durability"
+            | "requireSandbox"
+            | "require_sandbox"
             | "markdown"
             | "queueMode"
     )
@@ -1112,22 +1114,20 @@ fn check_sandbox(status: &SandboxStatus, required: bool, findings: &mut Vec<Find
     findings.push(headline);
 
     if required {
+        let armed_by = crate::sandbox::require_backend_source()
+            .unwrap_or_else(|| crate::env::name("REQUIRE_SANDBOX"));
         if let Some(refusal) = crate::sandbox::unconfined_refusal(status, required) {
             // The row shows the message bash itself returns, so the two cannot
             // drift into saying different things about the same refusal.
             findings.push(
                 Finding::fail(cat, "Sandbox: every command is refused")
                     .with_detail(refusal)
-                    .with_remediation(format!(
-                        "Unset {} to allow unconfined commands",
-                        crate::env::name("REQUIRE_SANDBOX")
-                    )),
+                    .with_remediation(format!("Clear {armed_by} to allow unconfined commands")),
             );
         } else {
             findings.push(
                 Finding::info(cat, "Sandbox: hard refusal armed").with_detail(format!(
-                    "{} is set, so a degraded sandbox will refuse commands rather than run them",
-                    crate::env::name("REQUIRE_SANDBOX")
+                    "{armed_by} is set, so a degraded sandbox will refuse commands rather than run them"
                 )),
             );
         }
@@ -2069,8 +2069,9 @@ export default function(pi) {
 
             /// `is_known_config_key` accepts both camelCase and snake_case forms.
             #[test]
-            fn config_key_pairs(idx in 0..10usize) {
+            fn config_key_pairs(idx in 0..11usize) {
                 let pairs = [
+                    ("requireSandbox", "require_sandbox"),
                     ("hideThinkingBlock", "hide_thinking_block"),
                     ("showHardwareCursor", "show_hardware_cursor"),
                     ("defaultProvider", "default_provider"),
