@@ -1,7 +1,8 @@
 //! Criterion benchmarks for TUI rendering paths (PERF-8).
 //!
-//! Measures `build_conversation_content`, `view`, and message generation
-//! at varying conversation sizes to catch rendering regressions.
+//! Measures `build_conversation_content`, the scroll keystroke path, `view`,
+//! and message generation at varying conversation sizes to catch rendering
+//! regressions.
 #![allow(
     clippy::cast_lossless,
     clippy::format_collect,
@@ -17,10 +18,11 @@ use std::collections::HashMap;
 use std::hint::black_box;
 use std::pin::Pin;
 use std::sync::{Arc, OnceLock};
+use std::time::{Duration, Instant};
 
 use asupersync::channel::mpsc;
 use bubbles::viewport::Viewport;
-use bubbletea::{Message, Model as BubbleteaModel};
+use bubbletea::{KeyMsg, KeyType, Message, Model as BubbleteaModel};
 use futures::stream;
 use kesa::agent::{Agent, AgentConfig};
 use kesa::config::Config;
@@ -270,6 +272,58 @@ fn bench_build_conversation_content(c: &mut Criterion) {
     group.finish();
 }
 
+fn press(app: &mut PiApp, key_type: KeyType) {
+    let cmd = BubbleteaModel::update(app, Message::new(KeyMsg::from_type(key_type)));
+    black_box(&cmd);
+}
+
+/// A loaded transcript parked two pages above the bottom, so paging one page in
+/// either direction stays scrolled away and never re-arms tail-following.
+fn scrolled_bench_app(n: usize) -> PiApp {
+    let mut app = create_bench_app();
+    load_conversation(&mut app, generate_conversation(n));
+    let at_tail = BubbleteaModel::view(&app);
+    press(&mut app, KeyType::PgUp);
+    press(&mut app, KeyType::PgUp);
+    assert_ne!(
+        at_tail,
+        BubbleteaModel::view(&app),
+        "PgUp did not move the transcript; the bench would measure a no-op"
+    );
+    app
+}
+
+/// Time one keystroke per iteration, undoing it untimed so the transcript
+/// oscillates between two fixed offsets instead of saturating at an end.
+fn bench_keystroke(app: &mut PiApp, timed: KeyType, untimed: KeyType, iters: u64) -> Duration {
+    let mut total = Duration::ZERO;
+    for _ in 0..iters {
+        press(app, untimed);
+        let start = Instant::now();
+        press(app, timed);
+        total += start.elapsed();
+    }
+    total
+}
+
+/// Drives the scroll keystroke, not `build_conversation_content` directly, so
+/// reintroducing a per-keystroke transcript rebuild shows up here.
+fn bench_scroll_actions(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scroll_actions");
+
+    group.bench_function("page_up_500", |b| {
+        let mut app = scrolled_bench_app(500);
+        b.iter_custom(|iters| bench_keystroke(&mut app, KeyType::PgUp, KeyType::PgDown, iters));
+    });
+
+    group.bench_function("page_down_500", |b| {
+        let mut app = scrolled_bench_app(500);
+        b.iter_custom(|iters| bench_keystroke(&mut app, KeyType::PgDown, KeyType::PgUp, iters));
+    });
+
+    group.finish();
+}
+
 fn bench_view(c: &mut Criterion) {
     let mut group = c.benchmark_group("view");
 
@@ -423,6 +477,7 @@ criterion_group! {
     config = bench_env::criterion_config();
     targets =
         bench_build_conversation_content,
+        bench_scroll_actions,
         bench_view,
         bench_message_generation,
         bench_viewport_operations,
