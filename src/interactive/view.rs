@@ -202,6 +202,45 @@ fn context_left_percent(window: u32, used: u64) -> Option<u64> {
     Some(window.saturating_sub(used.min(window)) * 100 / window)
 }
 
+/// The `/context` overlay's whole state: a breakdown snapshotted when the
+/// command ran, plus the window it is measured against.
+///
+/// No scroll offset, unlike the rewind and branch overlays: the category list
+/// is [`crate::session::ContextOrigin::ALL`] and never grows.
+pub(super) struct ContextOverlay {
+    pub(super) breakdown: crate::session::ContextBreakdown,
+    pub(super) window: u32,
+    pub(super) model: String,
+}
+
+/// Thousands-separated, because the acceptance for this overlay is a reader
+/// adding the column up by eye and `12.4K` cannot be added up.
+fn group_digits(value: u64) -> String {
+    let digits = value.to_string();
+    let mut out = String::with_capacity(digits.len() + digits.len() / 3);
+    for (idx, ch) in digits.chars().enumerate() {
+        if idx > 0 && (digits.len() - idx) % 3 == 0 {
+            out.push(',');
+        }
+        out.push(ch);
+    }
+    out
+}
+
+fn proportion_bar(part: u64, whole: u64, width: usize) -> String {
+    if whole == 0 || width == 0 {
+        return " ".repeat(width);
+    }
+    let filled = usize::try_from(part.min(whole).saturating_mul(width as u64) / whole)
+        .unwrap_or(0)
+        .min(width);
+    format!(
+        "{}{}",
+        "\u{2588}".repeat(filled),
+        "\u{2591}".repeat(width - filled)
+    )
+}
+
 /// Drop the `**` emphasis markers reasoning summaries arrive wrapped in, and
 /// put each summary on its own line.
 ///
@@ -996,6 +1035,11 @@ impl PiApp {
             output.push_str(&self.render_rewind_overlay(overlay));
         }
 
+        // Context breakdown overlay (if open)
+        if let Some(ref overlay) = self.context_overlay {
+            output.push_str(&self.render_context_overlay(overlay));
+        }
+
         // Model selector overlay (if open)
         if let Some(ref selector) = self.model_selector {
             output.push_str(&self.render_model_selector(selector));
@@ -1294,6 +1338,10 @@ impl PiApp {
 
     /// Tokens the session currently occupies, from the newest assistant turn
     /// that reported usage. `0` means no turn has reported any yet.
+    ///
+    /// [`crate::session::Session::context_total_tokens`] is also what
+    /// `/context` divides into categories, so the footer and the overlay can
+    /// never report different totals.
     fn session_context_tokens(&self) -> u64 {
         let key = (self.messages.len(), self.total_usage.total_tokens);
         if let Some((cached_key, tokens)) = self.context_tokens_cache.get()
@@ -1305,26 +1353,7 @@ impl PiApp {
         let Ok(session) = self.session.try_lock() else {
             return 0;
         };
-        let tokens = session
-            .entries_for_current_path()
-            .iter()
-            .rev()
-            .find_map(|entry| {
-                let SessionEntry::Message(entry) = entry else {
-                    return None;
-                };
-                let SessionMessage::Assistant { message } = &entry.message else {
-                    return None;
-                };
-                let usage = &message.usage;
-                let tokens = if usage.total_tokens > 0 {
-                    usage.total_tokens
-                } else {
-                    usage.input.saturating_add(usage.output)
-                };
-                (tokens > 0).then_some(tokens)
-            })
-            .unwrap_or(0);
+        let tokens = session.context_total_tokens();
         self.context_tokens_cache.set(Some((key, tokens)));
         tokens
     }
@@ -2349,6 +2378,135 @@ impl PiApp {
             self.styles
                 .muted_italic
                 .render("bash = the turn ran a command, so a file restore is only partial")
+        );
+        output
+    }
+
+    pub(super) fn render_context_overlay(&self, overlay: &ContextOverlay) -> String {
+        let mut output = String::new();
+
+        let _ = writeln!(output, "\n  {}", self.styles.title.render("Context window"));
+        let _ = writeln!(
+            output,
+            "  {}",
+            self.styles
+                .muted
+                .render("-------------------------------------------")
+        );
+
+        let breakdown = &overlay.breakdown;
+        let window = u64::from(overlay.window);
+        let bar_width = self.term_width.saturating_sub(46).clamp(10, 32);
+
+        let headline = if window == 0 {
+            format!(
+                "{}  ·  window not published by the model registry",
+                overlay.model
+            )
+        } else {
+            format!(
+                "{}  ·  {} token window",
+                overlay.model,
+                group_digits(window)
+            )
+        };
+        let _ = writeln!(output, "  {}", self.styles.muted.render(&headline));
+
+        if window > 0 {
+            let used_percent = breakdown.total.saturating_mul(100) / window;
+            let bar = proportion_bar(
+                breakdown.total,
+                window,
+                self.term_width.saturating_sub(30).clamp(10, 48),
+            );
+            let _ = writeln!(
+                output,
+                "  {} {}",
+                self.styles.accent.render(&bar),
+                self.styles.muted.render(&format!(
+                    "{used_percent}% used · {}% left",
+                    100 - used_percent.min(100)
+                ))
+            );
+        }
+        output.push('\n');
+
+        for origin in crate::session::ContextOrigin::ALL {
+            let tokens = breakdown.tokens(origin);
+            let share = if breakdown.total == 0 {
+                0
+            } else {
+                tokens.saturating_mul(100) / breakdown.total
+            };
+            let row = format!(
+                "{:<16} {:>9} {:>4}%  {}",
+                origin.label(),
+                group_digits(tokens),
+                share,
+                proportion_bar(tokens, breakdown.total, bar_width),
+            );
+            let _ = writeln!(output, "  {}", self.styles.muted.render(&row));
+        }
+
+        let _ = writeln!(
+            output,
+            "  {}",
+            self.styles
+                .muted
+                .render("-------------------------------------------")
+        );
+        let sum = breakdown.sum();
+        let _ = writeln!(
+            output,
+            "  {}",
+            self.styles.accent_bold.render(&format!(
+                "{:<16} {:>9}",
+                "Sum of parts",
+                group_digits(sum)
+            ))
+        );
+        let footer_label = if breakdown.estimated {
+            "Estimated total"
+        } else {
+            "Footer reports"
+        };
+        // only the measured total has a footer figure to agree with
+        let percent = if breakdown.estimated {
+            String::new()
+        } else {
+            context_left_percent(overlay.window, breakdown.total)
+                .map_or_else(String::new, |left| format!(" → {left}% left"))
+        };
+        let _ = writeln!(
+            output,
+            "  {}",
+            self.styles.accent_bold.render(&format!(
+                "{footer_label:<16} {:>9}{percent}  {}",
+                group_digits(breakdown.total),
+                if sum == breakdown.total {
+                    "parts add up"
+                } else {
+                    "PARTS DO NOT ADD UP"
+                }
+            ))
+        );
+
+        if breakdown.estimated {
+            let _ = writeln!(
+                output,
+                "  {}",
+                self.styles.warning.render(
+                    "No turn has reported usage yet, so the total is a local estimate, not a measurement."
+                )
+            );
+        }
+
+        let _ = writeln!(
+            output,
+            "\n  {}",
+            self.styles.muted_italic.render(
+                "Shares are the reported total split by measured request size  ·  Esc/q: close"
+            )
         );
         output
     }
