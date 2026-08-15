@@ -58,3 +58,51 @@ jobs:
           if [ -n "$unexpected" ]; then
             echo "::error::new test failures:"; printf '%s\n' "$unexpected"; exit 1
           fi
+
+  # A sandbox is only verified by watching it refuse something, and nothing in
+  # this repository can watch seatbelt refuse anything except a Mac.
+  seatbelt:
+    runs-on: macos-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-05
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --bin kesa
+      - name: the backend's own denial probe
+        run: |
+          cargo test --lib sandbox:: -- --nocapture
+      - name: an in-root write and read, through the shipped trampoline
+        run: |
+          set -euo pipefail
+          root="$PWD/seatbelt-root"
+          mkdir -p "$root"
+          read_back=$(./target/debug/kesa __sandbox-exec --workspace "$root" -- \
+            /bin/sh -c "echo in-root > '$root/allowed.txt'; cat '$root/allowed.txt'")
+          echo "read back: $read_back"
+          test "$read_back" = "in-root"
+      - name: an out-of-root write, denied
+        run: |
+          set -euo pipefail
+          root="$PWD/seatbelt-root"
+          mkdir -p "$root"
+          outside="$HOME/kesa-seatbelt-escape.txt"
+          rm -f "$outside"
+          set +e
+          output=$(./target/debug/kesa __sandbox-exec --workspace "$root" -- \
+            /bin/sh -c "echo escaped > '$outside'" 2>&1)
+          code=$?
+          set -e
+          printf 'exit %s: %s\n' "$code" "$output"
+          if [ "$code" -eq 0 ] || [ -e "$outside" ]; then
+            echo "::error::seatbelt allowed a write outside the workspace"
+            exit 1
+          fi
+          # A trampoline that failed for its own reasons would look identical to
+          # a denial, so the denial itself has to be named.
+          case "$output" in
+            *"Operation not permitted"*|*"Permission denied"*) ;;
+            *) echo "::error::the command failed, but not from a sandbox denial"; exit 1 ;;
+          esac
