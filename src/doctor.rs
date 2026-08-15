@@ -8,9 +8,11 @@ use crate::auth::{AuthStorage, CredentialStatus};
 use crate::config::Config;
 use crate::error::Result;
 use crate::provider_metadata::provider_auth_env_keys;
+use crate::sandbox::SandboxStatus;
 use crate::session::SessionHeader;
 use crate::session_index::walk_sessions;
 use serde::Serialize;
+use serde_json::json;
 use std::collections::HashSet;
 use std::fmt;
 use std::fmt::Write as _;
@@ -61,6 +63,7 @@ pub enum CheckCategory {
     Dirs,
     Auth,
     Shell,
+    Sandbox,
     Sessions,
     Extensions,
 }
@@ -72,6 +75,7 @@ impl CheckCategory {
             Self::Dirs => "Directories",
             Self::Auth => "Authentication",
             Self::Shell => "Shell & Tools",
+            Self::Sandbox => "Sandbox",
             Self::Sessions => "Sessions",
             Self::Extensions => "Extensions",
         }
@@ -92,6 +96,7 @@ impl std::str::FromStr for CheckCategory {
             "dirs" | "directories" => Ok(Self::Dirs),
             "auth" | "authentication" => Ok(Self::Auth),
             "shell" => Ok(Self::Shell),
+            "sandbox" => Ok(Self::Sandbox),
             "sessions" => Ok(Self::Sessions),
             "extensions" | "ext" => Ok(Self::Extensions),
             other => Err(format!("unknown category: {other}")),
@@ -397,6 +402,13 @@ pub fn run_doctor(opts: &DoctorOptions<'_>) -> Result<DoctorReport> {
     }
     if should_run(CheckCategory::Shell) {
         check_shell(&mut findings);
+    }
+    if should_run(CheckCategory::Sandbox) {
+        check_sandbox(
+            &crate::sandbox::status(),
+            crate::sandbox::require_backend(),
+            &mut findings,
+        );
     }
     if should_run(CheckCategory::Sessions) {
         check_sessions(&mut findings);
@@ -1067,6 +1079,76 @@ fn is_executable(path: &Path) -> bool {
     clippy::cast_precision_loss
 )]
 
+// ── Check: Sandbox ──────────────────────────────────────────────────
+
+fn check_sandbox(status: &SandboxStatus, required: bool, findings: &mut Vec<Finding>) {
+    let cat = CheckCategory::Sandbox;
+    let mut headline = match status {
+        SandboxStatus::Enforcing { backend } => {
+            Finding::pass(cat, format!("Sandbox: enforcing ({backend})"))
+        }
+        SandboxStatus::OffByRequest { .. } => {
+            Finding::warn(cat, "Sandbox: off, commands run unconfined")
+        }
+        SandboxStatus::KernelUnsupported { .. } => {
+            Finding::warn(cat, "Sandbox: unavailable on this kernel")
+        }
+        // Fail, not warn. A warning is what you emit for something the user
+        // might fix; no flag adds a backend to a platform that has none, and a
+        // user who reads this as healthy grants permissions on a promise the
+        // build cannot keep.
+        SandboxStatus::NoBackend { platform } => {
+            Finding::fail(cat, format!("Sandbox: no backend for {platform}"))
+        }
+    };
+    headline = headline.with_detail(status.describe()).with_data(json!({
+        "state": status.state(),
+        "degraded": status.is_degraded(),
+        "requireSandbox": required,
+    }));
+    if let Some(remediation) = status.remediation() {
+        headline = headline.with_remediation(remediation);
+    }
+    findings.push(headline);
+
+    if required {
+        if let Some(refusal) = crate::sandbox::unconfined_refusal(status, required) {
+            // The row shows the message bash itself returns, so the two cannot
+            // drift into saying different things about the same refusal.
+            findings.push(
+                Finding::fail(cat, "Sandbox: every command is refused")
+                    .with_detail(refusal)
+                    .with_remediation(format!(
+                        "Unset {} to allow unconfined commands",
+                        crate::env::name("REQUIRE_SANDBOX")
+                    )),
+            );
+        } else {
+            findings.push(
+                Finding::info(cat, "Sandbox: hard refusal armed").with_detail(format!(
+                    "{} is set, so a degraded sandbox will refuse commands rather than run them",
+                    crate::env::name("REQUIRE_SANDBOX")
+                )),
+            );
+        }
+    }
+
+    if status.is_enforcing() {
+        findings.push(
+            Finding::info(cat, "Sandboxed bash reaches paths the file tools refuse")
+                .with_detail(format!(
+                    "readable: {}; writable: {}. The file tools stop at the workspace roots, so `read` and `bash` do not agree about the filesystem.",
+                    crate::sandbox::system_readable_paths().join(", "),
+                    crate::sandbox::system_writable_paths().join(", "),
+                ))
+                .with_data(json!({
+                    "readable": crate::sandbox::system_readable_paths(),
+                    "writable": crate::sandbox::system_writable_paths(),
+                })),
+        );
+    }
+}
+
 // ── Check: Sessions ─────────────────────────────────────────────────
 
 fn check_sessions(findings: &mut Vec<Finding>) {
@@ -1526,6 +1608,92 @@ mod tests {
         assert!(findings[0].title.contains("invocation failed"));
     }
 
+    /// A platform with no backend has to read as a broken guarantee, not as
+    /// advice. `kesa doctor` exits 1 on Fail, which is the point.
+    #[test]
+    fn sandbox_without_a_backend_fails_rather_than_warns() {
+        let mut findings = Vec::new();
+        check_sandbox(&SandboxStatus::no_backend("macos"), false, &mut findings);
+        let headline = &findings[0];
+        assert_eq!(headline.severity, Severity::Fail);
+        assert_eq!(headline.category, CheckCategory::Sandbox);
+        assert!(headline.title.contains("macos"), "{}", headline.title);
+        assert!(
+            headline
+                .detail
+                .as_ref()
+                .is_some_and(|d| d.contains("unconfined")),
+            "the row must say what the user actually gets: {:?}",
+            headline.detail
+        );
+        println!("{}", DoctorReport::from_findings(findings).render_text());
+    }
+
+    #[test]
+    fn sandbox_unavailable_on_this_kernel_warns_and_reads_differently() {
+        let mut kernel = Vec::new();
+        check_sandbox(
+            &SandboxStatus::KernelUnsupported {
+                backend: "landlock",
+                reason: "the kernel does not support Landlock ABI v5".to_string(),
+            },
+            false,
+            &mut kernel,
+        );
+        let mut platform = Vec::new();
+        check_sandbox(&SandboxStatus::no_backend("macos"), false, &mut platform);
+
+        assert_eq!(kernel[0].severity, Severity::Warn);
+        assert_ne!(kernel[0].title, platform[0].title);
+        assert_ne!(kernel[0].detail, platform[0].detail);
+        println!("kernel:   {} / {:?}", kernel[0].title, kernel[0].detail);
+        println!("platform: {} / {:?}", platform[0].title, platform[0].detail);
+    }
+
+    /// The asymmetry the sandbox status exists to stop hiding: a sandboxed
+    /// shell reads /etc and writes /tmp, and the file tools refuse both.
+    #[test]
+    fn enforcing_sandbox_discloses_what_bash_reaches_and_the_file_tools_do_not() {
+        let mut findings = Vec::new();
+        check_sandbox(
+            &SandboxStatus::Enforcing {
+                backend: "landlock",
+            },
+            false,
+            &mut findings,
+        );
+        assert_eq!(findings[0].severity, Severity::Pass);
+        let disclosure = findings
+            .iter()
+            .find(|f| f.title.contains("paths the file tools refuse"))
+            .expect("an enforcing sandbox still has to disclose its system grants");
+        let detail = disclosure.detail.as_deref().unwrap_or_default();
+        for path in ["/etc", "/tmp", "/var/tmp"] {
+            assert!(detail.contains(path), "{path} missing from: {detail}");
+        }
+    }
+
+    /// The opt-in for users who would rather not run than run unconfined. The
+    /// row carries the refusal bash itself returns, not a paraphrase of it.
+    #[test]
+    fn hard_refusal_opt_in_turns_a_degraded_sandbox_into_a_failure() {
+        let status = SandboxStatus::no_backend("macos");
+        let mut findings = Vec::new();
+        check_sandbox(&status, true, &mut findings);
+
+        let refusal = findings
+            .iter()
+            .find(|f| f.title.contains("every command is refused"))
+            .expect("the opt-in has to produce its own row");
+        assert_eq!(refusal.severity, Severity::Fail);
+        assert_eq!(
+            refusal.detail.as_deref(),
+            crate::sandbox::unconfined_refusal(&status, true).as_deref(),
+            "the row and the bash tool must return one sentence"
+        );
+        println!("{}", DoctorReport::from_findings(findings).render_text());
+    }
+
     #[test]
     fn check_settings_file_rejects_non_object_json() {
         let dir = tempfile::tempdir().unwrap();
@@ -1768,6 +1936,7 @@ export default function(pi) {
             "auth",
             "authentication",
             "shell",
+            "sandbox",
             "sessions",
             "extensions",
             "ext",
@@ -1820,12 +1989,13 @@ export default function(pi) {
 
             /// `CheckCategory::label` returns non-empty strings.
             #[test]
-            fn check_category_label_non_empty(idx in 0..6usize) {
+            fn check_category_label_non_empty(idx in 0..7usize) {
                 let cats = [
                     CheckCategory::Config,
                     CheckCategory::Dirs,
                     CheckCategory::Auth,
                     CheckCategory::Shell,
+                    CheckCategory::Sandbox,
                     CheckCategory::Sessions,
                     CheckCategory::Extensions,
                 ];

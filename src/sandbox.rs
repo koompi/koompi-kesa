@@ -59,25 +59,110 @@ pub fn settings() -> SandboxSettings {
         .unwrap_or_default()
 }
 
+/// What the sandbox is doing right now, and why.
+///
+/// A boolean cannot tell "this kernel refuses landlock" apart from "this
+/// platform has no backend at all", and those deserve different words: the
+/// first is a machine a user can change, the second is a property of their
+/// operating system that no flag will fix. A user who believes they are
+/// sandboxed grants permissions they would otherwise refuse, so every variant
+/// here carries the sentence that explains it.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Availability {
-    Available,
-    Unavailable(String),
+pub enum SandboxStatus {
+    /// Every command the bash tool spawns is confined by `backend`.
+    Enforcing { backend: &'static str },
+    /// A backend exists for this platform and this kernel will not take it.
+    KernelUnsupported {
+        backend: &'static str,
+        reason: String,
+    },
+    /// No backend is implemented for this platform. Not fixable by the user.
+    NoBackend { platform: String },
+    /// A backend is available and `--no-sandbox` turned it off.
+    OffByRequest { backend: &'static str },
 }
 
-impl Availability {
+impl SandboxStatus {
+    /// The status every platform without a backend reports. Always compiled so
+    /// a Linux test can read the exact words a Mac would be shown.
+    #[must_use]
+    pub fn no_backend(platform: &str) -> Self {
+        Self::NoBackend {
+            platform: platform.to_string(),
+        }
+    }
+
+    #[must_use]
+    pub const fn is_enforcing(&self) -> bool {
+        matches!(self, Self::Enforcing { .. })
+    }
+
+    /// True whenever commands run unconfined, whatever the cause.
+    #[must_use]
+    pub const fn is_degraded(&self) -> bool {
+        !self.is_enforcing()
+    }
+
+    /// Stable machine name, for `doctor --format json` and for tests.
+    #[must_use]
+    pub const fn state(&self) -> &'static str {
+        match self {
+            Self::Enforcing { .. } => "enforcing",
+            Self::KernelUnsupported { .. } => "kernel-unsupported",
+            Self::NoBackend { .. } => "no-backend",
+            Self::OffByRequest { .. } => "off-by-request",
+        }
+    }
+
+    /// Under a dozen columns, for a statusline segment.
+    #[must_use]
+    pub const fn short_label(&self) -> &'static str {
+        match self {
+            Self::Enforcing { .. } => "sandbox on",
+            Self::KernelUnsupported { .. } => "sandbox N/A",
+            Self::NoBackend { .. } => "NO SANDBOX",
+            Self::OffByRequest { .. } => "sandbox off",
+        }
+    }
+
+    /// One line naming the state and its cause.
     #[must_use]
     pub fn describe(&self) -> String {
         match self {
-            Self::Available => "landlock available".to_string(),
-            Self::Unavailable(reason) => reason.clone(),
+            Self::Enforcing { backend } => {
+                format!("commands are confined by {backend}")
+            }
+            Self::KernelUnsupported { backend, reason } => {
+                format!("{backend} is not usable on this kernel: {reason}")
+            }
+            Self::NoBackend { platform } => format!(
+                "no sandbox backend for {platform}; only Linux landlock is implemented, so commands run unconfined"
+            ),
+            Self::OffByRequest { backend } => {
+                format!("{backend} is available and --no-sandbox turned it off")
+            }
+        }
+    }
+
+    /// What the user can do about it, when anything.
+    #[must_use]
+    pub const fn remediation(&self) -> Option<&'static str> {
+        match self {
+            Self::Enforcing { .. } => None,
+            Self::KernelUnsupported { .. } => Some(
+                "Boot a kernel that supports this backend, or accept unconfined commands with --no-sandbox",
+            ),
+            Self::NoBackend { .. } => Some(
+                "Nothing on this platform can fix it. Run the agent on Linux, or treat every command as unconfined when approving it",
+            ),
+            Self::OffByRequest { .. } => Some("Drop --no-sandbox to confine commands again"),
         }
     }
 }
 
 #[cfg(target_os = "linux")]
 mod imp {
-    use super::{Availability, SYSTEM_READ_PATHS, SYSTEM_WRITE_PATHS};
+    use super::{SYSTEM_READ_PATHS, SYSTEM_WRITE_PATHS, SandboxStatus};
     use landlock::{
         ABI, Access, AccessFs, CompatLevel, Compatible, Ruleset, RulesetAttr, RulesetCreatedAttr,
         RulesetStatus, path_beneath_rules,
@@ -89,7 +174,9 @@ mod imp {
     /// own allow rules before they could be handled without breaking sockets.
     const FS_ABI: ABI = ABI::V5;
 
-    pub fn availability() -> Availability {
+    pub const BACKEND: &str = "landlock";
+
+    pub fn status() -> SandboxStatus {
         let probe = || -> Result<(), landlock::RulesetError> {
             Ruleset::default()
                 .set_compatibility(CompatLevel::HardRequirement)
@@ -98,10 +185,11 @@ mod imp {
             Ok(())
         };
         match probe() {
-            Ok(()) => Availability::Available,
-            Err(err) => {
-                Availability::Unavailable(format!("landlock is not usable on this kernel: {err}"))
-            }
+            Ok(()) => SandboxStatus::Enforcing { backend: BACKEND },
+            Err(err) => SandboxStatus::KernelUnsupported {
+                backend: BACKEND,
+                reason: err.to_string(),
+            },
         }
     }
 
@@ -138,14 +226,11 @@ mod imp {
 
 #[cfg(not(target_os = "linux"))]
 mod imp {
-    use super::Availability;
+    use super::SandboxStatus;
     use std::path::{Path, PathBuf};
 
-    pub fn availability() -> Availability {
-        Availability::Unavailable(format!(
-            "no sandbox backend for {}; only Linux landlock is implemented",
-            std::env::consts::OS
-        ))
+    pub fn status() -> SandboxStatus {
+        SandboxStatus::no_backend(std::env::consts::OS)
     }
 
     pub fn restrict(
@@ -153,13 +238,83 @@ mod imp {
         _extra_writable: &[PathBuf],
         _extra_readable: &[PathBuf],
     ) -> Result<(), String> {
-        Err(availability().describe())
+        Err(status().describe())
     }
 }
 
+/// What this platform's backend can do, ignoring the mode the user chose.
+///
+/// Probed once: the answer is a property of the kernel, and the statusline
+/// would otherwise make the syscall on every frame.
 #[must_use]
-pub fn availability() -> Availability {
-    imp::availability()
+pub fn backend_status() -> SandboxStatus {
+    static PROBED: std::sync::OnceLock<SandboxStatus> = std::sync::OnceLock::new();
+    PROBED.get_or_init(imp::status).clone()
+}
+
+/// What is actually in force for this process. This is the accessor the
+/// statusline and the tool-approval overlay call.
+#[must_use]
+pub fn status() -> SandboxStatus {
+    status_of(&settings(), backend_status())
+}
+
+/// A missing backend outranks the mode: no flag can conjure one, so saying
+/// "off by request" on a Mac would name the wrong cause.
+pub(crate) fn status_of(settings: &SandboxSettings, backend: SandboxStatus) -> SandboxStatus {
+    match backend {
+        SandboxStatus::Enforcing { backend } if settings.mode == SandboxMode::Off => {
+            SandboxStatus::OffByRequest { backend }
+        }
+        other => other,
+    }
+}
+
+/// Directories a sandboxed command may read beyond the workspace roots.
+///
+/// The file tools stop at the workspace; a shell cannot start without these.
+/// So bash and `read` do not see one filesystem, and a status surface that hid
+/// that would be the lie it exists to prevent.
+#[must_use]
+pub const fn system_readable_paths() -> &'static [&'static str] {
+    SYSTEM_READ_PATHS
+}
+
+/// Directories a sandboxed command may write beyond the workspace roots.
+#[must_use]
+pub const fn system_writable_paths() -> &'static [&'static str] {
+    SYSTEM_WRITE_PATHS
+}
+
+/// Process-wide opt-in: refuse to run at all rather than run unconfined.
+static REQUIRE_BACKEND: RwLock<Option<bool>> = RwLock::new(None);
+
+/// Install the opt-in from a settings file. Unset falls back to the
+/// `KESA_REQUIRE_SANDBOX` environment variable.
+pub fn configure_require_backend(required: bool) {
+    *REQUIRE_BACKEND.write().expect("require sandbox lock") = Some(required);
+}
+
+#[must_use]
+pub fn require_backend() -> bool {
+    if let Some(configured) = *REQUIRE_BACKEND.read().expect("require sandbox lock") {
+        return configured;
+    }
+    crate::env::var("REQUIRE_SANDBOX")
+        .is_some_and(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+}
+
+/// The refusal a degraded sandbox earns when the user asked never to run
+/// unconfined. `None` means the command may proceed.
+pub(crate) fn unconfined_refusal(status: &SandboxStatus, required: bool) -> Option<String> {
+    if !required || status.is_enforcing() {
+        return None;
+    }
+    Some(format!(
+        "refusing to run this command unconfined: {}. {}=1 is set, which trades running for not running unsandboxed; unset it to allow unconfined commands.",
+        status.describe(),
+        crate::env::name("REQUIRE_SANDBOX"),
+    ))
 }
 
 /// Apply the sandbox to this process and replace it with `argv`. Only returns
@@ -214,13 +369,21 @@ pub(crate) fn wrap_command_with(
     command: Command,
     workspace: &Path,
 ) -> std::io::Result<Command> {
+    // The opt-in is checked before the mode, or --no-sandbox would be a way
+    // around the very refusal the user asked for.
+    let status = status_of(settings, backend_status());
+    if let Some(refusal) = unconfined_refusal(&status, require_backend()) {
+        return Err(std::io::Error::other(refusal));
+    }
+
     if settings.mode == SandboxMode::Off {
         return Ok(command);
     }
 
-    if let Availability::Unavailable(reason) = availability() {
+    if status.is_degraded() {
         return Err(std::io::Error::other(format!(
-            "{reason}. Re-run with --no-sandbox to allow unsandboxed commands."
+            "{}. Re-run with --no-sandbox to allow unsandboxed commands.",
+            status.describe()
         )));
     }
 
@@ -307,10 +470,101 @@ mod tests {
 
     #[test]
     fn landlock_is_available_on_this_kernel() {
-        assert_eq!(
-            availability(),
-            Availability::Available,
-            "this machine reports landlock in /sys/kernel/security/lsm"
+        assert!(
+            backend_status().is_enforcing(),
+            "this machine reports landlock in /sys/kernel/security/lsm, got {:?}",
+            backend_status()
         );
+    }
+
+    /// The whole point of the status type: a caller must be able to tell a
+    /// kernel that refuses landlock from a platform that never had it.
+    #[test]
+    fn degraded_states_do_not_share_a_sentence() {
+        let kernel = SandboxStatus::KernelUnsupported {
+            backend: "landlock",
+            reason: "the kernel does not support Landlock ABI v5".to_string(),
+        };
+        let platform = SandboxStatus::no_backend("macos");
+
+        println!("kernel-unsupported: {}", kernel.describe());
+        println!("no-backend:         {}", platform.describe());
+
+        assert_ne!(kernel.describe(), platform.describe());
+        assert_ne!(kernel.short_label(), platform.short_label());
+        assert_ne!(kernel.state(), platform.state());
+        assert!(kernel.is_degraded() && platform.is_degraded());
+        assert!(
+            platform.describe().contains("macos"),
+            "the platform with no backend has to be named: {}",
+            platform.describe()
+        );
+    }
+
+    #[test]
+    fn no_sandbox_is_reported_as_the_users_own_choice_not_as_a_missing_backend() {
+        let off = status_of(
+            &SandboxSettings {
+                mode: SandboxMode::Off,
+                extra_writable: Vec::new(),
+            },
+            SandboxStatus::Enforcing {
+                backend: "landlock",
+            },
+        );
+        assert_eq!(off.state(), "off-by-request");
+        assert!(off.is_degraded());
+    }
+
+    /// `--no-sandbox` must not be able to answer a platform that has no
+    /// backend, or the status would name a cause the user could undo.
+    #[test]
+    fn no_sandbox_cannot_turn_a_missing_backend_into_a_choice() {
+        let status = status_of(
+            &SandboxSettings {
+                mode: SandboxMode::Off,
+                extra_writable: Vec::new(),
+            },
+            SandboxStatus::no_backend("windows"),
+        );
+        assert_eq!(status.state(), "no-backend");
+    }
+
+    #[test]
+    fn the_opt_in_refuses_every_degraded_state_and_permits_the_enforcing_one() {
+        let enforcing = SandboxStatus::Enforcing {
+            backend: "landlock",
+        };
+        assert_eq!(unconfined_refusal(&enforcing, true), None);
+        assert_eq!(
+            unconfined_refusal(&SandboxStatus::no_backend("macos"), false),
+            None
+        );
+
+        for degraded in [
+            SandboxStatus::no_backend("macos"),
+            SandboxStatus::OffByRequest {
+                backend: "landlock",
+            },
+            SandboxStatus::KernelUnsupported {
+                backend: "landlock",
+                reason: "no landlock".to_string(),
+            },
+        ] {
+            let refusal = unconfined_refusal(&degraded, true)
+                .unwrap_or_else(|| panic!("{} must be refused", degraded.state()));
+            println!("{}: {refusal}", degraded.state());
+            assert!(refusal.contains("refusing to run"));
+            assert!(refusal.contains("KESA_REQUIRE_SANDBOX"));
+        }
+    }
+
+    /// A sandboxed shell reaches paths the file tools refuse. The status has to
+    /// be able to say so; hiding it is the failure mode this module exists for.
+    #[test]
+    fn the_system_grants_are_readable_by_a_caller() {
+        assert!(system_readable_paths().contains(&"/etc"));
+        assert!(system_writable_paths().contains(&"/tmp"));
+        assert!(system_writable_paths().contains(&"/var/tmp"));
     }
 }
