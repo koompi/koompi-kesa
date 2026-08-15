@@ -359,7 +359,12 @@ mod imp {
         if !Path::new(SANDBOX_EXEC).exists() {
             return Err(format!("{SANDBOX_EXEC} is not present on this system"));
         }
-        let dir = std::env::temp_dir().join(format!("kesa-seatbelt-probe-{}", std::process::id()));
+        // the probe deletes its own root when it is done, so two concurrent
+        // callers must never be handed the same one
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let nth = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let dir =
+            std::env::temp_dir().join(format!("kesa-seatbelt-probe-{}-{nth}", std::process::id()));
         let allowed = dir.join("allowed");
         let denied = dir.join("denied");
         std::fs::create_dir_all(&allowed)
@@ -464,7 +469,25 @@ mod imp {
             let observed = observe_denial();
             println!("denial probe: {observed:?}");
             assert_eq!(observed, Ok(()));
-            assert!(status().is_enforcing());
+            let status = status();
+            assert!(status.is_enforcing(), "{}", status.describe());
+        }
+
+        /// The probe removes its own root, so a shared one makes the first
+        /// caller to finish delete the directory the other is still writing in.
+        #[test]
+        fn concurrent_probes_do_not_delete_each_other() {
+            std::thread::scope(|scope| {
+                let mut threads = Vec::new();
+                for _ in 0..4 {
+                    threads.push(scope.spawn(observe_denial));
+                }
+                for thread in threads {
+                    let outcome = thread.join().expect("probe thread panicked");
+                    println!("concurrent denial probe: {outcome:?}");
+                    assert_eq!(outcome, Ok(()));
+                }
+            });
         }
 
         #[test]
