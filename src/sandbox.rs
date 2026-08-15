@@ -300,16 +300,39 @@ pub fn required_by_settings(config: &crate::config::Config) -> bool {
     config.require_sandbox.unwrap_or(false)
 }
 
-#[must_use]
-pub fn require_backend() -> bool {
-    // either source arms it: a settings file without the key must not disarm
-    // the environment variable
+fn armed_by_settings() -> bool {
     REQUIRE_BACKEND
         .read()
         .expect("require sandbox lock")
         .unwrap_or(false)
-        || crate::env::var("REQUIRE_SANDBOX")
-            .is_some_and(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+}
+
+fn armed_by_env() -> bool {
+    crate::env::var("REQUIRE_SANDBOX")
+        .is_some_and(|value| value == "1" || value.eq_ignore_ascii_case("true"))
+}
+
+#[must_use]
+pub fn require_backend() -> bool {
+    // either source arms it: a settings file without the key must not disarm
+    // the environment variable
+    armed_by_settings() || armed_by_env()
+}
+
+/// What armed the hard refusal, so a message can point at the source the user
+/// actually set rather than the one that happens to be named in the string.
+pub(crate) fn require_backend_source() -> Option<String> {
+    source_label(armed_by_settings(), armed_by_env())
+}
+
+fn source_label(by_settings: bool, by_env: bool) -> Option<String> {
+    let env_name = crate::env::name("REQUIRE_SANDBOX");
+    match (by_settings, by_env) {
+        (true, true) => Some(format!("settings key requireSandbox and {env_name}")),
+        (true, false) => Some("settings key requireSandbox".to_string()),
+        (false, true) => Some(env_name),
+        (false, false) => None,
+    }
 }
 
 /// The refusal a degraded sandbox earns when the user asked never to run
@@ -596,6 +619,25 @@ mod tests {
                 "{absent} must leave the default alone"
             );
         }
+    }
+
+    /// Telling a user to unset an environment variable they never set is advice
+    /// that cannot work, so the message names whichever source armed it.
+    #[test]
+    fn the_refusal_message_names_the_source_that_armed_it() {
+        let env_name = crate::env::name("REQUIRE_SANDBOX");
+
+        let settings_only = source_label(true, false).expect("settings arms it");
+        assert!(settings_only.contains("requireSandbox"));
+        assert!(!settings_only.contains(&env_name));
+
+        let env_only = source_label(false, true).expect("env arms it");
+        assert_eq!(env_only, env_name);
+
+        let both = source_label(true, true).expect("either arms it");
+        assert!(both.contains("requireSandbox") && both.contains(&env_name));
+
+        assert_eq!(source_label(false, false), None);
     }
 
     /// A cloned repository carries `.kesa/settings.json`, so a project file
