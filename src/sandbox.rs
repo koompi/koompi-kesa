@@ -259,14 +259,14 @@ mod imp {
 
     /// Empty yields no rule at all: a bare `(allow file-write*)` would grant the
     /// whole filesystem, which is the opposite of an empty root list.
-    fn subpath_rule(operation: &str, roots: &[PathBuf]) -> String {
-        if roots.is_empty() {
+    fn rule(operation: &str, filter: &str, paths: &[PathBuf]) -> String {
+        if paths.is_empty() {
             return String::new();
         }
         let mut rule = format!("(allow {operation}");
-        for root in roots {
-            rule.push_str(" (subpath \"");
-            rule.push_str(&quoted(root));
+        for path in paths {
+            rule.push_str(&format!(" ({filter} \""));
+            rule.push_str(&quoted(path));
             rule.push_str("\")");
         }
         rule.push(')');
@@ -276,14 +276,15 @@ mod imp {
     /// Everything but the filesystem stays allowed, matching landlock's scope:
     /// claiming more than the Linux backend enforces would be the lie this
     /// module exists to prevent.
-    fn profile(readable: &[PathBuf], writable: &[PathBuf]) -> String {
+    fn profile(readable: &[PathBuf], files: &[PathBuf], writable: &[PathBuf]) -> String {
         [
             "(version 1)".to_string(),
             "(allow default)".to_string(),
             "(deny file-read* file-write*)".to_string(),
             "(allow file-read-metadata)".to_string(),
-            subpath_rule("file-read*", readable),
-            subpath_rule("file-write*", writable),
+            rule("file-read*", "subpath", readable),
+            rule("file-read*", "literal", files),
+            rule("file-write*", "subpath", writable),
         ]
         .into_iter()
         .filter(|line| !line.is_empty())
@@ -329,13 +330,17 @@ mod imp {
                 .chain(DARWIN_READ_PATHS)
                 .copied()
                 .map(PathBuf::from)
-                // seatbelt applies before it execs, so this binary has to be
-                // readable or the sandbox cannot start the process it confines.
-                .chain(std::env::current_exe())
                 .chain(std::iter::once(workspace.to_path_buf()))
                 .chain(extra_readable.iter().cloned())
                 .chain(writable.iter().cloned()),
         )
+    }
+
+    /// seatbelt applies before it execs, so the binary it is about to start has
+    /// to be readable. `subpath` names a directory and its contents, so a file
+    /// needs `literal` or dyld is denied the image it was told to run.
+    fn readable_files() -> Vec<PathBuf> {
+        existing(std::env::current_exe())
     }
 
     pub fn status() -> SandboxStatus {
@@ -377,7 +382,7 @@ mod imp {
         let denied = denied
             .canonicalize()
             .map_err(|err| format!("could not resolve the seatbelt probe root: {err}"))?;
-        let profile = profile(&[PathBuf::from("/")], std::slice::from_ref(&allowed));
+        let profile = profile(&[PathBuf::from("/")], &[], std::slice::from_ref(&allowed));
 
         let inside = allowed.join("write");
         let attempt = touch(&profile, &inside)?;
@@ -424,7 +429,7 @@ mod imp {
         use std::os::unix::process::CommandExt as _;
         let err = Command::new(SANDBOX_EXEC)
             .arg("-p")
-            .arg(profile(&readable, &writable))
+            .arg(profile(&readable, &readable_files(), &writable))
             .arg(&exe)
             .args(&args)
             .env(APPLIED_ENV, "1")
@@ -464,8 +469,8 @@ mod imp {
 
         #[test]
         fn an_empty_root_list_never_becomes_a_whole_filesystem_grant() {
-            assert!(subpath_rule("file-write*", &[]).is_empty());
-            let rendered = profile(&[PathBuf::from("/")], &[]);
+            assert!(rule("file-write*", "subpath", &[]).is_empty());
+            let rendered = profile(&[PathBuf::from("/")], &[], &[]);
             println!("{rendered}");
             assert!(!rendered.contains("(allow file-write*"));
             assert!(rendered.contains("(deny file-read* file-write*)"));
@@ -476,7 +481,7 @@ mod imp {
             let workspace = std::env::temp_dir();
             let writable = write_roots(&workspace, &[PathBuf::from("/Library")]);
             let readable = read_roots(&workspace, &[PathBuf::from("/Applications")], &writable);
-            let rendered = profile(&readable, &writable);
+            let rendered = profile(&readable, &readable_files(), &writable);
             println!("{rendered}");
             for root in existing([
                 workspace,
@@ -489,6 +494,21 @@ mod imp {
                     root.display()
                 );
             }
+        }
+
+        /// A file granted as a subpath is what aborted the trampoline on CI: the
+        /// sandbox started, then refused dyld the image it was told to run.
+        #[test]
+        fn the_executable_is_granted_as_a_file_and_not_as_a_directory() {
+            let exe = readable_files();
+            assert_eq!(exe.len(), 1);
+            let rendered = profile(&[PathBuf::from("/")], &exe, &[]);
+            println!("{rendered}");
+            assert!(rendered.contains(&format!(
+                "(allow file-read* (literal \"{}\"))",
+                quoted(&exe[0])
+            )));
+            assert!(!rendered.contains(&format!("(subpath \"{}\")", quoted(&exe[0]))));
         }
     }
 }

@@ -76,13 +76,15 @@ jobs:
           cargo test --lib sandbox:: -- --nocapture
       - name: an in-root write and read, through the shipped trampoline
         run: |
-          set -uo pipefail
           root="$PWD/seatbelt-root"
           mkdir -p "$root"
           # Unsandboxed first, so a binary that cannot start at all is never
           # mistaken for a profile that will not let it.
           ./target/debug/kesa --version
           started=$(date +%s)
+          # github runs this as `bash -e`, which kills the step before the
+          # diagnostics below can say why.
+          set +e
           ./target/debug/kesa __sandbox-exec --workspace "$root" -- \
             /bin/sh -c "echo in-root > '$root/allowed.txt'; cat '$root/allowed.txt'"
           code=$?
