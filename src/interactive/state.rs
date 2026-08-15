@@ -845,6 +845,132 @@ impl BranchPickerOverlay {
     }
 }
 
+/// What a rewind is allowed to touch. Restoring the transcript alongside the
+/// files loses what the agent learned; restoring the files alone leaves it
+/// working from a transcript that no longer matches the tree. Both are
+/// legitimate, so the user picks.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum RewindScope {
+    Files,
+    Conversation,
+    Both,
+}
+
+impl RewindScope {
+    pub(super) const ALL: [Self; 3] = [Self::Files, Self::Conversation, Self::Both];
+
+    pub(super) const fn label(self) -> &'static str {
+        match self {
+            Self::Files => "Files only (keep the conversation)",
+            Self::Conversation => "Conversation only (keep the files)",
+            Self::Both => "Both files and conversation",
+        }
+    }
+
+    pub(super) const fn touches_files(self) -> bool {
+        matches!(self, Self::Files | Self::Both)
+    }
+
+    pub(super) const fn touches_conversation(self) -> bool {
+        matches!(self, Self::Conversation | Self::Both)
+    }
+}
+
+/// Rewind overlay: pick a turn, then pick what the restore touches.
+///
+/// Turn labels are whatever the store recorded. The store is process-global, so
+/// a subagent opens its own turns on it and a row can carry a subagent's prompt
+/// rather than the message the user typed. Files on disk are still correct;
+/// only the label is. Rendering the store verbatim is the honest option until a
+/// top-level-vs-subagent signal exists.
+#[derive(Debug)]
+pub(super) struct RewindOverlay {
+    /// Newest turn first.
+    pub(super) turns: Vec<crate::rewind::TurnSummary>,
+    pub(super) selected: usize,
+    pub(super) max_visible: usize,
+    /// `Some` once a turn is chosen and the scope list is up.
+    pub(super) scope: Option<usize>,
+}
+
+impl RewindOverlay {
+    pub(super) fn new(mut turns: Vec<crate::rewind::TurnSummary>) -> Self {
+        turns.reverse();
+        Self {
+            turns,
+            selected: 0,
+            max_visible: 10,
+            scope: None,
+        }
+    }
+
+    pub(super) const fn picking_scope(&self) -> bool {
+        self.scope.is_some()
+    }
+
+    pub(super) const fn select_next(&mut self) {
+        if !self.turns.is_empty() {
+            self.selected = (self.selected + 1) % self.turns.len();
+        }
+    }
+
+    pub(super) fn select_prev(&mut self) {
+        if !self.turns.is_empty() {
+            self.selected = self.selected.checked_sub(1).unwrap_or(self.turns.len() - 1);
+        }
+    }
+
+    pub(super) fn select_page_down(&mut self) {
+        if self.turns.is_empty() {
+            return;
+        }
+        let step = self.max_visible.saturating_sub(1).max(1);
+        self.selected = (self.selected + step).min(self.turns.len() - 1);
+    }
+
+    pub(super) fn select_page_up(&mut self) {
+        let step = self.max_visible.saturating_sub(1).max(1);
+        self.selected = self.selected.saturating_sub(step);
+    }
+
+    pub(super) const fn scroll_offset(&self) -> usize {
+        if self.selected < self.max_visible {
+            0
+        } else {
+            self.selected - self.max_visible + 1
+        }
+    }
+
+    pub(super) fn selected_turn(&self) -> Option<&crate::rewind::TurnSummary> {
+        self.turns.get(self.selected)
+    }
+
+    pub(super) fn scope_next(&mut self) {
+        if let Some(scope) = self.scope.as_mut() {
+            *scope = (*scope + 1) % RewindScope::ALL.len();
+        }
+    }
+
+    pub(super) fn scope_prev(&mut self) {
+        if let Some(scope) = self.scope.as_mut() {
+            *scope = scope.checked_sub(1).unwrap_or(RewindScope::ALL.len() - 1);
+        }
+    }
+
+    pub(super) fn selected_scope(&self) -> Option<RewindScope> {
+        self.scope
+            .and_then(|index| RewindScope::ALL.get(index).copied())
+    }
+
+    /// Restoring a turn undoes it and everything after it, so bash anywhere in
+    /// that range makes the file restore partial.
+    pub(super) fn bash_in_restore_range(&self) -> bool {
+        self.turns
+            .get(..=self.selected)
+            .is_some_and(|range| range.iter().any(|turn| turn.ran_bash))
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum QueuedMessageKind {
     Steering,

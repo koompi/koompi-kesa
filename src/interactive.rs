@@ -110,9 +110,9 @@ use self::state::{
     ApprovalAction, AutocompleteState, BranchPickerOverlay, CTRLC_QUIT_WINDOW, CapabilityAction,
     CapabilityPromptOverlay, ExtensionCustomOverlay, HistoryList, InjectedMessageQueue,
     InteractiveMessageQueue, PASTE_COLLAPSE_MIN_LINES, PendingLoginKind, PendingOAuth,
-    QueuedMessageKind, SessionPickerOverlay, SettingsUiEntry, SettingsUiState,
-    THINKING_COLLAPSED_MAX_LINES, TOOL_COLLAPSE_PREVIEW_LINES, ThemePickerItem, ThemePickerOverlay,
-    ToolApprovalOverlay, ToolProgress, format_count,
+    QueuedMessageKind, RewindOverlay, RewindScope, SessionPickerOverlay, SettingsUiEntry,
+    SettingsUiState, THINKING_COLLAPSED_MAX_LINES, TOOL_COLLAPSE_PREVIEW_LINES, ThemePickerItem,
+    ThemePickerOverlay, ToolApprovalOverlay, ToolProgress, format_count,
 };
 pub use self::state::{ConversationMessage, MessageRole};
 use self::text_utils::{queued_message_preview, truncate};
@@ -1158,6 +1158,7 @@ impl PiApp {
             && self.capability_prompt.is_none()
             && self.extension_custom_overlay.is_none()
             && self.branch_picker.is_none()
+            && self.rewind_overlay.is_none()
             && self.model_selector.is_none()
     }
 
@@ -1233,6 +1234,12 @@ impl PiApp {
             chrome += 3 + visible + 2; // title + header + separator + items + help + blank
         }
 
+        // Rewind overlay: header + N visible turns + help line + padding.
+        if let Some(ref overlay) = self.rewind_overlay {
+            let visible = overlay.turns.len().min(overlay.max_visible);
+            chrome += 4 + visible + 2;
+        }
+
         // Model selector overlay: title + config-only hint + search + separator + items + detail + help + padding.
         if let Some(ref selector) = self.model_selector {
             let visible = selector.max_visible().min(selector.filtered_len().max(1));
@@ -1267,6 +1274,7 @@ impl PiApp {
             || self.capability_prompt.is_some()
             || self.extension_custom_overlay.is_some()
             || self.branch_picker.is_some()
+            || self.rewind_overlay.is_some()
             || self.model_selector.is_some();
         if any_overlay {
             chrome += 2;
@@ -1395,6 +1403,9 @@ impl PiApp {
         }
         if let Some(ref mut picker) = self.branch_picker {
             picker.max_visible = max_vis;
+        }
+        if let Some(ref mut overlay) = self.rewind_overlay {
+            overlay.max_visible = max_vis;
         }
     }
 
@@ -2618,6 +2629,9 @@ pub struct PiApp {
     // Branch picker overlay (Ctrl+B quick branch switching)
     branch_picker: Option<BranchPickerOverlay>,
 
+    // Rewind overlay (Esc Esc, /rewind)
+    rewind_overlay: Option<RewindOverlay>,
+
     // Model selector overlay (Ctrl+L)
     model_selector: Option<crate::model_selector::ModelSelectorOverlay>,
 
@@ -2944,6 +2958,7 @@ impl PiApp {
             tree_ui: None,
             capability_prompt: None,
             branch_picker: None,
+            rewind_overlay: None,
             model_selector: None,
             frame_timing: FrameTimingStats::new(),
             tui_pressure_frame_p99_us: Arc::new(AtomicU64::new(0)),
@@ -3231,6 +3246,11 @@ impl PiApp {
             // Branch picker modal captures all input while active.
             if self.branch_picker.is_some() {
                 return self.handle_branch_picker_key(key);
+            }
+
+            // Rewind modal captures all input while active.
+            if self.rewind_overlay.is_some() {
+                return self.handle_rewind_overlay_key(key);
             }
 
             // Model selector modal captures all input while active.
