@@ -5,30 +5,23 @@ use clap::{Parser, Subcommand};
 use std::collections::HashSet;
 use std::ffi::OsString;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 
-/// Tools enabled when `--tools` is not given. Kept character-identical to the
-/// list in the `--tools` help so the two cannot drift.
-pub const DEFAULT_TOOLS: &str = "read,bash,bash_output,kill_shell,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search,exit_plan_mode";
+/// Tools enabled when `--tools` is not given. This and the `--tools` help text
+/// are rendered from the same inventory, so the two cannot drift.
+pub static DEFAULT_TOOLS: LazyLock<String> =
+    LazyLock::new(|| crate::tools::DEFAULT_TOOL_NAMES.join(","));
 
 /// Every name `ToolRegistry::new` knows how to construct. `subagent` is opt-in,
 /// so it is accepted here but absent from [`DEFAULT_TOOLS`].
-pub const REGISTERED_TOOLS: &[&str] = &[
-    "read",
-    "bash",
-    "bash_output",
-    "kill_shell",
-    "edit",
-    "write",
-    "grep",
-    "find",
-    "ls",
-    "hashline_edit",
-    "todo",
-    "web_fetch",
-    "web_search",
-    "exit_plan_mode",
-    "subagent",
-];
+pub const REGISTERED_TOOLS: &[&str] = crate::tools::REGISTERED_TOOL_NAMES;
+
+fn tools_help() -> String {
+    format!(
+        "Specific tools to enable (comma-separated: {})",
+        *DEFAULT_TOOLS
+    )
+}
 
 /// Reject an unknown `--tools` entry at parse time rather than dropping it and
 /// starting the agent a tool short.
@@ -554,8 +547,8 @@ pub struct Cli {
     #[arg(long)]
     pub no_tools: bool,
 
-    /// Specific tools to enable (comma-separated: read,bash,bash_output,kill_shell,edit,write,grep,find,ls,hashline_edit,todo,web_fetch,web_search,exit_plan_mode)
-    #[arg(long, default_value = DEFAULT_TOOLS, value_parser = parse_tools_list)]
+    /// Specific tools to enable
+    #[arg(long, help = tools_help(), default_value = DEFAULT_TOOLS.as_str(), value_parser = parse_tools_list)]
     pub tools: String,
 
     // === Extensions ===
@@ -1334,7 +1327,7 @@ mod tests {
             .expect("help lists the tools")
             .1
             .trim_end_matches(')');
-        assert_eq!(advertised, DEFAULT_TOOLS);
+        assert_eq!(advertised, *DEFAULT_TOOLS);
     }
 
     #[test]
@@ -1691,7 +1684,7 @@ mod tests {
         assert!(cli.list_models.is_none());
         assert!(cli.command.is_none());
         assert!(cli.args.is_empty());
-        assert_eq!(cli.tools, DEFAULT_TOOLS);
+        assert_eq!(cli.tools, *DEFAULT_TOOLS);
     }
 
     // ── 11. Combined flags ───────────────────────────────────────────

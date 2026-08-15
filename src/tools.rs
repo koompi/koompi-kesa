@@ -5170,6 +5170,251 @@ impl Tool for ExitPlanModeTool {
 // Tool Registry
 // ============================================================================
 
+/// Everything a [`ToolSpec`] constructor needs that varies from run to run.
+pub struct ToolBuild<'a> {
+    cwd: &'a Path,
+    reads: Option<Arc<SessionFileReads>>,
+    shell_path: Option<String>,
+    shell_command_prefix: Option<String>,
+    image_auto_resize: bool,
+    block_images: bool,
+    permission_mode: PermissionModeGate,
+}
+
+/// One built-in tool, described once.
+///
+/// Every list of built-in tool names derives from [`TOOL_SPECS`]: the CLI's
+/// accepted set and `--tools` default, the registry's constructor, the SDK's
+/// exported inventory and the system prompt's tool table. Adding a tool is one
+/// entry here.
+pub struct ToolSpec {
+    pub name: &'static str,
+    /// In the `--tools` default. `subagent` is opt-in, so it is not.
+    pub default_enabled: bool,
+    /// In `sdk::BUILTIN_TOOL_NAMES`. Excludes the tools that need a session
+    /// surface the SDK's standalone registry has no way to supply.
+    pub sdk_builtin: bool,
+    /// The one-line blurb the system prompt lists this tool under.
+    pub prompt_description: &'static str,
+    build: fn(&ToolBuild<'_>) -> Box<dyn Tool>,
+}
+
+pub const TOOL_SPECS: &[ToolSpec] = &[
+    ToolSpec {
+        name: "read",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Read file contents",
+        build: |cx| {
+            let tool = ReadTool::with_settings(cx.cwd, cx.image_auto_resize, cx.block_images);
+            Box::new(match &cx.reads {
+                Some(reads) => tool.tracking_reads(Arc::clone(reads)),
+                None => tool,
+            })
+        },
+    },
+    ToolSpec {
+        name: "bash",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Execute bash commands (ls, grep, find, etc.)",
+        build: |cx| {
+            Box::new(BashTool::with_shell(
+                cx.cwd,
+                cx.shell_path.clone(),
+                cx.shell_command_prefix.clone(),
+            ))
+        },
+    },
+    ToolSpec {
+        name: "bash_output",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Read new output from a background shell started by bash with run_in_background",
+        build: |_| Box::new(BashOutputTool),
+    },
+    ToolSpec {
+        name: "kill_shell",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Stop a background shell and every process it spawned",
+        build: |_| Box::new(KillShellTool),
+    },
+    ToolSpec {
+        name: "edit",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Make surgical edits to files (find exact text and replace)",
+        build: |cx| {
+            let tool = EditTool::new(cx.cwd);
+            Box::new(match &cx.reads {
+                Some(reads) => tool.tracking_reads(Arc::clone(reads)),
+                None => tool,
+            })
+        },
+    },
+    ToolSpec {
+        name: "write",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Create or overwrite files",
+        build: |cx| {
+            let tool = WriteTool::new(cx.cwd);
+            Box::new(match &cx.reads {
+                Some(reads) => tool.tracking_reads(Arc::clone(reads)),
+                None => tool,
+            })
+        },
+    },
+    ToolSpec {
+        name: "grep",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Search file contents for patterns (respects .gitignore, supports hashline=true for use with hashline_edit)",
+        build: |cx| Box::new(GrepTool::new(cx.cwd)),
+    },
+    ToolSpec {
+        name: "find",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Find files by glob pattern (respects .gitignore)",
+        build: |cx| Box::new(FindTool::new(cx.cwd)),
+    },
+    ToolSpec {
+        name: "ls",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "List directory contents",
+        build: |cx| Box::new(LsTool::new(cx.cwd)),
+    },
+    ToolSpec {
+        name: "hashline_edit",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Apply precise file edits using LINE#HASH tags from read or grep with hashline=true",
+        build: |cx| Box::new(HashlineEditTool::new(cx.cwd)),
+    },
+    ToolSpec {
+        name: "todo",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Track the plan for a multi-step task; send the whole list each call, exactly one item in_progress",
+        build: |_| Box::new(crate::todo::TodoTool),
+    },
+    ToolSpec {
+        name: "web_fetch",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Fetch an http(s) URL and read it as text; follows redirects and reports the final URL",
+        build: |_| Box::new(crate::web_tools::WebFetchTool),
+    },
+    ToolSpec {
+        name: "web_search",
+        default_enabled: true,
+        sdk_builtin: true,
+        prompt_description: "Search the web for ranked title/url/snippet results; follow up with web_fetch to read one",
+        build: |_| Box::new(crate::web_tools::WebSearchTool),
+    },
+    ToolSpec {
+        name: "exit_plan_mode",
+        default_enabled: true,
+        sdk_builtin: false,
+        prompt_description: "Ask the user to approve your plan and leave plan mode; only works while in plan mode, approval switches to default mode and rejection returns their reason",
+        build: |cx| {
+            Box::new(ExitPlanModeTool {
+                gate: cx.permission_mode.clone(),
+            })
+        },
+    },
+    ToolSpec {
+        name: "subagent",
+        default_enabled: false,
+        sdk_builtin: false,
+        prompt_description: "Delegate isolated work to a named Rust Pi child agent; supports single, bounded parallel, and chained workflows",
+        build: |cx| Box::new(crate::subagents::SubagentTool::new(cx.cwd)),
+    },
+];
+
+const fn default_tool_count() -> usize {
+    let mut i = 0;
+    let mut count = 0;
+    while i < TOOL_SPECS.len() {
+        if TOOL_SPECS[i].default_enabled {
+            count += 1;
+        }
+        i += 1;
+    }
+    count
+}
+
+const fn sdk_tool_count() -> usize {
+    let mut i = 0;
+    let mut count = 0;
+    while i < TOOL_SPECS.len() {
+        if TOOL_SPECS[i].sdk_builtin {
+            count += 1;
+        }
+        i += 1;
+    }
+    count
+}
+
+const REGISTERED_NAMES: [&str; TOOL_SPECS.len()] = {
+    let mut out = [""; TOOL_SPECS.len()];
+    let mut i = 0;
+    while i < TOOL_SPECS.len() {
+        out[i] = TOOL_SPECS[i].name;
+        i += 1;
+    }
+    out
+};
+
+const DEFAULT_NAMES: [&str; default_tool_count()] = {
+    let mut out = [""; default_tool_count()];
+    let mut i = 0;
+    let mut n = 0;
+    while i < TOOL_SPECS.len() {
+        if TOOL_SPECS[i].default_enabled {
+            out[n] = TOOL_SPECS[i].name;
+            n += 1;
+        }
+        i += 1;
+    }
+    out
+};
+
+const SDK_NAMES: [&str; sdk_tool_count()] = {
+    let mut out = [""; sdk_tool_count()];
+    let mut i = 0;
+    let mut n = 0;
+    while i < TOOL_SPECS.len() {
+        if TOOL_SPECS[i].sdk_builtin {
+            out[n] = TOOL_SPECS[i].name;
+            n += 1;
+        }
+        i += 1;
+    }
+    out
+};
+
+/// Every name [`ToolRegistry::new`] knows how to construct.
+pub const REGISTERED_TOOL_NAMES: &[&str] = &REGISTERED_NAMES;
+
+/// The tools `--tools` enables when it is not given.
+pub const DEFAULT_TOOL_NAMES: &[&str] = &DEFAULT_NAMES;
+
+/// The tools the SDK's standalone registry builds.
+pub const SDK_BUILTIN_TOOL_NAMES: &[&str] = &SDK_NAMES;
+
+/// The blurb the system prompt lists `name` under, if it is a built-in.
+#[must_use]
+pub fn prompt_description(name: &str) -> Option<&'static str> {
+    TOOL_SPECS
+        .iter()
+        .find(|spec| spec.name == name)
+        .map(|spec| spec.prompt_description)
+}
+
 /// Registry of enabled tools for a Pi run.
 ///
 /// The registry is constructed from configuration (enabled tool names + settings) and is used for:
@@ -5184,62 +5429,26 @@ impl ToolRegistry {
     /// Create a new registry with the specified tools enabled.
     pub fn new(enabled: &[&str], cwd: &Path, config: Option<&Config>) -> Self {
         let permission_mode = PermissionModeGate::default();
-        let mut tools: Vec<Box<dyn Tool>> = Vec::new();
-        let shell_path = config.and_then(|c| c.shell_path.clone());
-        let shell_command_prefix = config.and_then(|c| c.shell_command_prefix.clone());
-        let image_auto_resize = config.is_none_or(Config::image_auto_resize);
-        let block_images = config
-            .and_then(|c| c.images.as_ref().and_then(|i| i.block_images))
-            .unwrap_or(false);
-        // without a read tool in the set there is no way to satisfy the guard, so leave it off
-        let reads = enabled
-            .contains(&"read")
-            .then(|| Arc::new(SessionFileReads::default()));
+        let cx = ToolBuild {
+            cwd,
+            // without a read tool in the set there is no way to satisfy the guard, so leave it off
+            reads: enabled
+                .contains(&"read")
+                .then(|| Arc::new(SessionFileReads::default())),
+            shell_path: config.and_then(|c| c.shell_path.clone()),
+            shell_command_prefix: config.and_then(|c| c.shell_command_prefix.clone()),
+            image_auto_resize: config.is_none_or(Config::image_auto_resize),
+            block_images: config
+                .and_then(|c| c.images.as_ref().and_then(|i| i.block_images))
+                .unwrap_or(false),
+            permission_mode: permission_mode.clone(),
+        };
 
-        for name in enabled {
-            match *name {
-                "read" => {
-                    let tool = ReadTool::with_settings(cwd, image_auto_resize, block_images);
-                    tools.push(match &reads {
-                        Some(reads) => Box::new(tool.tracking_reads(Arc::clone(reads))),
-                        None => Box::new(tool),
-                    });
-                }
-                "bash" => tools.push(Box::new(BashTool::with_shell(
-                    cwd,
-                    shell_path.clone(),
-                    shell_command_prefix.clone(),
-                ))),
-                "bash_output" => tools.push(Box::new(BashOutputTool)),
-                "kill_shell" => tools.push(Box::new(KillShellTool)),
-                "edit" => {
-                    let tool = EditTool::new(cwd);
-                    tools.push(match &reads {
-                        Some(reads) => Box::new(tool.tracking_reads(Arc::clone(reads))),
-                        None => Box::new(tool),
-                    });
-                }
-                "write" => {
-                    let tool = WriteTool::new(cwd);
-                    tools.push(match &reads {
-                        Some(reads) => Box::new(tool.tracking_reads(Arc::clone(reads))),
-                        None => Box::new(tool),
-                    });
-                }
-                "grep" => tools.push(Box::new(GrepTool::new(cwd))),
-                "find" => tools.push(Box::new(FindTool::new(cwd))),
-                "ls" => tools.push(Box::new(LsTool::new(cwd))),
-                "hashline_edit" => tools.push(Box::new(HashlineEditTool::new(cwd))),
-                "subagent" => tools.push(Box::new(crate::subagents::SubagentTool::new(cwd))),
-                "todo" => tools.push(Box::new(crate::todo::TodoTool)),
-                "web_fetch" => tools.push(Box::new(crate::web_tools::WebFetchTool)),
-                "web_search" => tools.push(Box::new(crate::web_tools::WebSearchTool)),
-                "exit_plan_mode" => tools.push(Box::new(ExitPlanModeTool {
-                    gate: permission_mode.clone(),
-                })),
-                _ => {}
-            }
-        }
+        let tools: Vec<Box<dyn Tool>> = enabled
+            .iter()
+            .filter_map(|name| TOOL_SPECS.iter().find(|spec| spec.name == *name))
+            .map(|spec| (spec.build)(&cx))
+            .collect();
 
         Self {
             tools,

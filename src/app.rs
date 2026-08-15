@@ -223,57 +223,9 @@ fn resolve_prompt_input(input: Option<&str>, description: &str) -> Result<Option
 }
 
 fn default_system_prompt(enabled_tools: &[&str], package_dir: &Path) -> String {
-    let tool_descriptions = [
-        ("read", "Read file contents"),
-        ("bash", "Execute bash commands (ls, grep, find, etc.)"),
-        (
-            "bash_output",
-            "Read new output from a background shell started by bash with run_in_background",
-        ),
-        (
-            "kill_shell",
-            "Stop a background shell and every process it spawned",
-        ),
-        (
-            "edit",
-            "Make surgical edits to files (find exact text and replace)",
-        ),
-        ("write", "Create or overwrite files"),
-        (
-            "grep",
-            "Search file contents for patterns (respects .gitignore, supports hashline=true for use with hashline_edit)",
-        ),
-        ("find", "Find files by glob pattern (respects .gitignore)"),
-        ("ls", "List directory contents"),
-        (
-            "hashline_edit",
-            "Apply precise file edits using LINE#HASH tags from read or grep with hashline=true",
-        ),
-        (
-            "subagent",
-            "Delegate isolated work to a named Rust Pi child agent; supports single, bounded parallel, and chained workflows",
-        ),
-        (
-            "todo",
-            "Track the plan for a multi-step task; send the whole list each call, exactly one item in_progress",
-        ),
-        (
-            "web_fetch",
-            "Fetch an http(s) URL and read it as text; follows redirects and reports the final URL",
-        ),
-        (
-            "web_search",
-            "Search the web for ranked title/url/snippet results; follow up with web_fetch to read one",
-        ),
-        (
-            "exit_plan_mode",
-            "Ask the user to approve your plan and leave plan mode; only works while in plan mode, approval switches to default mode and rejection returns their reason",
-        ),
-    ];
-
     let mut tools = Vec::new();
     for tool in enabled_tools {
-        if let Some((_, description)) = tool_descriptions.iter().find(|(name, _)| name == tool) {
+        if let Some(description) = crate::tools::prompt_description(tool) {
             tools.push(format!("- {tool}: {description}"));
         }
     }
@@ -1306,6 +1258,58 @@ mod tests {
         assert!(
             missing.is_empty(),
             "registerable but absent from the system prompt's tool list: {missing:?}"
+        );
+    }
+
+    /// Every name list is one projection of `tools::TOOL_SPECS`. A name that
+    /// reaches one surface and not another is the shape B04 shipped in.
+    #[test]
+    fn every_tool_reaches_every_derived_surface() {
+        let cwd = Path::new(".");
+        for spec in crate::tools::TOOL_SPECS {
+            let name = spec.name;
+
+            assert!(
+                crate::cli::REGISTERED_TOOLS.contains(&name),
+                "{name} is not in the CLI's accepted set"
+            );
+            assert!(
+                crate::cli::parse_tools_list(name).is_ok(),
+                "--tools rejects {name}"
+            );
+
+            let registry = crate::tools::ToolRegistry::new(&[name], cwd, None);
+            assert!(
+                registry.get(name).is_some(),
+                "the registry cannot construct {name}"
+            );
+
+            let prompt = default_system_prompt(&[name], cwd);
+            assert!(
+                prompt.contains(&format!("- {name}: ")),
+                "{name} is absent from the system prompt's tool list"
+            );
+
+            assert_eq!(
+                crate::cli::DEFAULT_TOOLS.split(',').any(|t| t == name),
+                spec.default_enabled,
+                "{name} disagrees with the --tools default"
+            );
+            assert_eq!(
+                cli::Cli::parse_from(["pi"]).enabled_tools().contains(&name),
+                spec.default_enabled,
+                "{name} disagrees with the tools a default run enables"
+            );
+            assert_eq!(
+                crate::sdk::BUILTIN_TOOL_NAMES.contains(&name),
+                spec.sdk_builtin,
+                "{name} disagrees with the SDK's built-in inventory"
+            );
+        }
+
+        assert_eq!(
+            crate::cli::REGISTERED_TOOLS.len(),
+            crate::tools::TOOL_SPECS.len()
         );
     }
 
