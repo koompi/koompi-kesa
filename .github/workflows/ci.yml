@@ -58,3 +58,69 @@ jobs:
           if [ -n "$unexpected" ]; then
             echo "::error::new test failures:"; printf '%s\n' "$unexpected"; exit 1
           fi
+
+  # A sandbox is only verified by watching it refuse something, and nothing in
+  # this repository can watch seatbelt refuse anything except a Mac.
+  seatbelt:
+    runs-on: macos-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-05
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --bin kesa
+      - name: the backend's own denial probe
+        run: |
+          cargo test --lib sandbox:: -- --nocapture
+      - name: an in-root write and read, through the shipped trampoline
+        run: |
+          root="$PWD/seatbelt-root"
+          mkdir -p "$root"
+          # Unsandboxed first, so a binary that cannot start at all is never
+          # mistaken for a profile that will not let it.
+          ./target/debug/kesa --version
+          started=$(date +%s)
+          # github runs this as `bash -e`, which kills the step before the
+          # diagnostics below can say why.
+          set +e
+          ./target/debug/kesa __sandbox-exec --workspace "$root" -- \
+            /bin/sh -c "echo in-root > '$root/allowed.txt'; cat '$root/allowed.txt'"
+          code=$?
+          echo "trampoline exit: $code"
+          if [ "$code" -ne 0 ] || [ "$(cat "$root/allowed.txt" 2>/dev/null)" != "in-root" ]; then
+            echo "--- what the kernel refused ---"
+            log show --style compact --start "@$started" \
+              --predicate 'sender == "Sandbox" or eventMessage contains "deny"' 2>&1 | tail -40
+            echo "--- crash reports ---"
+            for report in $(ls -t "$HOME"/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -2); do
+              echo "=== $report"
+              head -40 "$report"
+            done
+            echo "::error::the in-root write did not survive the sandbox"
+            exit 1
+          fi
+      - name: an out-of-root write, denied
+        run: |
+          set -euo pipefail
+          root="$PWD/seatbelt-root"
+          mkdir -p "$root"
+          outside="$HOME/kesa-seatbelt-escape.txt"
+          rm -f "$outside"
+          set +e
+          output=$(./target/debug/kesa __sandbox-exec --workspace "$root" -- \
+            /bin/sh -c "echo escaped > '$outside'" 2>&1)
+          code=$?
+          set -e
+          printf 'exit %s: %s\n' "$code" "$output"
+          if [ "$code" -eq 0 ] || [ -e "$outside" ]; then
+            echo "::error::seatbelt allowed a write outside the workspace"
+            exit 1
+          fi
+          # A trampoline that failed for its own reasons would look identical to
+          # a denial, so the denial itself has to be named.
+          case "$output" in
+            *"Operation not permitted"*|*"Permission denied"*) ;;
+            *) echo "::error::the command failed, but not from a sandbox denial"; exit 1 ;;
+          esac

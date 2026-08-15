@@ -136,7 +136,7 @@ impl SandboxStatus {
                 format!("{backend} is not usable on this kernel: {reason}")
             }
             Self::NoBackend { platform } => format!(
-                "no sandbox backend for {platform}; only Linux landlock is implemented, so commands run unconfined"
+                "no sandbox backend for {platform}; only Linux landlock and macOS seatbelt are implemented, so commands run unconfined"
             ),
             Self::OffByRequest { backend } => {
                 format!("{backend} is available and --no-sandbox turned it off")
@@ -153,7 +153,7 @@ impl SandboxStatus {
                 "Boot a kernel that supports this backend, or accept unconfined commands with --no-sandbox",
             ),
             Self::NoBackend { .. } => Some(
-                "Nothing on this platform can fix it. Run the agent on Linux, or treat every command as unconfined when approving it",
+                "Nothing on this platform can fix it. Run the agent on Linux or macOS, or treat every command as unconfined when approving it",
             ),
             Self::OffByRequest { .. } => Some("Drop --no-sandbox to confine commands again"),
         }
@@ -224,7 +224,319 @@ mod imp {
     }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "macos")]
+mod imp {
+    use super::{SYSTEM_READ_PATHS, SYSTEM_WRITE_PATHS, SandboxStatus};
+    use std::ffi::OsString;
+    use std::path::{Path, PathBuf};
+    use std::process::{Command, Output};
+
+    pub const BACKEND: &str = "seatbelt";
+
+    const SANDBOX_EXEC: &str = "/usr/bin/sandbox-exec";
+
+    /// Set on the re-exec so the second pass knows the profile is already on.
+    const APPLIED_ENV: &str = "KESA_SEATBELT_APPLIED";
+
+    /// Darwin keeps the dynamic linker cache and the system frameworks here, so
+    /// nothing execs without them.
+    const DARWIN_READ_PATHS: &[&str] = &["/System", "/Library", "/Applications", "/private/var/db"];
+
+    /// Readable by every account and under none of the roots the profile grants,
+    /// so a refused listing of it is proof the profile is live.
+    const DENIAL_PROBE: &str = "/Users";
+
+    fn quoted(path: &Path) -> String {
+        let mut out = String::new();
+        for ch in path.to_string_lossy().chars() {
+            if ch == '\\' || ch == '"' {
+                out.push('\\');
+            }
+            out.push(ch);
+        }
+        out
+    }
+
+    /// Empty yields no rule at all: a bare `(allow file-write*)` would grant the
+    /// whole filesystem, which is the opposite of an empty root list.
+    fn rule(operation: &str, filter: &str, paths: &[PathBuf]) -> String {
+        if paths.is_empty() {
+            return String::new();
+        }
+        let mut rule = format!("(allow {operation}");
+        for path in paths {
+            rule.push_str(&format!(" ({filter} \""));
+            rule.push_str(&quoted(path));
+            rule.push_str("\")");
+        }
+        rule.push(')');
+        rule
+    }
+
+    /// Everything but the filesystem stays allowed, matching landlock's scope:
+    /// claiming more than the Linux backend enforces would be the lie this
+    /// module exists to prevent.
+    fn profile(readable: &[PathBuf], files: &[PathBuf], writable: &[PathBuf]) -> String {
+        [
+            "(version 1)".to_string(),
+            "(allow default)".to_string(),
+            "(deny file-read* file-write*)".to_string(),
+            "(allow file-read-metadata)".to_string(),
+            rule("file-read*", "subpath", readable),
+            rule("file-read*", "literal", files),
+            rule("file-write*", "subpath", writable),
+        ]
+        .into_iter()
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
+    }
+
+    fn existing<I: IntoIterator<Item = PathBuf>>(roots: I) -> Vec<PathBuf> {
+        let mut resolved: Vec<PathBuf> = Vec::new();
+        for root in roots {
+            // /tmp, /var and /etc are symlinks into /private here, and seatbelt
+            // matches on the resolved path.
+            if let Ok(real) = root.canonicalize()
+                && !resolved.contains(&real)
+            {
+                resolved.push(real);
+            }
+        }
+        resolved
+    }
+
+    fn write_roots(workspace: &Path, extra_writable: &[PathBuf]) -> Vec<PathBuf> {
+        existing(
+            SYSTEM_WRITE_PATHS
+                .iter()
+                .copied()
+                .map(PathBuf::from)
+                // Darwin's per-user TMPDIR is not under /tmp.
+                .chain(std::iter::once(std::env::temp_dir()))
+                .chain(std::iter::once(workspace.to_path_buf()))
+                .chain(extra_writable.iter().cloned()),
+        )
+    }
+
+    fn read_roots(
+        workspace: &Path,
+        extra_readable: &[PathBuf],
+        writable: &[PathBuf],
+    ) -> Vec<PathBuf> {
+        existing(
+            SYSTEM_READ_PATHS
+                .iter()
+                .chain(DARWIN_READ_PATHS)
+                .copied()
+                .map(PathBuf::from)
+                .chain(std::iter::once(workspace.to_path_buf()))
+                .chain(extra_readable.iter().cloned())
+                .chain(writable.iter().cloned()),
+        )
+    }
+
+    /// seatbelt applies before it execs, so the binary it is about to start has
+    /// to be readable. `subpath` names a directory and its contents, so a file
+    /// needs `literal` or dyld is denied the image it was told to run.
+    fn readable_files() -> Vec<PathBuf> {
+        existing(std::env::current_exe())
+    }
+
+    pub fn status() -> SandboxStatus {
+        match observe_denial() {
+            Ok(()) => SandboxStatus::Enforcing { backend: BACKEND },
+            Err(reason) => SandboxStatus::KernelUnsupported {
+                backend: BACKEND,
+                reason,
+            },
+        }
+    }
+
+    /// Enforcing is a claim about behaviour, so it is only made after seatbelt
+    /// has refused a write on this machine.
+    fn observe_denial() -> Result<(), String> {
+        if !Path::new(SANDBOX_EXEC).exists() {
+            return Err(format!("{SANDBOX_EXEC} is not present on this system"));
+        }
+        // the probe deletes its own root when it is done, so two concurrent
+        // callers must never be handed the same one
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let nth = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let dir =
+            std::env::temp_dir().join(format!("kesa-seatbelt-probe-{}-{nth}", std::process::id()));
+        let allowed = dir.join("allowed");
+        let denied = dir.join("denied");
+        std::fs::create_dir_all(&allowed)
+            .and_then(|()| std::fs::create_dir_all(&denied))
+            .map_err(|err| {
+                format!(
+                    "could not stage a seatbelt probe under {}: {err}",
+                    dir.display()
+                )
+            })?;
+        let outcome = probe(&allowed, &denied);
+        let _ = std::fs::remove_dir_all(&dir);
+        outcome
+    }
+
+    fn probe(allowed: &Path, denied: &Path) -> Result<(), String> {
+        let allowed = allowed
+            .canonicalize()
+            .map_err(|err| format!("could not resolve the seatbelt probe root: {err}"))?;
+        let denied = denied
+            .canonicalize()
+            .map_err(|err| format!("could not resolve the seatbelt probe root: {err}"))?;
+        let profile = profile(&[PathBuf::from("/")], &[], std::slice::from_ref(&allowed));
+
+        let inside = allowed.join("write");
+        let attempt = touch(&profile, &inside)?;
+        if !attempt.status.success() || !inside.exists() {
+            return Err(format!(
+                "seatbelt refused a write inside its own root, so the profile is unusable: {}",
+                String::from_utf8_lossy(&attempt.stderr).trim()
+            ));
+        }
+
+        let outside = denied.join("write");
+        let attempt = touch(&profile, &outside)?;
+        if attempt.status.success() || outside.exists() {
+            return Err("seatbelt allowed a write outside its own root".to_string());
+        }
+        Ok(())
+    }
+
+    fn touch(profile: &str, path: &Path) -> Result<Output, String> {
+        Command::new(SANDBOX_EXEC)
+            .arg("-p")
+            .arg(profile)
+            .arg("/usr/bin/touch")
+            .arg(path)
+            .output()
+            .map_err(|err| format!("could not run {SANDBOX_EXEC}: {err}"))
+    }
+
+    pub fn restrict(
+        workspace: &Path,
+        extra_writable: &[PathBuf],
+        extra_readable: &[PathBuf],
+    ) -> Result<(), String> {
+        let writable = write_roots(workspace, extra_writable);
+        let readable = read_roots(workspace, extra_readable, &writable);
+        if std::env::var_os(APPLIED_ENV).is_some() {
+            return confirm_confined(&readable);
+        }
+
+        let exe = std::env::current_exe()
+            .map_err(|err| format!("cannot locate this executable to sandbox it: {err}"))?;
+        let args: Vec<OsString> = std::env::args_os().skip(1).collect();
+
+        use std::os::unix::process::CommandExt as _;
+        let err = Command::new(SANDBOX_EXEC)
+            .arg("-p")
+            .arg(profile(&readable, &readable_files(), &writable))
+            .arg(&exe)
+            .args(&args)
+            .env(APPLIED_ENV, "1")
+            .exec();
+        Err(format!("failed to exec {SANDBOX_EXEC}: {err}"))
+    }
+
+    /// The marker environment variable would be forgeable on its own, so the
+    /// second pass watches an access outside every root fail before it hands
+    /// the process to the command.
+    fn confirm_confined(readable: &[PathBuf]) -> Result<(), String> {
+        let probe = Path::new(DENIAL_PROBE);
+        if !probe.exists() || readable.iter().any(|root| probe.starts_with(root)) {
+            return Err(format!(
+                "cannot prove seatbelt is confining this process: {DENIAL_PROBE} is missing or inside the sandbox roots"
+            ));
+        }
+        if std::fs::read_dir(probe).is_ok() {
+            return Err(format!(
+                "seatbelt is not confining this process: reading {DENIAL_PROBE} outside every sandbox root succeeded"
+            ));
+        }
+        Ok(())
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn enforcing_is_only_reported_once_a_denial_has_been_seen() {
+            let observed = observe_denial();
+            println!("denial probe: {observed:?}");
+            assert_eq!(observed, Ok(()));
+            let status = status();
+            assert!(status.is_enforcing(), "{}", status.describe());
+        }
+
+        /// The probe removes its own root, so a shared one makes the first
+        /// caller to finish delete the directory the other is still writing in.
+        #[test]
+        fn concurrent_probes_do_not_delete_each_other() {
+            std::thread::scope(|scope| {
+                let mut threads = Vec::new();
+                for _ in 0..4 {
+                    threads.push(scope.spawn(observe_denial));
+                }
+                for thread in threads {
+                    let outcome = thread.join().expect("probe thread panicked");
+                    println!("concurrent denial probe: {outcome:?}");
+                    assert_eq!(outcome, Ok(()));
+                }
+            });
+        }
+
+        #[test]
+        fn an_empty_root_list_never_becomes_a_whole_filesystem_grant() {
+            assert!(rule("file-write*", "subpath", &[]).is_empty());
+            let rendered = profile(&[PathBuf::from("/")], &[], &[]);
+            println!("{rendered}");
+            assert!(!rendered.contains("(allow file-write*"));
+            assert!(rendered.contains("(deny file-read* file-write*)"));
+        }
+
+        #[test]
+        fn the_workspace_and_the_extra_roots_all_reach_the_profile() {
+            let workspace = std::env::temp_dir();
+            let writable = write_roots(&workspace, &[PathBuf::from("/Library")]);
+            let readable = read_roots(&workspace, &[PathBuf::from("/Applications")], &writable);
+            let rendered = profile(&readable, &readable_files(), &writable);
+            println!("{rendered}");
+            for root in existing([
+                workspace,
+                PathBuf::from("/Library"),
+                PathBuf::from("/Applications"),
+            ]) {
+                assert!(
+                    rendered.contains(&quoted(&root)),
+                    "{} is missing",
+                    root.display()
+                );
+            }
+        }
+
+        /// A file granted as a subpath is what aborted the trampoline on CI: the
+        /// sandbox started, then refused dyld the image it was told to run.
+        #[test]
+        fn the_executable_is_granted_as_a_file_and_not_as_a_directory() {
+            let exe = readable_files();
+            assert_eq!(exe.len(), 1);
+            let rendered = profile(&[PathBuf::from("/")], &exe, &[]);
+            println!("{rendered}");
+            assert!(rendered.contains(&format!(
+                "(allow file-read* (literal \"{}\"))",
+                quoted(&exe[0])
+            )));
+            assert!(!rendered.contains(&format!("(subpath \"{}\")", quoted(&exe[0]))));
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 mod imp {
     use super::SandboxStatus;
     use std::path::{Path, PathBuf};
@@ -499,12 +811,14 @@ mod tests {
         );
     }
 
+    /// Runs on both CI platforms, so it names neither backend: on a Mac the old
+    /// landlock wording sent a reader to /sys on a kernel that has no /sys.
     #[test]
-    fn landlock_is_available_on_this_kernel() {
+    fn this_machine_has_an_enforcing_backend() {
+        let status = backend_status();
         assert!(
-            backend_status().is_enforcing(),
-            "this machine reports landlock in /sys/kernel/security/lsm, got {:?}",
-            backend_status()
+            status.is_enforcing(),
+            "this machine is expected to enforce a sandbox, got {status:?}"
         );
     }
 
