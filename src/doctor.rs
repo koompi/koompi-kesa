@@ -571,6 +571,8 @@ fn is_known_config_key(key: &str) -> bool {
             | "check_for_updates"
             | "sessionDurability"
             | "session_durability"
+            | "requireSandbox"
+            | "require_sandbox"
             | "markdown"
             | "queueMode"
     )
@@ -2069,8 +2071,9 @@ export default function(pi) {
 
             /// `is_known_config_key` accepts both camelCase and snake_case forms.
             #[test]
-            fn config_key_pairs(idx in 0..10usize) {
+            fn config_key_pairs(idx in 0..11usize) {
                 let pairs = [
+                    ("requireSandbox", "require_sandbox"),
                     ("hideThinkingBlock", "hide_thinking_block"),
                     ("showHardwareCursor", "show_hardware_cursor"),
                     ("defaultProvider", "default_provider"),
