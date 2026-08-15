@@ -295,12 +295,10 @@ impl RewindStore {
             Err(err) => return Err(io_err(err)),
         };
         self.turns[index].entries.insert(key, blob);
-        self.persist_active()
-            .map(|()| true)
-            .map_err(|err| {
-                self.turns[index].entries.clear();
-                err
-            })
+        self.persist_active().map(|()| true).map_err(|err| {
+            self.turns[index].entries.clear();
+            err
+        })
     }
 
     fn write_blob(&self, bytes: &[u8]) -> Result<String> {
@@ -364,7 +362,11 @@ impl RewindStore {
         Ok(report)
     }
 
-    fn restore_entry(&self, key: &str, blob: Option<&str>) -> std::result::Result<Restored, String> {
+    fn restore_entry(
+        &self,
+        key: &str,
+        blob: Option<&str>,
+    ) -> std::result::Result<Restored, String> {
         let target = self.resolve_entry(key)?;
         match blob {
             Some(name) => {
@@ -571,7 +573,9 @@ pub fn is_active() -> bool {
 }
 
 pub fn begin_turn(message: &str) -> Option<u64> {
-    slot().as_mut().and_then(|store| store.begin_turn(message).ok())
+    slot()
+        .as_mut()
+        .and_then(|store| store.begin_turn(message).ok())
 }
 
 pub fn note_bash() {
@@ -581,7 +585,10 @@ pub fn note_bash() {
 }
 
 pub fn summaries() -> Vec<TurnSummary> {
-    slot().as_ref().map(RewindStore::summaries).unwrap_or_default()
+    slot()
+        .as_ref()
+        .map(RewindStore::summaries)
+        .unwrap_or_default()
 }
 
 pub fn restore(turn: u64) -> Option<Result<RestoreReport>> {
@@ -775,7 +782,9 @@ mod tests {
         )
         .expect("write tampered manifest");
 
-        let before = std::fs::metadata("/etc/passwd").ok().and_then(|m| m.modified().ok());
+        let before = std::fs::metadata("/etc/passwd")
+            .ok()
+            .and_then(|m| m.modified().ok());
 
         let mut reopened = RewindStore::open_at(
             fx.store().root().to_path_buf(),
@@ -790,7 +799,9 @@ mod tests {
                 refusal.entry, refusal.reason
             );
         }
-        let after = std::fs::metadata("/etc/passwd").ok().and_then(|m| m.modified().ok());
+        let after = std::fs::metadata("/etc/passwd")
+            .ok()
+            .and_then(|m| m.modified().ok());
         println!("[acceptance 4] /etc/passwd mtime before={before:?} after={after:?}");
 
         let expected_refusals = if cfg!(unix) { 3 } else { 2 };

@@ -495,8 +495,7 @@ impl LifecycleState {
         if self.ended.swap(true, Ordering::SeqCst) {
             return;
         }
-        self.runner
-            .session_end_blocking(&self.session_id, reason);
+        self.runner.session_end_blocking(&self.session_id, reason);
     }
 }
 
@@ -1137,9 +1136,10 @@ mod tests {
     fn merging_two_settings_files_keeps_every_event() {
         let base: HooksConfig =
             serde_json::from_str(r#"{"SessionEnd":[{"command":"a"}]}"#).expect("base");
-        let other: HooksConfig =
-            serde_json::from_str(r#"{"SessionEnd":[{"command":"b"}],"PreCompact":[{"command":"c"}]}"#)
-                .expect("other");
+        let other: HooksConfig = serde_json::from_str(
+            r#"{"SessionEnd":[{"command":"b"}],"PreCompact":[{"command":"c"}]}"#,
+        )
+        .expect("other");
 
         let merged = HooksConfig::merged(base, other);
 
@@ -1153,12 +1153,19 @@ mod tests {
         let path = scratch("exit");
 
         let lifecycle = SessionLifecycle::watch(lifecycle_runner(&path), "sess-exit");
-        assert_eq!(fired(&path), "", "SessionEnd fired before the session ended");
+        assert_eq!(
+            fired(&path),
+            "",
+            "SessionEnd fired before the session ended"
+        );
         drop(lifecycle);
 
         let payload = fired(&path);
         assert!(payload.contains(r#""reason":"exit""#), "got {payload:?}");
-        assert!(payload.contains(r#""session_id":"sess-exit""#), "got {payload:?}");
+        assert!(
+            payload.contains(r#""session_id":"sess-exit""#),
+            "got {payload:?}"
+        );
         assert_eq!(payload.matches("SessionEnd").count(), 1, "got {payload:?}");
         let _ = std::fs::remove_file(&path);
     }
@@ -1191,7 +1198,10 @@ mod tests {
         drop(lifecycle);
 
         let payload = fired(&path);
-        assert!(payload.contains(r#""reason":"interrupt""#), "got {payload:?}");
+        assert!(
+            payload.contains(r#""reason":"interrupt""#),
+            "got {payload:?}"
+        );
         assert_eq!(payload.matches("SessionEnd").count(), 1, "got {payload:?}");
         let _ = std::fs::remove_file(&path);
     }

@@ -231,7 +231,10 @@ mod tests {
 
     #[test]
     fn osc_nine_carries_the_message_and_the_fallback_is_a_bare_bell() {
-        assert_eq!(rendered("turn done", true), b"\x1b]9;turn done\x07".to_vec());
+        assert_eq!(
+            rendered("turn done", true),
+            b"\x1b]9;turn done\x07".to_vec()
+        );
         assert_eq!(rendered("turn done", false), vec![0x07]);
     }
 

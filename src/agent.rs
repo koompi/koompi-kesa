@@ -10576,9 +10576,10 @@ fn is_subagent() -> bool {
 }
 
 fn turn_end_message() -> String {
-    let here = std::env::current_dir()
-        .ok()
-        .and_then(|cwd| cwd.file_name().map(|name| name.to_string_lossy().into_owned()));
+    let here = std::env::current_dir().ok().and_then(|cwd| {
+        cwd.file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+    });
     match here {
         Some(here) => format!("KESA finished a turn in {here}"),
         None => "KESA finished a turn".to_string(),
