@@ -153,7 +153,7 @@ impl SandboxStatus {
                 "Boot a kernel that supports this backend, or accept unconfined commands with --no-sandbox",
             ),
             Self::NoBackend { .. } => Some(
-                "Nothing on this platform can fix it. Run the agent on Linux, or treat every command as unconfined when approving it",
+                "Nothing on this platform can fix it. Run the agent on Linux or macOS, or treat every command as unconfined when approving it",
             ),
             Self::OffByRequest { .. } => Some("Drop --no-sandbox to confine commands again"),
         }
