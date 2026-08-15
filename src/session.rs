@@ -6624,7 +6624,7 @@ fn escape_html(input: &str) -> String {
     escaped
 }
 
-fn user_content_to_text(content: &UserContent) -> String {
+pub(crate) fn user_content_to_text(content: &UserContent) -> String {
     match content {
         UserContent::Text(text) => text.clone(),
         UserContent::Blocks(blocks) => content_blocks_to_text(blocks),
