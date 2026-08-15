@@ -72,21 +72,7 @@ use crate::tools::{
 ///
 /// The opt-in `subagent` tool is configured through the CLI/session delegation
 /// surface and is intentionally not constructed by [`create_all_tools`].
-pub const BUILTIN_TOOL_NAMES: &[&str] = &[
-    "read",
-    "bash",
-    "bash_output",
-    "kill_shell",
-    "edit",
-    "write",
-    "grep",
-    "find",
-    "ls",
-    "hashline_edit",
-    "todo",
-    "web_fetch",
-    "web_search",
-];
+pub const BUILTIN_TOOL_NAMES: &[&str] = crate::tools::SDK_BUILTIN_TOOL_NAMES;
 
 /// Create a read tool configured for `cwd`.
 pub fn create_read_tool(cwd: &Path) -> Box<dyn Tool> {
