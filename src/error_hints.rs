@@ -197,6 +197,9 @@ fn provider_hints(message: &str) -> ErrorHint {
             context_fields: &["provider", "status_code"],
         };
     }
+    if is_name_resolution_failure(message) {
+        return name_resolution_hints();
+    }
     if message.contains("connection") || message.contains("network") {
         return ErrorHint {
             summary: "Network connection error",
@@ -410,6 +413,34 @@ const fn winsock_not_connected_hints() -> ErrorHint {
     }
 }
 
+/// getaddrinfo failures reach us as `Uncategorized`, so the kind says nothing
+/// and the text is the only signal.
+fn is_name_resolution_failure(message: &str) -> bool {
+    let message = message.to_ascii_lowercase();
+    [
+        "failed to lookup address information",
+        "name resolution",
+        "name or service not known",
+        "nodename nor servname",
+        "dns error",
+        "no such host",
+    ]
+    .iter()
+    .any(|needle| message.contains(needle))
+}
+
+fn name_resolution_hints() -> ErrorHint {
+    ErrorHint {
+        summary: "Cannot resolve the provider's hostname",
+        hints: &[
+            "Check that this machine is online and DNS is working",
+            "If you are on a VPN or split-DNS resolver, confirm it is up",
+            "Set HTTPS_PROXY if the network requires a proxy",
+        ],
+        context_fields: &["url"],
+    }
+}
+
 fn io_hints(err: &std::io::Error) -> ErrorHint {
     // Windows WSAENOTCONN (10057): kind() maps to NotConnected on Windows,
     // but also check the raw OS code in case the error was synthesized with
@@ -417,7 +448,31 @@ fn io_hints(err: &std::io::Error) -> ErrorHint {
     if err.kind() == std::io::ErrorKind::NotConnected || err.raw_os_error() == Some(10057) {
         return winsock_not_connected_hints();
     }
+    if is_name_resolution_failure(&err.to_string()) {
+        return name_resolution_hints();
+    }
     match err.kind() {
+        std::io::ErrorKind::ConnectionRefused
+        | std::io::ErrorKind::ConnectionReset
+        | std::io::ErrorKind::ConnectionAborted
+        | std::io::ErrorKind::HostUnreachable
+        | std::io::ErrorKind::NetworkUnreachable
+        | std::io::ErrorKind::NetworkDown => ErrorHint {
+            summary: "Cannot reach the provider",
+            hints: &[
+                "Check network connectivity and any firewall or proxy",
+                "Retry: the endpoint may be briefly unavailable",
+            ],
+            context_fields: &["url"],
+        },
+        std::io::ErrorKind::TimedOut => ErrorHint {
+            summary: "Network request timed out",
+            hints: &[
+                "Check connectivity, then retry",
+                "A slow proxy or VPN can exceed the request deadline",
+            ],
+            context_fields: &["url"],
+        },
         std::io::ErrorKind::NotFound => ErrorHint {
             summary: "File or directory not found",
             hints: &["Verify the path exists"],
@@ -549,20 +604,25 @@ fn api_hints(msg: &str) -> ErrorHint {
 ///
 /// Returns a formatted string suitable for terminal output.
 pub fn format_error_with_hints(error: &Error) -> String {
-    let hint = hints_for_error(error);
+    render_with_hints(&error.to_string(), &hints_for_error(error))
+}
+
+/// Same shape as [`format_error_with_hints`], for the turn-failure paths that
+/// only ever see the provider's message text and never the typed error.
+pub fn format_error_text_with_hints(message: &str) -> String {
+    render_with_hints(message, &provider_hints(message))
+}
+
+fn render_with_hints(message: &str, hint: &ErrorHint) -> String {
     let mut output = String::new();
+    let _ = writeln!(&mut output, "Error: {message}");
 
-    // Error message
-    let _ = writeln!(&mut output, "Error: {error}");
-
-    // Summary if different from error message
-    if !error.to_string().contains(hint.summary) {
+    if !message.contains(hint.summary) {
         output.push('\n');
         output.push_str(hint.summary);
         output.push('\n');
     }
 
-    // Hints
     if !hint.hints.is_empty() {
         output.push_str("\nSuggestions:\n");
         for &h in hint.hints {
@@ -1013,6 +1073,31 @@ mod tests {
         let error = Error::Io(Box::new(io_err));
         let hint = hints_for_error(&error);
         assert_eq!(hint.summary, "I/O error");
+    }
+
+    #[test]
+    fn a_dns_failure_is_not_reported_as_a_filesystem_problem() {
+        let io_err = std::io::Error::other(
+            "failed to lookup address information: Temporary failure in name resolution",
+        );
+        let error = Error::Io(Box::new(io_err));
+        let hint = hints_for_error(&error);
+
+        assert_eq!(hint.summary, "Cannot resolve the provider's hostname");
+        assert!(
+            !hint.hints.iter().any(|h| h.contains("file system")),
+            "a name resolution failure must not send the user to their filesystem: {:?}",
+            hint.hints
+        );
+        assert!(hint.hints.iter().any(|h| h.contains("DNS")));
+    }
+
+    #[test]
+    fn an_unreachable_host_points_at_the_network() {
+        let io_err = std::io::Error::new(std::io::ErrorKind::ConnectionRefused, "refused");
+        let error = Error::Io(Box::new(io_err));
+        let hint = hints_for_error(&error);
+        assert_eq!(hint.summary, "Cannot reach the provider");
     }
 
     #[test]

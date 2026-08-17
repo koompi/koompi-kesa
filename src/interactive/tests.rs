@@ -1038,3 +1038,112 @@ fn a_trailing_backslash_turns_enter_into_a_newline() {
         Some("Missing credentials for provider openai. Run /login openai.")
     );
 }
+
+#[test]
+fn a_hard_failure_reports_once_and_keeps_the_hinted_copy() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(92, 40);
+
+    let raw =
+        "IO error: failed to lookup address information: Temporary failure in name resolution";
+
+    // AgentEnd carries the synthesized error assistant message.
+    app.handle_pi_message(PiMsg::AgentDone {
+        usage: None,
+        stop_reason: StopReason::Error,
+        error_message: Some(raw.to_string()),
+    });
+    // Then the run's Err lands, carrying the remediation hints.
+    app.handle_pi_message(PiMsg::AgentError(format!(
+        "Error: {raw}\n\nCannot resolve the provider's hostname\n"
+    )));
+
+    let errors: Vec<&str> = app
+        .messages
+        .iter()
+        .filter(|message| message.role == MessageRole::System)
+        .map(|message| message.content.as_str())
+        .collect();
+    assert_eq!(errors.len(), 1, "one failure, one message: {errors:?}");
+    assert!(
+        errors[0].contains("Cannot resolve the provider's hostname"),
+        "the surviving copy must be the hinted one: {errors:?}"
+    );
+}
+
+#[test]
+fn an_unrelated_error_after_a_failure_still_gets_its_own_message() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(92, 40);
+
+    app.handle_pi_message(PiMsg::AgentDone {
+        usage: None,
+        stop_reason: StopReason::Error,
+        error_message: Some("Request failed".to_string()),
+    });
+    app.handle_pi_message(PiMsg::AgentError(
+        "Failed to save session: disk full".to_string(),
+    ));
+
+    let errors = app
+        .messages
+        .iter()
+        .filter(|message| message.role == MessageRole::System)
+        .count();
+    assert_eq!(errors, 2, "different failures must not collapse");
+}
+
+#[test]
+fn a_failed_turn_does_not_print_the_error_in_the_status_line_as_well() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(92, 40);
+
+    let raw =
+        "IO error: failed to lookup address information: Temporary failure in name resolution";
+    app.handle_pi_message(PiMsg::AgentDone {
+        usage: None,
+        stop_reason: StopReason::Error,
+        error_message: Some(raw.to_string()),
+    });
+
+    assert!(
+        app.status_message.is_none(),
+        "the transcript already carries the error: {:?}",
+        app.status_message
+    );
+
+    let frame = strip_ansi(&app.view());
+    let repeats = frame
+        .matches("failed to lookup address information")
+        .count();
+    assert_eq!(repeats, 1, "the error is on screen twice:\n{frame}");
+    assert!(
+        frame.contains("Cannot resolve the provider's hostname"),
+        "a DNS failure must say so rather than reading as a disk problem:\n{frame}"
+    );
+}
+
+#[test]
+fn a_partial_answer_keeps_its_failure_in_the_status_line() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(92, 40);
+    app.current_response.push_str("here is half an answer");
+
+    app.handle_pi_message(PiMsg::AgentDone {
+        usage: None,
+        stop_reason: StopReason::Error,
+        error_message: Some("stream ended early".to_string()),
+    });
+
+    assert_eq!(app.status_message.as_deref(), Some("stream ended early"));
+    assert!(
+        !app.messages
+            .iter()
+            .any(|message| message.role == MessageRole::System),
+        "the partial answer must not also get a System error row"
+    );
+}

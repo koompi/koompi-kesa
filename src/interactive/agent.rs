@@ -567,11 +567,15 @@ impl PiApp {
                     self.status_message = Some("Request aborted".to_string());
                 } else if stop_reason == StopReason::Error {
                     let message = error_message.unwrap_or_else(|| "Request failed".to_string());
-                    self.status_message = Some(message.clone());
-                    if !had_response {
+                    if had_response {
+                        // the transcript row belongs to the partial answer, so the
+                        // status line is the only place left to say what went wrong
+                        self.status_message = Some(message);
+                    } else {
+                        self.status_message = None;
                         self.messages.push(ConversationMessage {
                             role: MessageRole::System,
-                            content: format!("Error: {message}"),
+                            content: crate::error_hints::format_error_text_with_hints(&message),
                             thinking: None,
                             collapsed: false,
                         });
@@ -603,12 +607,27 @@ impl PiApp {
                 } else {
                     format!("Error: {error}")
                 };
-                self.messages.push(ConversationMessage {
-                    role: MessageRole::System,
-                    content,
-                    thinking: None,
-                    collapsed: false,
-                });
+                // a hard failure arrives twice: AgentEnd carries the synthesized
+                // error assistant message, then the run's Err lands here. same
+                // first line means same failure, so keep the fuller copy.
+                let headline = content.lines().next().unwrap_or_default();
+                if let Some(last) = self.messages.last_mut()
+                    && last.role == MessageRole::System
+                    && !headline.is_empty()
+                    && last.content.lines().next() == Some(headline)
+                {
+                    if content.len() > last.content.len() {
+                        last.content = content;
+                        self.message_render_cache.invalidate_all();
+                    }
+                } else {
+                    self.messages.push(ConversationMessage {
+                        role: MessageRole::System,
+                        content,
+                        thinking: None,
+                        collapsed: false,
+                    });
+                }
                 self.agent_state = AgentState::Idle;
                 self.current_tool = None;
                 self.abort_handle = None;
