@@ -532,6 +532,61 @@ fn append_streaming_plaintext_to_output(output: &mut String, markdown: &str, max
     }
 }
 
+/// Column a wrapped list item's continuation should start at, so it lines up
+/// under the item's text rather than under its bullet.
+fn markdown_continuation_indent(line: &str) -> usize {
+    let bytes = line.as_bytes();
+    let mut cursor = 0usize;
+    let mut indent = 0usize;
+    while let Some(&byte) = bytes.get(cursor) {
+        match byte {
+            0x1b => {
+                cursor += 1;
+                while bytes.get(cursor).is_some_and(u8::is_ascii) {
+                    let terminator = bytes[cursor].is_ascii_alphabetic();
+                    cursor += 1;
+                    if terminator {
+                        break;
+                    }
+                }
+            }
+            b' ' => {
+                indent += 1;
+                cursor += 1;
+            }
+            _ => break,
+        }
+    }
+    if !line.is_char_boundary(cursor) {
+        return indent;
+    }
+
+    let rest = &line[cursor..];
+    if rest.starts_with("• ") {
+        return indent + 2;
+    }
+    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+    if digits > 0 && rest[digits..].starts_with(". ") {
+        return indent + digits + 2;
+    }
+    indent
+}
+
+/// glamour 0.2 word-wraps paragraphs but never list items, so a long bullet
+/// reaches the terminal whole and gets broken mid-word at column 0.
+fn append_rendered_markdown_line(output: &mut String, line: &str, gutter: &str, max_width: usize) {
+    if max_width == 0 || textwrap::core::display_width(line) <= max_width {
+        let _ = writeln!(output, "{gutter}{line}");
+        return;
+    }
+
+    let hanging = " ".repeat(markdown_continuation_indent(line).min(max_width / 2));
+    let options = textwrap::Options::new(max_width).subsequent_indent(&hanging);
+    for segment in textwrap::wrap(line, options) {
+        let _ = writeln!(output, "{gutter}{segment}");
+    }
+}
+
 fn render_streaming_markdown_with_glamour(
     markdown: &str,
     markdown_style: &GlamourStyleConfig,
@@ -802,12 +857,13 @@ impl PiApp {
                 }
                 let _ = writeln!(output, "  {}", self.styles.accent_bold.render("What's New"));
                 output.push('\n');
+                let markdown_width = self.term_width.saturating_sub(6).max(40);
                 let rendered = glamour::Renderer::new()
                     .with_style_config(self.markdown_style.clone())
-                    .with_word_wrap(self.term_width.saturating_sub(6).max(40))
+                    .with_word_wrap(markdown_width)
                     .render(markdown);
                 for line in rendered.lines() {
-                    let _ = writeln!(output, "  {line}");
+                    append_rendered_markdown_line(&mut output, line, "  ", markdown_width);
                 }
             }
             None => {}
@@ -1433,12 +1489,21 @@ impl PiApp {
         match msg.role {
             MessageRole::User => {
                 let _ = writeln!(output);
+                let glyph = self.styles.accent_bold.render(USER_PROMPT_GLYPH);
+                let width = self.term_width.saturating_sub(6).max(40);
                 for line in msg.content.lines() {
-                    let _ = writeln!(
-                        output,
-                        "  {} {line}",
-                        self.styles.accent_bold.render(USER_PROMPT_GLYPH)
-                    );
+                    let segments = textwrap::wrap(line, width);
+                    if segments.is_empty() {
+                        let _ = writeln!(output, "  {glyph} ");
+                        continue;
+                    }
+                    for (idx, segment) in segments.iter().enumerate() {
+                        if idx == 0 {
+                            let _ = writeln!(output, "  {glyph} {segment}");
+                        } else {
+                            let _ = writeln!(output, "    {segment}");
+                        }
+                    }
                 }
             }
             MessageRole::Assistant => {
@@ -1451,13 +1516,13 @@ impl PiApp {
                     self.render_thinking_into(thinking, &mut output);
                 }
 
-                // Render markdown content
+                let markdown_width = self.term_width.saturating_sub(6).max(40);
                 let rendered = glamour::Renderer::new()
                     .with_style_config(self.markdown_style.clone())
-                    .with_word_wrap(self.term_width.saturating_sub(6).max(40))
+                    .with_word_wrap(markdown_width)
                     .render(&msg.content);
                 for line in rendered.lines() {
-                    let _ = writeln!(output, "    {line}");
+                    append_rendered_markdown_line(&mut output, line, "    ", markdown_width);
                 }
             }
             MessageRole::Tool => {
@@ -1512,7 +1577,18 @@ impl PiApp {
                 }
             }
             MessageRole::System => {
-                let _ = write!(output, "\n  {}\n", self.styles.warning.render(&msg.content));
+                let width = self.term_width.saturating_sub(6).max(40);
+                let _ = writeln!(output);
+                for line in msg.content.lines() {
+                    let segments = textwrap::wrap(line, width);
+                    if segments.is_empty() {
+                        let _ = writeln!(output);
+                        continue;
+                    }
+                    for segment in segments {
+                        let _ = writeln!(output, "  {}", self.styles.warning.render(&segment));
+                    }
+                }
             }
         }
         output
@@ -1640,7 +1716,7 @@ impl PiApp {
                     markdown_width,
                 );
                 for line in rendered.lines() {
-                    let _ = writeln!(output, "  {line}");
+                    append_rendered_markdown_line(output, line, "  ", markdown_width);
                 }
             } else {
                 append_streaming_plaintext_to_output(
@@ -1801,7 +1877,9 @@ impl PiApp {
             let _ = writeln!(output, "  {line}");
         }
 
-        let _ = write!(
+        // the footer is appended straight after this; without the newline it
+        // lands on this row and fit_footer sizes against the wrong column
+        let _ = writeln!(
             output,
             "  {}",
             self.styles
@@ -2876,5 +2954,29 @@ mod tests {
         let mut out = String::new();
         append_streaming_plaintext_to_output(&mut out, "abcdef\n", 4);
         assert_eq!(out, "  abcd\n  ef\n");
+    }
+
+    #[test]
+    fn a_long_bullet_wraps_under_its_own_text() {
+        let mut output = String::new();
+        let line = "  \u{2022} Slash commands such as /help, /model, /clear, /session, /theme, \
+                /rewind, /compact and /share";
+        append_rendered_markdown_line(&mut output, line, "    ", 40);
+
+        let rows: Vec<&str> = output.lines().collect();
+        assert!(rows.len() > 1, "the bullet was left unwrapped: {output}");
+        for row in &rows {
+            assert!(
+                row.width() <= 44,
+                "row exceeds gutter + wrap width: {row:?}"
+            );
+        }
+        assert!(rows[0].starts_with("      \u{2022} "));
+        for row in &rows[1..] {
+            assert!(
+                row.starts_with("        ") && !row.trim_start().starts_with('\u{2022}'),
+                "continuation must hang under the bullet's text: {row:?}"
+            );
+        }
     }
 }

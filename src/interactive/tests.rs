@@ -1096,6 +1096,30 @@ fn an_unrelated_error_after_a_failure_still_gets_its_own_message() {
 }
 
 #[test]
+fn no_frame_row_overflows_the_terminal_with_the_completion_list_open() {
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+    app.set_terminal_size(92, 40);
+
+    type_text(&mut app, "/");
+    assert!(app.autocomplete.open, "typing / must open the list");
+
+    use unicode_width::UnicodeWidthStr;
+    let frame = strip_ansi(&app.view());
+    for line in frame.lines() {
+        assert!(
+            line.width() <= 92,
+            "row is {} columns wide and will wrap: {line:?}",
+            line.width()
+        );
+    }
+    assert!(
+        frame.contains("Ctrl+C quit"),
+        "the footer must still render: {frame}"
+    );
+}
+
+#[test]
 fn a_failed_turn_does_not_print_the_error_in_the_status_line_as_well() {
     let dir = tempdir();
     let mut app = build_test_app(dir.path().to_path_buf());
