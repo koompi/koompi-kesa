@@ -2,7 +2,7 @@
 source: tests/tui_snapshot.rs
 expression: view
 ---
-  KESA (dummy/dummy-model)  <cwd>  mode: default
+  KESA (dummy/dummy-model)  <cwd>
 
 
 
@@ -22,7 +22,7 @@ expression: view
 
 
   › Hello, Pi!
-  ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
+  ╭ default · think off · Enter send · \+Enter newline · @file context ──────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
-  Tokens: 0 in / 0 out  |  Persist: balanced  |  Ctrl+C quit
+  Tokens: 0 in / 0 out  |  Ctrl+C quit

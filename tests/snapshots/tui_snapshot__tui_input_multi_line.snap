@@ -2,8 +2,8 @@
 source: tests/tui_snapshot.rs
 expression: view
 ---
-  KESA (dummy/dummy-model)  <cwd>  mode: default
-  ctrl+l: model  ctrl+o: tools  shift+tab: mode  /help
+  KESA (dummy/dummy-model)  <cwd>
+  ctrl+l: model  ctrl+o: detail  shift+tab: mode  /help
 
 
 
@@ -21,8 +21,8 @@ expression: view
   │ Welcome to KESA!                                                         │
   │ Ask for a change, paste an error, or drag files here.                    │
   ╰──────────────────────────────────────────────────────────────────────────╯
-  ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
+  ╭ default · think off · Enter send · \+Enter newline · @file context ──────╮
   │ > first line                                                             │
   │   second line                                                            │
   ╰──────────────────────────────────────────────────────────────────────────╯
-  Tokens: 0 in / 0 out  |  Persist: balanced  |  Ctrl+C quit
+  Tokens: 0 in / 0 out  |  Ctrl+C quit

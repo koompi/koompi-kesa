@@ -5328,9 +5328,9 @@ pub const TOOL_SPECS: &[ToolSpec] = &[
     },
     ToolSpec {
         name: "subagent",
-        default_enabled: false,
+        default_enabled: true,
         sdk_builtin: false,
-        prompt_description: "Delegate isolated work to a named Rust Pi child agent; supports single, bounded parallel, and chained workflows",
+        prompt_description: "Delegate isolated work to a named KESA child agent, which may run on a different provider and model than you; supports one task, bounded parallel tasks, and chained workflows",
         build: |cx| Box::new(crate::subagents::SubagentTool::new(cx.cwd)),
     },
 ];

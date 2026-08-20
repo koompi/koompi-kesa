@@ -148,7 +148,7 @@ struct UiStreamDeltaBatcher {
     max_pending_bytes: usize,
     last_flush: std::time::Instant,
     frame_p99_us: Arc<AtomicU64>,
-    pending_tool_update: Option<PiMsg>,
+    pending_tool_updates: std::collections::BTreeMap<String, PiMsg>,
     pending_tool_update_bytes: usize,
     pending_tool_update_events: usize,
     last_tool_update_flush: std::time::Instant,
@@ -172,7 +172,7 @@ impl UiStreamDeltaBatcher {
             // Prime the first delta flush so the UI shows immediate output.
             last_flush: now.checked_sub(flush_interval).unwrap_or(now),
             frame_p99_us,
-            pending_tool_update: None,
+            pending_tool_updates: std::collections::BTreeMap::new(),
             pending_tool_update_bytes: 0,
             pending_tool_update_events: 0,
             last_tool_update_flush: now,
@@ -242,7 +242,8 @@ impl UiStreamDeltaBatcher {
             return;
         }
 
-        self.pending_tool_update = Some(msg);
+        self.pending_tool_updates
+            .insert(Self::coalesce_key(&msg), msg);
         self.pending_tool_update_bytes = pending_tool_output_bytes;
         self.pending_tool_update_events = pending_tool_events;
 
@@ -254,13 +255,31 @@ impl UiStreamDeltaBatcher {
         }
     }
 
+    /// One slot per child, not one slot per stream. All children of a fan-out
+    /// share a single update callback, so a global newest-wins slot delivers
+    /// only whichever child spoke last and silently drops the rest.
+    fn coalesce_key(msg: &PiMsg) -> String {
+        let PiMsg::ToolUpdate {
+            tool_id, details, ..
+        } = msg
+        else {
+            return String::new();
+        };
+        super::agent_roster::coalesce_suffix(details.as_ref()).map_or_else(
+            || tool_id.clone(),
+            |suffix| format!("{tool_id}\u{1f}{suffix}"),
+        )
+    }
+
     fn enqueue_pending_tool_update(&mut self) {
-        if let Some(msg) = self.pending_tool_update.take() {
-            self.pending.push_back(msg);
-            self.pending_tool_update_bytes = 0;
-            self.pending_tool_update_events = 0;
-            self.last_tool_update_flush = std::time::Instant::now();
+        if self.pending_tool_updates.is_empty() {
+            return;
         }
+        self.pending
+            .extend(std::mem::take(&mut self.pending_tool_updates).into_values());
+        self.pending_tool_update_bytes = 0;
+        self.pending_tool_update_events = 0;
+        self.last_tool_update_flush = std::time::Instant::now();
     }
 
     fn flush_tool_update(&mut self, force_channel_flush: bool) {
@@ -473,6 +492,7 @@ impl PiApp {
                 self.current_tool = Some(name);
                 self.tool_progress = Some(ToolProgress::new());
                 self.pending_tool_output = None;
+                self.agent_roster.clear();
             }
             PiMsg::ToolUpdate {
                 content, details, ..
@@ -491,6 +511,13 @@ impl PiApp {
                 {
                     self.todos = todos;
                 }
+                if let Some(details) = details.as_ref() {
+                    if let Some(row) = super::agent_roster::progress_row(details) {
+                        self.agent_roster.apply(row);
+                    } else if let Some(delegation) = super::agent_roster::delegation(details) {
+                        self.agent_roster.apply_all(delegation.rows);
+                    }
+                }
                 if let Some(output) = format_tool_output(
                     &content,
                     details.as_ref(),
@@ -503,6 +530,7 @@ impl PiApp {
                 self.agent_state = AgentState::Processing;
                 self.current_tool = None;
                 self.tool_progress = None;
+                self.agent_roster.clear();
                 if let Some(mut output) = self.pending_tool_output.take() {
                     if is_error {
                         output = super::tool_render::mark_tool_failed(&output);
@@ -720,7 +748,7 @@ impl PiApp {
 Open this URL:\n{verification_uri}\n\n\
 If prompted, enter this code: {user_code}\n\
 Code expires in {expires_in} seconds.\n\n\
-After approving access in the browser, press Enter in Pi to complete login."
+After approving access in the browser, press Enter in KESA to complete login."
                 );
                 self.messages.push(ConversationMessage {
                     role: MessageRole::System,
@@ -2734,6 +2762,42 @@ mod stream_delta_batcher_tests {
         ));
         assert!(matches!(second, PiMsg::ToolEnd { tool_id, .. } if tool_id == "t1"));
         assert!(rx.try_recv().is_err());
+    }
+
+    fn subagent_progress_update(agent: &str, text: &str) -> PiMsg {
+        PiMsg::ToolUpdate {
+            name: "subagent".to_string(),
+            tool_id: "t1".to_string(),
+            content: vec![ContentBlock::Text(TextContent::new(text))],
+            details: Some(json!({
+                "schema": "pi.subagent.progress.v1",
+                "result": {"agent": agent, "task": "t", "status": "running"},
+            })),
+        }
+    }
+
+    #[test]
+    fn pressure_coalesces_each_child_of_a_fan_out_separately() {
+        let (tx, mut rx) = mpsc::channel(8);
+        let frame_p99 = Arc::new(AtomicU64::new(TuiPressureController::HIGH_FRAME_P99_US));
+        let mut batcher = UiStreamDeltaBatcher::new_with_frame_p99(tx, frame_p99);
+        batcher.last_tool_update_flush = std::time::Instant::now();
+
+        batcher.send_immediate(subagent_progress_update("explorer", "explorer: one"));
+        batcher.send_immediate(subagent_progress_update("reviewer", "reviewer: one"));
+        batcher.send_immediate(subagent_progress_update("explorer", "explorer: two"));
+        assert!(rx.try_recv().is_err());
+
+        batcher.flush_tool_update(true);
+
+        let mut seen = Vec::new();
+        while let Ok(PiMsg::ToolUpdate { content, .. }) = rx.try_recv() {
+            if let Some(ContentBlock::Text(text)) = content.first() {
+                seen.push(text.text.clone());
+            }
+        }
+        seen.sort();
+        assert_eq!(seen, vec!["explorer: two", "reviewer: one"]);
     }
 
     #[test]

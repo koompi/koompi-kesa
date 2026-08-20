@@ -592,15 +592,16 @@ fn shift_tab_cycles_the_permission_mode_and_renders_its_indicator() {
 
     assert_eq!(app.permission_mode, PermissionMode::Default);
     assert!(
-        !app.render_input().contains("accept edits on"),
-        "default mode must not draw an indicator"
+        app.render_input().contains("default"),
+        "every mode is named, including the default one: {}",
+        app.render_input()
     );
 
     let _ = app.update(Message::new(KeyMsg::from_type(KeyType::ShiftTab)));
 
     assert_eq!(app.permission_mode, PermissionMode::AcceptEdits);
     assert!(
-        app.render_input().contains("accept edits on"),
+        app.render_input().contains("accept-edits"),
         "input: {}",
         app.render_input()
     );

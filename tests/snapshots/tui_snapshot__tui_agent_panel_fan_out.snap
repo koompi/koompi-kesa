@@ -1,0 +1,28 @@
+---
+source: tests/tui_snapshot.rs
+expression: view
+---
+  KESA (dummy/dummy-model)  <cwd>
+  ctrl+l: model  ctrl+o: detail  shift+tab: mode  /help
+
+
+
+
+
+
+
+
+
+  ╭──────────────────────────────────────────────────────────────────────────────────────╮
+  │ Welcome to KESA!                                                                     │
+  │ Ask for a change, paste an error, or drag files here.                                │
+  ╰──────────────────────────────────────────────────────────────────────────────────────╯
+  ╭ agents · 2 running · 1 done ─────────────────────────────────────────────────────────╮
+  │ ⣾  explorer  anthropic/claude-opus-5  18s  reading src/tools.rs                      │
+  │ ⣾  reviewer  openai/gpt-5.5           12s  3 files so far                            │
+  │ ✓ tester    google/gemini-3-pro      42s  12 passed                                  │
+  ╰──────────────────────────────────────────────────────────────────────────────────────╯
+  ╭ default · think off · Enter send · \+Enter newline · @file context ──────────────────╮
+  │ > Type a message... (/help, /exit)                                                   │
+  ╰──────────────────────────────────────────────────────────────────────────────────────╯
+  Tokens: 0 in / 0 out  |  Ctrl+C quit

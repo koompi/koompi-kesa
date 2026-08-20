@@ -69,6 +69,7 @@ use crate::tools::{process_file_arguments, resolve_read_path};
 use arboard::Clipboard as ArboardClipboard;
 
 mod agent;
+mod agent_roster;
 mod commands;
 mod conversation;
 mod ext_session;
@@ -2544,6 +2545,9 @@ pub struct PiApp {
     current_tool: Option<String>,
     tool_progress: Option<ToolProgress>,
     pending_tool_output: Option<String>,
+    /// Children of the delegation currently in flight. One in-flight tool call
+    /// can be many agents; `current_tool` alone cannot say so.
+    agent_roster: agent_roster::AgentRoster,
 
     // Session and config
     session: Arc<Mutex<Session>>,
@@ -2925,6 +2929,7 @@ impl PiApp {
             current_tool: None,
             tool_progress: None,
             pending_tool_output: None,
+            agent_roster: agent_roster::AgentRoster::default(),
             session,
             config,
             theme,

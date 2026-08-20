@@ -48,6 +48,9 @@ fn format_tool_result_body(
     if let Some(block) = details.and_then(todo_checkbox_block) {
         return Some(block);
     }
+    if let Some(block) = details.and_then(delegation_block) {
+        return Some(block);
+    }
     let mut output = tool_content_blocks_to_text(content, show_images);
     if let Some(details) = details {
         // `edit` includes a unified diff-like view in `details.diff`. Surface it in the TUI
@@ -94,6 +97,47 @@ fn todo_checkbox_block(details: &Value) -> Option<String> {
     Some(crate::todo::render_todo_list(&todos))
 }
 
+/// A finished delegation, one row per child. The engine's own rendering is a
+/// stack of `## agent` markdown headings, which loses the shape the live panel
+/// had; the same rows in scrollback mean live and replay read alike.
+fn delegation_block(details: &Value) -> Option<String> {
+    let delegation = super::agent_roster::delegation(details)?;
+    if delegation.rows.is_empty() {
+        return None;
+    }
+    let name_col = delegation
+        .rows
+        .iter()
+        .map(|row| row.agent.chars().count())
+        .max()
+        .unwrap_or(0);
+    let model_col = delegation
+        .rows
+        .iter()
+        .map(|row| row.model_label().chars().count())
+        .max()
+        .unwrap_or(0);
+    let elapsed_col = delegation
+        .rows
+        .iter()
+        .map(|row| row.elapsed_label().chars().count())
+        .max()
+        .unwrap_or(0);
+
+    let mut out = String::new();
+    for row in &delegation.rows {
+        out.push_str(&format!(
+            "{} {:name_col$}  {:model_col$}  {:>elapsed_col$}  {}\n",
+            row.status.glyph(),
+            row.agent,
+            row.model_label(),
+            row.elapsed_label(),
+            row.tail(),
+        ));
+    }
+    Some(out.trim_end().to_string())
+}
+
 /// Width budget for the argument shown beside a tool name in the call header.
 const TOOL_ARG_MAX_WIDTH: usize = 60;
 
@@ -103,10 +147,27 @@ const TOOL_ARG_MAX_WIDTH: usize = 60;
 /// call, which keeps unknown and extension-provided tools legible.
 pub(super) fn format_tool_call_header(name: &str, arguments: &Value) -> String {
     let display = display_tool_name(name);
+    if let Some(fan_out) = subagent_fan_out(name, arguments) {
+        return format!("{display}({fan_out})");
+    }
     match tool_primary_arg(name, arguments) {
         Some(arg) => format!("{display}({})", truncate_arg(&arg)),
         None => display,
     }
+}
+
+/// A fan-out has no single subject argument: `tasks` and `chain` carry a list
+/// and no top-level `agent`, so the shape of the call is the useful header.
+fn subagent_fan_out(name: &str, arguments: &Value) -> Option<String> {
+    if name != "subagent" {
+        return None;
+    }
+    let (key, mode) = [("tasks", "parallel"), ("chain", "chain")]
+        .into_iter()
+        .find(|(key, _)| arguments.get(*key).is_some())?;
+    let count = arguments.get(key)?.as_array()?.len();
+    let agents = if count == 1 { "agent" } else { "agents" };
+    Some(format!("{count} {agents}, {mode}"))
 }
 
 fn display_tool_name(name: &str) -> String {
@@ -130,7 +191,7 @@ fn tool_primary_arg(name: &str, arguments: &Value) -> Option<String> {
         "read" | "write" | "edit" | "hashline_edit" | "ls" => &["path", "file_path"],
         "grep" => &["pattern", "query"],
         "find" => &["pattern", "glob", "name"],
-        "subagent" => &["agent", "name", "prompt"],
+        "subagent" => &["agent", "task"],
         "todo" => &[],
         _ => &["path", "file_path", "command", "pattern", "query", "name"],
     };

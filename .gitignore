@@ -280,3 +280,6 @@ graphify-out/
 # lead/worker scratch, not repo content
 .work/
 tasks/
+
+# herdr job worktrees
+.wt/

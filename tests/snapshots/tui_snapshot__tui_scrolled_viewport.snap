@@ -2,27 +2,27 @@
 source: tests/tui_snapshot.rs
 expression: view
 ---
-  KESA (dummy/dummy-model)  <cwd>  mode: default
+  KESA (dummy/dummy-model)  <cwd>
 
-      Assistant reply 7
+  ● Assistant reply 7
 
 
 
   › User message 8
 
 
-      Assistant reply 8
+  ● Assistant reply 8
 
 
 
   › User message 9
 
 
-      Assistant reply 9
+  ● Assistant reply 9
 
 
 
-  ╭ think off · Enter send · \+Enter newline · @file context ────────────────╮
+  ╭ default · think off · Enter send · \+Enter newline · @file context ──────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
-  Scroll 71%  |  0/0 tokens  |  Persist: balanced  |  Ctrl+C quit
+  Scroll 71% (PgUp/PgDn)  |  Tokens: 0 in / 0 out  |  Ctrl+C quit

@@ -1,9 +1,11 @@
+use super::agent_roster::{AgentRow, AgentStatus};
 use super::*;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 /// Transcript gutter glyphs. One column each, so every speaker's text starts in
 /// the same place and the transcript reads as a single column.
 const USER_PROMPT_GLYPH: &str = "\u{203a}";
+const ASSISTANT_GLYPH: &str = "\u{25cf}";
 const TOOL_RESULT_GLYPH: &str = "\u{23bf}";
 
 const APP_LABEL: &str = "KESA";
@@ -16,6 +18,19 @@ const MIN_BOX_WIDTH: usize = 16;
 
 /// The autocomplete list stays readable rather than stretching to the terminal.
 const DROPDOWN_MAX_WIDTH: usize = 64;
+
+/// Input box hints, longest first. The renderer takes the first that fits.
+const KEY_HINT_VARIANTS: [&str; 4] = [
+    "Enter send \u{b7} \\+Enter newline \u{b7} @file context",
+    "Enter send \u{b7} \\+Enter newline",
+    "Enter send",
+    "",
+];
+
+/// Agent panel columns. Names and model ids are unbounded; the tail of what a
+/// child is doing is the column worth the remaining width.
+const AGENT_PANEL_NAME_MAX: usize = 16;
+const AGENT_PANEL_MODEL_MAX: usize = 26;
 
 /// Outer width of every framed box, leaving the two-column left gutter the rest
 /// of the view uses plus a matching margin on the right.
@@ -110,6 +125,40 @@ pub(super) fn normalize_raw_terminal_newlines(input: String) -> String {
 /// padded or truncated to `width - 4` so the frame stays rectangular even when
 /// a row already carries styling escapes. Only the border glyphs take `style`,
 /// so pre-styled content passes through untouched.
+/// A `bordered_box` whose top rule carries a label, the way the input box does.
+/// The label is what makes a panel say what it is without spending a row.
+pub(super) fn labelled_box<'a>(
+    label: &str,
+    content: impl IntoIterator<Item = &'a str>,
+    width: usize,
+    style: &lipgloss::Style,
+) -> Vec<String> {
+    let width = width.max(4);
+    let inner = width - 4;
+    let middle = width - 2;
+
+    let label = format!(" {} ", label.trim());
+    let label = if lipgloss::width(&label) > middle {
+        truncate(&label, middle)
+    } else {
+        label
+    };
+    let fill = middle - lipgloss::width(&label).min(middle);
+
+    let mut lines = vec![style.render(&format!(
+        "\u{256d}{label}{}\u{256e}",
+        "\u{2500}".repeat(fill)
+    ))];
+    let left = style.render("\u{2502}");
+    let right = style.render("\u{2502}");
+    for row in content {
+        let row = fit_to_width(row, inner);
+        lines.push(format!("{left} {row} {right}"));
+    }
+    lines.push(style.render(&format!("\u{2570}{}\u{256f}", "\u{2500}".repeat(middle))));
+    lines
+}
+
 pub(super) fn bordered_box<'a>(
     content: impl IntoIterator<Item = &'a str>,
     width: usize,
@@ -574,6 +623,23 @@ fn markdown_continuation_indent(line: &str) -> usize {
 
 /// glamour 0.2 word-wraps paragraphs but never list items, so a long bullet
 /// reaches the terminal whole and gets broken mid-word at column 0.
+/// Put the speaker's glyph in the four-column gutter of a rendered block's
+/// first line with anything on it. Glamour opens with blank lines, so the glyph
+/// cannot simply go on line zero.
+fn stamp_speaker(block: &str, glyph: &str) -> String {
+    let mut out = String::with_capacity(block.len() + glyph.len());
+    let mut stamped = false;
+    for line in block.lines() {
+        if !stamped && line.trim_start().len() != line.len() && !line.trim().is_empty() {
+            let _ = writeln!(out, "  {glyph} {}", line.trim_start_matches(' '));
+            stamped = true;
+            continue;
+        }
+        let _ = writeln!(out, "{line}");
+    }
+    out
+}
+
 fn append_rendered_markdown_line(output: &mut String, line: &str, gutter: &str, max_width: usize) {
     if max_width == 0 || textwrap::core::display_width(line) <= max_width {
         let _ = writeln!(output, "{gutter}{line}");
@@ -781,7 +847,7 @@ fn fit_footer(segments: &[FooterSegment], max_width: usize) -> String {
 fn format_persistence_footer_segment(
     mode: crate::session::AutosaveDurabilityMode,
     metrics: crate::session::AutosaveQueueMetrics,
-) -> String {
+) -> Option<String> {
     let mut details = Vec::new();
     if metrics.pending_mutations > 0 {
         details.push(format!(
@@ -798,11 +864,19 @@ fn format_persistence_footer_segment(
         details.push("backpressure".to_string());
     }
 
+    // A healthy queue on the default policy is not news, and the footer is the
+    // scarcest row in the frame. Say nothing until there is something to say.
     if details.is_empty() {
-        format!("Persist: {}", mode.as_str())
-    } else {
-        format!("Persist: {} ({})", mode.as_str(), details.join(", "))
+        if mode == crate::session::AutosaveDurabilityMode::Balanced {
+            return None;
+        }
+        return Some(format!("Persist: {}", mode.as_str()));
     }
+    Some(format!(
+        "Persist: {} ({})",
+        mode.as_str(),
+        details.join(", ")
+    ))
 }
 
 impl PiApp {
@@ -1015,8 +1089,13 @@ impl PiApp {
     fn render_below_conversation(&self) -> String {
         let mut output = String::new();
 
-        // Tool status
-        if let Some(tool) = &self.current_tool {
+        // Tool status. A delegation gets per-agent rows instead: one spinner
+        // saying "Running subagent" hides how many children there are.
+        if let Some(tool) = self
+            .current_tool
+            .as_ref()
+            .filter(|_| self.agent_roster.is_empty())
+        {
             let progress_str = self.tool_progress.as_ref().map_or_else(String::new, |p| {
                 let secs = p.elapsed_ms / 1000;
                 if secs < 1 {
@@ -1120,6 +1199,10 @@ impl PiApp {
             }
         }
 
+        if let Some(panel) = self.render_agent_panel() {
+            output.push_str(&panel);
+        }
+
         if let Some(panel) = self.render_todo_panel() {
             output.push_str(&panel);
         }
@@ -1142,7 +1225,6 @@ impl PiApp {
     fn render_header_into(&self, output: &mut String) {
         let model_label = format!("({})", self.model);
         let cwd_label = format_path_label(&self.cwd);
-        let mode_label = format!("mode: {}", self.permission_mode);
 
         // Branch indicator: show "Branch N/M" when session has multiple leaves.
         let branch_indicator = self
@@ -1168,7 +1250,7 @@ impl PiApp {
         let mode_key = self.header_binding_hint(AppAction::CyclePermissionMode, "shift+tab");
         let max_width = self.term_width.saturating_sub(2);
         let title_line = truncate(
-            &format!("{APP_LABEL} {model_label}  {cwd_label}{branch_indicator}  {mode_label}"),
+            &format!("{APP_LABEL} {model_label}  {cwd_label}{branch_indicator}"),
             max_width,
         );
 
@@ -1176,7 +1258,7 @@ impl PiApp {
         // hints from the left rather than a cut word on the right.
         let hints = [
             format!("{model_key}: model"),
-            format!("{tools_key}: tools"),
+            format!("{tools_key}: detail"),
             format!("{mode_key}: mode"),
             "/help".to_string(),
         ];
@@ -1270,52 +1352,61 @@ impl PiApp {
         let input_text = self.input.value();
         let is_bash_mode = parse_bash_command(&input_text).is_some();
 
-        let (thinking_label, thinking_border_style) = match thinking_level {
-            ThinkingLevel::Off => ("off", self.styles.border.clone()),
-            ThinkingLevel::Minimal => ("minimal", self.styles.accent.clone()),
-            ThinkingLevel::Low => ("low", self.styles.accent.clone()),
-            ThinkingLevel::Medium => ("medium", self.styles.accent.clone()),
-            ThinkingLevel::High => ("high", self.styles.warning.clone()),
-            ThinkingLevel::XHigh => ("xhigh", self.styles.error_bold.clone()),
-            ThinkingLevel::Max => ("max", self.styles.error_bold.clone()),
+        let thinking_label = match thinking_level {
+            ThinkingLevel::Off => "off",
+            ThinkingLevel::Minimal => "minimal",
+            ThinkingLevel::Low => "low",
+            ThinkingLevel::Medium => "medium",
+            ThinkingLevel::High => "high",
+            ThinkingLevel::XHigh => "xhigh",
+            ThinkingLevel::Max => "max",
         };
 
+        // The border carries what is at stake if you press Enter, not how hard
+        // the model will think. Thinking level keeps its label and loses its
+        // colour: at the default of Max it was drawing a red box around an idle
+        // prompt, which reads as a failure.
         let border_style = if is_bash_mode {
             self.styles.warning_bold.clone()
         } else {
-            thinking_border_style
+            match self.permission_mode {
+                PermissionMode::Default => self.styles.border.clone(),
+                PermissionMode::AcceptEdits => self.styles.warning.clone(),
+                PermissionMode::Plan => self.styles.accent.clone(),
+                PermissionMode::ReadOnly => self.styles.muted.clone(),
+            }
         };
 
-        let mode_text = if self.term_width >= 76 {
-            "Enter send · \\+Enter newline · @file context"
-        } else {
-            "Enter send · \\+Enter newline"
-        };
         let width = box_width(self.term_width);
         let middle_width = width.saturating_sub(2);
 
-        let mut segments: Vec<&str> = Vec::new();
-        if is_bash_mode {
-            segments.push("bash");
-        }
-        segments.extend(self.permission_mode.indicator());
+        // Named unconditionally, including in Default, because the header no
+        // longer says it and a plain border must still be readable as a mode.
+        let permission_segment = self.permission_mode.to_string();
         let thinking_segment = format!("think {thinking_label}");
-        segments.push(&thinking_segment);
-        segments.push(mode_text);
 
+        // Give up detail from the right, one clause at a time. Fitting greedily
+        // over a fixed hint drops the whole hint the moment the mode name makes
+        // it one column too long, and the hint is what a new user reads.
         let mut label = String::new();
-        for segment in segments {
-            let candidate = if label.is_empty() {
-                format!(" {segment} ")
-            } else {
-                format!("{label}· {segment} ")
-            };
+        for hint in KEY_HINT_VARIANTS {
+            let mut segments: Vec<&str> = Vec::new();
+            if is_bash_mode {
+                segments.push("bash");
+            }
+            segments.push(&permission_segment);
+            segments.push(&thinking_segment);
+            if !hint.is_empty() {
+                segments.push(hint);
+            }
+            let candidate = format!(" {} ", segments.join(" \u{b7} "));
             if lipgloss::width(&candidate) <= middle_width {
                 label = candidate;
+                break;
             }
         }
-        if lipgloss::width(&label) > middle_width {
-            label = truncate(&label, middle_width);
+        if label.is_empty() {
+            label = truncate(&format!(" {permission_segment} "), middle_width);
         }
         let label_width = lipgloss::width(&label).min(middle_width);
         let top_middle = format!("{label}{}", "─".repeat(middle_width - label_width));
@@ -1427,7 +1518,7 @@ impl PiApp {
         let input = self.total_usage.input;
         let output_tokens = self.total_usage.output;
         let persistence_str = self.session.try_lock().ok().map_or_else(
-            || "Persist: unavailable".to_string(),
+            || Some("Persist: unavailable".to_string()),
             |session| {
                 format_persistence_footer_segment(
                     session.autosave_durability_mode(),
@@ -1465,14 +1556,16 @@ impl PiApp {
         if let Some(percent) = percent {
             segments.push(FooterSegment {
                 long: format!("Context: {percent}% left"),
-                short: format!("{percent}% ctx"),
+                short: format!("{percent}% ctx left"),
                 priority: FOOTER_PRIORITY_CONTEXT,
             });
         }
-        segments.push(FooterSegment::pair(
-            persistence_str,
-            FOOTER_PRIORITY_PERSISTENCE,
-        ));
+        if let Some(persistence_str) = persistence_str {
+            segments.push(FooterSegment::pair(
+                persistence_str,
+                FOOTER_PRIORITY_PERSISTENCE,
+            ));
+        }
         segments.push(FooterSegment::pair(
             "Ctrl+C quit".to_string(),
             FOOTER_PRIORITY_QUIT,
@@ -1521,9 +1614,14 @@ impl PiApp {
                     .with_style_config(self.markdown_style.clone())
                     .with_word_wrap(markdown_width)
                     .render(&msg.content);
+                let mut block = String::new();
                 for line in rendered.lines() {
-                    append_rendered_markdown_line(&mut output, line, "    ", markdown_width);
+                    append_rendered_markdown_line(&mut block, line, "    ", markdown_width);
                 }
+                output.push_str(&stamp_speaker(
+                    &block,
+                    &self.styles.accent_bold.render(ASSISTANT_GLYPH),
+                ));
             }
             MessageRole::Tool => {
                 // Per-message collapse: global toggle overrides, then per-message.
@@ -1731,6 +1829,78 @@ impl PiApp {
     /// The plan, on the row above the editor. Collapsed it is the item in
     /// progress and a count; expanded it is every item. Absent when the agent
     /// has not written a plan.
+    /// The children of the delegation in flight, one row each. This is the
+    /// control surface for a tool that can spawn eight processes: it is where
+    /// the user sees what to press Esc on.
+    pub(super) fn render_agent_panel(&self) -> Option<String> {
+        if self.agent_roster.is_empty() {
+            return None;
+        }
+        let width = box_width(self.term_width);
+        let inner = width.saturating_sub(4);
+
+        let rows: Vec<&AgentRow> = self.agent_roster.rows().collect();
+        let name_col = rows
+            .iter()
+            .map(|row| lipgloss::width(&row.agent))
+            .max()
+            .unwrap_or(0)
+            .clamp(1, AGENT_PANEL_NAME_MAX);
+        let model_col = rows
+            .iter()
+            .map(|row| lipgloss::width(&row.model_label()))
+            .max()
+            .unwrap_or(0)
+            .clamp(1, AGENT_PANEL_MODEL_MAX);
+        let elapsed_col = rows
+            .iter()
+            .map(|row| lipgloss::width(&row.elapsed_label()))
+            .max()
+            .unwrap_or(0);
+
+        let lines: Vec<String> = rows
+            .iter()
+            .map(|row| {
+                let glyph = if row.status.is_running() {
+                    self.spinner.view().trim_end().to_string()
+                } else {
+                    row.status.glyph().to_string()
+                };
+                let name = fit_to_width(&row.agent, name_col);
+                let model = fit_to_width(&row.model_label(), model_col);
+                let elapsed = fit_to_width(&row.elapsed_label(), elapsed_col);
+                let head = format!("{glyph} {name}  {model}  {elapsed}");
+                let tail_width = inner.saturating_sub(lipgloss::width(&head) + 2);
+                let tail = truncate(&row.tail(), tail_width);
+                format!(
+                    "{}  {}",
+                    self.agent_row_style(row.status).render(&head),
+                    self.styles.muted.render(&tail),
+                )
+            })
+            .collect();
+
+        let mut out = String::new();
+        for line in labelled_box(
+            &self.agent_roster.summary_line(),
+            lines.iter().map(String::as_str),
+            width,
+            &self.styles.border,
+        ) {
+            let _ = writeln!(out, "  {line}");
+        }
+        Some(out)
+    }
+
+    fn agent_row_style(&self, status: AgentStatus) -> lipgloss::Style {
+        match status {
+            AgentStatus::Running => self.styles.accent.clone(),
+            AgentStatus::Completed => self.styles.success_bold.clone(),
+            AgentStatus::Failed => self.styles.error_bold.clone(),
+            _ => self.styles.muted.clone(),
+        }
+    }
+
     pub(super) fn render_todo_panel(&self) -> Option<String> {
         let mut out = String::new();
         if self.todo_panel_expanded {
@@ -1813,11 +1983,11 @@ impl PiApp {
 
         let offset = self.autocomplete.scroll_offset();
         // Constrain visible items to available terminal space.
-        // Dropdown chrome uses ~5 rows (borders, help, pagination, description).
+        // Dropdown chrome uses 6 rows: borders, help, pagination, rule, description.
         let max_dropdown_rows = self.term_height.saturating_sub(
             // header + min conversation(1) + scroll indicator(1)
             // + input(4 + height) + footer(2) + dropdown chrome(5)
-            self.header_rows() + 1 + 1 + 4 + self.input.height() + 2 + 5,
+            self.header_rows() + 1 + 1 + 4 + self.input.height() + 2 + 6,
         );
         let visible_count = self
             .autocomplete
@@ -1855,11 +2025,6 @@ impl PiApp {
                 _ if is_selected => selected_style.render(&plain),
                 _ => plain,
             });
-
-            if is_selected && let Some(desc) = &item.description {
-                let desc = fit_to_width(&format!("  {}", desc.replace('\n', " ")), inner);
-                rows.push(desc_style.render(&desc));
-            }
         }
 
         if self.autocomplete.items.len() > visible_count {
@@ -1870,6 +2035,18 @@ impl PiApp {
                 self.autocomplete.items.len()
             );
             rows.push(format!("{shown:^inner$}"));
+        }
+
+        // Below the list, not inside it. Inserted between rows it changed the
+        // box height, so every entry under the cursor moved as you arrowed.
+        if let Some(desc) = self
+            .autocomplete
+            .selected
+            .and_then(|idx| self.autocomplete.items.get(idx))
+            .and_then(|item| item.description.as_ref())
+        {
+            rows.push(self.styles.border.render(&"\u{2500}".repeat(inner)));
+            rows.push(desc_style.render(&fit_to_width(&desc.replace('\n', " "), inner)));
         }
 
         output.push('\n');
@@ -2829,9 +3006,14 @@ mod tests {
             last_flush_duration_ms: None,
             last_flush_trigger: None,
         };
+        // A healthy queue on the default policy earns no footer slot.
         assert_eq!(
-            format_persistence_footer_segment(AutosaveDurabilityMode::Balanced, metrics),
-            "Persist: balanced"
+            format_persistence_footer_segment(AutosaveDurabilityMode::Balanced, metrics.clone()),
+            None
+        );
+        assert_eq!(
+            format_persistence_footer_segment(AutosaveDurabilityMode::Strict, metrics),
+            Some("Persist: strict".to_string())
         );
     }
 
@@ -2850,7 +3032,8 @@ mod tests {
             last_flush_trigger: Some(crate::session::AutosaveFlushTrigger::Periodic),
         };
         let rendered =
-            format_persistence_footer_segment(AutosaveDurabilityMode::Throughput, metrics);
+            format_persistence_footer_segment(AutosaveDurabilityMode::Throughput, metrics)
+                .expect("an unhealthy queue always earns the slot");
         assert!(rendered.contains("Persist: throughput"));
         assert!(rendered.contains("pending 256/256"));
         assert!(rendered.contains("flush-fail 2"));

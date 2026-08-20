@@ -566,7 +566,7 @@ impl ChildRunner {
         let mut result =
             SubagentResult::starting(agent, task, step, &self.child_binary, &cwd, &args);
         let update = on_update.as_ref();
-        emit_progress(update, &result);
+        emit_progress(update, &mut result);
 
         let mut command = Command::new(&self.child_binary);
         command
@@ -588,14 +588,14 @@ impl ChildRunner {
                     "Failed to launch {}: {error}",
                     self.child_binary.display()
                 ));
-                emit_progress(update, &result);
+                emit_progress(update, &mut result);
                 return result;
             }
         };
         let mut child = ChildProcessGuard::new(child);
         result.pid = Some(child.id());
         result.status = SubagentStatus::Running;
-        emit_progress(update, &result);
+        emit_progress(update, &mut result);
 
         if !child.has_stdout() {
             result.fail("Child stdout was not piped.".to_string());
@@ -651,7 +651,7 @@ impl ChildRunner {
             }
         }
         child.disarm();
-        emit_progress(update, &result);
+        emit_progress(update, &mut result);
         result
     }
 }
@@ -771,7 +771,14 @@ struct SubagentResult {
     step: Option<usize>,
     source: Option<AgentSource>,
     definition_path: Option<PathBuf>,
+    // requested, from frontmatter; often absent or a bare id
     model: Option<String>,
+    // resolved, as the child reported it; none until its first assistant message
+    provider: Option<String>,
+    resolved_model: Option<String>,
+    tokens: Option<u64>,
+    cost: Option<f64>,
+    elapsed_ms: Option<u64>,
     reasoning: Option<String>,
     tools: Vec<String>,
     cwd: PathBuf,
@@ -783,6 +790,8 @@ struct SubagentResult {
     stderr: String,
     error: Option<String>,
     session_isolation: &'static str,
+    #[serde(skip)]
+    started: Option<std::time::Instant>,
     #[serde(skip)]
     is_error: bool,
 }
@@ -804,6 +813,11 @@ impl SubagentResult {
             source: Some(agent.source),
             definition_path: Some(agent.file_path.clone()),
             model: agent.model.clone(),
+            provider: None,
+            resolved_model: None,
+            tokens: None,
+            cost: None,
+            elapsed_ms: Some(0),
             reasoning: agent.reasoning.clone(),
             tools: agent
                 .tools
@@ -818,6 +832,7 @@ impl SubagentResult {
             stderr: String::new(),
             error: None,
             session_isolation: "ephemeral_no_session",
+            started: Some(std::time::Instant::now()),
             is_error: false,
         }
     }
@@ -831,6 +846,11 @@ impl SubagentResult {
             source: None,
             definition_path: None,
             model: None,
+            provider: None,
+            resolved_model: None,
+            tokens: None,
+            cost: None,
+            elapsed_ms: Some(0),
             reasoning: None,
             tools: Vec::new(),
             cwd: task.cwd.unwrap_or_default(),
@@ -842,6 +862,7 @@ impl SubagentResult {
             stderr: String::new(),
             error: Some(format!("Unknown agent: {}", task.agent)),
             session_isolation: "ephemeral_no_session",
+            started: None,
             is_error: true,
         }
     }
@@ -861,6 +882,13 @@ impl SubagentResult {
         self.status = SubagentStatus::Failed;
         self.error = Some(error);
         self.is_error = true;
+    }
+
+    fn tick(&mut self) {
+        if let Some(started) = self.started {
+            self.elapsed_ms =
+                Some(u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX));
+        }
     }
 }
 
@@ -883,10 +911,12 @@ fn render_results(results: &[SubagentResult]) -> String {
         .join("\n\n")
 }
 
-fn emit_progress(update: Option<&UpdateCallback>, result: &SubagentResult) {
+fn emit_progress(update: Option<&UpdateCallback>, result: &mut SubagentResult) {
+    result.tick();
     let Some(update) = update else {
         return;
     };
+    let result = &*result;
     let preview = if result.output.trim().is_empty() {
         format!("{}: {:?}", result.agent, result.status)
     } else {
@@ -975,12 +1005,14 @@ fn ingest_child_event(line: &str, result: &mut SubagentResult, update: Option<&U
             }
         }
         Some("message_end") => {
-            if let Some(text) = assistant_text(event.get("message")) {
+            let message = event.get("message");
+            record_assistant_identity(message, result);
+            if let Some(text) = assistant_text(message) {
                 if result.output.is_empty() {
                     append_bounded_line(&mut result.output, &text);
                 }
-                emit_progress(update, result);
             }
+            emit_progress(update, result);
         }
         Some("agent_end") => {
             if result.output.is_empty()
@@ -995,6 +1027,31 @@ fn ingest_child_event(line: &str, result: &mut SubagentResult, update: Option<&U
             }
         }
         _ => {}
+    }
+}
+
+/// The provider and model the child actually reached, which the parent cannot
+/// know: `--model` may be absent or a bare id, and resolution happens in the
+/// child. Usage accumulates because a child's tool loop ends many messages.
+fn record_assistant_identity(message: Option<&Value>, result: &mut SubagentResult) {
+    let Some(message) = message else { return };
+    if message.get("role").and_then(Value::as_str) != Some("assistant") {
+        return;
+    }
+    if let Some(provider) = message.get("provider").and_then(Value::as_str) {
+        result.provider = Some(provider.to_string());
+    }
+    if let Some(model) = message.get("model").and_then(Value::as_str) {
+        result.resolved_model = Some(model.to_string());
+    }
+    if let Some(tokens) = message
+        .pointer("/usage/totalTokens")
+        .and_then(Value::as_u64)
+    {
+        result.tokens = Some(result.tokens.unwrap_or(0) + tokens);
+    }
+    if let Some(cost) = message.pointer("/usage/cost/total").and_then(Value::as_f64) {
+        result.cost = Some(result.cost.unwrap_or(0.0) + cost);
     }
 }
 

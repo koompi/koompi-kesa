@@ -1151,6 +1151,7 @@ mod tests {
                 "web_fetch",
                 "web_search",
                 "exit_plan_mode",
+                "subagent",
             ]
         );
     }

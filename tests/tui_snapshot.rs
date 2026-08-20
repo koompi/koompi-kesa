@@ -17,6 +17,7 @@ use kesa::resources::{ResourceCliOptions, ResourceLoader};
 use kesa::session::Session;
 use kesa::tools::ToolRegistry;
 use regex::Regex;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
 use std::pin::Pin;
@@ -950,4 +951,153 @@ fn tui_input_box_stays_pinned_to_the_bottom() {
             rows[22]
         );
     }
+}
+
+fn subagent_progress(
+    agent: &str,
+    status: &str,
+    model: &str,
+    elapsed_ms: u64,
+    output: &str,
+) -> Value {
+    serde_json::json!({
+        "schema": "pi.subagent.progress.v1",
+        "result": {
+            "agent": agent,
+            "task": "do a thing",
+            "status": status,
+            "provider": model.split('/').next().unwrap_or(""),
+            "resolvedModel": model.split('/').nth(1).unwrap_or(model),
+            "elapsedMs": elapsed_ms,
+            "output": output,
+            "cwd": "/tmp",
+            "binary": "/usr/bin/kesa",
+            "tools": [],
+            "sessionIsolation": "ephemeral_no_session"
+        }
+    })
+}
+
+fn send_subagent_progress(app: &mut PiApp, details: Value) {
+    send_pi(
+        app,
+        PiMsg::ToolUpdate {
+            name: "subagent".to_string(),
+            tool_id: "tool-fanout".to_string(),
+            content: vec![ContentBlock::ToolCall(ToolCall {
+                id: "tool-fanout".to_string(),
+                name: "subagent".to_string(),
+                arguments: serde_json::json!({
+                    "tasks": [{"agent": "explorer"}, {"agent": "reviewer"}, {"agent": "tester"}]
+                }),
+                thought_signature: None,
+            })],
+            details: Some(details),
+        },
+    );
+}
+
+#[test]
+fn tui_snapshot_agent_panel_fan_out() {
+    let harness = TestHarness::new("tui_snapshot_agent_panel_fan_out");
+    let mut app = build_app(&harness);
+    app.set_terminal_size(92, 24);
+    send_pi(
+        &mut app,
+        PiMsg::ToolStart {
+            name: "subagent".to_string(),
+            tool_id: "tool-fanout".to_string(),
+        },
+    );
+    send_subagent_progress(
+        &mut app,
+        subagent_progress(
+            "explorer",
+            "running",
+            "anthropic/claude-opus-5",
+            18_000,
+            "reading src/tools.rs",
+        ),
+    );
+    send_subagent_progress(
+        &mut app,
+        subagent_progress(
+            "reviewer",
+            "running",
+            "openai/gpt-5.5",
+            12_000,
+            "3 files so far",
+        ),
+    );
+    send_subagent_progress(
+        &mut app,
+        subagent_progress(
+            "tester",
+            "completed",
+            "google/gemini-3-pro",
+            42_000,
+            "12 passed",
+        ),
+    );
+    let context = vec![("scenario".to_string(), "agent-panel-fan-out".to_string())];
+    snapshot(&harness, "tui_agent_panel_fan_out", &app, &context);
+}
+
+#[test]
+fn tui_snapshot_agent_delegation_history() {
+    let harness = TestHarness::new("tui_snapshot_agent_delegation_history");
+    let mut app = build_app(&harness);
+    app.set_terminal_size(92, 24);
+    send_pi(
+        &mut app,
+        PiMsg::ToolStart {
+            name: "subagent".to_string(),
+            tool_id: "tool-fanout".to_string(),
+        },
+    );
+    send_pi(
+        &mut app,
+        PiMsg::ToolUpdate {
+            name: "subagent".to_string(),
+            tool_id: "tool-fanout".to_string(),
+            content: vec![ContentBlock::ToolCall(ToolCall {
+                id: "tool-fanout".to_string(),
+                name: "subagent".to_string(),
+                arguments: serde_json::json!({
+                    "tasks": [{"agent": "explorer"}, {"agent": "reviewer"}, {"agent": "tester"}]
+                }),
+                thought_signature: None,
+            })],
+            details: Some(serde_json::json!({
+                "schema": "pi.subagent.result.v1",
+                "mode": "parallel",
+                "sessionIsolation": "ephemeral_no_session",
+                "results": [
+                    {"agent": "explorer", "task": "t", "status": "completed", "provider": "anthropic",
+                     "resolvedModel": "claude-opus-5", "elapsedMs": 42_000, "output": "found 7 call sites",
+                     "cwd": "/tmp", "binary": "/b", "tools": [], "sessionIsolation": "ephemeral_no_session"},
+                    {"agent": "reviewer", "task": "t", "status": "completed", "provider": "openai",
+                     "resolvedModel": "gpt-5.5", "elapsedMs": 58_000, "output": "2 concerns",
+                     "cwd": "/tmp", "binary": "/b", "tools": [], "sessionIsolation": "ephemeral_no_session"},
+                    {"agent": "tester", "task": "t", "status": "failed", "provider": "google",
+                     "resolvedModel": "gemini-3-pro", "elapsedMs": 12_000, "output": "",
+                     "error": "child exited with code 1",
+                     "cwd": "/tmp", "binary": "/b", "tools": [], "sessionIsolation": "ephemeral_no_session"}
+                ]
+            })),
+        },
+    );
+    send_pi(
+        &mut app,
+        PiMsg::ToolEnd {
+            name: "subagent".to_string(),
+            tool_id: "tool-fanout".to_string(),
+            is_error: false,
+        },
+    );
+    let context = vec![(
+        "scenario".to_string(),
+        "agent-delegation-history".to_string(),
+    )];
+    snapshot(&harness, "tui_agent_delegation_history", &app, &context);
 }

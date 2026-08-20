@@ -2,7 +2,7 @@
 source: tests/tui_snapshot.rs
 expression: view
 ---
-  KESA (dummy/dummy-model)  <cwd>  ...
+  KESA (dummy/dummy-model)  <cwd>
 
 
 
@@ -16,9 +16,9 @@ expression: view
 
 
 
-      This is a longer assistant response that
+  ● This is a longer assistant response that
       should wrap across multiple lines.
-  ╭ think off · Enter send · \+Enter newline ──╮
+  ╭ default · think off · Enter send ──────────╮
   │ > Type a message... (/help, /exit)         │
   ╰────────────────────────────────────────────╯
-  0/0 tokens  |  Persist: balanced  |  Ctrl+C quit
+  Tokens: 0 in / 0 out  |  Ctrl+C quit

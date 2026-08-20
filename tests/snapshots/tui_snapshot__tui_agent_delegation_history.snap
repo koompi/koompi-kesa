@@ -1,0 +1,28 @@
+---
+source: tests/tui_snapshot.rs
+expression: view
+---
+  KESA (dummy/dummy-model)  <cwd>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ⎿ Subagent(3 agents, parallel)
+    ✓ explorer  anthropic/claude-opus-5  42s  found 7 call sites
+    ✓ reviewer  openai/gpt-5.5           58s  2 concerns
+    ✗ tester    google/gemini-3-pro      12s  child exited with code 1
+  ⣾  Working (0s · esc to interrupt)
+  ╭ default · think off · Enter send · \+Enter newline · @file context ──────────────────╮
+  │ > Type a message... (/help, /exit)                                                   │
+  ╰──────────────────────────────────────────────────────────────────────────────────────╯
+  Tokens: 0 in / 0 out  |  Ctrl+C quit
