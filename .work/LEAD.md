@@ -98,9 +98,12 @@ Empty. All three jobs returned and are merged into `fix-tui-audit-bugs`.
    three OpenRouter models, three independent rows updating separately. Provider is one gateway,
    not three, because that is the credential held; the per-child field is read the same way either
    way and the snapshot covers three distinct providers.
-2. **Esc cancels, rows go to cancelled, no child survives** — **not demonstrated live.** The drop
-   guard is pre-existing (`subagents.rs:660-711`) and the panel renders `Cancelled`, but no live
-   Esc was driven. Unclosed.
+2. **Esc cancels, no child survives** — **met, live**. Two children confirmed running by `pgrep`,
+   Esc sent, both gone four seconds later, transcript reads `Tool execution aborted`.
+   **Caveat, and the run's one known gap:** the roster is cleared on `ToolEnd`, so the rows do not
+   linger as `⊘ cancelled` — pressing Esc loses the record of what was in flight. The abort path
+   never delivers a final `pi.subagent.result.v1`, so there is nothing to render the block from.
+   Next job.
 3. **Scrollback and `--continue` read as the run looked** — **met for scrollback**, live: the
    `Subagent(3 agents, parallel)` block with per-agent model, elapsed and outcome.
    `--continue` follows from `format_tool_output` being the replay path
@@ -109,5 +112,5 @@ Empty. All three jobs returned and are merged into `fix-tui-audit-bugs`.
 
 ## Next action
 
-Close gate clause 2: drive Esc against a live fan-out and confirm no child process survives. Then
-decide whether the two provider-layer findings below get their own jobs.
+Gate closed. Next: make Esc leave a cancelled block in the transcript instead of clearing the
+roster — see clause 2's caveat. Then the two provider-layer findings in Decided.
