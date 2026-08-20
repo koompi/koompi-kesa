@@ -4110,10 +4110,10 @@ pub fn start_oauth_callback_server(redirect_uri: &str) -> Result<OAuthCallbackSe
 
         // Send a friendly response so the browser shows a success page.
         let html = r#"<!DOCTYPE html>
-<html><head><title>Pi Agent — OAuth Complete</title></head>
+<html><head><title>KESA — OAuth Complete</title></head>
 <body style="font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;background:#f8f9fa">
 <h1 style="color:#2d7d46">&#10003; Authorization successful</h1>
-<p>You can close this browser tab and return to Pi Agent.</p>
+<p>You can close this browser tab and return to KESA.</p>
 </body></html>"#;
 
         let response = format!(
@@ -4222,10 +4222,10 @@ pub fn start_oauth_callback_server_random_port() -> Result<(OAuthCallbackServer,
             .unwrap_or_default();
 
         let html = r#"<!DOCTYPE html>
-<html><head><title>Pi Agent — OAuth Complete</title></head>
+<html><head><title>KESA — OAuth Complete</title></head>
 <body style="font-family:system-ui,sans-serif;text-align:center;padding:60px 20px;background:#f8f9fa">
 <h1 style="color:#2d7d46">&#10003; Authorization successful</h1>
-<p>You can close this browser tab and return to Pi Agent.</p>
+<p>You can close this browser tab and return to KESA.</p>
 </body></html>"#;
 
         let response = format!(

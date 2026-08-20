@@ -808,7 +808,7 @@ fn auth_hints(message: &str) -> ErrorHints {
         "Authentication error.",
         vec![
             "Verify API keys or run `/login`.".to_string(),
-            "Check auth.json permissions in the Pi config directory.".to_string(),
+            "Check auth.json permissions in the KESA config directory.".to_string(),
         ],
         vec![("details", message.to_string())],
     )
@@ -889,7 +889,7 @@ fn io_hints(err: &std::io::Error) -> ErrorHints {
                 vec![
                     "Confirm the endpoint is reachable (e.g. `curl -v <url>`).".to_string(),
                     "Check VPN, proxy, and firewall settings.".to_string(),
-                    "If curl works but Pi does not, this is a client connect-path issue \
+                    "If curl works but KESA does not, this is a client connect-path issue \
                      (IPv6/IPv4 reachability or DNS) — please report it."
                         .to_string(),
                 ],
@@ -920,7 +920,7 @@ fn sqlite_hints(err: &sqlmodel_core::Error) -> ErrorHints {
         return build_hints(
             "SQLite database is locked.",
             vec![
-                "Close other Pi instances using the same database.".to_string(),
+                "Close other KESA instances using the same database.".to_string(),
                 "Retry once the lock clears.".to_string(),
             ],
             vec![("details", details)],

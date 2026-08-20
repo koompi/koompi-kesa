@@ -63,7 +63,11 @@ impl PiApp {
             return;
         }
 
-        let mut overlay = crate::model_selector::ModelSelectorOverlay::new(&self.available_models);
+        let current = crate::model_selector::ModelKey::from_entry(&self.model_entry);
+        let mut overlay = crate::model_selector::ModelSelectorOverlay::new(
+            &self.available_models,
+            Some(&current),
+        );
         overlay.set_max_visible(super::overlay_max_visible(self.term_height));
         self.model_selector = Some(overlay);
     }
@@ -88,7 +92,9 @@ impl PiApp {
             return;
         }
 
-        let mut overlay = crate::model_selector::ModelSelectorOverlay::new(&filtered);
+        let current = crate::model_selector::ModelKey::from_entry(&self.model_entry);
+        let mut overlay =
+            crate::model_selector::ModelSelectorOverlay::new(&filtered, Some(&current));
         overlay.set_configured_only_scope(Self::unique_model_count(&self.available_models));
         overlay.set_max_visible(super::overlay_max_visible(self.term_height));
         self.model_selector = Some(overlay);
@@ -185,44 +191,32 @@ impl PiApp {
         selector: &crate::model_selector::ModelSelectorOverlay,
     ) -> String {
         use std::fmt::Write;
-        let mut output = String::new();
 
-        let _ = writeln!(output, "\n  {}", self.styles.title.render("Select a model"));
+        let mut rows = vec![self.styles.title.render("Select a model")];
         if selector.configured_only() {
-            let _ = writeln!(
-                output,
-                "  {}",
+            rows.push(
                 self.styles
                     .muted
-                    .render("Only showing models that are ready to use (see README for details)")
+                    .render("Only showing models ready to use. Run /login <provider> to add more."),
             );
         }
+        rows.push(String::new());
 
-        // Search field
         let query = selector.query();
         let search_line = if query.is_empty() {
             if selector.configured_only() {
-                "  >".to_string()
+                ">".to_string()
             } else {
-                "  > (type to filter)".to_string()
+                "> (type to filter)".to_string()
             }
         } else {
-            format!("  > {query}")
+            format!("> {query}")
         };
-        let _ = writeln!(output, "{}", self.styles.muted.render(&search_line));
-
-        let _ = writeln!(
-            output,
-            "  {}",
-            self.styles.muted.render("─".repeat(50).as_str())
-        );
+        rows.push(self.styles.muted.render(&search_line));
+        rows.push(String::new());
 
         if selector.filtered_len() == 0 {
-            let _ = writeln!(
-                output,
-                "  {}",
-                self.styles.muted_italic.render("No matching models.")
-            );
+            rows.push(self.styles.muted_italic.render("No matching models."));
         } else {
             let offset = selector.scroll_offset();
             let visible_count = selector.max_visible().min(selector.filtered_len());
@@ -234,59 +228,63 @@ impl PiApp {
             );
 
             for idx in offset..end {
+                let Some(key) = selector.item_at(idx) else {
+                    continue;
+                };
+
+                let starts_new_provider = idx == 0
+                    || selector
+                        .item_at(idx - 1)
+                        .is_none_or(|prev| !prev.provider.eq_ignore_ascii_case(&key.provider));
+                if starts_new_provider {
+                    rows.push(self.styles.muted_bold.render(&key.provider));
+                }
+
                 let is_selected = idx == selector.selected_index();
                 let prefix = if is_selected { ">" } else { " " };
-
-                if let Some(key) = selector.item_at(idx) {
-                    let full = key.full_id();
-                    let is_current = full.eq_ignore_ascii_case(&current_full);
-                    let marker = if is_current { " *" } else { "" };
-                    let mut row =
-                        String::with_capacity(prefix.len() + 1 + full.len() + marker.len() + 32);
-                    row.push_str(prefix);
+                let full = key.full_id();
+                let is_current = full.eq_ignore_ascii_case(&current_full);
+                let marker = if is_current { " *" } else { "" };
+                let mut row = format!("{prefix} {full}{marker}");
+                if let Some(badge) = selector
+                    .routing_evidence_for(key)
+                    .and_then(crate::model_routing::ModelRoutingEvidence::row_badge)
+                {
                     row.push(' ');
-                    row.push_str(&full);
-                    row.push_str(marker);
-                    if let Some(badge) = selector
-                        .routing_evidence_for(key)
-                        .and_then(crate::model_routing::ModelRoutingEvidence::row_badge)
-                    {
-                        row.push(' ');
-                        row.push_str(&badge);
-                    }
-                    let rendered = if is_selected {
-                        self.styles.accent_bold.render(&row)
-                    } else if is_current {
-                        self.styles.accent.render(&row)
-                    } else {
-                        self.styles.muted.render(&row)
-                    };
-                    let _ = writeln!(output, "  {rendered}");
+                    row.push_str(&badge);
                 }
+                let rendered = if is_selected {
+                    self.styles.accent_bold.render(&row)
+                } else if is_current {
+                    self.styles.accent.render(&row)
+                } else {
+                    self.styles.muted.render(&row)
+                };
+                rows.push(rendered);
             }
 
+            let mut counter_parts = Vec::new();
             if selector.filtered_len() > visible_count {
-                let _ = writeln!(
-                    output,
-                    "  {}",
-                    self.styles.muted.render(&format!(
-                        "({}-{} of {})",
-                        offset + 1,
-                        end,
-                        selector.filtered_len()
-                    ))
-                );
+                counter_parts.push(format!(
+                    "{}-{} of {}",
+                    offset + 1,
+                    end,
+                    selector.filtered_len()
+                ));
             }
-
             if selector.configured_only() {
-                let _ = writeln!(
-                    output,
-                    "  {}",
-                    self.styles.muted.render(&format!(
-                        "({}/{})",
-                        selector.filtered_len(),
-                        selector.source_total()
-                    ))
+                counter_parts.push(format!(
+                    "{} of {} ready",
+                    selector.filtered_len(),
+                    selector.source_total()
+                ));
+            }
+            if !counter_parts.is_empty() {
+                rows.push(String::new());
+                rows.push(
+                    self.styles
+                        .muted
+                        .render(&format!("({})", counter_parts.join(" \u{b7} "))),
                 );
             }
 
@@ -299,36 +297,109 @@ impl PiApp {
                         && entry.model.id.eq_ignore_ascii_case(&selected.id)
                 })
             {
-                let _ = writeln!(
-                    output,
-                    "\n  {}",
+                rows.push(String::new());
+                rows.push(
                     self.styles
                         .muted
-                        .render(&format!("Model Name: {}", entry.model.name))
+                        .render(&format!("Model Name: {}", entry.model.name)),
                 );
 
                 if let Some(evidence) = selector.routing_evidence_for(selected) {
                     let summary = evidence
                         .row_badge()
                         .unwrap_or_else(|| format!("[{}]", evidence.decision.short_label()));
-                    let _ = writeln!(
-                        output,
-                        "  {}",
-                        self.styles.muted.render(&format!("Routing: {summary}"))
-                    );
+                    rows.push(self.styles.muted.render(&format!("Routing: {summary}")));
                 }
             }
         }
 
+        let width = box_width(self.term_width);
+        let mut output = String::from("\n");
+        for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
+            let _ = writeln!(output, "  {line}");
+        }
         let _ = writeln!(
             output,
-            "\n  {}",
+            "  {}",
             self.styles
                 .muted_italic
                 .render("↑/↓/j/k/PgUp/PgDn: navigate  Enter: select  Esc: cancel  * = current")
         );
         output
     }
+}
+
+// copy of interactive::view's bordered_box/fit_to_width/box_width; that module is J63's, don't re-export
+const MIN_BOX_WIDTH: usize = 16;
+
+fn box_width(term_width: usize) -> usize {
+    let width = term_width.saturating_sub(4);
+    if width < MIN_BOX_WIDTH {
+        MIN_BOX_WIDTH
+    } else {
+        width
+    }
+}
+
+fn fit_to_width(line: &str, width: usize) -> String {
+    let visible = lipgloss::width(line);
+    if visible == width {
+        return line.to_string();
+    }
+    if visible < width {
+        let mut out = line.to_string();
+        out.push_str(&" ".repeat(width - visible));
+        return out;
+    }
+
+    let mut out = String::with_capacity(line.len());
+    let mut taken = 0usize;
+    let mut chars = line.chars();
+    while let Some(ch) = chars.next() {
+        if ch == '\u{1b}' {
+            out.push(ch);
+            for esc in chars.by_ref() {
+                out.push(esc);
+                if esc.is_ascii_alphabetic() || esc == '\u{7}' {
+                    break;
+                }
+            }
+            continue;
+        }
+        let cell = unicode_width::UnicodeWidthChar::width(ch).unwrap_or(0);
+        if taken + cell > width {
+            break;
+        }
+        out.push(ch);
+        taken += cell;
+    }
+    if out.contains('\u{1b}') {
+        out.push_str("\u{1b}[0m");
+    }
+    if taken < width {
+        out.push_str(&" ".repeat(width - taken));
+    }
+    out
+}
+
+fn bordered_box<'a>(
+    content: impl IntoIterator<Item = &'a str>,
+    width: usize,
+    style: &lipgloss::Style,
+) -> Vec<String> {
+    let width = width.max(4);
+    let inner = width - 4;
+    let rule = "\u{2500}".repeat(width - 2);
+
+    let mut lines = vec![style.render(&format!("\u{256d}{rule}\u{256e}"))];
+    let left = style.render("\u{2502}");
+    let right = style.render("\u{2502}");
+    for row in content {
+        let row = fit_to_width(row, inner);
+        lines.push(format!("{left} {row} {right}"));
+    }
+    lines.push(style.render(&format!("\u{2570}{rule}\u{256f}")));
+    lines
 }
 
 #[cfg(test)]
@@ -657,5 +728,36 @@ mod tests {
         assert!(rendered.contains("ollama/llama3.2 * [degraded: latency]"));
         assert!(rendered.contains("Routing: [degraded: latency]"));
         assert!(!rendered.contains("acme-remote/cloud-model"));
+    }
+
+    #[test]
+    fn opens_scrolled_to_the_current_model_grouped_by_provider() {
+        let mut available: Vec<ModelEntry> = (0..109)
+            .map(|i| model_entry("amazon-bedrock", &format!("model-{i:03}"), None))
+            .collect();
+        available.push(model_entry("openai", "gpt-4o", None));
+        let current = model_entry("zzz-provider", "zzz-model", None);
+        available.push(current.clone());
+        assert_eq!(available.len(), 111);
+
+        let mut app = build_test_app(current, available);
+        app.open_model_selector();
+
+        let selector = app
+            .model_selector
+            .as_ref()
+            .expect("selector should open with 111 models");
+        assert_eq!(
+            selector.selected_item().unwrap().full_id(),
+            "zzz-provider/zzz-model"
+        );
+        assert_eq!(selector.scroll_offset(), 0);
+
+        let rendered = app.render_model_selector(selector);
+        println!("{rendered}");
+        assert!(rendered.contains("> zzz-provider/zzz-model *"));
+        assert!(rendered.contains('\u{256d}'));
+        assert!(rendered.contains('\u{2570}'));
+        assert!(rendered.contains("amazon-bedrock"));
     }
 }
