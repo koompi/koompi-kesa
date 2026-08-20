@@ -111,8 +111,8 @@ pub(super) fn format_command_output(output: &std::process::Output) -> String {
 /// Build a gist description from the optional session name and current time.
 pub(super) fn share_gist_description(session_name: Option<&str>) -> String {
     session_name.map_or_else(
-        || format!("Pi session {}", Utc::now().format("%Y-%m-%dT%H:%M:%SZ")),
-        |name| format!("Pi session: {name}"),
+        || format!("KESA session {}", Utc::now().format("%Y-%m-%dT%H:%M:%SZ")),
+        |name| format!("KESA session: {name}"),
     )
 }
 
@@ -246,14 +246,14 @@ mod tests {
     fn gist_description_with_name() {
         assert_eq!(
             share_gist_description(Some("my-session")),
-            "Pi session: my-session"
+            "KESA session: my-session"
         );
     }
 
     #[test]
     fn gist_description_without_name() {
         let desc = share_gist_description(None);
-        assert!(desc.starts_with("Pi session "));
+        assert!(desc.starts_with("KESA session "));
         assert!(desc.contains('T'));
     }
 

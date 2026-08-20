@@ -87,46 +87,99 @@ impl SlashCommand {
         Some((command, args.trim()))
     }
 
-    /// Get help text for all commands.
-    pub const fn help_text() -> &'static str {
-        r"Available commands:
-  /help, /h, /?      - Show this help message
-  /login [provider]  - Login/setup credentials; without provider shows status table
-  /logout [provider] - Remove stored credentials
-  /clear, /cls       - Clear conversation history
-  /model, /m [id|provider/id] - Open model selector or switch directly
-  /thinking, /t [level] - Set thinking level (off/minimal/low/medium/high/xhigh/max)
-  /scoped-models [patterns|clear] - Show or set scoped models for cycling
-  /history, /hist    - Show input history
-  /export [path]     - Export conversation to HTML
-  /session, /info    - Show session info (path, tokens, cost)
-  /settings          - Open settings selector
-  /theme [name]      - List or switch themes (dark/light/custom)
-  /resume, /r        - Pick and resume a previous session
-  /new               - Start a new session
-  /copy, /cp         - Copy last assistant message to clipboard
-  /name <name>       - Set session display name
-  /hotkeys, /keys    - Show keyboard shortcuts
-  /changelog         - Show changelog entries
-  /tree              - Show session branch tree summary
-  /fork [id|index]   - Fork from a user message (default: last on current path)
-  /rewind, /undo     - Undo a turn's file edits, its transcript, or both (also Esc Esc)
-  /context, /ctx     - Break the context window down by what is filling it
-  /compact [notes]   - Compact older context with optional instructions
-  /reload            - Reload skills/prompts from disk
-  /template <name> [args] - Expand a prompt template by name
-  /share             - Upload session HTML to a secret GitHub gist and show URL
-  /mcp               - Show MCP server status (Model Context Protocol)
-  /exit, /quit, /q   - Exit Pi
+    const HELP_ROWS: &'static [(&'static str, &'static str)] = &[
+        ("/help, /h, /?", "Show this help message"),
+        (
+            "/login [provider]",
+            "Login/setup credentials; without provider shows status table",
+        ),
+        ("/logout [provider]", "Remove stored credentials"),
+        ("/clear, /cls", "Clear conversation history"),
+        (
+            "/model, /m [id|provider/id]",
+            "Open model selector or switch directly",
+        ),
+        (
+            "/thinking, /t [level]",
+            "Set thinking level (off/minimal/low/medium/high/xhigh/max)",
+        ),
+        (
+            "/scoped-models [patterns|clear]",
+            "Show or set scoped models for cycling",
+        ),
+        ("/history, /hist", "Show input history"),
+        ("/export [path]", "Export conversation to HTML"),
+        ("/session, /info", "Show session info (path, tokens, cost)"),
+        ("/settings", "Open settings selector"),
+        ("/theme [name]", "List or switch themes (dark/light/custom)"),
+        ("/resume, /r", "Pick and resume a previous session"),
+        ("/new", "Start a new session"),
+        ("/copy, /cp", "Copy last assistant message to clipboard"),
+        ("/name <name>", "Set session display name"),
+        ("/hotkeys, /keys", "Show keyboard shortcuts"),
+        ("/changelog", "Show changelog entries"),
+        ("/tree", "Show session branch tree summary"),
+        (
+            "/fork [id|index]",
+            "Fork from a user message (default: last on current path)",
+        ),
+        (
+            "/rewind, /undo",
+            "Undo a turn's file edits, its transcript, or both (also Esc Esc)",
+        ),
+        (
+            "/context, /ctx",
+            "Break the context window down by what is filling it",
+        ),
+        (
+            "/compact [notes]",
+            "Compact older context with optional instructions",
+        ),
+        ("/reload", "Reload skills/prompts from disk"),
+        (
+            "/template <name> [args]",
+            "Expand a prompt template by name",
+        ),
+        (
+            "/share",
+            "Upload session HTML to a secret GitHub gist and show URL",
+        ),
+        ("/mcp", "Show MCP server status (Model Context Protocol)"),
+        ("/exit, /quit, /q", "Exit KESA"),
+    ];
 
-  Tips:
-    • Use ↑/↓ arrows to navigate input history
-    • Use Ctrl+L to open model selector
-    • Use Ctrl+P to cycle scoped models
-    • Use Shift+Enter (Ctrl+Enter on Windows) to insert a newline
-    • Use PageUp/PageDown to scroll conversation history
-    • Use Escape to cancel current input
-    • Use /skill:name or /template to expand resources"
+    /// Get help text for all commands.
+    pub fn help_text() -> String {
+        use std::fmt::Write as _;
+
+        let width = Self::HELP_ROWS
+            .iter()
+            .map(|(cmd, _)| cmd.len())
+            .max()
+            .unwrap_or(0);
+
+        let mut out = String::from("Available commands:\n");
+        for (cmd, desc) in Self::HELP_ROWS {
+            let _ = writeln!(out, "  {cmd:<width$} - {desc}");
+        }
+
+        let tips = [
+            "Use \u{2191}/\u{2193} arrows to navigate input history",
+            "Use Ctrl+L to open model selector",
+            "Use Ctrl+P to cycle scoped models",
+            "Use Shift+Enter or a trailing \\ to insert a newline (\\ always works; Shift+Enter doesn't survive every terminal)",
+            "Use PageUp/PageDown to scroll conversation history",
+            "Use Escape to cancel current input",
+            "Use /skill:name or /template to expand resources",
+        ];
+        out.push_str("\n  Tips:\n");
+        for (idx, tip) in tips.iter().enumerate() {
+            if idx > 0 {
+                out.push('\n');
+            }
+            let _ = write!(out, "    \u{2022} {tip}");
+        }
+        out
     }
 }
 
@@ -1683,7 +1736,7 @@ impl PiApp {
             SlashCommand::Help => {
                 self.messages.push(ConversationMessage {
                     role: MessageRole::System,
-                    content: SlashCommand::help_text().to_string(),
+                    content: SlashCommand::help_text(),
                     thinking: None,
                     collapsed: false,
                 });
@@ -2456,18 +2509,18 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
                 if callback_server.is_some() {
                     message.push_str(
                         "\nListening for callback — complete authorization in your browser.\n\
-                         Pi will continue automatically, or you can paste the code manually.",
+                         KESA will continue automatically, or you can paste the code manually.",
                     );
                 } else if let Some(instructions) = info.instructions {
                     message.push('\n');
                     message.push_str(&instructions);
                     message.push('\n');
                     message.push_str(
-                        "\nPaste the callback URL or authorization code into Pi to continue.",
+                        "\nPaste the callback URL or authorization code into KESA to continue.",
                     );
                 } else {
                     message.push_str(
-                        "\nPaste the callback URL or authorization code into Pi to continue.",
+                        "\nPaste the callback URL or authorization code into KESA to continue.",
                     );
                 }
 
@@ -2975,10 +3028,10 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         }
 
         content.push_str(
-            "\nNote: Pi only loads MCP servers that an installed extension registers via\n\
+            "\nNote: KESA only loads MCP servers that an installed extension registers via\n\
              registerMcpServer. It does not read standalone MCP config files\n\
              (.agents/mcp.json, .kesa/mcp.json, ~/.kesa/agent/mcp.json) — those are used by\n\
-             other agents, not Pi. To expose an MCP server to Pi, install an extension\n\
+             other agents, not KESA. To expose an MCP server to KESA, install an extension\n\
              that registers it.",
         );
 
@@ -3391,6 +3444,24 @@ mod tests {
     use crate::provider::{InputType, Model, ModelCost};
     use std::collections::{HashMap, HashSet};
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn help_text_dash_column_is_aligned_across_every_command() {
+        let help = SlashCommand::help_text();
+        println!("{help}");
+
+        let dash_columns: Vec<usize> = help
+            .lines()
+            .filter(|line| line.trim_start().starts_with('/'))
+            .map(|line| line.find(" - ").expect("every command row has a dash"))
+            .collect();
+
+        let first = dash_columns[0];
+        assert!(
+            dash_columns.iter().all(|&col| col == first),
+            "dash column must line up across every command row: {dash_columns:?}"
+        );
+    }
 
     #[test]
     fn prompt_weights_split_project_memory_out_of_the_system_prompt() {

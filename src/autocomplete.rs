@@ -728,7 +728,7 @@ const fn builtin_slash_commands() -> &'static [BuiltinSlashCommand] {
         },
         BuiltinSlashCommand {
             name: "exit",
-            description: "Exit Pi",
+            description: "Exit KESA",
         },
         BuiltinSlashCommand {
             name: "history",
@@ -783,12 +783,24 @@ const fn builtin_slash_commands() -> &'static [BuiltinSlashCommand] {
             description: "Branch from a previous user message",
         },
         BuiltinSlashCommand {
+            name: "rewind",
+            description: "Undo a turn's file edits, its transcript, or both (also Esc Esc)",
+        },
+        BuiltinSlashCommand {
+            name: "context",
+            description: "Break the context window down by what is filling it",
+        },
+        BuiltinSlashCommand {
             name: "compact",
             description: "Compact older context",
         },
         BuiltinSlashCommand {
             name: "reload",
             description: "Reload resources from disk",
+        },
+        BuiltinSlashCommand {
+            name: "template",
+            description: "Expand a prompt template by name",
         },
         BuiltinSlashCommand {
             name: "share",
@@ -1930,6 +1942,33 @@ mod tests {
         names.sort_unstable();
         names.dedup();
         assert_eq!(names.len(), orig_len, "Duplicate slash command names found");
+    }
+
+    fn commands_documented_in_help() -> Vec<String> {
+        crate::interactive::SlashCommand::help_text()
+            .lines()
+            .map(str::trim)
+            .filter(|line| line.starts_with('/'))
+            .map(|line| {
+                line.split_whitespace()
+                    .next()
+                    .unwrap()
+                    .trim_start_matches('/')
+                    .trim_end_matches(',')
+                    .to_string()
+            })
+            .collect()
+    }
+
+    #[test]
+    fn every_command_documented_in_help_autocompletes() {
+        let cmds = builtin_slash_commands();
+        for name in commands_documented_in_help() {
+            assert!(
+                cmds.iter().any(|c| c.name == name),
+                "/{name} is documented in /help but missing from builtin_slash_commands"
+            );
+        }
     }
 
     // ── set_max_items ────────────────────────────────────────────────

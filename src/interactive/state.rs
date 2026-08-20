@@ -177,13 +177,15 @@ impl AutocompleteState {
 
         self.open = true;
         self.items = response.items;
-        self.selected = previous_selection.and_then(|selected| {
-            self.items.iter().position(|candidate| {
-                candidate.kind == selected.kind
-                    && candidate.insert == selected.insert
-                    && candidate.label == selected.label
+        self.selected = previous_selection
+            .and_then(|selected| {
+                self.items.iter().position(|candidate| {
+                    candidate.kind == selected.kind
+                        && candidate.insert == selected.insert
+                        && candidate.label == selected.label
+                })
             })
-        });
+            .or(Some(0));
         self.replace_range = response.replace;
     }
 
@@ -1568,7 +1570,7 @@ mod tests {
             kind: crate::autocomplete::AutocompleteItemKind::Model,
             label: id.to_string(),
             insert: id.to_string(),
-            description: None,
+            description: Some(format!("{id} description")),
         }
     }
 
@@ -1583,11 +1585,21 @@ mod tests {
     }
 
     #[test]
+    fn autocomplete_opens_with_the_first_item_preselected() {
+        let mut state = AutocompleteState::new(PathBuf::from("."), AutocompleteCatalog::default());
+        state.open_with(response(0..6, ["gpt-4o", "gpt-5.2", "claude-opus-4-5"]));
+
+        assert_eq!(state.selected, Some(0));
+        let item = state.selected_item().expect("row 0 preselected");
+        assert_eq!(item.label, "gpt-4o");
+        assert!(item.description.is_some());
+    }
+
+    #[test]
     fn autocomplete_refresh_preserves_selected_item_when_replace_range_unchanged() {
         let mut state = AutocompleteState::new(PathBuf::from("."), AutocompleteCatalog::default());
         state.open_with(response(0..6, ["gpt-4o", "gpt-5.2", "claude-opus-4-5"]));
 
-        state.select_next();
         state.select_next();
         assert_eq!(
             state.selected_item().map(|item| item.label.as_str()),
@@ -1604,34 +1616,33 @@ mod tests {
     }
 
     #[test]
-    fn autocomplete_refresh_clears_selection_when_replace_range_changes() {
+    fn autocomplete_refresh_resets_to_first_item_when_replace_range_changes() {
         let mut state = AutocompleteState::new(PathBuf::from("."), AutocompleteCatalog::default());
         state.open_with(response(0..6, ["gpt-4o", "gpt-5.2"]));
-        state.select_next();
-        assert_eq!(
-            state.selected_item().map(|item| item.label.as_str()),
-            Some("gpt-4o")
-        );
-
-        // Cursor/token moved: replace range changed, so selection should reset.
-        state.open_with(response(2..8, ["gpt-4o", "gpt-5.2"]));
-        assert!(state.selected_item().is_none());
-    }
-
-    #[test]
-    fn autocomplete_refresh_clears_selection_when_selected_item_disappears() {
-        let mut state = AutocompleteState::new(PathBuf::from("."), AutocompleteCatalog::default());
-        state.open_with(response(0..6, ["gpt-4o", "gpt-5.2"]));
-        state.select_next();
         state.select_next();
         assert_eq!(
             state.selected_item().map(|item| item.label.as_str()),
             Some("gpt-5.2")
         );
 
-        // Selected suggestion no longer present after refresh.
+        // Cursor/token moved: replace range changed, so selection resets to row 0.
+        state.open_with(response(2..8, ["gpt-4o", "gpt-5.2"]));
+        assert_eq!(state.selected, Some(0));
+    }
+
+    #[test]
+    fn autocomplete_refresh_resets_to_first_item_when_selected_item_disappears() {
+        let mut state = AutocompleteState::new(PathBuf::from("."), AutocompleteCatalog::default());
+        state.open_with(response(0..6, ["gpt-4o", "gpt-5.2"]));
+        state.select_next();
+        assert_eq!(
+            state.selected_item().map(|item| item.label.as_str()),
+            Some("gpt-5.2")
+        );
+
+        // Selected suggestion no longer present after refresh: falls back to row 0.
         state.open_with(response(0..6, ["gpt-4o"]));
-        assert!(state.selected_item().is_none());
+        assert_eq!(state.selected, Some(0));
     }
 
     #[test]

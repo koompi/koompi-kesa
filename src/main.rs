@@ -4655,7 +4655,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
                     "[bold]OAuth login:[/] {}\n\n\
                      Open this URL:\n{}\n\n\
                      Listening for callback on port {}...\n\
-                     Complete authorization in your browser — Pi will continue automatically.\n\
+                     Complete authorization in your browser, and KESA will continue automatically.\n\
                      (Or paste the callback URL / authorization code manually.)\n",
                     start.provider,
                     start.url,
@@ -6677,7 +6677,7 @@ mod tests {
 
         let view = app.view();
         assert!(
-            view.contains("Pi Config UI"),
+            view.contains("KESA Config UI"),
             "missing config ui header:\n{view}"
         );
         assert!(

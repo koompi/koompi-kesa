@@ -42,33 +42,39 @@ pub struct ModelSelectorOverlay {
 
 impl ModelSelectorOverlay {
     #[must_use]
-    pub fn new(models: &[ModelEntry]) -> Self {
-        let keys = models
-            .iter()
-            .map(|entry| ModelKey {
-                provider: entry.model.provider.clone(),
-                id: entry.model.id.clone(),
-            })
-            .collect::<Vec<_>>();
-        Self::new_from_keys(keys)
+    pub fn new(models: &[ModelEntry], current: Option<&ModelKey>) -> Self {
+        let keys = models.iter().map(ModelKey::from_entry).collect::<Vec<_>>();
+        Self::new_from_keys(keys, current)
     }
 
     #[must_use]
-    pub fn new_from_keys(mut keys: Vec<ModelKey>) -> Self {
-        keys.sort_by(|a, b| a.provider.cmp(&b.provider).then_with(|| a.id.cmp(&b.id)));
+    pub fn new_from_keys(mut keys: Vec<ModelKey>, current: Option<&ModelKey>) -> Self {
+        let current_provider = current.map(|key| key.provider.as_str());
+        keys.sort_by(|a, b| {
+            provider_rank(&a.provider, current_provider)
+                .cmp(&provider_rank(&b.provider, current_provider))
+                .then_with(|| a.provider.cmp(&b.provider))
+                .then_with(|| a.id.cmp(&b.id))
+        });
         let source_total = keys.len();
-        let mut selector = Self {
+        let selected = current
+            .and_then(|current| {
+                keys.iter().position(|key| {
+                    key.provider.eq_ignore_ascii_case(&current.provider)
+                        && key.id.eq_ignore_ascii_case(&current.id)
+                })
+            })
+            .unwrap_or(0);
+        Self {
+            filtered: (0..keys.len()).collect(),
             all: keys,
-            filtered: Vec::new(),
-            selected: 0,
+            selected,
             query: String::new(),
             max_visible: 10,
             source_total,
             configured_only: false,
             routing_evidence: BTreeMap::new(),
-        };
-        selector.refresh_filtered();
-        selector
+        }
     }
 
     #[must_use]
@@ -217,6 +223,13 @@ impl ModelSelectorOverlay {
     }
 }
 
+fn provider_rank(provider: &str, current_provider: Option<&str>) -> u8 {
+    match current_provider {
+        Some(current) if current.eq_ignore_ascii_case(provider) => 0,
+        _ => 1,
+    }
+}
+
 fn matches_query(query: &str, key: &ModelKey) -> bool {
     let trimmed = query.trim();
     if trimmed.is_empty() {
@@ -268,6 +281,7 @@ mod tests {
                     id: (*id).to_string(),
                 })
                 .collect(),
+            None,
         )
     }
 
@@ -316,6 +330,66 @@ mod tests {
                 "openai/gpt-4o-mini"
             ]
         );
+    }
+
+    #[test]
+    fn new_from_keys_puts_the_current_providers_group_first() {
+        let keys = vec![
+            ModelKey {
+                provider: "amazon-bedrock".to_string(),
+                id: "titan".to_string(),
+            },
+            ModelKey {
+                provider: "anthropic".to_string(),
+                id: "claude-opus-4-5".to_string(),
+            },
+            ModelKey {
+                provider: "zzz-provider".to_string(),
+                id: "zzz-model".to_string(),
+            },
+        ];
+        let current = ModelKey {
+            provider: "zzz-provider".to_string(),
+            id: "zzz-model".to_string(),
+        };
+        let selector = ModelSelectorOverlay::new_from_keys(keys, Some(&current));
+
+        assert_eq!(
+            selector.item_at(0).unwrap().full_id(),
+            "zzz-provider/zzz-model"
+        );
+    }
+
+    #[test]
+    fn new_from_keys_opens_with_the_current_model_selected() {
+        let keys = (0..111)
+            .map(|i| ModelKey {
+                provider: "amazon-bedrock".to_string(),
+                id: format!("m{i:03}"),
+            })
+            .chain(std::iter::once(ModelKey {
+                provider: "zzz-provider".to_string(),
+                id: "zzz-model".to_string(),
+            }))
+            .collect::<Vec<_>>();
+        let current = ModelKey {
+            provider: "zzz-provider".to_string(),
+            id: "zzz-model".to_string(),
+        };
+        let mut selector = ModelSelectorOverlay::new_from_keys(keys, Some(&current));
+        selector.set_max_visible(10);
+
+        assert_eq!(
+            selector.selected_item().unwrap().full_id(),
+            "zzz-provider/zzz-model"
+        );
+        assert!(
+            selector.selected_index() < selector.max_visible(),
+            "current model must be scrolled into view: selected {} not within the first {} rows",
+            selector.selected_index(),
+            selector.max_visible()
+        );
+        assert_eq!(selector.scroll_offset(), 0);
     }
 
     #[test]
@@ -696,7 +770,7 @@ mod tests {
             /// `set_max_visible(0)` clamps to 1.
             #[test]
             fn max_visible_clamps_to_one(n in 0..100usize) {
-                let mut s = ModelSelectorOverlay::new_from_keys(vec![]);
+                let mut s = ModelSelectorOverlay::new_from_keys(vec![], None);
                 s.set_max_visible(n);
                 assert!(s.max_visible() >= 1);
                 if n > 0 {
@@ -717,7 +791,7 @@ mod tests {
                         id: format!("m{i}"),
                     })
                     .collect();
-                let mut s = ModelSelectorOverlay::new_from_keys(keys);
+                let mut s = ModelSelectorOverlay::new_from_keys(keys, None);
                 s.set_max_visible(max_vis);
                 for _ in 0..n_next {
                     s.select_next();
@@ -734,7 +808,7 @@ mod tests {
                         id: format!("m{i}"),
                     })
                     .collect();
-                let mut s = ModelSelectorOverlay::new_from_keys(keys);
+                let mut s = ModelSelectorOverlay::new_from_keys(keys, None);
                 for _ in 0..n_items {
                     s.select_next();
                 }
@@ -751,7 +825,7 @@ mod tests {
                         id: format!("m{i}"),
                     })
                     .collect();
-                let mut s = ModelSelectorOverlay::new_from_keys(keys);
+                let mut s = ModelSelectorOverlay::new_from_keys(keys, None);
                 // From 0, prev wraps to last
                 s.select_prev();
                 assert_eq!(s.selected_index(), n_items - 1);
@@ -769,7 +843,7 @@ mod tests {
                         id: format!("m{i}"),
                     })
                     .collect();
-                let mut s = ModelSelectorOverlay::new_from_keys(keys);
+                let mut s = ModelSelectorOverlay::new_from_keys(keys, None);
                 for _ in 0..n_next {
                     s.select_next();
                 }
@@ -790,7 +864,7 @@ mod tests {
                     let mut s = ModelSelectorOverlay::new_from_keys(vec![
                         ModelKey { provider: p1.clone(), id: "m1".to_string() },
                         ModelKey { provider: p2, id: "m2".to_string() },
-                    ]);
+                    ], None);
                     s.push_chars(p1.chars());
                     // The filtered set should include at least the p1 model
                     assert!(s.filtered_len() >= 1);
