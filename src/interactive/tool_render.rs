@@ -97,9 +97,8 @@ fn todo_checkbox_block(details: &Value) -> Option<String> {
     Some(crate::todo::render_todo_list(&todos))
 }
 
-/// A finished delegation, one row per child. The engine's own rendering is a
-/// stack of `## agent` markdown headings, which loses the shape the live panel
-/// had; the same rows in scrollback mean live and replay read alike.
+/// A finished delegation, one row per child, matching the live panel so that
+/// scrollback and `--continue` read the way the run looked.
 fn delegation_block(details: &Value) -> Option<String> {
     let delegation = super::agent_roster::delegation(details)?;
     if delegation.rows.is_empty() {
@@ -156,8 +155,8 @@ pub(super) fn format_tool_call_header(name: &str, arguments: &Value) -> String {
     }
 }
 
-/// A fan-out has no single subject argument: `tasks` and `chain` carry a list
-/// and no top-level `agent`, so the shape of the call is the useful header.
+/// A fan-out has no single subject argument, so the shape of the call is the
+/// useful header.
 fn subagent_fan_out(name: &str, arguments: &Value) -> Option<String> {
     if name != "subagent" {
         return None;
@@ -601,8 +600,8 @@ mod tests {
         let blocks = vec![ContentBlock::Text(TextContent::new("ignored".to_string()))];
         assert_eq!(
             format_tool_output(&blocks, Some(&details), true),
-            Some("\u{2611} Read the file".to_string()),
-            "a session recorded before the rename should still render as checkboxes"
+            Some("\u{2713} Read the file".to_string()),
+            "a session recorded before the rename should still render as a todo row"
         );
     }
 
@@ -619,7 +618,7 @@ mod tests {
         let blocks = vec![ContentBlock::Text(TextContent::new("ignored".to_string()))];
         assert_eq!(
             format_tool_output(&blocks, Some(&details), true),
-            Some("☑ Read the file\n▣ Running the tests\n☐ Write the report".to_string())
+            Some("✓ Read the file\n▸ Running the tests\no Write the report".to_string())
         );
     }
 

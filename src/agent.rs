@@ -8949,7 +8949,7 @@ impl AgentSession {
                 // model switch (e.g. RPC `set_model`) honors its registry
                 // `maxTokens` instead of carrying over the previous model's
                 // limit or falling back to the provider default.
-                stream_options.max_tokens = Some(entry.model.max_tokens);
+                stream_options.max_tokens = Some(entry.model.usable_max_tokens());
                 self.refresh_extension_completion_host_state();
                 Ok(())
             }

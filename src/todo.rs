@@ -30,9 +30,9 @@ impl TodoStatus {
     #[must_use]
     pub const fn glyph(self) -> char {
         match self {
-            Self::Pending => '☐',
-            Self::InProgress => '▣',
-            Self::Completed => '☑',
+            Self::Pending => 'o',
+            Self::InProgress => '\u{25b8}',
+            Self::Completed => '\u{2713}',
         }
     }
 }
@@ -270,7 +270,7 @@ mod tests {
         let rendered = render_todo_list(&stored);
         assert_eq!(
             rendered,
-            "☑ Read the file\n▣ Running the tests\n☐ Write the report"
+            "✓ Read the file\n▸ Running the tests\no Write the report"
         );
     }
 
@@ -292,7 +292,7 @@ mod tests {
         ];
         assert_eq!(
             summary_line(&todos).as_deref(),
-            Some("▣ Run the testsing (1/3)")
+            Some("▸ Run the testsing (1/3)")
         );
     }
 
@@ -304,7 +304,7 @@ mod tests {
         ];
         assert_eq!(
             summary_line(&todos).as_deref(),
-            Some("☐ Run the tests (1/2)")
+            Some("o Run the tests (1/2)")
         );
     }
 

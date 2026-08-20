@@ -1743,11 +1743,11 @@ fn tui_state_second_todo_write_replaces_the_first_block() {
     };
 
     let first = write(&mut app, "tool-1", "pending");
-    assert_after_contains(&harness, &first, "☐ Run the tests");
+    assert_after_contains(&harness, &first, "o Run the tests");
 
     let second = write(&mut app, "tool-2", "in_progress");
-    assert_after_contains(&harness, &second, "▣ Running the tests");
-    assert_after_not_contains(&harness, &second, "☐ Run the tests");
+    assert_after_contains(&harness, &second, "▸ Running the tests");
+    assert_after_not_contains(&harness, &second, "o Run the tests");
 }
 
 #[test]
@@ -1779,13 +1779,13 @@ fn tui_state_todo_panel_collapses_to_one_row_and_expands_on_f3() {
     // agent is not working on yet stays out of it.
     let collapsed = normalize_view(&BubbleteaModel::view(&app));
     assert!(
-        collapsed.contains("▣ Running the tests (1/3)"),
+        collapsed.contains("▸ Running the tests (1/3)"),
         "collapsed panel missing its summary row:\n{collapsed}"
     );
 
     let expanded = apply_key(&harness, &mut app, "key:F3", KeyMsg::from_type(KeyType::F3));
-    assert_after_contains(&harness, &expanded, "☐ Write it up");
-    assert_after_not_contains(&harness, &expanded, "▣ Running the tests (1/3)");
+    assert_after_contains(&harness, &expanded, "o Write it up");
+    assert_after_not_contains(&harness, &expanded, "▸ Running the tests (1/3)");
 }
 
 #[test]

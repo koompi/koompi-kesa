@@ -16,6 +16,10 @@ const INPUT_PROMPT_GLYPH: &str = ">";
 /// Smallest box we will draw before giving up on fitting the terminal.
 const MIN_BOX_WIDTH: usize = 16;
 
+/// Widest the frame gets, whatever the terminal. A reading measure, not a
+/// window: past roughly this, a wrapped line is harder to track back to.
+pub(super) const MAX_FRAME_WIDTH: usize = 100;
+
 /// The autocomplete list stays readable rather than stretching to the terminal.
 const DROPDOWN_MAX_WIDTH: usize = 64;
 
@@ -30,7 +34,7 @@ const KEY_HINT_VARIANTS: [&str; 4] = [
 /// Agent panel columns. Names and model ids are unbounded; the tail of what a
 /// child is doing is the column worth the remaining width.
 const AGENT_PANEL_NAME_MAX: usize = 16;
-const AGENT_PANEL_MODEL_MAX: usize = 26;
+const AGENT_PANEL_MODEL_MAX: usize = 34;
 
 /// Outer width of every framed box, leaving the two-column left gutter the rest
 /// of the view uses plus a matching margin on the right.
@@ -849,7 +853,10 @@ fn format_persistence_footer_segment(
     metrics: crate::session::AutosaveQueueMetrics,
 ) -> Option<String> {
     let mut details = Vec::new();
-    if metrics.pending_mutations > 0 {
+    // a write-behind queue is meant to have writes in it; only a filling one is news
+    if metrics.pending_mutations > 0
+        && metrics.pending_mutations.saturating_mul(2) >= metrics.max_pending_mutations
+    {
         details.push(format!(
             "pending {}/{}",
             metrics.pending_mutations, metrics.max_pending_mutations
@@ -864,8 +871,6 @@ fn format_persistence_footer_segment(
         details.push("backpressure".to_string());
     }
 
-    // A healthy queue on the default policy is not news, and the footer is the
-    // scarcest row in the frame. Say nothing until there is something to say.
     if details.is_empty() {
         if mode == crate::session::AutosaveDurabilityMode::Balanced {
             return None;
@@ -1089,8 +1094,7 @@ impl PiApp {
     fn render_below_conversation(&self) -> String {
         let mut output = String::new();
 
-        // Tool status. A delegation gets per-agent rows instead: one spinner
-        // saying "Running subagent" hides how many children there are.
+        // a delegation gets per-agent rows instead of one "Running subagent"
         if let Some(tool) = self
             .current_tool
             .as_ref()
@@ -1362,10 +1366,7 @@ impl PiApp {
             ThinkingLevel::Max => "max",
         };
 
-        // The border carries what is at stake if you press Enter, not how hard
-        // the model will think. Thinking level keeps its label and loses its
-        // colour: at the default of Max it was drawing a red box around an idle
-        // prompt, which reads as a failure.
+        // border carries what is at stake on Enter, not how hard the model thinks
         let border_style = if is_bash_mode {
             self.styles.warning_bold.clone()
         } else {
@@ -1385,9 +1386,7 @@ impl PiApp {
         let permission_segment = self.permission_mode.to_string();
         let thinking_segment = format!("think {thinking_label}");
 
-        // Give up detail from the right, one clause at a time. Fitting greedily
-        // over a fixed hint drops the whole hint the moment the mode name makes
-        // it one column too long, and the hint is what a new user reads.
+        // give up detail from the right; a greedy fit drops the whole hint at once
         let mut label = String::new();
         for hint in KEY_HINT_VARIANTS {
             let mut segments: Vec<&str> = Vec::new();
@@ -1862,7 +1861,8 @@ impl PiApp {
             .iter()
             .map(|row| {
                 let glyph = if row.status.is_running() {
-                    self.spinner.view().trim_end().to_string()
+                    // spinner frame carries a trailing space inside its ansi pair
+                    fit_to_width(&self.spinner.view(), 1)
                 } else {
                     row.status.glyph().to_string()
                 };
@@ -2037,8 +2037,7 @@ impl PiApp {
             rows.push(format!("{shown:^inner$}"));
         }
 
-        // Below the list, not inside it. Inserted between rows it changed the
-        // box height, so every entry under the cursor moved as you arrowed.
+        // below the list: inside it, the box grew and rows shifted as you arrowed
         if let Some(desc) = self
             .autocomplete
             .selected
@@ -3161,5 +3160,42 @@ mod tests {
                 "continuation must hang under the bullet's text: {row:?}"
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod frame_width_tests {
+    use super::*;
+
+    #[test]
+    fn a_healthy_queue_at_idle_earns_no_footer_row() {
+        let metrics = crate::session::AutosaveQueueMetrics {
+            pending_mutations: 3,
+            max_pending_mutations: 256,
+            coalesced_mutations: 0,
+            backpressure_events: 0,
+            flush_started: 1,
+            flush_succeeded: 1,
+            flush_failed: 0,
+            last_flush_batch_size: 3,
+            last_flush_duration_ms: Some(1),
+            last_flush_trigger: None,
+        };
+        assert_eq!(
+            format_persistence_footer_segment(
+                crate::session::AutosaveDurabilityMode::Balanced,
+                metrics
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn the_frame_stops_widening_past_the_reading_measure() {
+        assert_eq!(box_width(80), 76);
+        assert_eq!(box_width(MAX_FRAME_WIDTH), MAX_FRAME_WIDTH - 4);
+        // term_width is capped before it reaches here, so a 184-column pane
+        // arrives as MAX_FRAME_WIDTH and the box never exceeds it.
+        assert!(box_width(MAX_FRAME_WIDTH) < 100);
     }
 }

@@ -64,6 +64,8 @@ pub struct AgentRow {
     #[serde(default)]
     pub output: String,
     #[serde(default)]
+    pub stderr: String,
+    #[serde(default)]
     pub error: Option<String>,
 }
 
@@ -79,12 +81,14 @@ impl AgentRow {
     /// which nothing on this side can name until the child reports back.
     pub fn model_label(&self) -> String {
         match (&self.provider, &self.resolved_model) {
+            // gateway ids already carry the vendor
+            (Some(_), Some(model)) if model.contains('/') => model.clone(),
             (Some(provider), Some(model)) => format!("{provider}/{model}"),
             (None, Some(model)) => model.clone(),
             _ => self
                 .model
-                .clone()
-                .unwrap_or_else(|| "inherited".to_string()),
+                .as_deref()
+                .map_or_else(|| "inherited".to_string(), strip_gateway_prefix),
         }
     }
 
@@ -103,15 +107,30 @@ impl AgentRow {
     /// The newest thing this child said, or why it stopped saying anything.
     pub fn tail(&self) -> String {
         if let Some(error) = &self.error {
+            // the exit code names the symptom; stderr names the cause
+            if let Some(reason) = last_line(&self.stderr) {
+                return reason;
+            }
             return error.trim().replace('\n', " ");
         }
-        self.output
-            .lines()
-            .rev()
-            .find(|line| !line.trim().is_empty())
-            .unwrap_or_default()
-            .trim()
-            .to_string()
+        last_line(&self.output).unwrap_or_default()
+    }
+}
+
+fn last_line(text: &str) -> Option<String> {
+    text.lines()
+        .rev()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+        .map(ToString::to_string)
+}
+
+/// `openrouter/openai/gpt-oss-20b` and `openai/gpt-oss-20b` are the same model
+/// written two ways; a roster that shows both reads as two different ones.
+fn strip_gateway_prefix(spec: &str) -> String {
+    match spec.split_once('/') {
+        Some((_, rest)) if rest.contains('/') => rest.to_string(),
+        _ => spec.to_string(),
     }
 }
 
@@ -163,6 +182,7 @@ impl AgentRow {
             elapsed_ms: None,
             tokens: None,
             output: String::new(),
+            stderr: String::new(),
             error: None,
         }
     }
@@ -183,9 +203,8 @@ pub fn delegation(details: &Value) -> Option<Delegation> {
     })
 }
 
-/// Distinguishes one child's stream from another's inside a single tool call.
-/// Without it the batcher's newest-wins coalescing drops every agent but the
-/// last one to speak, because all children share one update callback.
+/// Keys one child's stream apart from its siblings': they share one update
+/// callback, so newest-wins coalescing would deliver only the last to speak.
 pub fn coalesce_suffix(details: Option<&Value>) -> Option<String> {
     let details = details?;
     if !schema_is(details, PROGRESS_SCHEMA) {
@@ -305,6 +324,34 @@ mod tests {
     fn an_unknown_status_does_not_lose_the_row() {
         let row = progress_row(&progress("explorer", "hibernating")).expect("row");
         assert_eq!(row.status, AgentStatus::Unknown);
+    }
+
+    #[test]
+    fn a_requested_model_reads_the_same_as_a_resolved_one() {
+        let mut row = progress_row(&progress("explorer", "starting")).expect("row");
+        row.provider = None;
+        row.resolved_model = None;
+        row.model = Some("openrouter/openai/gpt-oss-20b:free".to_string());
+        assert_eq!(row.model_label(), "openai/gpt-oss-20b:free");
+        row.model = Some("anthropic/claude-opus-5".to_string());
+        assert_eq!(row.model_label(), "anthropic/claude-opus-5");
+    }
+
+    #[test]
+    fn a_gateway_model_id_is_not_prefixed_twice() {
+        let mut row = progress_row(&progress("explorer", "running")).expect("row");
+        row.provider = Some("openrouter".to_string());
+        row.resolved_model = Some("openai/gpt-oss-20b:free".to_string());
+        assert_eq!(row.model_label(), "openai/gpt-oss-20b:free");
+    }
+
+    #[test]
+    fn a_failure_reports_the_cause_not_the_exit_code() {
+        let mut row = progress_row(&progress("explorer", "failed")).expect("row");
+        row.error = Some("Child exited with code 1.".to_string());
+        assert_eq!(row.tail(), "Child exited with code 1.");
+        row.stderr = "warming up\nError: no credentials for openrouter\n".to_string();
+        assert_eq!(row.tail(), "Error: no credentials for openrouter");
     }
 
     #[test]

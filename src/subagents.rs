@@ -1030,9 +1030,8 @@ fn ingest_child_event(line: &str, result: &mut SubagentResult, update: Option<&U
     }
 }
 
-/// The provider and model the child actually reached, which the parent cannot
-/// know: `--model` may be absent or a bare id, and resolution happens in the
-/// child. Usage accumulates because a child's tool loop ends many messages.
+/// What the child actually reached. The parent cannot know it: `--model` may be
+/// absent or a bare id, and resolution happens in the child.
 fn record_assistant_identity(message: Option<&Value>, result: &mut SubagentResult) {
     let Some(message) = message else { return };
     if message.get("role").and_then(Value::as_str) != Some("assistant") {

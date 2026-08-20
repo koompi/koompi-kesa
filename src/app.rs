@@ -918,7 +918,7 @@ pub fn build_stream_options(
         // default (e.g. 4096), truncating turns that emit large tool-call
         // arguments (most visibly the `write` tool). Embedders can still
         // override via `set_max_tokens`.
-        max_tokens: Some(selection.model_entry.model.max_tokens),
+        max_tokens: Some(selection.model_entry.model.usable_max_tokens()),
         ..Default::default()
     };
 

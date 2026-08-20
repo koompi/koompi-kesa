@@ -1376,7 +1376,8 @@ impl PiApp {
     pub fn set_terminal_size(&mut self, width: usize, height: usize) {
         let test_mode = crate::env::var_os("TEST_MODE").is_some();
         let previous_height = self.term_height;
-        self.term_width = width.max(1);
+        // every width in the view derives from this one
+        self.term_width = width.max(1).min(view::MAX_FRAME_WIDTH);
         self.term_height = height.max(1);
         self.input
             .set_width(view::editor_width(self.term_width, self.editor_padding_x));

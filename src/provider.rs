@@ -191,6 +191,24 @@ pub struct Model {
     pub headers: HashMap<String, String>,
 }
 
+impl Model {
+    /// Output budget that still leaves room to send a prompt.
+    ///
+    /// Some catalogues report a model's whole context window as its output
+    /// limit. Asking for all of it makes every request fail before a token is
+    /// generated: the provider counts requested output against the same window
+    /// the input has to fit in.
+    #[must_use]
+    pub const fn usable_max_tokens(&self) -> u32 {
+        let ceiling = self.context_window / 2;
+        if self.context_window > 0 && self.max_tokens > ceiling {
+            ceiling
+        } else {
+            self.max_tokens
+        }
+    }
+}
+
 /// Input types supported by a model.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -827,5 +845,49 @@ mod tests {
                 assert!((parsed.cache_write - cw).abs() < 1e-10);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod usable_max_tokens_tests {
+    use super::*;
+
+    fn model(context_window: u32, max_tokens: u32) -> Model {
+        Model {
+            id: "m".to_string(),
+            name: "m".to_string(),
+            api: "openai-completions".to_string(),
+            provider: "p".to_string(),
+            base_url: "https://example.invalid".to_string(),
+            reasoning: false,
+            input: vec![InputType::Text],
+            cost: ModelCost {
+                input: 0.0,
+                output: 0.0,
+                cache_read: 0.0,
+                cache_write: 0.0,
+            },
+            context_window,
+            max_tokens,
+            headers: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn a_normal_output_limit_is_left_alone() {
+        assert_eq!(model(200_000, 8_192).usable_max_tokens(), 8_192);
+        assert_eq!(model(128_000, 16_384).usable_max_tokens(), 16_384);
+    }
+
+    #[test]
+    fn an_output_limit_equal_to_the_window_leaves_room_for_a_prompt() {
+        // openrouter/openai/gpt-oss-20b:free reports both as 131072, and every
+        // request 400s with "you requested about 131667 tokens".
+        assert_eq!(model(131_072, 131_072).usable_max_tokens(), 65_536);
+    }
+
+    #[test]
+    fn an_unknown_window_does_not_clamp_to_zero() {
+        assert_eq!(model(0, 4_096).usable_max_tokens(), 4_096);
     }
 }
