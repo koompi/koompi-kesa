@@ -26,6 +26,8 @@ include = [
     "/docs/provider-upstream-model-ids-snapshot.json",
     "/docs/schema/extension_protocol.json",
     "/legacy_pi_mono_code/pi-mono/packages/ai/src/models.generated.ts",
+    # Embedded by src/theme.rs via include_str! for the built-in dark/light/solarized themes.
+    "/themes/**",
     # Compile-time unit-test fixture referenced by src/doctor.rs.
     "/tests/fixtures/agent_mail/schema_corrupt_health.json",
     "/Cargo.toml",

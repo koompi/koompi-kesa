@@ -2,24 +2,24 @@
   "name": "dark",
   "version": "1.0",
   "colors": {
-    "foreground": "#d4d4d4",
-    "background": "#1e1e1e",
-    "accent": "#007acc",
-    "success": "#4ec9b0",
-    "warning": "#ce9178",
-    "error": "#f44747",
-    "muted": "#6a6a6a"
+    "foreground": "#e6e6e6",
+    "background": "#0b0f14",
+    "accent": "#38bdf8",
+    "success": "#22c55e",
+    "warning": "#f59e0b",
+    "error": "#ef4444",
+    "muted": "#94a3b8"
   },
   "syntax": {
-    "keyword": "#569cd6",
-    "string": "#ce9178",
-    "number": "#b5cea8",
-    "comment": "#6a9955",
-    "function": "#dcdcaa"
+    "keyword": "#38bdf8",
+    "string": "#22c55e",
+    "number": "#a78bfa",
+    "comment": "#94a3b8",
+    "function": "#f59e0b"
   },
   "ui": {
-    "border": "#3c3c3c",
-    "selection": "#264f78",
-    "cursor": "#aeafad"
+    "border": "#64748b",
+    "selection": "#1e293b",
+    "cursor": "#e6e6e6"
   }
 }

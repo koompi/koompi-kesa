@@ -2,24 +2,24 @@
   "name": "light",
   "version": "1.0",
   "colors": {
-    "foreground": "#2d2d2d",
-    "background": "#ffffff",
-    "accent": "#0066bf",
-    "success": "#2e8b57",
-    "warning": "#b36200",
-    "error": "#c62828",
-    "muted": "#7a7a7a"
+    "foreground": "#0b0f14",
+    "background": "#f8fafc",
+    "accent": "#0369a1",
+    "success": "#15803d",
+    "warning": "#92400e",
+    "error": "#b91c1c",
+    "muted": "#475569"
   },
   "syntax": {
-    "keyword": "#0000ff",
-    "string": "#a31515",
-    "number": "#098658",
-    "comment": "#008000",
-    "function": "#795e26"
+    "keyword": "#0369a1",
+    "string": "#15803d",
+    "number": "#7c3aed",
+    "comment": "#475569",
+    "function": "#92400e"
   },
   "ui": {
-    "border": "#c8c8c8",
-    "selection": "#cce7ff",
-    "cursor": "#000000"
+    "border": "#64748b",
+    "selection": "#e2e8f0",
+    "cursor": "#0b0f14"
   }
 }
