@@ -72,12 +72,14 @@ Minimal example:
     "function": "#f59e0b"
   },
   "ui": {
-    "border": "#1f2937",
-    "selection": "#111827",
+    "border": "#64748b",
+    "selection": "#1e293b",
     "cursor": "#e6e6e6"
   }
 }
 ```
+
+`ui.border` must clear a 3:1 contrast ratio against `colors.background`, and every other color above must clear 4.5:1 — built-in themes are held to this by `tests/theme_contrast.rs`.
 
 ### Field meanings (high level)
 

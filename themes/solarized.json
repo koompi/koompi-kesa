@@ -2,23 +2,23 @@
   "name": "solarized",
   "version": "1.0",
   "colors": {
-    "foreground": "#839496",
+    "foreground": "#93a1a1",
     "background": "#002b36",
-    "accent": "#268bd2",
-    "success": "#859900",
-    "warning": "#b58900",
-    "error": "#dc322f",
-    "muted": "#586e75"
+    "accent": "#52aee8",
+    "success": "#93a712",
+    "warning": "#cdb03a",
+    "error": "#ff6d64",
+    "muted": "#85999f"
   },
   "syntax": {
-    "keyword": "#268bd2",
-    "string": "#2aa198",
-    "number": "#d33682",
-    "comment": "#586e75",
-    "function": "#b58900"
+    "keyword": "#52aee8",
+    "string": "#35b6ab",
+    "number": "#9598e0",
+    "comment": "#85999f",
+    "function": "#cdb03a"
   },
   "ui": {
-    "border": "#073642",
+    "border": "#64808a",
     "selection": "#073642",
     "cursor": "#93a1a1"
   }

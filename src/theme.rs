@@ -233,10 +233,17 @@ impl Theme {
         config.strong.color = Some(self.colors.foreground.clone());
         config.emph.color = Some(self.colors.foreground.clone());
 
-        // Basic code styling (syntax-highlighting is controlled by glamour feature flags).
-        let code_color = Some(self.syntax.string.clone());
-        config.code.style.color.clone_from(&code_color);
-        config.code_block.block.style.color = code_color;
+        // Inline code keeps its own color so it still reads as a code span.
+        config.code.style.color = Some(self.syntax.string.clone());
+
+        // Fenced blocks get their own foreground, a background so the block
+        // reads as a panel, and a left margin so it doesn't run flush with
+        // body text. GlamourStyleConfig has no per-token slot for the other
+        // syntax.* colors (number/comment/function) — StyleBlock carries one
+        // color and one background_color, nothing else.
+        config.code_block.block.style.color = Some(self.syntax.keyword.clone());
+        config.code_block.block.style.background_color = Some(self.ui.selection.clone());
+        config.code_block.block.margin = Some(2);
 
         // Blockquotes use muted color
         config.block_quote.style.color = Some(self.colors.muted.clone());
@@ -331,91 +338,28 @@ impl Theme {
     /// Default dark theme.
     #[must_use]
     pub fn dark() -> Self {
-        Self {
-            name: "dark".to_string(),
-            version: "1.0".to_string(),
-            colors: ThemeColors {
-                foreground: "#d4d4d4".to_string(),
-                background: "#1e1e1e".to_string(),
-                accent: "#007acc".to_string(),
-                success: "#4ec9b0".to_string(),
-                warning: "#ce9178".to_string(),
-                error: "#f44747".to_string(),
-                muted: "#6a6a6a".to_string(),
-            },
-            syntax: SyntaxColors {
-                keyword: "#569cd6".to_string(),
-                string: "#ce9178".to_string(),
-                number: "#b5cea8".to_string(),
-                comment: "#6a9955".to_string(),
-                function: "#dcdcaa".to_string(),
-            },
-            ui: UiColors {
-                border: "#3c3c3c".to_string(),
-                selection: "#264f78".to_string(),
-                cursor: "#aeafad".to_string(),
-            },
-        }
+        Self::from_embedded("dark.json", include_str!("../themes/dark.json"))
     }
 
     /// Default light theme.
     #[must_use]
     pub fn light() -> Self {
-        Self {
-            name: "light".to_string(),
-            version: "1.0".to_string(),
-            colors: ThemeColors {
-                foreground: "#2d2d2d".to_string(),
-                background: "#ffffff".to_string(),
-                accent: "#0066bf".to_string(),
-                success: "#2e8b57".to_string(),
-                warning: "#b36200".to_string(),
-                error: "#c62828".to_string(),
-                muted: "#7a7a7a".to_string(),
-            },
-            syntax: SyntaxColors {
-                keyword: "#0000ff".to_string(),
-                string: "#a31515".to_string(),
-                number: "#098658".to_string(),
-                comment: "#008000".to_string(),
-                function: "#795e26".to_string(),
-            },
-            ui: UiColors {
-                border: "#c8c8c8".to_string(),
-                selection: "#cce7ff".to_string(),
-                cursor: "#000000".to_string(),
-            },
-        }
+        Self::from_embedded("light.json", include_str!("../themes/light.json"))
     }
 
     /// Default solarized dark theme.
     #[must_use]
     pub fn solarized() -> Self {
-        Self {
-            name: "solarized".to_string(),
-            version: "1.0".to_string(),
-            colors: ThemeColors {
-                foreground: "#839496".to_string(),
-                background: "#002b36".to_string(),
-                accent: "#268bd2".to_string(),
-                success: "#859900".to_string(),
-                warning: "#b58900".to_string(),
-                error: "#dc322f".to_string(),
-                muted: "#586e75".to_string(),
-            },
-            syntax: SyntaxColors {
-                keyword: "#268bd2".to_string(),
-                string: "#2aa198".to_string(),
-                number: "#d33682".to_string(),
-                comment: "#586e75".to_string(),
-                function: "#b58900".to_string(),
-            },
-            ui: UiColors {
-                border: "#073642".to_string(),
-                selection: "#073642".to_string(),
-                cursor: "#93a1a1".to_string(),
-            },
-        }
+        Self::from_embedded("solarized.json", include_str!("../themes/solarized.json"))
+    }
+
+    /// Parse a built-in theme embedded at compile time via `include_str!`.
+    ///
+    /// `name` is the source file under `themes/`, used only to name the
+    /// offending file if the embedded JSON is malformed.
+    fn from_embedded(name: &str, json: &str) -> Self {
+        serde_json::from_str(json)
+            .unwrap_or_else(|err| panic!("built-in theme themes/{name} is malformed: {err}"))
     }
 
     fn validate(&self) -> Result<()> {
