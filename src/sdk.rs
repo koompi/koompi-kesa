@@ -1640,6 +1640,7 @@ fn build_stream_options_with_optional_key(
         // so embedders inherit the configured limit by default; they can still
         // override it via `set_max_tokens`.
         max_tokens: Some(selection.model_entry.model.max_tokens),
+        cache_retention: config.cache_retention(),
         ..Default::default()
     };
 

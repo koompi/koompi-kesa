@@ -919,6 +919,7 @@ pub fn build_stream_options(
         // arguments (most visibly the `write` tool). Embedders can still
         // override via `set_max_tokens`.
         max_tokens: Some(selection.model_entry.model.usable_max_tokens()),
+        cache_retention: config.cache_retention(),
         ..Default::default()
     };
 

@@ -1364,6 +1364,7 @@ fn handle_session_new(
         // so ACP sessions honor the configured limit instead of the provider's
         // hardcoded per-request default.
         max_tokens: Some(model_entry.model.max_tokens),
+        cache_retention: options.config.cache_retention(),
         ..StreamOptions::default()
     };
 

@@ -133,12 +133,14 @@ pub struct StreamOptions {
     pub thinking_budgets: Option<ThinkingBudgets>,
 }
 
-/// Cache retention policy.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+/// Cache retention policy. `Short` by default: an agent loop re-sends the
+/// same growing prefix every turn, which is what prompt caching is for.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum CacheRetention {
-    #[default]
     None,
     /// Provider-managed short-lived caching (provider-specific semantics).
+    #[default]
     Short,
     /// Provider-managed long-lived caching (e.g. ~1 hour TTL on Anthropic).
     Long,
@@ -621,8 +623,24 @@ mod tests {
     }
 
     #[test]
-    fn cache_retention_default_is_none() {
-        assert_eq!(CacheRetention::default(), CacheRetention::None);
+    fn cache_retention_default_is_short() {
+        assert_eq!(CacheRetention::default(), CacheRetention::Short);
+    }
+
+    #[test]
+    fn cache_retention_serde_uses_lowercase_names() {
+        for (variant, name) in [
+            (CacheRetention::None, "\"none\""),
+            (CacheRetention::Short, "\"short\""),
+            (CacheRetention::Long, "\"long\""),
+        ] {
+            assert_eq!(serde_json::to_string(&variant).unwrap(), name);
+            assert_eq!(
+                serde_json::from_str::<CacheRetention>(name).unwrap(),
+                variant
+            );
+        }
+        assert!(serde_json::from_str::<CacheRetention>("\"Short\"").is_err());
     }
 
     #[test]
@@ -631,7 +649,7 @@ mod tests {
         assert!(opts.temperature.is_none());
         assert!(opts.max_tokens.is_none());
         assert!(opts.api_key.is_none());
-        assert_eq!(opts.cache_retention, CacheRetention::None);
+        assert_eq!(opts.cache_retention, CacheRetention::Short);
         assert!(opts.session_id.is_none());
         assert!(opts.headers.is_empty());
         assert!(opts.thinking_level.is_none());

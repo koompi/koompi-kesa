@@ -509,6 +509,27 @@ impl AnthropicProvider {
             options.temperature
         };
 
+        // Top-level automatic caching: the API places the breakpoint on the
+        // last cacheable block and walks it forward as the conversation
+        // grows. Only first-party Anthropic is known to accept it; the
+        // gateways this provider also serves (Kimi, MiniMax, anything routed
+        // as anthropic-messages) may 400 on the unknown field.
+        let cache_control = if self.provider == "anthropic" {
+            match options.cache_retention {
+                CacheRetention::None => None,
+                CacheRetention::Short => Some(AnthropicCacheControl {
+                    r#type: "ephemeral",
+                    ttl: None,
+                }),
+                CacheRetention::Long => Some(AnthropicCacheControl {
+                    r#type: "ephemeral",
+                    ttl: Some("1h"),
+                }),
+            }
+        } else {
+            None
+        };
+
         AnthropicRequest {
             model: &self.model,
             messages,
@@ -519,6 +540,7 @@ impl AnthropicProvider {
             stream: true,
             thinking,
             output_config,
+            cache_control,
         }
     }
 }
@@ -1093,6 +1115,17 @@ pub struct AnthropicRequest<'a> {
     thinking: Option<AnthropicThinking>,
     #[serde(skip_serializing_if = "Option::is_none")]
     output_config: Option<AnthropicOutputConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cache_control: Option<AnthropicCacheControl>,
+}
+
+/// Request-level `cache_control`. `{"type":"ephemeral"}` is the 5-minute
+/// cache; `ttl: "1h"` buys the long one at twice the write cost.
+#[derive(Debug, Serialize)]
+struct AnthropicCacheControl {
+    r#type: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    ttl: Option<&'static str>,
 }
 
 /// Thinking configuration. Two shapes share this struct:
@@ -1558,6 +1591,57 @@ mod tests {
     /// wire shape at every thinking level — never the deprecated `budget_tokens`
     /// — and must omit `temperature` (sampling params are rejected on these
     /// models). This asserts the exact serialized JSON (the proof).
+    #[test]
+    fn test_build_request_cache_control_wire_format() {
+        let provider = AnthropicProvider::new("claude-test");
+        let cases = [
+            (CacheRetention::Short, Some(json!({ "type": "ephemeral" }))),
+            (
+                CacheRetention::Long,
+                Some(json!({ "type": "ephemeral", "ttl": "1h" })),
+            ),
+            (CacheRetention::None, None),
+        ];
+        for (retention, expected) in cases {
+            let options = StreamOptions {
+                cache_retention: retention,
+                ..Default::default()
+            };
+            let body = serde_json::to_value(provider.build_request(&Context::default(), &options))
+                .expect("serialize request");
+            assert_eq!(
+                body.get("cache_control").cloned(),
+                expected,
+                "retention {retention:?}"
+            );
+        }
+
+        // The default StreamOptions caches: every front-end builds one with
+        // `..Default::default()`.
+        let body = serde_json::to_value(
+            provider.build_request(&Context::default(), &StreamOptions::default()),
+        )
+        .expect("serialize request");
+        assert_eq!(body["cache_control"], json!({ "type": "ephemeral" }));
+    }
+
+    #[test]
+    fn test_build_request_cache_control_only_for_first_party_anthropic() {
+        let options = StreamOptions {
+            cache_retention: CacheRetention::Short,
+            ..Default::default()
+        };
+        for gateway in ["kimi", "kimi-for-coding", "minimax"] {
+            let provider = AnthropicProvider::new("claude-test").with_provider_name(gateway);
+            let body = serde_json::to_value(provider.build_request(&Context::default(), &options))
+                .expect("serialize request");
+            assert!(
+                body.get("cache_control").is_none(),
+                "{gateway}: gateway must not see a top-level cache_control"
+            );
+        }
+    }
+
     #[test]
     fn test_build_request_adaptive_thinking_effort_wire_format() {
         let provider = AnthropicProvider::new("claude-opus-4-8");
@@ -2421,6 +2505,25 @@ mod tests {
     fn test_provider_name_reflects_override() {
         let provider = AnthropicProvider::new("claude-test").with_provider_name("kimi-for-coding");
         assert_eq!(provider.name(), "kimi-for-coding");
+    }
+
+    #[test]
+    fn stream_request_body_carries_cache_control_with_short_retention() {
+        let captured = run_stream_and_capture_headers(CacheRetention::Short)
+            .expect("request should be captured");
+        let body: serde_json::Value =
+            serde_json::from_str(&captured.body).expect("request body is JSON");
+        assert_eq!(body["cache_control"], json!({ "type": "ephemeral" }));
+        assert_eq!(
+            captured.headers.get("anthropic-beta").map(String::as_str),
+            Some("prompt-caching-2024-07-31")
+        );
+
+        let captured = run_stream_and_capture_headers(CacheRetention::None)
+            .expect("request should be captured");
+        let body: serde_json::Value =
+            serde_json::from_str(&captured.body).expect("request body is JSON");
+        assert!(body.get("cache_control").is_none());
     }
 
     #[derive(Debug)]

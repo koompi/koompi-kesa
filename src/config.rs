@@ -132,6 +132,11 @@ pub struct Config {
     #[serde(alias = "thinkingBudgets")]
     pub thinking_budgets: Option<ThinkingBudgets>,
 
+    /// Prompt cache retention: `none`, `short` (default) or `long`. Only
+    /// first-party Anthropic reads it today. An unknown value fails to load.
+    #[serde(alias = "cacheRetention")]
+    pub cache_retention: Option<crate::provider::CacheRetention>,
+
     // Extensions/Skills/etc.
     pub packages: Option<Vec<PackageSource>>,
     pub extensions: Option<Vec<String>>,
@@ -640,6 +645,7 @@ impl Config {
 
             // Thinking Budgets
             thinking_budgets: merge_thinking_budgets(base.thinking_budgets, other.thinking_budgets),
+            cache_retention: other.cache_retention.or(base.cache_retention),
 
             // Extensions/Skills/etc.
             packages: other.packages.or(base.packages),
@@ -741,6 +747,10 @@ impl Config {
             .as_ref()
             .and_then(|i| i.auto_resize)
             .unwrap_or(true)
+    }
+
+    pub fn cache_retention(&self) -> crate::provider::CacheRetention {
+        self.cache_retention.unwrap_or_default()
     }
 
     /// Whether to check for version updates on startup (default: true).
@@ -2542,6 +2552,48 @@ mod tests {
         let config = Config::load_from_path(&path).expect("load config");
         // Should return default config, not error
         assert!(config.theme.is_none());
+    }
+
+    #[test]
+    fn cache_retention_parses_under_both_spellings_and_rejects_unknown_values() {
+        use crate::provider::CacheRetention;
+
+        let config: Config = serde_json::from_str(r#"{"cacheRetention":"long"}"#).expect("parse");
+        assert_eq!(config.cache_retention(), CacheRetention::Long);
+
+        let config: Config = serde_json::from_str(r#"{"cache_retention":"none"}"#).expect("parse");
+        assert_eq!(config.cache_retention(), CacheRetention::None);
+
+        assert_eq!(Config::default().cache_retention(), CacheRetention::Short);
+
+        assert!(
+            serde_json::from_str::<Config>(r#"{"cache_retention":"bogus"}"#).is_err(),
+            "an unknown retention must fail loudly, not fall back"
+        );
+    }
+
+    #[test]
+    fn merge_cache_retention_project_overrides_global() {
+        use crate::provider::CacheRetention;
+
+        let temp = TempDir::new().expect("create tempdir");
+        let cwd = temp.path().join("cwd");
+        let global_dir = temp.path().join("global");
+        write_file(
+            &global_dir.join("settings.json"),
+            r#"{ "cacheRetention": "none" }"#,
+        );
+        write_file(
+            &cwd.join(".kesa/settings.json"),
+            r#"{ "cache_retention": "long" }"#,
+        );
+
+        let config = Config::load_with_roots(None, &global_dir, &cwd).expect("load");
+        assert_eq!(config.cache_retention(), CacheRetention::Long);
+
+        let global_only =
+            Config::load_with_roots(None, &global_dir, &temp.path().join("empty")).expect("load");
+        assert_eq!(global_only.cache_retention(), CacheRetention::None);
     }
 
     #[test]
