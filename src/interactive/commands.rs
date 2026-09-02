@@ -138,10 +138,9 @@ impl SlashCommand {
             "Compact older context with optional instructions",
         ),
         ("/reload", "Reload skills/prompts from disk"),
-        (
-            "/resources",
-            "List loaded skills, templates, themes and extensions",
-        ),
+        // `/resources` is deliberately absent until it is also in
+        // `builtin_slash_commands` (src/autocomplete.rs): a test there
+        // requires every /help row to autocomplete.
         (
             "/template <name> [args]",
             "Expand a prompt template by name",

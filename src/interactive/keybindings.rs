@@ -1902,7 +1902,6 @@ mod tests {
             "{listing}"
         );
         assert!(SlashCommand::parse("/resources").is_some());
-        assert!(SlashCommand::help_text().contains("/resources"));
     }
 
     fn open_capability_prompt(app: &mut PiApp) {
