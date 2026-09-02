@@ -89,7 +89,7 @@ Update `docs/extension-artifact-provenance.json` with the new entries.
 
 ---
 
-## Phase 3: TS Oracle Validation (ground truth)
+## Phase 3: TS baseline validation (frozen 0.51.0 snapshot, not ground truth)
 
 ### 3.1 Run the TS oracle on new extensions
 
@@ -353,7 +353,7 @@ A refresh is complete when ALL of the following are true:
 
 | Artifact | Purpose | Location |
 |---|---|---|
-| Validated manifest | Ground truth registrations | `tests/ext_conformance/VALIDATED_MANIFEST.json` |
+| Validated manifest | Baseline registrations (pinned 0.51.0 runtime) | `tests/ext_conformance/VALIDATED_MANIFEST.json` |
 | Generated tests | Rust conformance test cases | `tests/ext_conformance_generated.rs` |
 | Conformance baseline | Pass/fail counts + failure categories | `tests/ext_conformance/reports/conformance_baseline.json` |
 | Conformance summary | Machine-readable summary | `tests/ext_conformance/reports/conformance_summary.json` |

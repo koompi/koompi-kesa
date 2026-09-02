@@ -360,7 +360,7 @@ requiring token-based auth.
 |----------------|------------------------------------|---------------------------------|
 | Unit tests     | Direct struct/function tests       | `tests/extensions_*.rs`         |
 | VCR tests      | HTTP interaction playback          | `tests/provider_*.rs`           |
-| Conformance    | Differential oracle (TS vs Rust)   | `tests/ext_conformance_*.rs`    |
+| Conformance    | Differential vs frozen TS baseline | `tests/ext_conformance_*.rs`    |
 | E2E            | Full CLI + tmux scripting          | `tests/e2e_*.rs`                |
 | Property       | proptest random inputs             | `tests/ext_proptest.rs`         |
 | Stress         | Concurrent load + memory profiling | `tests/extensions_stress.rs`    |

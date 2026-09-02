@@ -1,6 +1,8 @@
 /**
- * TS Oracle Harness: Load an extension via pi-mono's loader and output
- * a canonical JSON snapshot of everything it registered.
+ * TS baseline harness: load an extension via the pinned pi-coding-agent
+ * 0.51.0 loader and output a canonical JSON snapshot of everything it
+ * registered. This is a frozen regression baseline, not a live oracle; see
+ * package.json in this directory.
  *
  * Usage:
  *   bun run load_extension.ts <path-to-extension.ts> [cwd]
@@ -105,7 +107,7 @@ function applyDeterministicGlobals() {
 }
 
 // pi.events.on subscriptions never reach ext.handlers, so without recording them
-// the oracle under-reports every channel the Rust snapshot lists in event_hooks.
+// the baseline under-reports every channel the Rust snapshot lists in event_hooks.
 const eventBusChannels: string[] = [];
 const busHandlers = new Map<string, Array<(data: unknown) => void>>();
 const recordingEventBus = {
@@ -272,7 +274,7 @@ async function main() {
 
 		console.log(JSON.stringify(output, null, 2));
 		// Extensions may install timers/handles (e.g. spinners) that keep the event
-		// loop alive. The oracle is a one-shot snapshotter, so force exit after
+		// loop alive. The harness is a one-shot snapshotter, so force exit after
 		// printing to avoid hung differential tests.
 		process.exit(0);
 	} catch (err) {

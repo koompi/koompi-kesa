@@ -240,7 +240,7 @@ cargo test --test ext_conformance_generated --features ext-conformance
 # Owner-tracked opt-in lane for generated tier 3-5 extension tests.
 cargo test --test ext_conformance_generated --features ext-conformance -- --include-ignored
 
-# Differential TypeScript/Rust oracle.
+# Differential TypeScript/Rust baseline (pinned pi-coding-agent 0.51.0 snapshot, not a live oracle).
 cargo test --test ext_conformance_diff --features ext-conformance
 
 # Official extensions only, bounded.

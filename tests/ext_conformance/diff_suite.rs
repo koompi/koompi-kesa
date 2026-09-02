@@ -1,3 +1,16 @@
+// Differential suite: the same unmodified extension is loaded through the
+// pinned TypeScript runtime and through the Rust runtime, then the two
+// registration snapshots are diffed.
+//
+// The TypeScript side is a frozen regression baseline, not a live oracle.
+// `tests/ext_conformance/ts_oracle/package.json` pins
+// `@mariozechner/pi-coding-agent` 0.51.0, a known-good snapshot. That package
+// stopped at 0.73.1 and continues as `@earendil-works/pi-coding-agent`; KESA
+// is a hard fork and does not track it, so the pin stays where it is. The
+// `ts_oracle` name survives in the directory, the env vars
+// (`KESA_TS_ORACLE_TIMEOUT_SECS`) and the `ts_oracle_failed` marker because
+// renaming them would churn every test and report keyed on them.
+
 use chrono::{SecondsFormat, Utc};
 use kesa::extensions::{
     ExtensionManager, JsExtensionLoadSpec, JsExtensionRuntimeHandle, related_extension_entries,
@@ -211,7 +224,7 @@ fn deterministic_random_label(settings: &DeterministicSettings) -> String {
 
 // Extensions import @mariozechner/* by name. Resolving those to the pinned
 // snapshot's packages/ hands them an unbuilt tree with no dist/, so they must
-// come from the same published runtime the oracle loads.
+// come from the same published runtime the pinned baseline loads.
 fn ts_oracle_dir() -> PathBuf {
     project_root().join("tests/ext_conformance/ts_oracle")
 }
@@ -308,9 +321,9 @@ fn validated_manifest_has_all_tiers() {
     // "built-in-pi-mono" tier assertion is needed.
 }
 
-// ─── TS oracle runner ────────────────────────────────────────────────────────
+// ─── TS baseline runner (`ts_oracle`, pinned 0.51.0 snapshot) ───────────────────────────────────────────────────────────────────────
 
-/// Run the TS oracle harness on an extension and parse the JSON output.
+/// Run the pinned TS baseline harness on an extension and parse the JSON output.
 fn run_ts_oracle(extension_path: &Path) -> Value {
     run_ts_oracle_result(extension_path).unwrap_or_else(|err| unreachable!("{err}"))
 }
@@ -835,7 +848,7 @@ fn run_rust_event_dispatch_bench_result(
 // ─── Rust runtime loader ─────────────────────────────────────────────────────
 
 /// Load an extension through the Rust swc+`QuickJS` pipeline and return its
-/// registration snapshot in a format comparable to the TS oracle output.
+/// registration snapshot in a format comparable to the TS baseline output.
 /// Returns `Err(message)` if the extension fails to load.
 fn load_rust_snapshot(extension_path: &Path) -> Result<Value, String> {
     let (snapshot, _load_time_ms) = load_rust_snapshot_timed(extension_path)?;
@@ -1445,8 +1458,8 @@ fn run_differential_test(extension_name: &str, entry_file: &str) {
     }
 }
 
-/// Strict differential test that treats TS oracle failures as errors and returns a summary.
-/// Retries once on TS oracle timeout (flaky under load).
+/// Strict differential test that treats TS baseline-runner failures as errors and returns a summary.
+/// Retries once on a baseline-runner timeout (flaky under load).
 fn run_differential_test_strict(extension_name: &str, entry_file: &str) -> Result<(), String> {
     let ext_path = artifacts_dir().join(extension_name).join(entry_file);
     if !ext_path.exists() {

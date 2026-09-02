@@ -139,7 +139,7 @@ for optional features.
 | `@xterm/*` | No-op terminal | Terminal emulation not available |
 | `vscode-languageserver-protocol` | Type constants only | LSP types for compatibility |
 | `@sinclair/typebox` | `Type` schema builder | JSON Schema construction |
-| `@modelcontextprotocol/sdk` | `Client`, transport classes | MCP client stubs |
+| `@modelcontextprotocol/sdk` | `Client`, transport classes | Stubs only: no MCP client exists, `listTools`/`callTool` return empty |
 | `c12` (config loader) | `define()`, `loadConfig()` | Config loading stub |
 | `execa` | `bash()` returns empty | Process execution via hostcall instead |
 | `@anthropic-ai/sdk` | `Anthropic` class | API client stub |
@@ -212,7 +212,7 @@ Tested against a corpus of 223 real-world extensions:
 
 *Community/npm/third-party extensions are tested via the compatibility
 validation pack, which uses a broader load-and-register test rather than
-the full differential oracle.
+the full differential baseline suite.
 
 ### Remaining Failure Categories
 

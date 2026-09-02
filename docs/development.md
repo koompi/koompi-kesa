@@ -124,9 +124,10 @@ cargo test --test ext_conformance_fixture_schema
 cargo test --test ext_conformance_artifacts
 ```
 
-#### Full: Differential TS-Rust Oracle (requires Bun + pi-mono)
+#### Full: Differential TS-Rust baseline (requires Bun + pi-mono)
 
 These tests run the same unmodified extension in both the legacy TypeScript runtime and the Rust QuickJS runtime, then compare registration snapshots.
+The TypeScript side is a frozen regression baseline (`@mariozechner/pi-coding-agent` 0.51.0, pinned in `tests/ext_conformance/ts_oracle/package.json`), not a live oracle; the `ts_oracle` name is kept only in identifiers.
 
 **Prerequisites:**
 - Bun 1.3.8 at `/home/ubuntu/.bun/bin/bun` (or on PATH)

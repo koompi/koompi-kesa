@@ -41,7 +41,10 @@ ln -sf $(which bun) /home/ubuntu/.bun/bin/bun
 
 ### pi-mono Dependencies
 
-The TS oracle loads extensions through the legacy pi-mono TypeScript runtime.
+The "TS oracle" is a frozen regression baseline, not a live oracle.
+`tests/ext_conformance/ts_oracle/package.json` pins `@mariozechner/pi-coding-agent` 0.51.0, a known-good snapshot; that package stopped at 0.73.1 and continues as `@earendil-works/pi-coding-agent`, and KESA, a hard fork, does not track it.
+The name survives in identifiers (`ts_oracle/`, `KESA_TS_ORACLE_TIMEOUT_SECS`, `ts_oracle_failed`) because renaming them would churn every test and report keyed on them.
+The baseline loads extensions through the legacy pi-mono TypeScript runtime.
 Its npm dependencies must be installed:
 
 ```bash

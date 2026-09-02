@@ -1,5 +1,6 @@
 #!/bin/bash
-# Batch-load all official extensions through the TS oracle harness.
+# Batch-load all official extensions through the pinned TS baseline harness
+# (tests/ext_conformance/ts_oracle, a frozen 0.51.0 snapshot, not a live oracle).
 # Outputs a summary of pass/fail for each extension.
 #
 # Usage: bash batch_load.sh [artifacts-dir]
