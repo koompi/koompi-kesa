@@ -654,7 +654,9 @@ fn check_auth(fix: bool, findings: &mut Vec<Finding>) {
         findings.push(
             Finding::info(cat, "auth.json: not present")
                 .with_detail("No credentials stored yet")
-                .with_remediation("Run `pi` and follow the login prompt, or set ANTHROPIC_API_KEY"),
+                .with_remediation(
+                    "Run `kesa` and follow the login prompt, or set ANTHROPIC_API_KEY",
+                ),
         );
         // Still check env vars
         check_auth_env_vars(cat, findings);
@@ -722,7 +724,7 @@ fn check_auth(fix: bool, findings: &mut Vec<Finding>) {
         if providers.is_empty() {
             findings.push(
                 Finding::info(cat, "No stored credentials")
-                    .with_remediation("Run `pi` to authenticate or set an API key env var"),
+                    .with_remediation("Run `kesa` to authenticate or set an API key env var"),
             );
         } else {
             for provider in &providers {

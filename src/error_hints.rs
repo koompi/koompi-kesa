@@ -90,7 +90,7 @@ fn session_hints(error: &Error) -> ErrorHint {
         Error::SessionNotFound { .. } => ErrorHint {
             summary: "Session file not found",
             hints: &[
-                "Use 'pi' without --session to start a new session",
+                "Use 'kesa' without --session to start a new session",
                 "Use 'pi --resume' to pick from existing sessions",
             ],
             context_fields: &["path"],
@@ -98,7 +98,7 @@ fn session_hints(error: &Error) -> ErrorHint {
         Error::Session(msg) if msg.contains("corrupted") || msg.contains("invalid") => ErrorHint {
             summary: "Session file is corrupted or invalid",
             hints: &[
-                "Start a new session with 'pi'",
+                "Start a new session with 'kesa'",
                 "Session files are JSONL format - check for malformed lines",
             ],
             context_fields: &["path", "line_number"],
@@ -110,7 +110,7 @@ fn session_hints(error: &Error) -> ErrorHint {
         },
         _ => ErrorHint {
             summary: "Session error",
-            hints: &["Try starting a new session with 'pi'"],
+            hints: &["Try starting a new session with 'kesa'"],
             context_fields: &[],
         },
     }
