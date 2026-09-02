@@ -5483,8 +5483,10 @@ where
     )
     .await?;
 
+    // A user who hit Ctrl+C did not finish a turn: the agent loop already
+    // fired `Interrupt` for it, and `Stop` must not run on top of that.
     let mut stop_hook_active = false;
-    while !hooks.is_empty() {
+    while !hooks.is_empty() && message.stop_reason != StopReason::Aborted {
         let kesa::hooks::HookDecision::Block { reason } = hooks.stop(stop_hook_active).await else {
             break;
         };
