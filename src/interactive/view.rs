@@ -916,15 +916,8 @@ fn format_persistence_footer_segment(
 }
 
 impl PiApp {
-    /// Render one key for the header and status line.
-    ///
-    /// Two registers exist on purpose and neither should drift into the other.
-    /// Here, and anywhere else showing a *configurable* binding, the key is
-    /// spelled the way `keybindings.json` spells it: lowercase, `ctrl+l`. That
-    /// is what `KeyBinding`'s `Display` produces for a user's own override, so
-    /// the fallback matches it and the line reads the same either way. Overlay
-    /// legends, which list fixed keys the user cannot rebind, use prose case
-    /// (`Ctrl+D: delete`).
+    // lowercase to match keybindings.json and KeyBinding's Display; fixed keys in
+    // overlay legends use prose case instead
     fn header_binding_hint(&self, action: AppAction, fallback: &str) -> String {
         self.keybindings
             .get_bindings(action)
@@ -2595,9 +2588,7 @@ impl PiApp {
         let title = overlay
             .title
             .as_deref()
-            // Title case to match the extension bridge, which supplies this
-            // same title for its own overlays and is a pinned vendored blob
-            // with a byte-exact integrity check.
+            // matches the vendored bridge, which is hash-pinned
             .unwrap_or("Extension Overlay");
         let source = overlay.extension_id.as_deref().unwrap_or("extension");
 

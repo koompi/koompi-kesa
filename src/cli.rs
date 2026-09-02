@@ -484,9 +484,7 @@ pub struct Cli {
     /// turns the capture off so terminal-native copy/paste keeps working.
     /// In-app mouse wheel scrolling is sacrificed; users can still scroll
     /// with Page Up/Down or arrow keys.
-    // Read in `run_interactive` rather than through `#[arg(env = ...)]` so only
-    // `=1` counts as true, matching `KESA_HARDWARE_CURSOR`. Clap's bool-env
-    // handling would also treat `=0` and `=false` as setting the flag.
+    // read in run_interactive, not via arg(env): clap's bool-env makes =0 truthy
     #[arg(long)]
     pub no_mouse_capture: bool,
 

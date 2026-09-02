@@ -52,10 +52,8 @@
 // paths the same way integration tests do.
 extern crate self as kesa;
 
-/// Serialize unit tests that temporarily change the process-wide current
-/// directory against tests that resolve paths through it. Rust's test runner
-/// executes modules concurrently, so separate per-module locks do not prevent
-/// one module from observing another module's temporary directory.
+// serializes chdir-ing tests against tests resolving through the process cwd;
+// per-module locks cannot, the runner interleaves modules
 #[cfg(test)]
 pub(crate) fn test_current_dir_lock() -> std::sync::MutexGuard<'static, ()> {
     static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();

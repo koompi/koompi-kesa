@@ -2259,11 +2259,8 @@ fn cache_dependencies_for_scoped_scan(
                 control.path = cwd_root.logical_path().join(relative);
             }
         }
-        // The controls were ordered under the two `/proc/self/fd` roots they
-        // were collected from, whose numbers differ on every call. Re-order by
-        // the logical paths they were just rewritten to: a dependency list that
-        // permutes between two identical scans reads as a changed dependency,
-        // and the cached entry is thrown away instead of hit.
+        // collected under two /proc/self/fd roots, so set order tracks fd numbers,
+        // not the logical paths; a permuted list reads as a changed dependency
         controls.sort();
         controls.dedup();
         dependencies.extend(controls);
@@ -14242,9 +14239,7 @@ mod tests {
             .expect("scoped scan dependencies")
         };
 
-        // The two roots are pinned as open descriptors, so opening them in the
-        // other order gives them the other pair of fd numbers. The dependency
-        // list a cache hit is compared against must not notice.
+        // opening in the other order swaps their fd numbers
         let cwd_first = dependencies_for(true);
         let path_first = dependencies_for(false);
         assert_eq!(
@@ -14538,8 +14533,7 @@ mod tests {
 
     #[test]
     fn tool_output_cache_reuses_and_invalidates_read_only_tool_outputs() {
-        // the scanners resolve through the process working directory, which a
-        // chdir-ing test elsewhere can move out from under a cache-hit assertion
+        // scanners resolve through the process cwd, which a chdir-ing test can move
         let _cwd = crate::test_current_dir_lock();
         asupersync::test_utils::run_test(|| async {
             reset_tool_output_cache_for_tests();

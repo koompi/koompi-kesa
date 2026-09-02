@@ -1037,11 +1037,6 @@ pub fn resolve_model_scope(
     scoped_models
 }
 
-/// Report a `--models` pattern that selected nothing.
-///
-/// Both the glob branch and the exact-name branch drop the pattern silently
-/// otherwise, and from the outside the two are the same event: Ctrl+P will not
-/// cycle to anything the user was expecting.
 fn warn_no_models_match(pattern: &str) {
     eprintln!(
         "Warning: no model matches \"{pattern}\", so Ctrl+P will not cycle to one.\n\

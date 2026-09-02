@@ -255,11 +255,6 @@ fn validate_fetch_models_is_standalone(
     }
 }
 
-/// Report that Ctrl+C will not be caught for the rest of the process.
-///
-/// The three modes that install a handler lose the same thing when it fails, so
-/// they say the same thing: the key stops interrupting, and the way out is the
-/// terminal's own kill.
 fn warn_ctrlc_handler_unavailable(mode: &str, err: &ctrlc::Error) {
     eprintln!(
         "Warning: no Ctrl+C handler could be installed for {mode}, so Ctrl+C will not \
@@ -268,11 +263,6 @@ fn warn_ctrlc_handler_unavailable(mode: &str, err: &ctrlc::Error) {
     );
 }
 
-/// Report a `models.json` the registry could not use.
-///
-/// The registry still loads: the built-in catalog stands and the user's
-/// overrides are the only thing dropped. Say that, rather than printing a parse
-/// error with no consequence attached.
 fn warn_models_json_ignored(models_path: &Path, error: &str) {
     eprintln!(
         "Warning: {} could not be read, so its model overrides are not in effect \
@@ -715,9 +705,7 @@ fn print_error_with_hints(err: &anyhow::Error) {
         }
     }
 
-    // Nothing typed in the chain. Flatten it into one line and render it the
-    // same way, so this path still says `Error:` and still offers hints rather
-    // than dumping an anyhow Debug chain at the user.
+    // nothing typed in the chain; flatten it so this path still says Error: and hints
     let mut message = err.to_string();
     for cause in err.chain().skip(1) {
         let _ = write!(&mut message, ": {cause}");
