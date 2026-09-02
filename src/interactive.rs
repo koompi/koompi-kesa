@@ -2548,6 +2548,9 @@ pub struct PiApp {
     pending_tool_output: Option<String>,
     /// What the session hint row should point at, set as tools finish.
     last_hint_trigger: Option<HintTrigger>,
+    /// The text of the last prompt sent, as displayed. The editor is cleared
+    /// at submit, so this is what goes back into it when the turn fails.
+    last_submitted_display: Option<String>,
     /// Children of the delegation currently in flight. One in-flight tool call
     /// can be many agents; `current_tool` alone cannot say so.
     agent_roster: agent_roster::AgentRoster,
@@ -2933,6 +2936,7 @@ impl PiApp {
             tool_progress: None,
             pending_tool_output: None,
             last_hint_trigger: None,
+            last_submitted_display: None,
             agent_roster: agent_roster::AgentRoster::default(),
             session,
             config,

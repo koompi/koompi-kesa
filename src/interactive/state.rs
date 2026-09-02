@@ -75,6 +75,14 @@ impl ConversationMessage {
         }
     }
 
+    /// A `System` row that is a failure rather than a notice: it opens with
+    /// the error glyph. The flag lives in the content so every constructor
+    /// of a system row, in this crate and its tests, stays as it is.
+    pub(super) fn is_error_row(&self) -> bool {
+        self.role == MessageRole::System
+            && self.content.starts_with(crate::error_hints::ERROR_GLYPH)
+    }
+
     /// Create a tool output message with auto-collapse for large outputs.
     pub(super) fn tool(content: String) -> Self {
         let line_count = memchr::memchr_iter(b'\n', content.as_bytes()).count() + 1;

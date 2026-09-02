@@ -85,6 +85,13 @@ async fn user_prompt_submit_blocked(
     true
 }
 
+/// The error row for a typed failure, rendered where the failure happened so
+/// the presenter only has to paint it.
+fn rendered_error(error: &crate::error::Error) -> String {
+    let shown = crate::error_hints::present_error(error);
+    crate::error_hints::render_error(&shown.summary, &shown.detail, &shown.action)
+}
+
 /// The tools whose result is a file change, and so the thing rewind undoes.
 fn is_file_edit_tool(name: &str) -> bool {
     matches!(name, "edit" | "write" | "hashline_edit")
@@ -541,8 +548,14 @@ impl PiApp {
                 } else {
                     HintTrigger::Tool
                 });
+                let mut failure_body = String::new();
                 if let Some(mut output) = self.pending_tool_output.take() {
                     if is_error {
+                        failure_body = output
+                            .split_once('\n')
+                            .map_or("", |(_, body)| body)
+                            .trim()
+                            .to_string();
                         output = super::tool_render::mark_tool_failed(&output);
                     }
                     if super::conversation::drop_superseded_todo_messages(
@@ -554,6 +567,20 @@ impl PiApp {
                     }
                     self.messages.push(ConversationMessage::tool(output));
                     self.scroll_to_bottom();
+                }
+                if is_error {
+                    // the hints only ever reached typed errors; a failed
+                    // result is a ToolEnd, so route it here by name
+                    let shown = crate::error_hints::present_tool_error(&name, &failure_body);
+                    let detail = failure_body
+                        .lines()
+                        .find(|line| !line.trim().is_empty())
+                        .unwrap_or_default();
+                    self.push_error_row(crate::error_hints::render_error(
+                        &shown.summary,
+                        detail,
+                        &shown.action,
+                    ));
                 }
             }
             PiMsg::AgentDone {
@@ -611,12 +638,20 @@ impl PiApp {
                         self.status_message = Some(message);
                     } else {
                         self.status_message = None;
-                        self.messages.push(ConversationMessage {
-                            role: MessageRole::System,
-                            content: crate::error_hints::format_error_text_with_hints(&message),
-                            thinking: None,
-                            collapsed: false,
-                        });
+                        let shown = crate::error_hints::present_error_text(&message);
+                        self.push_error_row(crate::error_hints::render_error(
+                            &shown.summary,
+                            &shown.detail,
+                            &shown.action,
+                        ));
+                        // The prompt was cleared at submit. Nothing was
+                        // answered, so give it back rather than make the
+                        // user retype it.
+                        if self.input.value().trim().is_empty()
+                            && let Some(text) = self.last_submitted_display.clone()
+                        {
+                            self.input.set_value(&text);
+                        }
                     }
                 }
 
@@ -640,32 +675,15 @@ impl PiApp {
             PiMsg::AgentError(error) => {
                 self.current_response.clear();
                 self.current_thinking.clear();
-                let content = if error.contains('\n') || error.starts_with("Error:") {
+                // producers in this file send a rendered row; anything else
+                // (a blocked prompt's reason, a fork failure) is text
+                let content = if error.starts_with(crate::error_hints::ERROR_GLYPH) {
                     error
                 } else {
-                    format!("Error: {error}")
+                    let shown = crate::error_hints::present_error_text(&error);
+                    crate::error_hints::render_error(&shown.summary, &shown.detail, &shown.action)
                 };
-                // a hard failure arrives twice: AgentEnd carries the synthesized
-                // error assistant message, then the run's Err lands here. same
-                // first line means same failure, so keep the fuller copy.
-                let headline = content.lines().next().unwrap_or_default();
-                if let Some(last) = self.messages.last_mut()
-                    && last.role == MessageRole::System
-                    && !headline.is_empty()
-                    && last.content.lines().next() == Some(headline)
-                {
-                    if content.len() > last.content.len() {
-                        last.content = content;
-                        self.message_render_cache.invalidate_all();
-                    }
-                } else {
-                    self.messages.push(ConversationMessage {
-                        role: MessageRole::System,
-                        content,
-                        thinking: None,
-                        collapsed: false,
-                    });
-                }
+                self.push_error_row(content);
                 self.agent_state = AgentState::Idle;
                 self.current_tool = None;
                 self.abort_handle = None;
@@ -1319,6 +1337,36 @@ After approving access in the browser, press Enter in KESA to complete login."
         }
     }
 
+    /// Keep the prompt text so a failed turn can hand it back.
+    fn remember_submitted(&mut self, display: &str) {
+        if !display.trim().is_empty() {
+            self.last_submitted_display = Some(display.to_string());
+        }
+    }
+
+    /// Push one error row. The presenter is the only place that knows the
+    /// active provider, so `<provider>` is filled in here. A hard failure
+    /// arrives twice (AgentDone with the synthesized message, then the run's
+    /// Err); the same summary over the same first line of detail means the
+    /// same failure, so the fuller copy wins instead of a second row
+    /// appearing.
+    pub(super) fn push_error_row(&mut self, content: String) {
+        let content = content.replace("<provider>", &self.model_entry.model.provider);
+        let key = |text: &str| -> String { text.lines().take(2).collect::<Vec<_>>().join("\n") };
+        if let Some(last) = self.messages.last_mut()
+            && last.is_error_row()
+            && key(&last.content) == key(&content)
+        {
+            if content.len() > last.content.len() {
+                last.content = content;
+                self.message_render_cache.invalidate_all();
+            }
+            return;
+        }
+        self.messages
+            .push(ConversationMessage::new(MessageRole::System, content, None));
+    }
+
     pub(super) fn send_extension_ui_response(&mut self, response: ExtensionUiResponse) {
         if let Some(manager) = &self.extensions {
             if !manager.respond_ui(response) {
@@ -1718,11 +1766,10 @@ After approving access in the browser, press Enter in KESA to complete login."
             }
 
             if let Err(err) = result {
-                let formatted = crate::error_hints::format_error_with_hints(&err);
                 let _ = crate::interactive::enqueue_pi_event(
                     &event_tx,
                     &Cx::for_request(),
-                    PiMsg::AgentError(formatted),
+                    PiMsg::AgentError(rendered_error(&err)),
                 )
                 .await;
                 return;
@@ -1769,6 +1816,7 @@ After approving access in the browser, press Enter in KESA to complete login."
         }
 
         // Clear input and reset to single-line mode
+        self.remember_submitted(display);
         self.input.reset();
         self.input_mode = InputMode::SingleLine;
         self.set_input_height(INPUT_DEFAULT_HEIGHT);
@@ -1993,11 +2041,10 @@ After approving access in the browser, press Enter in KESA to complete login."
             }
 
             if let Err(err) = result {
-                let formatted = crate::error_hints::format_error_with_hints(&err);
                 let _ = crate::interactive::enqueue_pi_event(
                     &event_tx,
                     &Cx::for_request(),
-                    PiMsg::AgentError(formatted),
+                    PiMsg::AgentError(rendered_error(&err)),
                 )
                 .await;
                 return;
@@ -2148,6 +2195,7 @@ After approving access in the browser, press Enter in KESA to complete login."
         let displayed_message = message_for_agent.clone();
 
         // Clear input and reset to single-line mode
+        self.remember_submitted(&displayed_message);
         self.input.reset();
         self.input_mode = InputMode::SingleLine;
         self.set_input_height(INPUT_DEFAULT_HEIGHT);
@@ -3001,6 +3049,111 @@ mod stream_delta_batcher_tests {
         assert!(
             !state.saw_user_message.load(Ordering::SeqCst),
             "continue path should not synthesize a user message"
+        );
+    }
+
+    /// A failed turn is painted as an error, ends in a next step, and hands
+    /// the prompt back so a transient 500 cannot cost the user their text.
+    #[test]
+    fn a_failed_turn_renders_an_error_row_and_restores_the_prompt() {
+        let mut app = build_test_app();
+        app.remember_submitted("fix the flaky test");
+        app.messages.push(ConversationMessage::new(
+            MessageRole::User,
+            "fix the flaky test".to_string(),
+            None,
+        ));
+        app.agent_state = AgentState::Processing;
+        let _ = app.update(Message::new(PiMsg::AgentDone {
+            usage: None,
+            stop_reason: StopReason::Error,
+            error_message: Some("HTTP 429 Too Many Requests".to_string()),
+        }));
+
+        let last = app.messages.last().expect("error row");
+        assert!(last.is_error_row(), "{}", last.content);
+        assert!(
+            last.content
+                .ends_with("Next: wait, then Up then Enter to retry"),
+            "{}",
+            last.content
+        );
+        assert_eq!(app.input.value(), "fix the flaky test");
+        assert_eq!(app.agent_state, AgentState::Idle);
+    }
+
+    /// Both presenters and the failed-tool arm go through the same renderer,
+    /// and the provider placeholder is filled by the presenter.
+    #[test]
+    fn agent_errors_and_failed_tools_render_through_render_error() {
+        let mut app = build_test_app();
+        let _ = app.update(Message::new(PiMsg::AgentError(
+            "401 unauthorized: bad key".to_string(),
+        )));
+        let last = app.messages.last().expect("error row");
+        assert!(last.is_error_row(), "{}", last.content);
+        assert!(
+            last.content.contains("Next: /login continue-probe"),
+            "provider placeholder must be filled: {}",
+            last.content
+        );
+
+        // the run's Err lands after AgentDone with the same headline: one row
+        let rows = app.messages.len();
+        let _ = app.update(Message::new(PiMsg::AgentError(
+            "401 unauthorized: bad key\nmore detail".to_string(),
+        )));
+        assert_eq!(app.messages.len(), rows, "same failure must not add a row");
+
+        let _ = app.update(Message::new(PiMsg::ToolStart {
+            name: "read".to_string(),
+            tool_id: "t1".to_string(),
+        }));
+        let _ = app.update(Message::new(PiMsg::ToolUpdate {
+            name: "read".to_string(),
+            tool_id: "t1".to_string(),
+            content: vec![
+                ContentBlock::ToolCall(crate::model::ToolCall {
+                    id: "t1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "src/nope.rs"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("file not found: src/nope.rs")),
+            ],
+            details: None,
+        }));
+        let _ = app.update(Message::new(PiMsg::ToolEnd {
+            name: "read".to_string(),
+            tool_id: "t1".to_string(),
+            is_error: true,
+        }));
+        let error_row = app.messages.last().expect("error row after the tool row");
+        assert!(error_row.is_error_row(), "{}", error_row.content);
+        assert!(
+            error_row.content.starts_with("\u{2717} File not found"),
+            "{}",
+            error_row.content
+        );
+        assert!(
+            error_row.content.contains("file not found: src/nope.rs"),
+            "{}",
+            error_row.content
+        );
+        assert!(
+            error_row.content.contains("\nNext: "),
+            "{}",
+            error_row.content
+        );
+        let tool_row = &app.messages[app.messages.len() - 2];
+        assert_eq!(tool_row.role, MessageRole::Tool);
+        assert!(
+            tool_row
+                .content
+                .lines()
+                .next()
+                .unwrap_or_default()
+                .ends_with("failed")
         );
     }
 

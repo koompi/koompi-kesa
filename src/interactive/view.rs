@@ -1707,6 +1707,22 @@ impl PiApp {
                     }
                 }
             }
+            MessageRole::System if msg.is_error_row() => {
+                // The glyph line and the "Next:" line are the error; the
+                // detail between them is evidence and stays readable.
+                let width = self.term_width.saturating_sub(6).max(40);
+                let _ = writeln!(output);
+                for (idx, line) in msg.content.lines().enumerate() {
+                    let style = if idx == 0 || line.starts_with("Next: ") {
+                        &self.styles.error_bold
+                    } else {
+                        &self.styles.muted
+                    };
+                    for segment in textwrap::wrap(line, width) {
+                        let _ = writeln!(output, "  {}", style.render(&segment));
+                    }
+                }
+            }
             MessageRole::System => {
                 let width = self.term_width.saturating_sub(6).max(40);
                 let _ = writeln!(output);

@@ -2033,6 +2033,42 @@ mod tests {
         assert!(app.capability_prompt.is_none(), "Esc answers the prompt");
     }
 
+    /// A provider failure must not look like /help output.
+    #[test]
+    fn error_rows_and_notice_rows_render_in_different_styles() {
+        let current = model_entry("openai", "gpt-5.2", Some("key"), HashMap::new());
+        let mut app = build_test_app(current.clone(), vec![current]);
+        app.set_terminal_size(100, 40);
+        app.messages.push(ConversationMessage::new(
+            MessageRole::System,
+            "Something happened".to_string(),
+            None,
+        ));
+        app.messages.push(ConversationMessage::new(
+            MessageRole::System,
+            "\u{2717} Something failed\nthe detail\nNext: /login openai".to_string(),
+            None,
+        ));
+        let view = app.view();
+        let notice = app.styles.warning.render("Something happened");
+        let error_head = app.styles.error_bold.render("\u{2717} Something failed");
+        let error_next = app.styles.error_bold.render("Next: /login openai");
+        let detail = app.styles.muted.render("the detail");
+        assert_ne!(
+            app.styles.warning.render("x"),
+            app.styles.error_bold.render("x"),
+            "the two styles must differ or the test proves nothing"
+        );
+        assert!(view.contains(&notice), "notice row in warning style");
+        assert!(view.contains(&error_head), "error headline in error_bold");
+        assert!(view.contains(&error_next), "next step in error_bold");
+        assert!(view.contains(&detail), "detail in muted");
+        assert!(
+            !view.contains(&app.styles.warning.render("\u{2717} Something failed")),
+            "error must not be painted as a notice"
+        );
+    }
+
     #[test]
     fn double_escape_action_none_does_not_arm_or_trigger() {
         let current = model_entry("openai", "gpt-5.2", Some("old-key"), HashMap::new());
