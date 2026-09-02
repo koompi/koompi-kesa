@@ -119,7 +119,7 @@ without runtime errors, even when the real package is not installed.
 
 | Package | Key exports |
 |---------|-------------|
-| `@modelcontextprotocol/sdk/*` | MCP client/server/transport types |
+| `@modelcontextprotocol/sdk/*` | Stub only: `Client.connect()` is a no-op and `listTools()`/`callTool()` return empty results. KESA has no MCP client; `registerMcpServer` records the spec for `/mcp` display and never dials it |
 | `vscode-languageserver-protocol/*` | LSP types and protocol definitions |
 | `jsonwebtoken` | `decode`, HS256/HS384/HS512 `sign`/`verify` |
 | `uuid` | `v4`, `v5`, `v7`, `NIL` |

@@ -10,7 +10,7 @@ Runs 1 through 3 made KESA shippable and gave it a terminal that looks right.
 v0.3.0 installs from a one-liner and from crates.io, the tool loop is proven against a real provider, and the chrome no longer copies another product's marks.
 
 What is missing now is not features in the catalogue sense.
-KESA already has read, write, edit, bash, ls, grep, glob, web_fetch, web_search, subagents, todo, background bash, image paste, ACP for Zed, an extension runtime with MCP, and four permission modes.
+KESA already has read, write, edit, bash, ls, grep, glob, web_fetch, web_search, subagents, todo, background bash, image paste, ACP for Zed, an extension runtime (MCP registration is display-only; there is no MCP client), and four permission modes.
 Measured against Claude Code, Codex and Kimi, the gaps that remain are all the same shape: **the user cannot see what the agent is doing to their context, and cannot undo what it did to their files.**
 
 That is the run. It ends when a user can rewind a bad turn, see what is eating the context window, and trust that the sandbox is either on or loudly off.
