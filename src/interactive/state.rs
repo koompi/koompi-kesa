@@ -96,6 +96,16 @@ pub enum MessageRole {
     System,
 }
 
+/// The last thing the user did that a header hint can point at. The view
+/// keeps no other record of what just happened.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum HintTrigger {
+    /// A tool call finished: the detail toggle is now worth knowing.
+    Tool,
+    /// A file edit landed: rewind is now worth knowing.
+    Edit,
+}
+
 /// State of the agent processing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AgentState {

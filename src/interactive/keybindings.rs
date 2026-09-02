@@ -1754,6 +1754,144 @@ mod tests {
         assert!(app.should_consume_action(AppAction::CycleThinkingLevel));
     }
 
+    fn load_one_skill(app: &mut PiApp) {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let skill_dir = temp.path().join("skills").join("my-skill");
+        std::fs::create_dir_all(&skill_dir).expect("mkdir");
+        std::fs::write(
+            skill_dir.join("SKILL.md"),
+            "---\nname: my-skill\ndescription: Answers questions\n---\nBody",
+        )
+        .expect("write skill");
+        app.resources
+            .extend_with_paths(
+                Path::new("."),
+                &crate::resources::ExtensionResourcePaths {
+                    skill_paths: vec![temp.path().join("skills")],
+                    ..Default::default()
+                },
+            )
+            .expect("load skill");
+        assert_eq!(app.resources.skills().len(), 1);
+        // keep the fixture alive for the app's lifetime
+        std::mem::forget(temp);
+    }
+
+    fn header_lines(app: &PiApp) -> Vec<String> {
+        strip_ansi(&app.render_header())
+            .lines()
+            .map(str::to_string)
+            .collect()
+    }
+
+    /// The onboarding rows leave with the first message; one hint row stays
+    /// for the session and rotates with what the user just did.
+    #[test]
+    fn session_hint_row_survives_the_first_message_and_rotates() {
+        let current = model_entry("openai", "gpt-5.2", Some("key"), HashMap::new());
+        let mut app = build_test_app(current.clone(), vec![current]);
+        app.set_terminal_size(120, 40);
+        assert_eq!(
+            app.header_rows(),
+            3,
+            "onboarding rows before the first message"
+        );
+
+        app.messages.push(ConversationMessage::new(
+            MessageRole::User,
+            "hello".to_string(),
+            None,
+        ));
+        assert_eq!(
+            app.session_hint(),
+            None,
+            "nothing has happened, nothing to hint"
+        );
+        assert_eq!(app.header_rows(), 2);
+        assert_eq!(
+            header_lines(&app).len(),
+            1,
+            "title only: {:?}",
+            header_lines(&app)
+        );
+
+        app.last_hint_trigger = Some(HintTrigger::Tool);
+        assert_eq!(app.session_hint().as_deref(), Some("ctrl+o: detail"));
+        assert_eq!(app.header_rows(), 3);
+        let lines = header_lines(&app);
+        assert_eq!(lines.len(), 2, "{lines:?}");
+        assert!(lines[1].contains("ctrl+o: detail"), "{lines:?}");
+
+        app.last_hint_trigger = Some(HintTrigger::Edit);
+        app.config.double_escape_action = Some("rewind".to_string());
+        assert_eq!(app.session_hint().as_deref(), Some("Esc Esc: rewind"));
+        app.config.double_escape_action = Some("tree".to_string());
+        assert_eq!(app.session_hint().as_deref(), Some("Esc Esc: tree"));
+        app.config.double_escape_action = Some("none".to_string());
+        assert_eq!(
+            app.session_hint(),
+            None,
+            "a chord that does nothing gets no hint"
+        );
+        assert_eq!(app.header_rows(), 2);
+
+        load_one_skill(&mut app);
+        assert_eq!(
+            app.session_hint().as_deref(),
+            Some("/skill:my-skill: run a skill"),
+            "with no edit hint to show, a loaded skill is the resting hint"
+        );
+        app.last_hint_trigger = None;
+        assert_eq!(
+            app.session_hint().as_deref(),
+            Some("/skill:my-skill: run a skill")
+        );
+        app.last_hint_trigger = Some(HintTrigger::Tool);
+        assert_eq!(app.session_hint().as_deref(), Some("ctrl+o: detail"));
+    }
+
+    /// `/resources` says what loaded, and names where it looked for what did not.
+    #[test]
+    fn slash_resources_lists_a_loaded_skill_and_names_the_searched_dirs() {
+        let current = model_entry("openai", "gpt-5.2", Some("key"), HashMap::new());
+        let mut app = build_test_app(current.clone(), vec![current]);
+        let project_dir = Config::project_dir_in(&app.cwd);
+
+        assert!(app.handle_slash_resources().is_none());
+        let status = app.status_message.clone().expect("status names the gap");
+        assert!(
+            status.starts_with("No skills, prompt templates, themes or extensions loaded"),
+            "{status}"
+        );
+        assert!(
+            status.contains(&project_dir.display().to_string()),
+            "{status}"
+        );
+        assert!(app.messages.is_empty());
+
+        load_one_skill(&mut app);
+        app.status_message = None;
+        assert!(app.handle_slash_resources().is_none());
+        let listing = app.messages.last().expect("listing row").content.clone();
+        assert!(listing.contains("Skills (1):"), "{listing}");
+        assert!(
+            listing.contains("/skill:my-skill - Answers questions"),
+            "{listing}"
+        );
+        let prompts_dir = project_dir.join("prompts").display().to_string();
+        assert!(
+            listing.contains(&format!("Prompt templates: none (looked in"))
+                && listing.contains(&prompts_dir),
+            "{listing}"
+        );
+        assert!(
+            listing.contains("Agents: discovered by the subagent tool"),
+            "{listing}"
+        );
+        assert!(SlashCommand::parse("/resources").is_some());
+        assert!(SlashCommand::help_text().contains("/resources"));
+    }
+
     #[test]
     fn double_escape_action_none_does_not_arm_or_trigger() {
         let current = model_entry("openai", "gpt-5.2", Some("old-key"), HashMap::new());

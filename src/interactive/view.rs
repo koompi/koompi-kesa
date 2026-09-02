@@ -1270,6 +1270,13 @@ impl PiApp {
 
         let _ = writeln!(output, "  {}", self.styles.title.render(&title_line));
         if !self.header_hints_are_earned() {
+            if let Some(hint) = self.session_hint() {
+                let _ = writeln!(
+                    output,
+                    "  {}",
+                    self.styles.muted.render(&truncate(&hint, max_width))
+                );
+            }
             return;
         }
         let _ = writeln!(output, "  {}", self.styles.muted.render(&hints_line));
@@ -1288,6 +1295,33 @@ impl PiApp {
     /// stay until the first message, then hand their rows to the conversation.
     fn header_hints_are_earned(&self) -> bool {
         self.messages.is_empty()
+    }
+
+    /// The one hint row that outlives the first message. It points at the
+    /// capability closest to what the user just did: the detail toggle after
+    /// a tool call, rewind after an edit, and otherwise a loaded skill. Like
+    /// the resource row, it is absent rather than pointing at nothing.
+    pub(super) fn session_hint(&self) -> Option<String> {
+        match self.last_hint_trigger {
+            Some(HintTrigger::Edit) => {
+                let action = self.double_escape_action();
+                if !action.eq_ignore_ascii_case("none") {
+                    return Some(format!("Esc Esc: {}", action.to_ascii_lowercase()));
+                }
+            }
+            Some(HintTrigger::Tool) => {
+                let tools_key = self.header_binding_hint(AppAction::ExpandTools, "ctrl+o");
+                return Some(format!("{tools_key}: detail"));
+            }
+            None => {}
+        }
+        if !self.config.enable_skill_commands() {
+            return None;
+        }
+        self.resources
+            .skills()
+            .first()
+            .map(|skill| format!("/skill:{}: run a skill", skill.name))
     }
 
     /// What the resource loader actually found, or nothing at all. A row of
@@ -1313,7 +1347,7 @@ impl PiApp {
     /// Rows `render_header_into` writes, including its trailing spacer.
     pub(super) fn header_rows(&self) -> usize {
         if !self.header_hints_are_earned() {
-            return 2;
+            return 2 + usize::from(self.session_hint().is_some());
         }
         if self.resources_line().is_some() {
             4
@@ -2291,7 +2325,16 @@ impl PiApp {
         let _ = writeln!(output, "\n  {}\n", self.styles.title.render("Select Theme"));
 
         if picker.items.is_empty() {
-            let _ = writeln!(output, "  {}", self.styles.muted.render("No themes found."));
+            let (user_dir, project_dir) = self.resource_dirs("themes");
+            let _ = writeln!(
+                output,
+                "  {}",
+                self.styles.muted.render(&format!(
+                    "No themes found. Put a theme in {} or {}.",
+                    user_dir.display(),
+                    project_dir.display()
+                ))
+            );
         } else {
             let offset = picker.scroll_offset();
             let visible_count = picker.max_visible.min(picker.items.len());

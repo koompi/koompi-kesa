@@ -109,11 +109,11 @@ use self::perf::{
 pub use self::state::{AgentState, InputMode, PendingInput};
 use self::state::{
     ApprovalAction, AutocompleteState, BranchPickerOverlay, CTRLC_QUIT_WINDOW, CapabilityAction,
-    CapabilityPromptOverlay, ExtensionCustomOverlay, HistoryList, InjectedMessageQueue,
-    InteractiveMessageQueue, PASTE_COLLAPSE_MIN_LINES, PendingLoginKind, PendingOAuth,
-    QueuedMessageKind, RewindOverlay, RewindScope, SessionPickerOverlay, SettingsUiEntry,
-    SettingsUiState, THINKING_COLLAPSED_MAX_LINES, TOOL_COLLAPSE_PREVIEW_LINES, ThemePickerItem,
-    ThemePickerOverlay, ToolApprovalOverlay, ToolProgress, format_count,
+    CapabilityPromptOverlay, ExtensionCustomOverlay, HintTrigger, HistoryList,
+    InjectedMessageQueue, InteractiveMessageQueue, PASTE_COLLAPSE_MIN_LINES, PendingLoginKind,
+    PendingOAuth, QueuedMessageKind, RewindOverlay, RewindScope, SessionPickerOverlay,
+    SettingsUiEntry, SettingsUiState, THINKING_COLLAPSED_MAX_LINES, TOOL_COLLAPSE_PREVIEW_LINES,
+    ThemePickerItem, ThemePickerOverlay, ToolApprovalOverlay, ToolProgress, format_count,
 };
 pub use self::state::{ConversationMessage, MessageRole};
 use self::text_utils::{queued_message_preview, truncate};
@@ -2546,6 +2546,8 @@ pub struct PiApp {
     current_tool: Option<String>,
     tool_progress: Option<ToolProgress>,
     pending_tool_output: Option<String>,
+    /// What the session hint row should point at, set as tools finish.
+    last_hint_trigger: Option<HintTrigger>,
     /// Children of the delegation currently in flight. One in-flight tool call
     /// can be many agents; `current_tool` alone cannot say so.
     agent_roster: agent_roster::AgentRoster,
@@ -2930,6 +2932,7 @@ impl PiApp {
             current_tool: None,
             tool_progress: None,
             pending_tool_output: None,
+            last_hint_trigger: None,
             agent_roster: agent_roster::AgentRoster::default(),
             session,
             config,

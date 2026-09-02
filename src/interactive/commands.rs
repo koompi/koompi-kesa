@@ -40,6 +40,7 @@ pub enum SlashCommand {
     Template,
     Share,
     Mcp,
+    Resources,
 }
 
 impl SlashCommand {
@@ -81,6 +82,7 @@ impl SlashCommand {
             "/template" => Self::Template,
             "/share" => Self::Share,
             "/mcp" => Self::Mcp,
+            "/resources" => Self::Resources,
             _ => return None,
         };
 
@@ -136,6 +138,10 @@ impl SlashCommand {
             "Compact older context with optional instructions",
         ),
         ("/reload", "Reload skills/prompts from disk"),
+        (
+            "/resources",
+            "List loaded skills, templates, themes and extensions",
+        ),
         (
             "/template <name> [args]",
             "Expand a prompt template by name",
@@ -2302,6 +2308,7 @@ impl PiApp {
             SlashCommand::Compact => self.handle_slash_compact(args),
             SlashCommand::Reload => self.handle_slash_reload(),
             SlashCommand::Template => self.handle_slash_template(args),
+            SlashCommand::Resources => self.handle_slash_resources(),
             SlashCommand::Share => self.handle_slash_share(args),
             SlashCommand::Mcp => self.handle_slash_mcp(args),
         }
@@ -3045,6 +3052,117 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         None
     }
 
+    /// The two roots the resource loader walks for one category, user then
+    /// project. The loader does not keep the paths it searched, so the empty
+    /// states name the roots it is known to use.
+    pub(super) fn resource_dirs(&self, category: &str) -> (PathBuf, PathBuf) {
+        (
+            Config::global_dir().join(category),
+            Config::project_dir_in(&self.cwd).join(category),
+        )
+    }
+
+    /// What the loader actually found, one section per category, with the
+    /// searched roots named wherever a section is empty. Agent definitions
+    /// are discovered by the subagent tool at call time and are not listed.
+    pub(super) fn handle_slash_resources(&mut self) -> Option<Cmd> {
+        let skills = self.resources.skills();
+        let prompts = self.resources.prompts();
+        let themes = self.resources.themes();
+        let extensions = self.resources.extensions();
+        if skills.is_empty() && prompts.is_empty() && themes.is_empty() && extensions.is_empty() {
+            self.status_message = Some(format!(
+                "No skills, prompt templates, themes or extensions loaded. Searched {} and {}",
+                Config::global_dir().display(),
+                Config::project_dir_in(&self.cwd).display()
+            ));
+            return None;
+        }
+
+        let mut listing = String::from(
+            "Loaded resources:
+",
+        );
+        let mut section = |title: &str, category: &str, rows: Vec<String>| {
+            if rows.is_empty() {
+                let (user_dir, project_dir) = self.resource_dirs(category);
+                let _ = writeln!(
+                    listing,
+                    "{title}: none (looked in {} and {})",
+                    user_dir.display(),
+                    project_dir.display()
+                );
+                return;
+            }
+            let _ = writeln!(listing, "{title} ({}):", rows.len());
+            for row in rows {
+                let _ = writeln!(listing, "  {row}");
+            }
+        };
+        section(
+            "Skills",
+            "skills",
+            skills
+                .iter()
+                .map(|skill| {
+                    let command = if self.config.enable_skill_commands() {
+                        format!("/skill:{}", skill.name)
+                    } else {
+                        skill.name.clone()
+                    };
+                    if skill.description.trim().is_empty() {
+                        command
+                    } else {
+                        format!("{command} - {}", skill.description.trim())
+                    }
+                })
+                .collect(),
+        );
+        section(
+            "Prompt templates",
+            "prompts",
+            prompts
+                .iter()
+                .map(|template| {
+                    if template.description.trim().is_empty() {
+                        format!("/{}", template.name)
+                    } else {
+                        format!("/{} - {}", template.name, template.description.trim())
+                    }
+                })
+                .collect(),
+        );
+        section(
+            "Themes",
+            "themes",
+            themes
+                .iter()
+                .map(|theme| format!("{} ({})", theme.name, theme.source))
+                .collect(),
+        );
+        section(
+            "Extensions",
+            "extensions",
+            extensions
+                .iter()
+                .map(|path| path.display().to_string())
+                .collect(),
+        );
+        listing.push_str(
+            "Agents: discovered by the subagent tool when it runs, not listed here.
+",
+        );
+
+        self.messages.push(ConversationMessage {
+            role: MessageRole::System,
+            content: listing,
+            thinking: None,
+            collapsed: false,
+        });
+        self.scroll_to_last_match("Loaded resources");
+        None
+    }
+
     #[allow(clippy::too_many_lines)]
     pub(super) fn handle_slash_template(&mut self, args: &str) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
@@ -3056,7 +3174,12 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         if trimmed.is_empty() {
             let templates = self.resources.prompts();
             if templates.is_empty() {
-                self.status_message = Some("No prompt templates loaded".to_string());
+                let (user_dir, project_dir) = self.resource_dirs("prompts");
+                self.status_message = Some(format!(
+                    "No prompt templates loaded. Put one in {} or {}",
+                    user_dir.display(),
+                    project_dir.display()
+                ));
                 return None;
             }
 

@@ -1,9 +1,10 @@
 ---
 source: tests/tui_snapshot.rs
+assertion_line: 233
 expression: view
 ---
   KESA (dummy/dummy-model)  <cwd>
-
+  ctrl+o: detail
 
 
 

@@ -85,6 +85,11 @@ async fn user_prompt_submit_blocked(
     true
 }
 
+/// The tools whose result is a file change, and so the thing rewind undoes.
+fn is_file_edit_tool(name: &str) -> bool {
+    matches!(name, "edit" | "write" | "hashline_edit")
+}
+
 /// Runs the user's `Stop` hooks at the end of a turn. A block feeds its reason
 /// back as the next input, which is how the turn keeps going.
 async fn run_stop_hooks(
@@ -526,11 +531,16 @@ impl PiApp {
                     self.pending_tool_output = Some(output);
                 }
             }
-            PiMsg::ToolEnd { is_error, .. } => {
+            PiMsg::ToolEnd { name, is_error, .. } => {
                 self.agent_state = AgentState::Processing;
                 self.current_tool = None;
                 self.tool_progress = None;
                 self.agent_roster.clear();
+                self.last_hint_trigger = Some(if is_file_edit_tool(&name) {
+                    HintTrigger::Edit
+                } else {
+                    HintTrigger::Tool
+                });
                 if let Some(mut output) = self.pending_tool_output.take() {
                     if is_error {
                         output = super::tool_render::mark_tool_failed(&output);
