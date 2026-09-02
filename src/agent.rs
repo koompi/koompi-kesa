@@ -1666,8 +1666,20 @@ impl Agent {
     ) -> Result<AssistantMessage> {
         self.begin_session().await;
         let result = self.run_loop_inner(prompts, on_event, abort).await;
-        if result.is_ok() {
-            self.end_turn().await;
+        match &result {
+            // The user is at the keyboard and just hit Esc: `Stop` and the
+            // turn-end notification are wrong, `Interrupt` is the event.
+            Ok(message) if message.stop_reason == StopReason::Aborted => {
+                let session_id = self
+                    .config
+                    .stream_options
+                    .session_id
+                    .clone()
+                    .unwrap_or_default();
+                self.shell_hooks().interrupt(&session_id).await;
+            }
+            Ok(_) => self.end_turn().await,
+            Err(_) => {}
         }
         result
     }
@@ -7322,6 +7334,79 @@ mod abort_tests {
             assert_eq!(message.stop_reason, StopReason::Aborted);
             assert_eq!(message.error_message.as_deref(), Some("Aborted"));
         });
+    }
+
+    #[test]
+    fn abort_fires_interrupt_hook_and_never_the_stop_hook() {
+        let runtime = RuntimeBuilder::current_thread()
+            .build()
+            .expect("runtime build");
+        let handle = runtime.handle();
+
+        let pid = std::process::id();
+        let interrupt_path = std::env::temp_dir().join(format!("kesa-agent-interrupt-{pid}"));
+        let stop_path = std::env::temp_dir().join(format!("kesa-agent-stop-{pid}"));
+        let _ = std::fs::remove_file(&interrupt_path);
+        let _ = std::fs::remove_file(&stop_path);
+        let appender = |path: &Path| crate::hooks::HookEntry {
+            matcher: None,
+            command: Some(format!("cat >> {}", path.display())),
+            timeout_seconds: Some(10),
+        };
+        let runner = crate::hooks::HookRunner::new(crate::hooks::HooksConfig {
+            interrupt: Some(vec![appender(&interrupt_path)]),
+            stop: Some(vec![appender(&stop_path)]),
+            ..Default::default()
+        });
+
+        let started = Arc::new(Notify::new());
+        let started_wait = started.notified();
+        let (abort_handle, abort_signal) = AbortHandle::new();
+
+        let provider = Arc::new(HangingProvider);
+        let tools = ToolRegistry::new(&[], Path::new("."), None);
+        let agent = Agent::new(provider, tools, AgentConfig::default());
+        assert!(agent.shell_hooks.set(Arc::new(runner)).is_ok());
+        let session = Arc::new(Mutex::new(Session::in_memory()));
+        let mut agent_session =
+            AgentSession::new(agent, session, false, ResolvedCompactionSettings::default());
+
+        let started_tx = Arc::clone(&started);
+        let join = handle.spawn(async move {
+            agent_session
+                .run_text_with_abort("hello".to_string(), Some(abort_signal), move |event| {
+                    if matches!(
+                        event,
+                        AgentEvent::MessageStart {
+                            message: Message::Assistant(_)
+                        }
+                    ) {
+                        started_tx.notify_one();
+                    }
+                })
+                .await
+        });
+
+        runtime.block_on(async move {
+            started_wait.await;
+            abort_handle.abort();
+
+            let message = join.await.expect("run_text_with_abort");
+            assert_eq!(message.stop_reason, StopReason::Aborted);
+        });
+
+        // `dispatch` awaits the hook child, so the payload is on disk by now.
+        let fired = std::fs::read_to_string(&interrupt_path).expect("Interrupt hook did not fire");
+        let payload: serde_json::Value =
+            serde_json::from_str(fired.trim()).expect("one JSON payload");
+        assert_eq!(payload["hook_event_name"], "Interrupt");
+        assert_eq!(fired.matches("Interrupt").count(), 1, "got {fired:?}");
+        assert!(
+            !stop_path.exists(),
+            "Stop hook fired on a user interrupt: {:?}",
+            std::fs::read_to_string(&stop_path)
+        );
+        let _ = std::fs::remove_file(&interrupt_path);
     }
 
     #[test]

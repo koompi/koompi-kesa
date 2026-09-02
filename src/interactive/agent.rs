@@ -1666,6 +1666,10 @@ After approving access in the browser, press Enter in KESA to complete login."
                 .await;
             flush_ui_stream_batcher_with_backpressure(&ui_stream_batcher).await;
 
+            let aborted = matches!(
+                &result,
+                Ok(message) if message.stop_reason == StopReason::Aborted
+            );
             let new_messages: Vec<crate::model::Message> =
                 agent_guard.messages()[previous_len..].to_vec();
             drop(agent_guard);
@@ -1714,6 +1718,9 @@ After approving access in the browser, press Enter in KESA to complete login."
                 return;
             }
 
+            if aborted {
+                return;
+            }
             run_stop_hooks(&shell_hooks, &stop_hook_active, &event_tx, &task_cx).await;
         });
 
@@ -1934,6 +1941,10 @@ After approving access in the browser, press Enter in KESA to complete login."
 
             agent_guard.set_system_prompt(base_system_prompt);
 
+            let aborted = matches!(
+                &result,
+                Ok(message) if message.stop_reason == StopReason::Aborted
+            );
             let new_messages: Vec<crate::model::Message> =
                 agent_guard.messages()[previous_len..].to_vec();
             drop(agent_guard);
@@ -1982,6 +1993,9 @@ After approving access in the browser, press Enter in KESA to complete login."
                 return;
             }
 
+            if aborted {
+                return;
+            }
             run_stop_hooks(&shell_hooks, &stop_hook_active, &event_tx, &task_cx).await;
         });
 
@@ -2262,6 +2276,10 @@ After approving access in the browser, press Enter in KESA to complete login."
             };
             flush_ui_stream_batcher_with_backpressure(&ui_stream_batcher).await;
 
+            let aborted = matches!(
+                &result,
+                Ok(message) if message.stop_reason == StopReason::Aborted
+            );
             let new_messages: Vec<crate::model::Message> =
                 agent_guard.messages()[previous_len..].to_vec();
             drop(agent_guard);
@@ -2309,6 +2327,9 @@ After approving access in the browser, press Enter in KESA to complete login."
                 return;
             }
 
+            if aborted {
+                return;
+            }
             run_stop_hooks(&shell_hooks, &stop_hook_active, &event_tx, &task_cx).await;
         });
 

@@ -70,12 +70,14 @@ pub enum HookEvent {
     SubagentStop,
     /// When KESA has something to tell the user, including turn-end alerts.
     Notification,
+    /// When the user aborts a turn before it finishes.
+    Interrupt,
 }
 
 impl HookEvent {
     /// Every event, so a new variant cannot be forgotten by the code that has
     /// to walk all of them.
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 10] = [
         Self::PreToolUse,
         Self::PostToolUse,
         Self::UserPromptSubmit,
@@ -85,6 +87,7 @@ impl HookEvent {
         Self::PreCompact,
         Self::SubagentStop,
         Self::Notification,
+        Self::Interrupt,
     ];
 
     #[must_use]
@@ -99,6 +102,7 @@ impl HookEvent {
             Self::PreCompact => "PreCompact",
             Self::SubagentStop => "SubagentStop",
             Self::Notification => "Notification",
+            Self::Interrupt => "Interrupt",
         }
     }
 }
@@ -166,6 +170,8 @@ pub struct HooksConfig {
     pub subagent_stop: Option<Vec<HookEntry>>,
     #[serde(rename = "Notification", alias = "notification")]
     pub notification: Option<Vec<HookEntry>>,
+    #[serde(rename = "Interrupt", alias = "interrupt")]
+    pub interrupt: Option<Vec<HookEntry>>,
     /// Opt in to running hooks from the project settings file. Honored only
     /// when it is set in the global settings file.
     #[serde(alias = "trustProjectHooks")]
@@ -185,6 +191,7 @@ impl HooksConfig {
             HookEvent::PreCompact => &self.pre_compact,
             HookEvent::SubagentStop => &self.subagent_stop,
             HookEvent::Notification => &self.notification,
+            HookEvent::Interrupt => &self.interrupt,
         };
         entries.as_deref().unwrap_or(&[])
     }
@@ -213,6 +220,7 @@ impl HooksConfig {
             pre_compact: concat_entries(base.pre_compact, other.pre_compact),
             subagent_stop: concat_entries(base.subagent_stop, other.subagent_stop),
             notification: concat_entries(base.notification, other.notification),
+            interrupt: concat_entries(base.interrupt, other.interrupt),
             trust_project_hooks: other.trust_project_hooks.or(base.trust_project_hooks),
         }
     }
@@ -364,6 +372,19 @@ impl HookRunner {
             json!({
                 "hook_event_name": HookEvent::Notification.as_str(),
                 "message": message,
+            })
+        })
+        .await
+    }
+
+    /// Run the `Interrupt` hooks, after the user aborted a turn. `Stop` does
+    /// not fire on an interrupt; this does. There is nothing left to block, so
+    /// the caller ignores the decision.
+    pub async fn interrupt(&self, session_id: &str) -> HookDecision {
+        self.dispatch(HookEvent::Interrupt, "", || {
+            json!({
+                "hook_event_name": HookEvent::Interrupt.as_str(),
+                "session_id": session_id,
             })
         })
         .await
@@ -866,6 +887,7 @@ mod tests {
             "PreCompact" => config.pre_compact = Some(vec![entry]),
             "SubagentStop" => config.subagent_stop = Some(vec![entry]),
             "Notification" => config.notification = Some(vec![entry]),
+            "Interrupt" => config.interrupt = Some(vec![entry]),
             _ => config.pre_tool_use = Some(vec![entry]),
         }
         HookRunner::new(config)
@@ -1117,7 +1139,8 @@ mod tests {
                 "sessionEnd":[{"command":"true"}],
                 "pre_compact":[{"command":"true"}],
                 "SubagentStop":[{"command":"true"}],
-                "notification":[{"command":"true"}]
+                "notification":[{"command":"true"}],
+                "Interrupt":[{"command":"true"}]
             }"#,
         )
         .expect("parse hooks config");
@@ -1134,10 +1157,12 @@ mod tests {
 
     #[test]
     fn merging_two_settings_files_keeps_every_event() {
-        let base: HooksConfig =
-            serde_json::from_str(r#"{"SessionEnd":[{"command":"a"}]}"#).expect("base");
+        let base: HooksConfig = serde_json::from_str(
+            r#"{"SessionEnd":[{"command":"a"}],"Interrupt":[{"command":"i1"}]}"#,
+        )
+        .expect("base");
         let other: HooksConfig = serde_json::from_str(
-            r#"{"SessionEnd":[{"command":"b"}],"PreCompact":[{"command":"c"}]}"#,
+            r#"{"SessionEnd":[{"command":"b"}],"PreCompact":[{"command":"c"}],"interrupt":[{"command":"i2"}]}"#,
         )
         .expect("other");
 
@@ -1145,6 +1170,7 @@ mod tests {
 
         assert_eq!(merged.entries(HookEvent::SessionEnd).len(), 2);
         assert_eq!(merged.entries(HookEvent::PreCompact).len(), 1);
+        assert_eq!(merged.entries(HookEvent::Interrupt).len(), 2);
     }
 
     #[test]
