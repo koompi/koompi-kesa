@@ -193,6 +193,23 @@ pub struct Config {
     /// hooks are dropped unless the global file opts in with
     /// `hooks.trustProjectHooks`; see [`crate::hooks`].
     pub hooks: Option<crate::hooks::HooksConfig>,
+
+    /// Formatters the file tools pipe an edit through before it is persisted.
+    ///
+    /// Key is a glob matched against the path relative to the working
+    /// directory; value is a shell command run with `/bin/sh -c` that reads
+    /// the file on stdin and writes the formatted file to stdout. The longest
+    /// matching key wins. Empty by default: a formatter reformats lines the
+    /// model did not touch, and the binary is not guaranteed to exist.
+    ///
+    /// ```json
+    /// {"formatters": {"*.rs": "rustfmt --edition 2024"}}
+    /// ```
+    ///
+    /// Like hooks, a formatter is the user's own shell command, so project
+    /// formatters are dropped unless the global file sets
+    /// `hooks.trustProjectHooks`.
+    pub formatters: Option<std::collections::BTreeMap<String, String>>,
 }
 
 /// Extension capability policy configuration.
@@ -551,6 +568,7 @@ impl Config {
         let global = Self::load_from_path(&global_dir.join("settings.json"))?;
         let mut project = Self::load_from_path(&Self::project_dir_in(&cwd).join("settings.json"))?;
         drop_untrusted_project_hooks(global.hooks.as_ref(), &mut project.hooks);
+        drop_untrusted_project_formatters(global.hooks.as_ref(), &mut project.formatters);
         drop_project_workspace_roots(&mut project.additional_directories);
         let merged = Self::merge(global, project);
         merged.emit_queue_mode_diagnostics();
@@ -679,6 +697,7 @@ impl Config {
 
             // Shell Hooks
             hooks: merge_hooks(base.hooks, other.hooks),
+            formatters: merge_formatters(base.formatters, other.formatters),
         }
     }
 
@@ -751,6 +770,11 @@ impl Config {
 
     pub fn cache_retention(&self) -> crate::provider::CacheRetention {
         self.cache_retention.unwrap_or_default()
+    }
+
+    /// The resolved formatter table, glob to command. Empty unless configured.
+    pub fn formatters(&self) -> std::collections::BTreeMap<String, String> {
+        self.formatters.clone().unwrap_or_default()
     }
 
     /// Whether to check for version updates on startup (default: true).
@@ -1594,6 +1618,42 @@ pub(crate) fn drop_untrusted_project_hooks(
         );
     }
     *project = None;
+}
+
+/// A formatter is a shell command exactly like a hook, so the same trust rule
+/// and the same flag apply: one opt-in means "I trust this repository's
+/// commands".
+pub(crate) fn drop_untrusted_project_formatters(
+    global: Option<&crate::hooks::HooksConfig>,
+    project: &mut Option<std::collections::BTreeMap<String, String>>,
+) {
+    let trusted = global.and_then(|hooks| hooks.trust_project_hooks) == Some(true);
+    if trusted {
+        return;
+    }
+    let Some(formatters) = project else { return };
+    if !formatters.is_empty() {
+        tracing::warn!(
+            "ignoring formatters from the project settings file; set hooks.trustProjectHooks in the global settings file to run them"
+        );
+    }
+    *project = None;
+}
+
+/// Per-key override: a project that sets `*.rs` replaces the global `*.rs`
+/// command and leaves every other global key in place.
+fn merge_formatters(
+    base: Option<std::collections::BTreeMap<String, String>>,
+    other: Option<std::collections::BTreeMap<String, String>>,
+) -> Option<std::collections::BTreeMap<String, String>> {
+    match (base, other) {
+        (Some(mut base), Some(other)) => {
+            base.extend(other);
+            Some(base)
+        }
+        (None, other) => other,
+        (base, None) => base,
+    }
 }
 
 fn merge_hooks(
@@ -2594,6 +2654,49 @@ mod tests {
         let global_only =
             Config::load_with_roots(None, &global_dir, &temp.path().join("empty")).expect("load");
         assert_eq!(global_only.cache_retention(), CacheRetention::None);
+    }
+
+    #[test]
+    fn project_formatters_need_the_global_trust_flag_and_merge_per_key() {
+        let temp = TempDir::new().expect("create tempdir");
+        let cwd = temp.path().join("cwd");
+        let global_dir = temp.path().join("global");
+        write_file(
+            &global_dir.join("settings.json"),
+            r#"{ "formatters": { "*.rs": "rustfmt", "*.py": "black -" } }"#,
+        );
+        write_file(
+            &cwd.join(".kesa/settings.json"),
+            r#"{ "formatters": { "*.rs": "rustfmt --edition 2024", "*.go": "gofmt" } }"#,
+        );
+
+        let untrusted = Config::load_with_roots(None, &global_dir, &cwd).expect("load");
+        let table = untrusted.formatters();
+        assert_eq!(table.get("*.rs").map(String::as_str), Some("rustfmt"));
+        assert_eq!(table.get("*.py").map(String::as_str), Some("black -"));
+        assert!(
+            !table.contains_key("*.go"),
+            "project formatters ran without trust: {table:?}"
+        );
+
+        write_file(
+            &global_dir.join("settings.json"),
+            r#"{
+                "hooks": { "trustProjectHooks": true },
+                "formatters": { "*.rs": "rustfmt", "*.py": "black -" }
+            }"#,
+        );
+        let trusted = Config::load_with_roots(None, &global_dir, &cwd).expect("load");
+        let table = trusted.formatters();
+        assert_eq!(
+            table.get("*.rs").map(String::as_str),
+            Some("rustfmt --edition 2024"),
+            "project key must override the global key"
+        );
+        assert_eq!(table.get("*.py").map(String::as_str), Some("black -"));
+        assert_eq!(table.get("*.go").map(String::as_str), Some("gofmt"));
+
+        assert!(Config::default().formatters().is_empty());
     }
 
     #[test]

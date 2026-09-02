@@ -5170,10 +5170,215 @@ impl Tool for ExitPlanModeTool {
 // Tool Registry
 // ============================================================================
 
+/// How long a formatter may take before it is killed and the unformatted
+/// edit lands instead.
+const FORMATTER_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Longest a formatter's pipes are drained after it exits, in case a child it
+/// left behind still holds them open.
+const FORMATTER_PIPE_GRACE: Duration = Duration::from_secs(2);
+
+/// Cap on the stderr a formatter may fill; only its first line is reported.
+const FORMATTER_STDERR_CAP: u64 = 16 * 1024;
+
+/// The `formatters` settings table, resolved: glob to shell command.
+///
+/// The file tools pipe the bytes they are about to persist through the
+/// matching command and persist its stdout instead, so one atomic write still
+/// carries exactly one mutation and the diff the tool reports is the diff to
+/// what is on disk.
+#[derive(Debug, Default)]
+pub struct Formatters {
+    /// Longest key first, so the first match is the deterministic winner.
+    entries: Vec<(String, glob::Pattern, String)>,
+}
+
+impl Formatters {
+    #[must_use]
+    pub fn from_config(table: &std::collections::BTreeMap<String, String>) -> Self {
+        let mut entries: Vec<(String, glob::Pattern, String)> = table
+            .iter()
+            .filter_map(|(key, command)| match glob::Pattern::new(key) {
+                Ok(pattern) => Some((key.clone(), pattern, command.clone())),
+                Err(err) => {
+                    tracing::warn!("formatters: ignoring `{key}`, not a valid glob: {err}");
+                    None
+                }
+            })
+            .collect();
+        entries.sort_by(|a, b| b.0.len().cmp(&a.0.len()).then_with(|| a.0.cmp(&b.0)));
+        Self { entries }
+    }
+
+    fn command_for(&self, path: &Path, cwd: &Path) -> Option<&str> {
+        if self.entries.is_empty() {
+            return None;
+        }
+        let relative = path_relative_to_cwd(path, cwd);
+        self.entries
+            .iter()
+            .find(|(_, pattern, _)| pattern.matches_path(&relative))
+            .map(|(_, _, command)| command.as_str())
+    }
+}
+
+/// `path` relative to `cwd`, trying the canonical forms before giving up and
+/// matching against the path as given.
+fn path_relative_to_cwd(path: &Path, cwd: &Path) -> PathBuf {
+    if let Ok(rel) = path.strip_prefix(cwd) {
+        return rel.to_path_buf();
+    }
+    let canonical_path = safe_canonicalize(path);
+    let canonical_cwd = safe_canonicalize(cwd);
+    canonical_path
+        .strip_prefix(&canonical_cwd)
+        .map_or_else(|_| path.to_path_buf(), Path::to_path_buf)
+}
+
+/// The bytes a file tool persists after the formatter had its say.
+struct FormatterOutcome {
+    bytes: Vec<u8>,
+    /// The formatter ran and its stdout is what `bytes` now holds.
+    formatted: bool,
+    /// One line for the tool output when the formatter did not run cleanly.
+    note: Option<String>,
+}
+
+/// Pipe `bytes` through `command` when there is one. Failure is not fatal and
+/// not silent: the model's own bytes come back with a note saying why.
+fn apply_formatter(command: Option<&str>, cwd: &Path, bytes: Vec<u8>) -> FormatterOutcome {
+    let Some(command) = command else {
+        return FormatterOutcome {
+            bytes,
+            formatted: false,
+            note: None,
+        };
+    };
+    match run_formatter(command, cwd, &bytes) {
+        Ok(formatted) => FormatterOutcome {
+            bytes: formatted,
+            formatted: true,
+            note: None,
+        },
+        Err(note) => FormatterOutcome {
+            bytes,
+            formatted: false,
+            note: Some(note),
+        },
+    }
+}
+
+/// Run one formatter as a stdin->stdout filter under the same sandbox the
+/// bash tool uses. Success is exit 0 and non-empty, valid UTF-8 stdout: a
+/// formatter that exits 0 with nothing on stdout (rustfmt on a parse error,
+/// on some versions) must not empty the file.
+fn run_formatter(command: &str, cwd: &Path, input: &[u8]) -> std::result::Result<Vec<u8>, String> {
+    let failure = |what: &str, stderr: &str| {
+        let first = stderr.lines().find(|line| !line.trim().is_empty());
+        match first {
+            Some(line) => format!("formatter `{command}` failed ({what}): {}", line.trim()),
+            None => format!("formatter `{command}` failed ({what})"),
+        }
+    };
+
+    let mut shell = Command::new("/bin/sh");
+    shell.arg("-c").arg(command);
+    let mut cmd =
+        crate::sandbox::wrap_command(shell, cwd).map_err(|err| failure(&err.to_string(), ""))?;
+    cmd.current_dir(cwd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    isolate_command_process_group(&mut cmd);
+    let mut child = cmd.spawn().map_err(|err| {
+        if err.kind() == std::io::ErrorKind::NotFound {
+            failure("not found", "")
+        } else {
+            failure(&err.to_string(), "")
+        }
+    })?;
+
+    // Each pipe gets its own thread so a file larger than a pipe buffer
+    // cannot deadlock the wait below.
+    let mut stdin = child.stdin.take();
+    let payload = input.to_vec();
+    thread::spawn(move || {
+        if let Some(mut stdin) = stdin.take() {
+            let _ = stdin.write_all(&payload);
+        }
+    });
+    let mut stdout = child.stdout.take();
+    let (stdout_tx, stdout_rx) = mpsc::channel();
+    thread::spawn(move || {
+        let mut buffer = Vec::new();
+        if let Some(stdout) = stdout.as_mut() {
+            let _ = stdout.read_to_end(&mut buffer);
+        }
+        let _ = stdout_tx.send(buffer);
+    });
+    let mut stderr = child.stderr.take();
+    let (stderr_tx, stderr_rx) = mpsc::channel();
+    thread::spawn(move || {
+        let mut buffer = Vec::new();
+        if let Some(stderr) = stderr.as_mut() {
+            let _ = stderr.take(FORMATTER_STDERR_CAP).read_to_end(&mut buffer);
+            let _ = std::io::copy(stderr, &mut std::io::sink());
+        }
+        let _ = stderr_tx.send(String::from_utf8_lossy(&buffer).into_owned());
+    });
+
+    let deadline = std::time::Instant::now() + FORMATTER_TIMEOUT;
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if std::time::Instant::now() < deadline => {
+                thread::sleep(Duration::from_millis(10));
+            }
+            Ok(None) => {
+                kill_process_group_tree(Some(child.id()));
+                let _ = child.wait();
+                return Err(failure("timed out", ""));
+            }
+            Err(err) => {
+                kill_process_group_tree(Some(child.id()));
+                let _ = child.wait();
+                return Err(failure(&err.to_string(), ""));
+            }
+        }
+    };
+    let stderr = stderr_rx
+        .recv_timeout(FORMATTER_PIPE_GRACE)
+        .unwrap_or_default();
+    match status.code() {
+        Some(0) => {}
+        Some(127) => return Err(failure("not found", &stderr)),
+        Some(code) => return Err(failure(&format!("exit {code}"), &stderr)),
+        None => return Err(failure("killed by a signal", &stderr)),
+    }
+    let stdout = stdout_rx
+        .recv_timeout(FORMATTER_PIPE_GRACE)
+        .map_err(|_| failure("stdout never closed", &stderr))?;
+    if stdout.is_empty() {
+        return Err(failure("empty stdout", &stderr));
+    }
+    if std::str::from_utf8(&stdout).is_err() {
+        return Err(failure("stdout is not UTF-8", &stderr));
+    }
+    Ok(stdout)
+}
+
+/// The text the diff is computed from: what was persisted, minus BOM, as LF.
+fn diff_text_of(bytes: &[u8]) -> String {
+    let text = String::from_utf8_lossy(bytes);
+    let (text, _) = strip_bom(&text);
+    normalize_to_lf(text)
+}
+
 /// Everything a [`ToolSpec`] constructor needs that varies from run to run.
 pub struct ToolBuild<'a> {
     cwd: &'a Path,
     reads: Option<Arc<SessionFileReads>>,
+    formatters: Arc<Formatters>,
     shell_path: Option<String>,
     shell_command_prefix: Option<String>,
     image_auto_resize: bool,
@@ -5246,7 +5451,7 @@ pub const TOOL_SPECS: &[ToolSpec] = &[
         sdk_builtin: true,
         prompt_description: "Make surgical edits to files (find exact text and replace)",
         build: |cx| {
-            let tool = EditTool::new(cx.cwd);
+            let tool = EditTool::new(cx.cwd).with_formatters(Arc::clone(&cx.formatters));
             Box::new(match &cx.reads {
                 Some(reads) => tool.tracking_reads(Arc::clone(reads)),
                 None => tool,
@@ -5259,7 +5464,7 @@ pub const TOOL_SPECS: &[ToolSpec] = &[
         sdk_builtin: true,
         prompt_description: "Create or overwrite files",
         build: |cx| {
-            let tool = WriteTool::new(cx.cwd);
+            let tool = WriteTool::new(cx.cwd).with_formatters(Arc::clone(&cx.formatters));
             Box::new(match &cx.reads {
                 Some(reads) => tool.tracking_reads(Arc::clone(reads)),
                 None => tool,
@@ -5292,7 +5497,9 @@ pub const TOOL_SPECS: &[ToolSpec] = &[
         default_enabled: true,
         sdk_builtin: true,
         prompt_description: "Apply precise file edits using LINE#HASH tags from read or grep with hashline=true",
-        build: |cx| Box::new(HashlineEditTool::new(cx.cwd)),
+        build: |cx| {
+            Box::new(HashlineEditTool::new(cx.cwd).with_formatters(Arc::clone(&cx.formatters)))
+        },
     },
     ToolSpec {
         name: "todo",
@@ -5435,6 +5642,9 @@ impl ToolRegistry {
             reads: enabled
                 .contains(&"read")
                 .then(|| Arc::new(SessionFileReads::default())),
+            formatters: Arc::new(config.map_or_else(Formatters::default, |c| {
+                Formatters::from_config(&c.formatters())
+            })),
             shell_path: config.and_then(|c| c.shell_path.clone()),
             shell_command_prefix: config.and_then(|c| c.shell_command_prefix.clone()),
             image_auto_resize: config.is_none_or(Config::image_auto_resize),
@@ -7366,6 +7576,7 @@ pub struct EditTool {
     cwd: PathBuf,
     before_persist_hook: Option<Arc<dyn Fn() + Send + Sync>>,
     reads: Option<Arc<SessionFileReads>>,
+    formatters: Arc<Formatters>,
 }
 
 impl EditTool {
@@ -7374,6 +7585,7 @@ impl EditTool {
             cwd: cwd.to_path_buf(),
             before_persist_hook: None,
             reads: None,
+            formatters: Arc::default(),
         }
     }
 
@@ -7383,12 +7595,19 @@ impl EditTool {
         self
     }
 
+    #[must_use]
+    pub fn with_formatters(mut self, formatters: Arc<Formatters>) -> Self {
+        self.formatters = formatters;
+        self
+    }
+
     #[cfg(test)]
     fn with_before_persist_hook(cwd: &Path, hook: impl Fn() + Send + Sync + 'static) -> Self {
         Self {
             cwd: cwd.to_path_buf(),
             before_persist_hook: Some(Arc::new(hook)),
             reads: None,
+            formatters: Arc::default(),
         }
     }
 }
@@ -8233,7 +8452,7 @@ impl Tool for EditTool {
             ));
         }
 
-        let new_content_for_diff = normalize_to_lf(&new_content);
+        let mut new_content_for_diff = normalize_to_lf(&new_content);
 
         // Re-add BOM if present.
         let mut final_content = new_content;
@@ -8241,18 +8460,25 @@ impl Tool for EditTool {
             final_content = format!("\u{FEFF}{final_content}");
         }
 
-        // Atomic write (safe improvement vs legacy, behavior-equivalent).
+        // Atomic write (safe improvement vs legacy, behavior-equivalent). The
+        // formatter runs on the exact bytes about to land, inside the one
+        // persist funnel, so disk sees one mutation with one pre-image.
         let absolute_path_clone = absolute_path.clone();
         let cwd_clone = self.cwd.clone();
         let final_content_bytes = final_content.into_bytes();
+        let formatter = self
+            .formatters
+            .command_for(&absolute_path, &self.cwd)
+            .map(str::to_string);
         let before_persist_hook = self.before_persist_hook.clone();
-        asupersync::runtime::spawn_blocking_io(move || {
+        let persisted = asupersync::runtime::spawn_blocking_io(move || {
+            let outcome = apply_formatter(formatter.as_deref(), &cwd_clone, final_content_bytes);
             before_persist_hook.map_or_else(
                 || {
                     atomic_replace_file_if_unchanged(
                         &absolute_path_clone,
                         &cwd_clone,
-                        &final_content_bytes,
+                        &outcome.bytes,
                         source_expectation,
                     )
                 },
@@ -8260,15 +8486,19 @@ impl Tool for EditTool {
                     atomic_replace_file_with(
                         &absolute_path_clone,
                         &cwd_clone,
-                        &final_content_bytes,
+                        &outcome.bytes,
                         Some(source_expectation),
                         move || hook(),
                     )
                 },
-            )
+            )?;
+            Ok::<_, std::io::Error>(outcome)
         })
         .await
         .map_err(|e| Error::tool("edit", format!("Failed to write file: {e}")))?;
+        if persisted.formatted {
+            new_content_for_diff = diff_text_of(&persisted.bytes);
+        }
 
         if let Some(reads) = &self.reads
             && let Ok(meta) = std_metadata_async(&absolute_path).await
@@ -8287,11 +8517,13 @@ impl Tool for EditTool {
             );
         }
 
+        let mut text = format!("Successfully replaced text in {}.", input.path);
+        if let Some(note) = persisted.note {
+            text.push('\n');
+            text.push_str(&note);
+        }
         Ok(ToolOutput {
-            content: vec![ContentBlock::Text(TextContent::new(format!(
-                "Successfully replaced text in {}.",
-                input.path
-            )))],
+            content: vec![ContentBlock::Text(TextContent::new(text))],
             details: Some(serde_json::Value::Object(details)),
             is_error: false,
         })
@@ -8314,6 +8546,7 @@ pub struct WriteTool {
     cwd: PathBuf,
     before_persist_hook: Option<Arc<dyn Fn() + Send + Sync>>,
     reads: Option<Arc<SessionFileReads>>,
+    formatters: Arc<Formatters>,
 }
 
 impl WriteTool {
@@ -8322,6 +8555,7 @@ impl WriteTool {
             cwd: cwd.to_path_buf(),
             before_persist_hook: None,
             reads: None,
+            formatters: Arc::default(),
         }
     }
 
@@ -8331,12 +8565,19 @@ impl WriteTool {
         self
     }
 
+    #[must_use]
+    pub fn with_formatters(mut self, formatters: Arc<Formatters>) -> Self {
+        self.formatters = formatters;
+        self
+    }
+
     #[cfg(test)]
     fn with_before_persist_hook(cwd: &Path, hook: impl Fn() + Send + Sync + 'static) -> Self {
         Self {
             cwd: cwd.to_path_buf(),
             before_persist_hook: Some(Arc::new(hook)),
             reads: None,
+            formatters: Arc::default(),
         }
     }
 }
@@ -8453,29 +8694,41 @@ impl Tool for WriteTool {
         }
 
         // Parity with legacy pi-mono: report JS string length (UTF-16 code units) as "bytes".
-        let bytes_written = input.content.encode_utf16().count();
+        let mut bytes_written = input.content.encode_utf16().count();
 
-        // Write atomically using tempfile on a blocking thread
+        // Write atomically using tempfile on a blocking thread. The formatter
+        // runs inside the same funnel so disk sees one mutation.
         let path_clone = path.clone();
         let cwd_clone = self.cwd.clone();
         let content_bytes = input.content.into_bytes();
+        let formatter = self
+            .formatters
+            .command_for(&path, &self.cwd)
+            .map(str::to_string);
         let before_persist_hook = self.before_persist_hook.clone();
-        asupersync::runtime::spawn_blocking_io(move || {
+        let persisted = asupersync::runtime::spawn_blocking_io(move || {
+            let outcome = apply_formatter(formatter.as_deref(), &cwd_clone, content_bytes);
             before_persist_hook.map_or_else(
-                || atomic_replace_file(&path_clone, &cwd_clone, &content_bytes),
+                || atomic_replace_file(&path_clone, &cwd_clone, &outcome.bytes),
                 |hook| {
                     atomic_replace_file_with(
                         &path_clone,
                         &cwd_clone,
-                        &content_bytes,
+                        &outcome.bytes,
                         None,
                         move || hook(),
                     )
                 },
-            )
+            )?;
+            Ok::<_, std::io::Error>(outcome)
         })
         .await
         .map_err(|e| Error::tool("write", format!("Failed to write file: {e}")))?;
+        if persisted.formatted {
+            bytes_written = String::from_utf8_lossy(&persisted.bytes)
+                .encode_utf16()
+                .count();
+        }
 
         if let Some(reads) = &self.reads
             && let Ok(meta) = std_metadata_async(&path).await
@@ -8483,11 +8736,16 @@ impl Tool for WriteTool {
             reads.record(&path, &meta);
         }
 
+        let mut text = format!(
+            "Successfully wrote {} bytes to {}",
+            bytes_written, input.path
+        );
+        if let Some(note) = persisted.note {
+            text.push('\n');
+            text.push_str(&note);
+        }
         Ok(ToolOutput {
-            content: vec![ContentBlock::Text(TextContent::new(format!(
-                "Successfully wrote {} bytes to {}",
-                bytes_written, input.path
-            )))],
+            content: vec![ContentBlock::Text(TextContent::new(text))],
             details: None,
             is_error: false,
         })
@@ -11514,6 +11772,7 @@ struct ResolvedEdit<'a> {
 pub struct HashlineEditTool {
     cwd: PathBuf,
     before_persist_hook: Option<Arc<dyn Fn() + Send + Sync>>,
+    formatters: Arc<Formatters>,
 }
 
 impl HashlineEditTool {
@@ -11521,7 +11780,14 @@ impl HashlineEditTool {
         Self {
             cwd: cwd.to_path_buf(),
             before_persist_hook: None,
+            formatters: Arc::default(),
         }
+    }
+
+    #[must_use]
+    pub fn with_formatters(mut self, formatters: Arc<Formatters>) -> Self {
+        self.formatters = formatters;
+        self
     }
 
     #[cfg(test)]
@@ -11529,6 +11795,7 @@ impl HashlineEditTool {
         Self {
             cwd: cwd.to_path_buf(),
             before_persist_hook: Some(Arc::new(hook)),
+            formatters: Arc::default(),
         }
     }
 }
@@ -12002,7 +12269,7 @@ impl Tool for HashlineEditTool {
         }
 
         // Reconstruct content
-        let new_normalized = lines.join("\n");
+        let mut new_normalized = lines.join("\n");
         let new_content = restore_line_endings(&new_normalized, original_ending);
         let mut final_content = new_content;
         if had_bom {
@@ -12013,14 +12280,19 @@ impl Tool for HashlineEditTool {
         let absolute_path_clone = absolute_path.clone();
         let cwd_clone = self.cwd.clone();
         let final_content_bytes = final_content.into_bytes();
+        let formatter = self
+            .formatters
+            .command_for(&absolute_path, &self.cwd)
+            .map(str::to_string);
         let before_persist_hook = self.before_persist_hook.clone();
-        asupersync::runtime::spawn_blocking_io(move || {
+        let persisted = asupersync::runtime::spawn_blocking_io(move || {
+            let outcome = apply_formatter(formatter.as_deref(), &cwd_clone, final_content_bytes);
             before_persist_hook.map_or_else(
                 || {
                     atomic_replace_file_if_unchanged(
                         &absolute_path_clone,
                         &cwd_clone,
-                        &final_content_bytes,
+                        &outcome.bytes,
                         source_expectation,
                     )
                 },
@@ -12028,15 +12300,19 @@ impl Tool for HashlineEditTool {
                     atomic_replace_file_with(
                         &absolute_path_clone,
                         &cwd_clone,
-                        &final_content_bytes,
+                        &outcome.bytes,
                         Some(source_expectation),
                         move || hook(),
                     )
                 },
-            )
+            )?;
+            Ok::<_, std::io::Error>(outcome)
         })
         .await
         .map_err(|e| Error::tool("hashline_edit", format!("Failed to write file: {e}")))?;
+        if persisted.formatted {
+            new_normalized = diff_text_of(&persisted.bytes);
+        }
 
         // Generate diff
         let (diff, first_changed_line) = generate_diff_string(&normalized, &new_normalized);
@@ -12049,11 +12325,13 @@ impl Tool for HashlineEditTool {
             );
         }
 
+        let mut text = format!("Successfully applied hashline edits to {}.", input.path);
+        if let Some(note) = persisted.note {
+            text.push('\n');
+            text.push_str(&note);
+        }
         Ok(ToolOutput {
-            content: vec![ContentBlock::Text(TextContent::new(format!(
-                "Successfully applied hashline edits to {}.",
-                input.path
-            )))],
+            content: vec![ContentBlock::Text(TextContent::new(text))],
             details: Some(serde_json::Value::Object(details)),
             is_error: false,
         })
@@ -15337,6 +15615,292 @@ mod tests {
 
     fn guarded_registry(cwd: &Path) -> ToolRegistry {
         ToolRegistry::new(&["read", "edit", "write"], cwd, None)
+    }
+
+    /// The real wiring: settings table -> `ToolRegistry::new` -> the tools.
+    fn formatting_registry(cwd: &Path, table: &[(&str, &str)]) -> ToolRegistry {
+        let config = Config {
+            formatters: Some(
+                table
+                    .iter()
+                    .map(|(glob, command)| ((*glob).to_string(), (*command).to_string()))
+                    .collect(),
+            ),
+            ..Config::default()
+        };
+        ToolRegistry::new(
+            &["read", "edit", "write", "hashline_edit"],
+            cwd,
+            Some(&config),
+        )
+    }
+
+    fn output_text(output: &ToolOutput) -> String {
+        output
+            .content
+            .iter()
+            .filter_map(|block| match block {
+                ContentBlock::Text(text) => Some(text.text.as_str()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn edit_persists_the_formatter_output_and_reports_the_diff_to_disk() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("note.txt");
+            std::fs::write(&path, "hello\nworld\n").unwrap();
+            let registry = formatting_registry(tmp.path(), &[("*.txt", "tr a-z A-Z")]);
+            let path_str = path.to_string_lossy().into_owned();
+
+            run_tool(&registry, "read", serde_json::json!({ "path": path_str }))
+                .await
+                .unwrap();
+            let output = run_tool(
+                &registry,
+                "edit",
+                serde_json::json!({ "path": path_str, "oldText": "world", "newText": "there" }),
+            )
+            .await
+            .unwrap();
+
+            assert!(!output.is_error);
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "HELLO\nTHERE\n");
+            let diff = output.details.as_ref().unwrap()["diff"]
+                .as_str()
+                .unwrap()
+                .to_string();
+            assert!(
+                diff.contains("+1 HELLO"),
+                "diff must show what landed: {diff}"
+            );
+            assert!(
+                diff.contains("+2 THERE"),
+                "diff must show what landed: {diff}"
+            );
+            assert!(
+                !diff.contains("there"),
+                "diff must not show the unformatted text: {diff}"
+            );
+            assert!(
+                !output_text(&output).contains("formatter"),
+                "a clean run adds no note: {}",
+                output_text(&output)
+            );
+
+            // The read ledger recorded the post-format metadata, so the next
+            // edit passes the guard without another read.
+            let output = run_tool(
+                &registry,
+                "edit",
+                serde_json::json!({ "path": path_str, "oldText": "THERE", "newText": "again" }),
+            )
+            .await
+            .unwrap();
+            assert!(!output.is_error);
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "HELLO\nAGAIN\n");
+        });
+    }
+
+    #[test]
+    fn write_then_hashline_edit_both_run_the_formatter() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("note.txt");
+            let registry = formatting_registry(tmp.path(), &[("*.txt", "tr a-z A-Z")]);
+            let path_str = path.to_string_lossy().into_owned();
+
+            let output = run_tool(
+                &registry,
+                "write",
+                serde_json::json!({ "path": path_str, "content": "alpha\nbeta\n" }),
+            )
+            .await
+            .unwrap();
+            assert!(!output.is_error);
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "ALPHA\nBETA\n");
+
+            // The hashline tag is taken from what is on disk, which is what
+            // the tool's source expectation is checked against.
+            let output = run_tool(
+                &registry,
+                "hashline_edit",
+                serde_json::json!({
+                    "path": path_str,
+                    "edits": [{ "op": "replace", "pos": format_hashline_tag(0, "ALPHA"), "lines": "gamma" }]
+                }),
+            )
+            .await
+            .unwrap();
+            assert!(!output.is_error);
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "GAMMA\nBETA\n");
+            let diff = output.details.as_ref().unwrap()["diff"]
+                .as_str()
+                .unwrap()
+                .to_string();
+            assert!(diff.contains("+1 GAMMA"), "{diff}");
+            assert!(!diff.contains("gamma"), "{diff}");
+        });
+    }
+
+    #[test]
+    fn edit_without_a_matching_formatter_key_is_untouched() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("note.txt");
+            std::fs::write(&path, "hello\nworld\n").unwrap();
+            let registry = formatting_registry(tmp.path(), &[("*.md", "tr a-z A-Z")]);
+            let path_str = path.to_string_lossy().into_owned();
+
+            run_tool(&registry, "read", serde_json::json!({ "path": path_str }))
+                .await
+                .unwrap();
+            let output = run_tool(
+                &registry,
+                "edit",
+                serde_json::json!({ "path": path_str, "oldText": "world", "newText": "there" }),
+            )
+            .await
+            .unwrap();
+
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "hello\nthere\n");
+            assert!(!output_text(&output).contains("formatter"));
+        });
+    }
+
+    #[test]
+    fn failing_formatter_keeps_the_edit_and_says_why() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("note.txt");
+            std::fs::write(&path, "hello\nworld\n").unwrap();
+            let registry = formatting_registry(tmp.path(), &[("*.txt", "false")]);
+            let path_str = path.to_string_lossy().into_owned();
+
+            run_tool(&registry, "read", serde_json::json!({ "path": path_str }))
+                .await
+                .unwrap();
+            let output = run_tool(
+                &registry,
+                "edit",
+                serde_json::json!({ "path": path_str, "oldText": "world", "newText": "there" }),
+            )
+            .await
+            .unwrap();
+
+            assert!(!output.is_error);
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "hello\nthere\n");
+            let text = output_text(&output);
+            assert!(text.contains("formatter `false` failed (exit 1)"), "{text}");
+        });
+    }
+
+    #[test]
+    fn formatter_with_empty_stdout_counts_as_failed() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("note.txt");
+            let registry = formatting_registry(tmp.path(), &[("*.txt", "true")]);
+            let path_str = path.to_string_lossy().into_owned();
+
+            let output = run_tool(
+                &registry,
+                "write",
+                serde_json::json!({ "path": path_str, "content": "hello\n" }),
+            )
+            .await
+            .unwrap();
+
+            assert!(!output.is_error);
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "hello\n");
+            let text = output_text(&output);
+            assert!(
+                text.contains("formatter `true` failed (empty stdout)"),
+                "{text}"
+            );
+        });
+    }
+
+    #[test]
+    fn formatter_stderr_first_line_reaches_the_model() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("note.txt");
+            let registry = formatting_registry(
+                tmp.path(),
+                &[(
+                    "*.txt",
+                    "echo 'parse error at line 3' >&2; echo unwanted >&2; exit 3",
+                )],
+            );
+            let path_str = path.to_string_lossy().into_owned();
+
+            let output = run_tool(
+                &registry,
+                "write",
+                serde_json::json!({ "path": path_str, "content": "hello\n" }),
+            )
+            .await
+            .unwrap();
+
+            let text = output_text(&output);
+            let note = text.lines().last().unwrap_or_default();
+            assert!(
+                note.ends_with("failed (exit 3): parse error at line 3"),
+                "only the first stderr line, after the command: {text}"
+            );
+        });
+    }
+
+    #[test]
+    fn longest_formatter_key_wins() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("note.txt");
+            let registry =
+                formatting_registry(tmp.path(), &[("*", "tr a-z A-Z"), ("*.txt", "cat")]);
+            let path_str = path.to_string_lossy().into_owned();
+
+            let output = run_tool(
+                &registry,
+                "write",
+                serde_json::json!({ "path": path_str, "content": "hello\n" }),
+            )
+            .await
+            .unwrap();
+
+            assert!(!output.is_error);
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), "hello\n");
+            assert!(!output_text(&output).contains("formatter"));
+        });
+    }
+
+    #[test]
+    fn formatter_globs_match_the_path_relative_to_cwd() {
+        let table = std::collections::BTreeMap::from([
+            ("src/*.rs".to_string(), "rustfmt".to_string()),
+            ("*.rs".to_string(), "other".to_string()),
+        ]);
+        let formatters = Formatters::from_config(&table);
+        let cwd = Path::new("/work");
+        assert_eq!(
+            formatters.command_for(Path::new("/work/src/lib.rs"), cwd),
+            Some("rustfmt")
+        );
+        assert_eq!(
+            formatters.command_for(Path::new("/work/build.rs"), cwd),
+            Some("other")
+        );
+        assert_eq!(
+            formatters.command_for(Path::new("/work/README.md"), cwd),
+            None
+        );
+        assert_eq!(
+            Formatters::default().command_for(Path::new("/work/src/lib.rs"), cwd),
+            None
+        );
     }
 
     async fn run_tool(
