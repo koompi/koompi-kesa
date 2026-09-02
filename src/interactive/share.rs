@@ -283,7 +283,7 @@ impl PiApp {
     #[allow(clippy::too_many_lines)]
     pub(super) fn handle_slash_share(&mut self, args: &str) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot share while processing".to_string());
+            self.status_message = Some("Cannot share while KESA is working".to_string());
             return None;
         }
 
@@ -399,7 +399,7 @@ impl PiApp {
             let gist_desc = share_gist_description(session_name.as_deref());
 
             let temp_file = match tempfile::Builder::new()
-                .prefix("pi-share-")
+                .prefix("kesa-share-")
                 .suffix(".html")
                 .tempfile()
             {

@@ -241,7 +241,7 @@ impl PiApp {
     /// Open the branch picker if the session has sibling branches.
     pub fn open_branch_picker(&mut self) {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot switch branches while processing".to_string());
+            self.status_message = Some("Cannot switch branches while KESA is working".to_string());
             return;
         }
 
@@ -268,7 +268,7 @@ impl PiApp {
     /// Cycle to the next or previous sibling branch (Ctrl+Right / Ctrl+Left).
     pub fn cycle_sibling_branch(&mut self, forward: bool) {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot switch branches while processing".to_string());
+            self.status_message = Some("Cannot switch branches while KESA is working".to_string());
             return;
         }
 

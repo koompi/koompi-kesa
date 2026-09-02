@@ -280,7 +280,7 @@ impl PiApp {
     #[allow(clippy::too_many_lines)]
     pub(super) fn handle_slash_fork(&mut self, args: &str) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot fork while processing a request".to_string());
+            self.status_message = Some("Cannot fork while KESA is working".to_string());
             return None;
         }
 

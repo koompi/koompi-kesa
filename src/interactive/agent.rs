@@ -416,12 +416,28 @@ fn dispatch_agent_event_to_ui(event: &AgentEvent, batcher: &mut UiStreamDeltaBat
             tool_name,
             tool_call_id,
             is_error,
-            ..
+            result,
         } => {
+            let failure_text = if *is_error {
+                result
+                    .content
+                    .iter()
+                    .filter_map(|block| match block {
+                        ContentBlock::Text(text) => Some(text.text.as_str()),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n")
+                    .trim()
+                    .to_string()
+            } else {
+                String::new()
+            };
             batcher.send_immediate(PiMsg::ToolEnd {
                 name: tool_name.clone(),
                 tool_id: tool_call_id.clone(),
                 is_error: *is_error,
+                failure_text,
             });
         }
         AgentEvent::AgentEnd { messages, .. } => {
@@ -500,6 +516,10 @@ impl PiApp {
                 }
             }
             PiMsg::ToolStart { name, .. } => {
+                // Close off what the model said before it called the tool, so
+                // the thinking sits above the tool row here exactly as the
+                // replay path reconstructs it from the session.
+                self.flush_streaming_into_transcript();
                 self.agent_state = AgentState::ToolRunning;
                 self.current_tool = Some(name);
                 self.tool_progress = Some(ToolProgress::new());
@@ -538,24 +558,32 @@ impl PiApp {
                     self.pending_tool_output = Some(output);
                 }
             }
-            PiMsg::ToolEnd { name, is_error, .. } => {
+            PiMsg::ToolEnd {
+                name,
+                is_error,
+                failure_text,
+                ..
+            } => {
                 self.agent_state = AgentState::Processing;
                 self.current_tool = None;
                 self.tool_progress = None;
+                if let Some(block) = self.agent_roster.cancellation_block() {
+                    self.messages.push(ConversationMessage {
+                        role: MessageRole::System,
+                        content: block,
+                        thinking: None,
+                        collapsed: false,
+                    });
+                }
                 self.agent_roster.clear();
                 self.last_hint_trigger = Some(if is_file_edit_tool(&name) {
                     HintTrigger::Edit
                 } else {
                     HintTrigger::Tool
                 });
-                let mut failure_body = String::new();
+                let failure_body = failure_text;
                 if let Some(mut output) = self.pending_tool_output.take() {
                     if is_error {
-                        failure_body = output
-                            .split_once('\n')
-                            .map_or("", |(_, body)| body)
-                            .trim()
-                            .to_string();
                         output = super::tool_render::mark_tool_failed(&output);
                     }
                     if super::conversation::drop_superseded_todo_messages(
@@ -595,19 +623,7 @@ impl PiApp {
                 // Finalize the response: move streaming buffers into the
                 // permanent message list and clear them so they are not
                 // double-rendered by build_conversation_content().
-                let had_response =
-                    !self.current_response.is_empty() || !self.current_thinking.is_empty();
-                if had_response {
-                    self.messages.push(ConversationMessage::new(
-                        MessageRole::Assistant,
-                        std::mem::take(&mut self.current_response),
-                        if self.current_thinking.is_empty() {
-                            None
-                        } else {
-                            Some(std::mem::take(&mut self.current_thinking))
-                        },
-                    ));
-                }
+                let had_response = self.flush_streaming_into_transcript();
                 // Defensively clear both buffers even if they were already
                 // taken — this prevents a stale streaming section from
                 // appearing in the next view() frame.
@@ -635,7 +651,21 @@ impl PiApp {
                     if had_response {
                         // the transcript row belongs to the partial answer, so the
                         // status line is the only place left to say what went wrong
-                        self.status_message = Some(message);
+                        let shown = crate::error_hints::present_error_text(&message);
+                        // the provider's own words beat a category name
+                        let head = shown
+                            .detail
+                            .lines()
+                            .find(|line| !line.trim().is_empty())
+                            .unwrap_or(&shown.summary)
+                            .trim()
+                            .to_string();
+                        let line = if shown.action.is_empty() {
+                            head
+                        } else {
+                            format!("{head}. Next: {}", shown.action)
+                        };
+                        self.status_message = Some(self.fill_provider(&line));
                     } else {
                         self.status_message = None;
                         let shown = crate::error_hints::present_error_text(&message);
@@ -827,7 +857,8 @@ After approving access in the browser, press Enter in KESA to complete login."
                 label,
             } => {
                 if self.agent_state != AgentState::Idle {
-                    self.status_message = Some("Cannot open tree while processing".to_string());
+                    self.status_message =
+                        Some("Cannot open tree while KESA is working".to_string());
                     return None;
                 }
 
@@ -1350,8 +1381,31 @@ After approving access in the browser, press Enter in KESA to complete login."
     /// Err); the same summary over the same first line of detail means the
     /// same failure, so the fuller copy wins instead of a second row
     /// appearing.
+    /// Move the streaming buffers into the transcript as one assistant
+    /// message. Returns whether there was anything to move.
+    fn flush_streaming_into_transcript(&mut self) -> bool {
+        if self.current_response.is_empty() && self.current_thinking.is_empty() {
+            return false;
+        }
+        self.messages.push(ConversationMessage::new(
+            MessageRole::Assistant,
+            std::mem::take(&mut self.current_response),
+            if self.current_thinking.is_empty() {
+                None
+            } else {
+                Some(std::mem::take(&mut self.current_thinking))
+            },
+        ));
+        true
+    }
+
+    /// Providers emit a literal `<provider>` for the caller to fill in.
+    pub(super) fn fill_provider(&self, text: &str) -> String {
+        text.replace("<provider>", &self.model_entry.model.provider)
+    }
+
     pub(super) fn push_error_row(&mut self, content: String) {
-        let content = content.replace("<provider>", &self.model_entry.model.provider);
+        let content = self.fill_provider(&content);
         let key = |text: &str| -> String { text.lines().take(2).collect::<Vec<_>>().join("\n") };
         if let Some(last) = self.messages.last_mut()
             && last.is_error_row()
@@ -2105,11 +2159,12 @@ After approving access in the browser, press Enter in KESA to complete login."
 
         if message.starts_with('/') && !message.starts_with("/skill:") {
             let command = message.split_whitespace().next().unwrap_or(message);
-            let error = format!("Unknown command: {command}");
-            self.status_message = Some(error.clone());
+            // the transcript row is the record; a status line saying the same
+            // thing one line lower just reads as the error happening twice
+            self.status_message = None;
             self.messages.push(ConversationMessage {
                 role: MessageRole::System,
-                content: error,
+                content: format!("Unknown command: {command}. Run /help to list the commands."),
                 thinking: None,
                 collapsed: false,
             });
@@ -2830,6 +2885,7 @@ mod stream_delta_batcher_tests {
             name: "bash".to_string(),
             tool_id: "t1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         });
 
         let first = rx.try_recv().expect("expected coalesced latest update");
@@ -3085,6 +3141,29 @@ mod stream_delta_batcher_tests {
     /// Both presenters and the failed-tool arm go through the same renderer,
     /// and the provider placeholder is filled by the presenter.
     #[test]
+    fn a_failed_tool_with_no_rendered_row_still_shows_why_it_failed() {
+        let mut app = build_test_app();
+        let _ = app.update(Message::new(PiMsg::ToolStart {
+            name: "bash".to_string(),
+            tool_id: "t9".to_string(),
+        }));
+        // no ToolUpdate, so there is no rendered row to split a body out of
+        let _ = app.update(Message::new(PiMsg::ToolEnd {
+            name: "bash".to_string(),
+            tool_id: "t9".to_string(),
+            is_error: true,
+            failure_text: "permission denied: /etc/shadow".to_string(),
+        }));
+        let error_row = app.messages.last().expect("an error row");
+        assert!(error_row.is_error_row(), "{}", error_row.content);
+        assert!(
+            error_row.content.contains("permission denied: /etc/shadow"),
+            "the failure text must reach the user: {}",
+            error_row.content
+        );
+    }
+
+    #[test]
     fn agent_errors_and_failed_tools_render_through_render_error() {
         let mut app = build_test_app();
         let _ = app.update(Message::new(PiMsg::AgentError(
@@ -3127,6 +3206,7 @@ mod stream_delta_batcher_tests {
             name: "read".to_string(),
             tool_id: "t1".to_string(),
             is_error: true,
+            failure_text: "file not found: src/nope.rs".to_string(),
         }));
         let error_row = app.messages.last().expect("error row after the tool row");
         assert!(error_row.is_error_row(), "{}", error_row.content);
@@ -3263,6 +3343,10 @@ mod stream_delta_batcher_tests {
             let wait_for_terminal = async {
                 loop {
                     match event_rx.recv(&recv_cx).await {
+                        // the header repair may queue its own save, whose lock
+                        // fails first under the same cancelled context
+                        Ok(PiMsg::AgentError(message))
+                            if message.contains("Failed to lock session") => {}
                         Ok(PiMsg::AgentError(message)) => break format!("error:{message}"),
                         Ok(PiMsg::AgentDone { error_message, .. }) => {
                             break format!("done:{}", error_message.unwrap_or_default());

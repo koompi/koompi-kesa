@@ -465,6 +465,7 @@ fn tui_snapshot_tool_output_message() {
             name: "read".to_string(),
             tool_id: "tool-2".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
     send_pi(
@@ -1093,6 +1094,7 @@ fn tui_snapshot_agent_delegation_history() {
             name: "subagent".to_string(),
             tool_id: "tool-fanout".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
     let context = vec![(

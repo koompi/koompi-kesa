@@ -44,6 +44,293 @@ pub enum SlashCommand {
 }
 
 impl SlashCommand {
+    /// Every variant, in table order. Kept in step with `SLASH_COMMANDS` by
+    /// `slash_command_table_covers_every_variant`.
+    pub const ALL: &'static [Self] = &[
+        Self::Help,
+        Self::Login,
+        Self::Logout,
+        Self::Clear,
+        Self::Model,
+        Self::Thinking,
+        Self::ScopedModels,
+        Self::History,
+        Self::Export,
+        Self::Session,
+        Self::Settings,
+        Self::Theme,
+        Self::Resume,
+        Self::New,
+        Self::Copy,
+        Self::Name,
+        Self::Hotkeys,
+        Self::Changelog,
+        Self::Tree,
+        Self::Fork,
+        Self::Rewind,
+        Self::Context,
+        Self::Compact,
+        Self::Reload,
+        Self::Resources,
+        Self::Template,
+        Self::Share,
+        Self::Mcp,
+        Self::Exit,
+    ];
+
+    /// The name a user types. Exhaustive on purpose: a new variant does not
+    /// compile until it is named here, and the table test then demands an entry.
+    pub const fn canonical_name(self) -> &'static str {
+        match self {
+            Self::Help => "help",
+            Self::Login => "login",
+            Self::Logout => "logout",
+            Self::Clear => "clear",
+            Self::Model => "model",
+            Self::Thinking => "thinking",
+            Self::ScopedModels => "scoped-models",
+            Self::Exit => "exit",
+            Self::History => "history",
+            Self::Export => "export",
+            Self::Session => "session",
+            Self::Settings => "settings",
+            Self::Theme => "theme",
+            Self::Resume => "resume",
+            Self::New => "new",
+            Self::Copy => "copy",
+            Self::Name => "name",
+            Self::Hotkeys => "hotkeys",
+            Self::Changelog => "changelog",
+            Self::Tree => "tree",
+            Self::Fork => "fork",
+            Self::Rewind => "rewind",
+            Self::Context => "context",
+            Self::Compact => "compact",
+            Self::Reload => "reload",
+            Self::Template => "template",
+            Self::Share => "share",
+            Self::Mcp => "mcp",
+            Self::Resources => "resources",
+        }
+    }
+}
+
+/// Break `text` on spaces so no line exceeds `width` columns. A word longer
+/// than `width` gets its own line rather than being cut.
+fn wrap_words(text: &str, width: usize) -> Vec<String> {
+    let mut lines = Vec::new();
+    let mut current = String::new();
+    for word in text.split_whitespace() {
+        if current.is_empty() {
+            current.push_str(word);
+        } else if current.chars().count() + 1 + word.chars().count() <= width {
+            current.push(' ');
+            current.push_str(word);
+        } else {
+            lines.push(std::mem::take(&mut current));
+            current.push_str(word);
+        }
+    }
+    if !current.is_empty() {
+        lines.push(current);
+    }
+    if lines.is_empty() {
+        lines.push(String::new());
+    }
+    lines
+}
+
+/// One built-in slash command: how it is typed, and what it does.
+///
+/// `parse`, `/help` and the autocomplete popup all read this table; keeping
+/// three lists in step by hand is what let their descriptions drift apart.
+pub struct SlashCommandSpec {
+    pub command: SlashCommand,
+    /// Canonical name first, then aliases. No leading slash.
+    pub names: &'static [&'static str],
+    /// Argument syntax shown in `/help`, empty when the command takes none.
+    pub args: &'static str,
+    pub description: &'static str,
+}
+
+pub const SLASH_COMMANDS: &[SlashCommandSpec] = &[
+    SlashCommandSpec {
+        command: SlashCommand::Help,
+        names: &["help", "h", "?"],
+        args: "",
+        description: "Show this help message",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Login,
+        names: &["login"],
+        args: "[provider]",
+        description: "Sign in to a provider; without one, show the status table",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Logout,
+        names: &["logout"],
+        args: "[provider]",
+        description: "Remove stored credentials",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Clear,
+        names: &["clear", "cls"],
+        args: "",
+        description: "Clear the conversation history",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Model,
+        names: &["model", "m"],
+        args: "[id|provider/id]",
+        description: "Open the model selector, or switch directly",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Thinking,
+        names: &["thinking", "think", "t"],
+        args: "[level]",
+        description: "Set the thinking level (off/minimal/low/medium/high/xhigh/max)",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::ScopedModels,
+        names: &["scoped-models", "scoped"],
+        args: "[patterns|clear]",
+        description: "Show or set the models Ctrl+P cycles through",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::History,
+        names: &["history", "hist"],
+        args: "",
+        description: "Show the input history",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Export,
+        names: &["export"],
+        args: "[path]",
+        description: "Export the session to an HTML file on this machine",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Session,
+        names: &["session", "info"],
+        args: "",
+        description: "Show the session path, token use and cost",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Settings,
+        names: &["settings"],
+        args: "",
+        description: "Open the settings selector",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Theme,
+        names: &["theme"],
+        args: "[name]",
+        description: "List or switch themes",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Resume,
+        names: &["resume", "r"],
+        args: "",
+        description: "Pick and resume a previous session",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::New,
+        names: &["new"],
+        args: "",
+        description: "Start a new session",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Copy,
+        names: &["copy", "cp"],
+        args: "",
+        description: "Copy the last model message to the clipboard",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Name,
+        names: &["name"],
+        args: "<name>",
+        description: "Set the session display name",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Hotkeys,
+        names: &["hotkeys", "keys", "keybindings"],
+        args: "",
+        description: "Show the keyboard shortcuts",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Changelog,
+        names: &["changelog"],
+        args: "",
+        description: "Show the changelog entries",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Tree,
+        names: &["tree"],
+        args: "",
+        description: "Show the session branch tree",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Fork,
+        names: &["fork"],
+        args: "[id|index]",
+        description: "Branch from an earlier message of yours (default: the last one)",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Rewind,
+        names: &["rewind", "undo"],
+        args: "",
+        description: "Undo a turn's file edits, its transcript, or both (also Esc Esc)",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Context,
+        names: &["context", "ctx"],
+        args: "",
+        description: "Break the context window down by what is filling it",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Compact,
+        names: &["compact"],
+        args: "[notes]",
+        description: "Compact older context, with optional instructions",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Reload,
+        names: &["reload"],
+        args: "",
+        description: "Reload skills, prompts, themes and extensions from disk",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Resources,
+        names: &["resources"],
+        args: "",
+        description: "List the skills, templates, themes and extensions that loaded",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Template,
+        names: &["template"],
+        args: "<name> [args]",
+        description: "Expand a prompt template by name",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Share,
+        names: &["share"],
+        args: "",
+        description: "Upload the session to a secret GitHub gist and show the URL",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Mcp,
+        names: &["mcp"],
+        args: "",
+        description: "List the MCP servers extensions registered (KESA does not connect to them)",
+    },
+    SlashCommandSpec {
+        command: SlashCommand::Exit,
+        names: &["exit", "quit", "q"],
+        args: "",
+        description: "Exit KESA",
+    },
+];
+
+impl SlashCommand {
     /// Parse a slash command from input.
     pub fn parse(input: &str) -> Option<(Self, &str)> {
         let input = input.trim();
@@ -53,120 +340,57 @@ impl SlashCommand {
 
         let (cmd, args) = input.split_once(char::is_whitespace).unwrap_or((input, ""));
 
-        let command = match cmd.to_lowercase().as_str() {
-            "/help" | "/h" | "/?" => Self::Help,
-            "/login" => Self::Login,
-            "/logout" => Self::Logout,
-            "/clear" | "/cls" => Self::Clear,
-            "/model" | "/m" => Self::Model,
-            "/thinking" | "/think" | "/t" => Self::Thinking,
-            "/scoped-models" | "/scoped" => Self::ScopedModels,
-            "/exit" | "/quit" | "/q" => Self::Exit,
-            "/history" | "/hist" => Self::History,
-            "/export" => Self::Export,
-            "/session" | "/info" => Self::Session,
-            "/settings" => Self::Settings,
-            "/theme" => Self::Theme,
-            "/resume" | "/r" => Self::Resume,
-            "/new" => Self::New,
-            "/copy" | "/cp" => Self::Copy,
-            "/name" => Self::Name,
-            "/hotkeys" | "/keys" | "/keybindings" => Self::Hotkeys,
-            "/changelog" => Self::Changelog,
-            "/tree" => Self::Tree,
-            "/fork" => Self::Fork,
-            "/rewind" | "/undo" => Self::Rewind,
-            "/context" | "/ctx" => Self::Context,
-            "/compact" => Self::Compact,
-            "/reload" => Self::Reload,
-            "/template" => Self::Template,
-            "/share" => Self::Share,
-            "/mcp" => Self::Mcp,
-            "/resources" => Self::Resources,
-            _ => return None,
-        };
+        let lowered = cmd.to_lowercase();
+        let bare = lowered.strip_prefix('/')?;
+        let command = SLASH_COMMANDS
+            .iter()
+            .find(|spec| spec.names.contains(&bare))
+            .map(|spec| spec.command)?;
 
         Some((command, args.trim()))
     }
 
-    const HELP_ROWS: &'static [(&'static str, &'static str)] = &[
-        ("/help, /h, /?", "Show this help message"),
-        (
-            "/login [provider]",
-            "Login/setup credentials; without provider shows status table",
-        ),
-        ("/logout [provider]", "Remove stored credentials"),
-        ("/clear, /cls", "Clear conversation history"),
-        (
-            "/model, /m [id|provider/id]",
-            "Open model selector or switch directly",
-        ),
-        (
-            "/thinking, /t [level]",
-            "Set thinking level (off/minimal/low/medium/high/xhigh/max)",
-        ),
-        (
-            "/scoped-models [patterns|clear]",
-            "Show or set scoped models for cycling",
-        ),
-        ("/history, /hist", "Show input history"),
-        ("/export [path]", "Export conversation to HTML"),
-        ("/session, /info", "Show session info (path, tokens, cost)"),
-        ("/settings", "Open settings selector"),
-        ("/theme [name]", "List or switch themes (dark/light/custom)"),
-        ("/resume, /r", "Pick and resume a previous session"),
-        ("/new", "Start a new session"),
-        ("/copy, /cp", "Copy last assistant message to clipboard"),
-        ("/name <name>", "Set session display name"),
-        ("/hotkeys, /keys", "Show keyboard shortcuts"),
-        ("/changelog", "Show changelog entries"),
-        ("/tree", "Show session branch tree summary"),
-        (
-            "/fork [id|index]",
-            "Fork from a user message (default: last on current path)",
-        ),
-        (
-            "/rewind, /undo",
-            "Undo a turn's file edits, its transcript, or both (also Esc Esc)",
-        ),
-        (
-            "/context, /ctx",
-            "Break the context window down by what is filling it",
-        ),
-        (
-            "/compact [notes]",
-            "Compact older context with optional instructions",
-        ),
-        ("/reload", "Reload skills/prompts from disk"),
-        (
-            "/resources",
-            "List the skills, templates, themes and extensions that loaded",
-        ),
-        (
-            "/template <name> [args]",
-            "Expand a prompt template by name",
-        ),
-        (
-            "/share",
-            "Upload session HTML to a secret GitHub gist and show URL",
-        ),
-        ("/mcp", "Show MCP server status (Model Context Protocol)"),
-        ("/exit, /quit, /q", "Exit KESA"),
-    ];
+    /// `/help` label for one command: `/name, /alias <args>`.
+    fn help_label(spec: &SlashCommandSpec) -> String {
+        let mut label = String::new();
+        for (idx, name) in spec.names.iter().enumerate() {
+            if idx > 0 {
+                label.push_str(", ");
+            }
+            label.push('/');
+            label.push_str(name);
+        }
+        if !spec.args.is_empty() {
+            label.push(' ');
+            label.push_str(spec.args);
+        }
+        label
+    }
 
-    /// Get help text for all commands.
-    pub fn help_text() -> String {
+    /// Get help text for all commands, laid out for `width` columns.
+    pub fn help_text_for_width(width: usize) -> String {
         use std::fmt::Write as _;
 
-        let width = Self::HELP_ROWS
+        let labels: Vec<String> = SLASH_COMMANDS.iter().map(Self::help_label).collect();
+        let label_width = labels.iter().map(String::len).max().unwrap_or(0);
+        let longest_description = SLASH_COMMANDS
             .iter()
-            .map(|(cmd, _)| cmd.len())
+            .map(|spec| spec.description.len())
             .max()
             .unwrap_or(0);
+        // "  " + label + " - " + description
+        let stacked = width < label_width + longest_description + 5;
 
         let mut out = String::from("Available commands:\n");
-        for (cmd, desc) in Self::HELP_ROWS {
-            let _ = writeln!(out, "  {cmd:<width$} - {desc}");
+        for (label, spec) in labels.iter().zip(SLASH_COMMANDS) {
+            if stacked {
+                let _ = writeln!(out, "  {label}");
+                for line in wrap_words(spec.description, width.saturating_sub(6).max(20)) {
+                    let _ = writeln!(out, "      {line}");
+                }
+            } else {
+                let _ = writeln!(out, "  {label:<label_width$} - {}", spec.description);
+            }
         }
 
         let tips = [
@@ -186,6 +410,11 @@ impl SlashCommand {
             let _ = write!(out, "    \u{2022} {tip}");
         }
         out
+    }
+
+    /// Get help text at the widest layout, for callers with no terminal width.
+    pub fn help_text() -> String {
+        Self::help_text_for_width(usize::MAX)
     }
 }
 
@@ -543,7 +772,7 @@ pub(super) fn format_login_provider_listing(
 
 pub(super) fn format_startup_oauth_hint(auth: &crate::auth::AuthStorage) -> String {
     let mut output = String::new();
-    output.push_str("  No provider credentials were detected.\n");
+    output.push_str("  No provider credentials were detected\n");
     output.push_str("  Connect one of these providers:\n");
     for (provider, label) in STARTUP_PRIORITY_OAUTH_PROVIDERS {
         let status = format_provider_status(auth, provider);
@@ -644,7 +873,10 @@ fn model_entry_event_payload(entry: &ModelEntry) -> Value {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct SessionThinkingSyncPlan {
+    /// What this model is actually asked for.
     effective: crate::model::ThinkingLevel,
+    /// What the session header records: the user's intent, not the clamp.
+    header: crate::model::ThinkingLevel,
     thinking_changed: bool,
     persist_needed: bool,
 }
@@ -665,15 +897,22 @@ fn plan_session_thinking_sync(
     });
     let requested_thinking = parsed_session_thinking.unwrap_or(current_thinking);
     let effective = target_entry.clamp_thinking_level(requested_thinking);
-    let thinking_changed = effective != current_thinking;
-    let persist_needed = if session_thinking.is_some() {
-        parsed_session_thinking != Some(effective)
+    // The header carries what the user asked for. A model that cannot reason
+    // clamps the runtime level to off, but must not write that back, or one
+    // switch leaves thinking off for the rest of the session.
+    let header = if target_entry.model.reasoning {
+        effective
     } else {
-        thinking_changed
+        requested_thinking
     };
+    let thinking_changed = effective != current_thinking;
+    // The header is repaired whenever it does not already record the intent,
+    // which includes the case where it is absent or unparseable.
+    let persist_needed = parsed_session_thinking != Some(header);
 
     SessionThinkingSyncPlan {
         effective,
+        header,
         thinking_changed,
         persist_needed,
     }
@@ -1055,8 +1294,15 @@ impl PiApp {
             .stream_options()
             .thinking_level
             .unwrap_or_default();
-        let next_thinking = next.clamp_thinking_level(current_thinking);
         let previous_thinking = session_thinking_level(&session_guard);
+        // What the user last asked for, not what the previous model could do.
+        let intended_thinking = previous_thinking.unwrap_or(current_thinking);
+        let next_thinking = next.clamp_thinking_level(intended_thinking);
+        let header_thinking = if next.model.reasoning {
+            next_thinking
+        } else {
+            intended_thinking
+        };
 
         agent_guard.set_provider(provider_impl);
         let stream_options = agent_guard.stream_options_mut();
@@ -1071,9 +1317,9 @@ impl PiApp {
         session_guard.header.provider = Some(next.model.provider.clone());
         session_guard.header.model_id = Some(next.model.id.clone());
         session_guard.append_model_change(next.model.provider.clone(), next.model.id.clone());
-        session_guard.header.thinking_level = Some(next_thinking.to_string());
-        if previous_thinking != Some(next_thinking) {
-            session_guard.append_thinking_level_change(next_thinking.to_string());
+        session_guard.header.thinking_level = Some(header_thinking.to_string());
+        if previous_thinking != Some(header_thinking) {
+            session_guard.append_thinking_level_change(header_thinking.to_string());
         }
 
         drop(session_guard);
@@ -1197,10 +1443,9 @@ impl PiApp {
 
         let persist_needed = if thinking_sync.persist_needed {
             let previous_thinking = session_thinking_level(&session_guard);
-            session_guard.header.thinking_level = Some(thinking_sync.effective.to_string());
-            if thinking_sync.thinking_changed && previous_thinking != Some(thinking_sync.effective)
-            {
-                session_guard.append_thinking_level_change(thinking_sync.effective.to_string());
+            session_guard.header.thinking_level = Some(thinking_sync.header.to_string());
+            if previous_thinking != Some(thinking_sync.header) {
+                session_guard.append_thinking_level_change(thinking_sync.header.to_string());
             }
             true
         } else {
@@ -1677,7 +1922,7 @@ impl PiApp {
     pub(super) fn format_input_history(&self) -> String {
         let entries = self.history.entries();
         if entries.is_empty() {
-            return "No input history yet.".to_string();
+            return "No input history yet".to_string();
         }
 
         let mut output = String::from("Input history (most recent first):\n");
@@ -1742,7 +1987,7 @@ impl PiApp {
             SlashCommand::Help => {
                 self.messages.push(ConversationMessage {
                     role: MessageRole::System,
-                    content: SlashCommand::help_text(),
+                    content: SlashCommand::help_text_for_width(self.term_width),
                     thinking: None,
                     collapsed: false,
                 });
@@ -1780,7 +2025,7 @@ impl PiApp {
             }
             SlashCommand::Export => {
                 if self.agent_state != AgentState::Idle {
-                    self.status_message = Some("Cannot export while processing".to_string());
+                    self.status_message = Some("Cannot export while KESA is working".to_string());
                     return None;
                 }
 
@@ -1838,7 +2083,8 @@ impl PiApp {
             }
             SlashCommand::Settings => {
                 if self.agent_state != AgentState::Idle {
-                    self.status_message = Some("Cannot open settings while processing".to_string());
+                    self.status_message =
+                        Some("Cannot open settings while KESA is working".to_string());
                     return None;
                 }
 
@@ -1895,7 +2141,7 @@ impl PiApp {
             }
             SlashCommand::Resume => {
                 if self.agent_state != AgentState::Idle {
-                    self.status_message = Some("Cannot resume while processing".to_string());
+                    self.status_message = Some("Cannot resume while KESA is working".to_string());
                     return None;
                 }
 
@@ -1923,7 +2169,7 @@ impl PiApp {
             SlashCommand::New => {
                 if self.agent_state != AgentState::Idle {
                     self.status_message =
-                        Some("Cannot start a new session while processing".to_string());
+                        Some("Cannot start a new session while KESA is working".to_string());
                     return None;
                 }
 
@@ -2075,7 +2321,7 @@ impl PiApp {
             }
             SlashCommand::Copy => {
                 if self.agent_state != AgentState::Idle {
-                    self.status_message = Some("Cannot copy while processing".to_string());
+                    self.status_message = Some("Cannot copy while KESA is working".to_string());
                     return None;
                 }
 
@@ -2087,7 +2333,7 @@ impl PiApp {
                     .map(|m| m.content.clone());
 
                 let Some(text) = text else {
-                    self.status_message = Some("No agent messages to copy yet.".to_string());
+                    self.status_message = Some("No agent messages to copy yet".to_string());
                     return None;
                 };
 
@@ -2193,7 +2439,8 @@ impl PiApp {
             }
             SlashCommand::Tree => {
                 if self.agent_state != AgentState::Idle {
-                    self.status_message = Some("Cannot open tree while processing".to_string());
+                    self.status_message =
+                        Some("Cannot open tree while KESA is working".to_string());
                     return None;
                 }
 
@@ -2317,7 +2564,7 @@ impl PiApp {
     #[allow(clippy::too_many_lines)]
     pub(super) fn handle_slash_login(&mut self, args: &str) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot login while processing".to_string());
+            self.status_message = Some("Cannot login while KESA is working".to_string());
             return None;
         }
 
@@ -2580,7 +2827,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
 
     pub(super) fn handle_slash_logout(&mut self, args: &str) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot logout while processing".to_string());
+            self.status_message = Some("Cannot logout while KESA is working".to_string());
             return None;
         }
 
@@ -2605,7 +2852,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
                     self.status_message =
                         Some(format!("Removed stored credentials for {provider}."));
                 } else {
-                    self.status_message = Some(format!("No stored credentials for {provider}."));
+                    self.status_message = Some(format!("No stored credentials for {provider}"));
                 }
             }
             Err(err) => {
@@ -2623,7 +2870,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         }
 
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot switch models while processing".to_string());
+            self.status_message = Some("Cannot switch models while KESA is working".to_string());
             return None;
         }
 
@@ -2916,7 +3163,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
 
     pub(super) fn handle_slash_reload(&mut self) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot reload while processing".to_string());
+            self.status_message = Some("Cannot reload while KESA is working".to_string());
             return None;
         }
 
@@ -3166,7 +3413,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
     #[allow(clippy::too_many_lines)]
     pub(super) fn handle_slash_template(&mut self, args: &str) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot expand template while processing".to_string());
+            self.status_message = Some("Cannot expand template while KESA is working".to_string());
             return None;
         }
 
@@ -3289,7 +3536,7 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
 
     pub(super) fn open_rewind_overlay(&mut self) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot rewind while processing".to_string());
+            self.status_message = Some("Cannot rewind while KESA is working".to_string());
             return None;
         }
         if !crate::rewind::is_active() {
@@ -3558,9 +3805,84 @@ fn prompt_weights(
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn slash_command_table_covers_every_variant() {
+        assert_eq!(
+            SlashCommand::ALL.len(),
+            SLASH_COMMANDS.len(),
+            "add the new command to SLASH_COMMANDS and to SlashCommand::ALL"
+        );
+        for command in SlashCommand::ALL {
+            let spec = SLASH_COMMANDS
+                .iter()
+                .find(|spec| spec.command == *command)
+                .unwrap_or_else(|| panic!("{command:?} is missing from SLASH_COMMANDS"));
+            assert_eq!(
+                spec.names[0],
+                command.canonical_name(),
+                "{command:?}: the table's first name is what autocomplete inserts"
+            );
+        }
+    }
+
+    #[test]
+    fn every_table_name_parses_back_to_its_command() {
+        for spec in SLASH_COMMANDS {
+            for name in spec.names {
+                let input = format!("/{name} rest");
+                let parsed = SlashCommand::parse(&input);
+                assert_eq!(
+                    parsed,
+                    Some((spec.command, "rest")),
+                    "/{name} did not parse back to {:?}",
+                    spec.command
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn slash_command_names_are_unique_across_the_table() {
+        let mut seen = std::collections::HashSet::new();
+        for spec in SLASH_COMMANDS {
+            for name in spec.names {
+                assert!(seen.insert(*name), "/{name} is claimed by two commands");
+            }
+        }
+    }
+
+    #[test]
+    fn help_stacks_the_description_when_the_terminal_is_narrow() {
+        let wide = SlashCommand::help_text_for_width(200);
+        assert!(wide.contains("/help, /h, /? "), "{wide}");
+        assert!(wide.lines().any(|line| line.contains(" - Show this help")));
+
+        let narrow = SlashCommand::help_text_for_width(59);
+        let command_block = narrow.split("\n  Tips:").next().unwrap_or_default();
+        assert!(
+            command_block.lines().all(|line| line.chars().count() <= 59),
+            "a 59-column /help must not overrun:\n{command_block}"
+        );
+        assert!(narrow.contains("  /help, /h, /?\n      Show this help message"));
+    }
+
+    #[test]
+    fn help_documents_every_command_in_the_table() {
+        let help = SlashCommand::help_text();
+        for spec in SLASH_COMMANDS {
+            assert!(
+                help.contains(&format!("/{}", spec.names[0])),
+                "/help never mentions /{}",
+                spec.names[0]
+            );
+        }
+    }
+
     use super::{
-        DATE_HEADER, MEMORY_HEADER, SKILLS_HEADER, SlashCommand, parse_bash_command,
-        parse_extension_command, prompt_weights, should_show_startup_oauth_hint,
+        DATE_HEADER, MEMORY_HEADER, SKILLS_HEADER, SLASH_COMMANDS, SlashCommand,
+        parse_bash_command, parse_extension_command, prompt_weights,
+        should_show_startup_oauth_hint,
     };
     use crate::auth::{AuthCredential, AuthStorage};
     use crate::models::ModelEntry;
@@ -3661,6 +3983,40 @@ mod tests {
         assert_eq!(plan.effective, crate::model::ThinkingLevel::Off);
         assert!(plan.thinking_changed);
         assert!(plan.persist_needed);
+    }
+
+    #[test]
+    fn a_non_reasoning_model_does_not_turn_thinking_off_for_the_whole_session() {
+        let mut plain = test_model_entry("acme", "plain-model");
+        plain.model.reasoning = false;
+        let mut reasoner = test_model_entry("acme", "reasoning-model");
+        reasoner.model.reasoning = true;
+
+        // the user is on high and switches to a model that cannot reason
+        let plan = super::plan_session_thinking_sync(
+            Some("high"),
+            crate::model::ThinkingLevel::High,
+            &plain,
+        );
+        assert_eq!(
+            plan.effective,
+            crate::model::ThinkingLevel::Off,
+            "a model that cannot reason is sent off"
+        );
+        assert_eq!(
+            plan.header,
+            crate::model::ThinkingLevel::High,
+            "but the session must remember what the user asked for"
+        );
+
+        // and back to one that can: the level returns without touching /thinking
+        let back = super::plan_session_thinking_sync(
+            Some(&plan.header.to_string()),
+            crate::model::ThinkingLevel::Off,
+            &reasoner,
+        );
+        assert_eq!(back.effective, crate::model::ThinkingLevel::High);
+        assert_eq!(back.header, crate::model::ThinkingLevel::High);
     }
 
     #[test]
@@ -3792,7 +4148,7 @@ mod tests {
     fn startup_hint_copy_no_longer_uses_front_and_center_phrase() {
         let auth = empty_auth_storage();
         let hint = super::format_startup_oauth_hint(&auth);
-        assert!(hint.contains("No provider credentials were detected."));
+        assert!(hint.contains("No provider credentials were detected"));
         assert!(!hint.contains("front and center"));
     }
 

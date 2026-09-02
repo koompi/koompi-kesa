@@ -87,8 +87,8 @@ mod view;
 
 use self::agent::{build_user_message, extension_commands_for_catalog};
 pub use self::commands::{
-    SlashCommand, model_entry_matches, parse_scoped_model_patterns, resolve_scoped_model_entries,
-    strip_thinking_level_suffix,
+    SLASH_COMMANDS, SlashCommand, SlashCommandSpec, model_entry_matches,
+    parse_scoped_model_patterns, resolve_scoped_model_entries, strip_thinking_level_suffix,
 };
 use self::commands::{
     format_startup_oauth_hint, parse_bash_command, parse_extension_command,
@@ -1023,16 +1023,16 @@ impl PiApp {
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or("session");
-            return self.cwd.join(format!("pi-session-{stem}.html"));
+            return self.cwd.join(format!("kesa-session-{stem}.html"));
         }
         let id = crate::session_picker::truncate_session_id(&session.header.id, 8);
-        self.cwd.join(format!("pi-session-unsaved-{id}.html"))
+        self.cwd.join(format!("kesa-session-unsaved-{id}.html"))
     }
 
     fn resolve_output_path(&self, raw: &str) -> PathBuf {
         let raw = raw.trim();
         if raw.is_empty() {
-            return self.cwd.join("pi-session.html");
+            return self.cwd.join("kesa-session.html");
         }
         let path = PathBuf::from(raw);
         if path.is_absolute() {
@@ -1971,7 +1971,7 @@ pub async fn run_interactive(
     enqueue_ui_shutdown(&shutdown_event_tx, &shutdown_cx).await;
 
     let _ = crossterm::execute!(std::io::stdout(), cursor::Show);
-    println!("Goodbye!");
+    println!("Goodbye.");
     Ok(())
 }
 
@@ -2014,6 +2014,9 @@ pub enum PiMsg {
         name: String,
         tool_id: String,
         is_error: bool,
+        /// The tool's own failure text, carried rather than re-derived from the
+        /// rendered row: a header-only render leaves nothing to split off.
+        failure_text: String,
     },
     /// Agent finished with final message.
     AgentDone {
@@ -2251,7 +2254,7 @@ fn build_startup_welcome_message(config: &Config, available_models: &[ModelEntry
         return String::new();
     }
 
-    let mut message = String::from("  Welcome to KESA!\n");
+    let mut message = String::from("  Welcome to KESA\n");
 
     if available_models
         .iter()
@@ -2592,6 +2595,11 @@ pub struct PiApp {
     /// `(messages.len(), total_usage.total_tokens)` so the footer does not walk
     /// the session tree on every frame.
     context_tokens_cache: std::cell::Cell<Option<((usize, u64), u64)>>,
+    /// The last values read from the session while its lock was free. The lock
+    /// is contended exactly while a turn runs, and a `try_lock` miss is "not
+    /// known right now", never a fact about the session.
+    last_known_thinking_level: std::cell::Cell<Option<ThinkingLevel>>,
+    last_known_persistence: std::cell::RefCell<Option<Option<String>>>,
 
     // Async channel for agent events
     event_tx: mpsc::Sender<PiMsg>,
@@ -2964,6 +2972,8 @@ impl PiApp {
             total_usage,
             pasted_blocks: Vec::new(),
             context_tokens_cache: std::cell::Cell::new(None),
+            last_known_thinking_level: std::cell::Cell::new(None),
+            last_known_persistence: std::cell::RefCell::new(None),
             event_tx,
             runtime_handle,
             stop_hook_active: Arc::new(AtomicBool::new(false)),
@@ -3578,7 +3588,12 @@ impl PiApp {
                         return None;
                     }
                     KeyType::Enter => {
-                        if let Some(item) = self.autocomplete.selected_item().cloned() {
+                        let already_typed = self
+                            .autocomplete
+                            .selection_is_already_typed(&self.input.value());
+                        if !already_typed
+                            && let Some(item) = self.autocomplete.selected_item().cloned()
+                        {
                             self.accept_autocomplete(&item);
                             self.autocomplete.close();
                             return None;

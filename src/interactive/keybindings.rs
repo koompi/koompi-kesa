@@ -1,12 +1,12 @@
 use super::commands::model_entry_matches;
 use super::*;
 
-/// Outcome of a ctrl+V image paste. `Empty` and `Unsupported` are different
-/// failures and used to be the same silent `None`.
+/// Outcome of a ctrl+V image paste.
 pub(super) enum ImagePaste {
     Attached(PathBuf),
     Empty,
     Unsupported,
+    Failed(String),
 }
 
 impl PiApp {
@@ -37,7 +37,7 @@ impl PiApp {
         use std::fmt::Write;
 
         let mut output = String::new();
-        let _ = writeln!(output, "Keyboard Shortcuts");
+        let _ = writeln!(output, "Keyboard shortcuts");
         let _ = writeln!(output, "==================");
         let _ = writeln!(output);
         let _ = writeln!(
@@ -166,13 +166,13 @@ impl PiApp {
                 self.answer_tool_approval(ApprovalAction::Session);
             }
             KeyType::Runes if key.runes == ['3'] => {
-                self.answer_tool_approval(ApprovalAction::Reject);
+                self.answer_tool_approval(ApprovalAction::Deny);
             }
             KeyType::Enter => {
                 let action = prompt.selected_action();
                 self.answer_tool_approval(action);
             }
-            KeyType::Esc => self.answer_tool_approval(ApprovalAction::Reject),
+            KeyType::Esc => self.answer_tool_approval(ApprovalAction::Deny),
             _ => {}
         }
 
@@ -195,7 +195,7 @@ impl PiApp {
             self.status_message = Some(format!("Could not remember that choice: {err}"));
         }
 
-        let decision = if action == ApprovalAction::Reject {
+        let decision = if action == ApprovalAction::Deny {
             ToolApprovalDecision::deny("the user rejected this tool call")
         } else {
             ToolApprovalDecision::Allow
@@ -213,7 +213,7 @@ impl PiApp {
                     "Approved `{}`, and will not ask again for `{}` this session.",
                     prompt.tool_name, prompt.session_rule
                 ),
-                ApprovalAction::Reject => format!("Rejected `{}`.", prompt.tool_name),
+                ApprovalAction::Deny => format!("Denied `{}`.", prompt.tool_name),
             },
             thinking: None,
             collapsed: false,
@@ -409,12 +409,21 @@ impl PiApp {
     pub(super) fn paste_image_from_clipboard() -> ImagePaste {
         #[cfg(all(feature = "clipboard", feature = "image-resize"))]
         {
+            use image::ImageEncoder;
+
+            let mut clipboard = match ArboardClipboard::new() {
+                Ok(clipboard) => clipboard,
+                Err(err) => return ImagePaste::Failed(format!("clipboard unavailable: {err}")),
+            };
+            let image = match clipboard.get_image() {
+                Ok(image) => image,
+                // arboard reports "no image on the clipboard" and "the clipboard
+                // holds something that is not an image" the same way
+                Err(arboard::Error::ContentNotAvailable) => return ImagePaste::Empty,
+                Err(err) => return ImagePaste::Failed(format!("cannot read the clipboard: {err}")),
+            };
+
             let decode = || -> Option<PathBuf> {
-                use image::ImageEncoder;
-
-                let mut clipboard = ArboardClipboard::new().ok()?;
-                let image = clipboard.get_image().ok()?;
-
                 let width = u32::try_from(image.width).ok()?;
                 let height = u32::try_from(image.height).ok()?;
                 let bytes = image.bytes.into_owned();
@@ -445,7 +454,10 @@ impl PiApp {
                 let (_file, path) = temp_file.keep().ok()?;
                 Some(path)
             };
-            decode().map_or(ImagePaste::Empty, ImagePaste::Attached)
+            decode().map_or_else(
+                || ImagePaste::Failed("could not save the pasted image".to_string()),
+                ImagePaste::Attached,
+            )
         }
 
         #[cfg(not(all(feature = "clipboard", feature = "image-resize")))]
@@ -590,7 +602,7 @@ impl PiApp {
     #[allow(clippy::too_many_lines)]
     pub fn cycle_model(&mut self, delta: i32) {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot switch models while processing".to_string());
+            self.status_message = Some("Cannot switch models while KESA is working".to_string());
             return;
         }
 
@@ -872,13 +884,19 @@ impl PiApp {
                         self.status_message = Some("Image attached".to_string());
                     }
                     ImagePaste::Empty => {
-                        self.status_message = Some("No image in the clipboard".to_string());
+                        self.status_message =
+                            Some("No image in the clipboard. Copy an image, then press Ctrl+V, or attach the file with @path/to/image.png".to_string());
                     }
                     ImagePaste::Unsupported => {
                         self.status_message = Some(
                             "This build has no clipboard support. Attach the file instead: @path/to/image.png"
                                 .to_string(),
                         );
+                    }
+                    ImagePaste::Failed(reason) => {
+                        self.status_message = Some(format!(
+                            "Could not paste the image ({reason}). Attach the file instead: @path/to/image.png"
+                        ));
                     }
                 }
                 None
@@ -912,7 +930,8 @@ impl PiApp {
             AppAction::ExternalEditor => {
                 // Ctrl+G: Open external editor with current input
                 if self.agent_state != AgentState::Idle {
-                    self.status_message = Some("Cannot open editor while processing".to_string());
+                    self.status_message =
+                        Some("Cannot open editor while KESA is working".to_string());
                     return None;
                 }
                 match self.open_external_editor() {
@@ -1578,8 +1597,8 @@ mod tests {
         let session_guard = app.session.try_lock().expect("session lock");
         assert_eq!(
             session_guard.header.thinking_level.as_deref(),
-            Some("off"),
-            "session thinking level should clamp alongside the active model"
+            Some("high"),
+            "the runtime clamps, but the header keeps the level to restore on the way back"
         );
     }
 
@@ -1767,7 +1786,9 @@ mod tests {
         assert!(app.should_consume_action(AppAction::CycleThinkingLevel));
     }
 
-    fn load_one_skill(app: &mut PiApp) {
+    /// Returns the fixture directory; bind it so it outlives the app.
+    #[must_use]
+    fn load_one_skill(app: &mut PiApp) -> tempfile::TempDir {
         let temp = tempfile::tempdir().expect("tempdir");
         let skill_dir = temp.path().join("skills").join("my-skill");
         std::fs::create_dir_all(&skill_dir).expect("mkdir");
@@ -1786,8 +1807,7 @@ mod tests {
             )
             .expect("load skill");
         assert_eq!(app.resources.skills().len(), 1);
-        // keep the fixture alive for the app's lifetime
-        std::mem::forget(temp);
+        temp
     }
 
     fn header_lines(app: &PiApp) -> Vec<String> {
@@ -1848,7 +1868,7 @@ mod tests {
         );
         assert_eq!(app.header_rows(), 2);
 
-        load_one_skill(&mut app);
+        let _skills = load_one_skill(&mut app);
         assert_eq!(
             app.session_hint().as_deref(),
             Some("/skill:my-skill: run a skill"),
@@ -1882,7 +1902,7 @@ mod tests {
         );
         assert!(app.messages.is_empty());
 
-        load_one_skill(&mut app);
+        let _skills = load_one_skill(&mut app);
         app.status_message = None;
         assert!(app.handle_slash_resources().is_none());
         let listing = app.messages.last().expect("listing row").content.clone();
@@ -1893,8 +1913,7 @@ mod tests {
         );
         let prompts_dir = project_dir.join("prompts").display().to_string();
         assert!(
-            listing.contains(&format!("Prompt templates: none (looked in"))
-                && listing.contains(&prompts_dir),
+            listing.contains("Prompt templates: none (looked in") && listing.contains(&prompts_dir),
             "{listing}"
         );
         assert!(
@@ -2181,13 +2200,20 @@ mod tests {
         drop(shared_guard);
 
         let session_guard = app.session.try_lock().expect("session lock");
-        assert_eq!(session_guard.header.thinking_level.as_deref(), Some("off"));
+        assert_eq!(
+            session_guard.header.thinking_level.as_deref(),
+            Some("high"),
+            "only the runtime clamps; the header keeps the level to restore"
+        );
         let thinking_changes = session_guard
             .entries_for_current_path()
             .iter()
             .filter(|entry| matches!(entry, crate::session::SessionEntry::ThinkingLevelChange(_)))
             .count();
-        assert_eq!(thinking_changes, 1);
+        assert_eq!(
+            thinking_changes, 0,
+            "the user's level did not change, so nothing is recorded"
+        );
     }
 
     #[test]
@@ -2255,7 +2281,11 @@ mod tests {
             Some("partial-provider")
         );
         assert_eq!(session_guard.header.model_id, None);
-        assert_eq!(session_guard.header.thinking_level.as_deref(), Some("off"));
+        assert_eq!(
+            session_guard.header.thinking_level.as_deref(),
+            Some("high"),
+            "only the runtime clamps; the header keeps the level to restore"
+        );
     }
 
     #[test]

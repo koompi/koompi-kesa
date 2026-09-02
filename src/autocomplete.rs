@@ -693,128 +693,16 @@ struct BuiltinSlashCommand {
     description: &'static str,
 }
 
-// A flat static data table of built-in slash commands; not splittable into a
-// cohesive helper, so allow the line count rather than fragment the table.
-#[allow(clippy::too_many_lines)]
-const fn builtin_slash_commands() -> &'static [BuiltinSlashCommand] {
-    &[
-        BuiltinSlashCommand {
-            name: "help",
-            description: "Show help for interactive commands",
-        },
-        BuiltinSlashCommand {
-            name: "login",
-            description: "OAuth login (provider-specific)",
-        },
-        BuiltinSlashCommand {
-            name: "logout",
-            description: "Remove stored OAuth credentials",
-        },
-        BuiltinSlashCommand {
-            name: "clear",
-            description: "Clear conversation history",
-        },
-        BuiltinSlashCommand {
-            name: "model",
-            description: "Show or change the current model",
-        },
-        BuiltinSlashCommand {
-            name: "thinking",
-            description: "Set thinking level (off/minimal/low/medium/high/xhigh/max)",
-        },
-        BuiltinSlashCommand {
-            name: "scoped-models",
-            description: "Show or set model scope patterns",
-        },
-        BuiltinSlashCommand {
-            name: "exit",
-            description: "Exit KESA",
-        },
-        BuiltinSlashCommand {
-            name: "history",
-            description: "Show input history",
-        },
-        BuiltinSlashCommand {
-            name: "export",
-            description: "Export conversation to HTML",
-        },
-        BuiltinSlashCommand {
-            name: "session",
-            description: "Show session info",
-        },
-        BuiltinSlashCommand {
-            name: "settings",
-            description: "Show current settings summary",
-        },
-        BuiltinSlashCommand {
-            name: "theme",
-            description: "List or switch themes",
-        },
-        BuiltinSlashCommand {
-            name: "resume",
-            description: "Pick and resume a previous session",
-        },
-        BuiltinSlashCommand {
-            name: "new",
-            description: "Start a new session",
-        },
-        BuiltinSlashCommand {
-            name: "copy",
-            description: "Copy last assistant message to clipboard",
-        },
-        BuiltinSlashCommand {
-            name: "name",
-            description: "Set session display name",
-        },
-        BuiltinSlashCommand {
-            name: "hotkeys",
-            description: "Show keyboard shortcuts",
-        },
-        BuiltinSlashCommand {
-            name: "changelog",
-            description: "Show changelog entries",
-        },
-        BuiltinSlashCommand {
-            name: "tree",
-            description: "Show session branch tree summary",
-        },
-        BuiltinSlashCommand {
-            name: "fork",
-            description: "Branch from a previous user message",
-        },
-        BuiltinSlashCommand {
-            name: "rewind",
-            description: "Undo a turn's file edits, its transcript, or both (also Esc Esc)",
-        },
-        BuiltinSlashCommand {
-            name: "context",
-            description: "Break the context window down by what is filling it",
-        },
-        BuiltinSlashCommand {
-            name: "compact",
-            description: "Compact older context",
-        },
-        BuiltinSlashCommand {
-            name: "reload",
-            description: "Reload resources from disk",
-        },
-        BuiltinSlashCommand {
-            name: "resources",
-            description: "List the skills, templates, themes and extensions that loaded",
-        },
-        BuiltinSlashCommand {
-            name: "template",
-            description: "Expand a prompt template by name",
-        },
-        BuiltinSlashCommand {
-            name: "share",
-            description: "Export to a temp HTML file and show path",
-        },
-        BuiltinSlashCommand {
-            name: "mcp",
-            description: "Show MCP server status (Model Context Protocol)",
-        },
-    ]
+/// The canonical name and description of every built-in command, from the one
+/// table `parse` and `/help` also read.
+fn builtin_slash_commands() -> Vec<BuiltinSlashCommand> {
+    crate::interactive::SLASH_COMMANDS
+        .iter()
+        .map(|spec| BuiltinSlashCommand {
+            name: spec.names[0],
+            description: spec.description,
+        })
+        .collect()
 }
 
 const fn kind_rank(kind: AutocompleteItemKind) -> u8 {

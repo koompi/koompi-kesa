@@ -185,6 +185,37 @@ pub(super) fn bordered_box<'a>(
 
 /// Pad with spaces or truncate `line` so it occupies exactly `width` cells,
 /// counting display width and ignoring ANSI escapes.
+/// Cut `text` to `width` cells on a word boundary where one is near the end,
+/// marking the cut with an ellipsis rather than stopping mid-word.
+fn ellipsize(text: &str, width: usize) -> String {
+    if lipgloss::width(text) <= width {
+        return text.to_string();
+    }
+    if width <= 1 {
+        return "\u{2026}".to_string();
+    }
+    let budget = width - 1;
+    let mut out = String::new();
+    let mut taken = 0usize;
+    for ch in text.chars() {
+        let cell = UnicodeWidthChar::width(ch).unwrap_or(0);
+        if taken + cell > budget {
+            break;
+        }
+        out.push(ch);
+        taken += cell;
+    }
+    // only back up to a word boundary when one is close, or a long word
+    // would leave the row almost empty
+    if let Some(space) = out.rfind(' ')
+        && space * 4 >= out.len() * 3
+    {
+        out.truncate(space);
+    }
+    out.push('\u{2026}');
+    out
+}
+
 fn fit_to_width(line: &str, width: usize) -> String {
     let visible = lipgloss::width(line);
     if visible == width {
@@ -885,6 +916,15 @@ fn format_persistence_footer_segment(
 }
 
 impl PiApp {
+    /// Render one key for the header and status line.
+    ///
+    /// Two registers exist on purpose and neither should drift into the other.
+    /// Here, and anywhere else showing a *configurable* binding, the key is
+    /// spelled the way `keybindings.json` spells it: lowercase, `ctrl+l`. That
+    /// is what `KeyBinding`'s `Display` produces for a user's own override, so
+    /// the fallback matches it and the line reads the same either way. Overlay
+    /// legends, which list fixed keys the user cannot rebind, use prose case
+    /// (`Ctrl+D: delete`).
     fn header_binding_hint(&self, action: AppAction, fallback: &str) -> String {
         self.keybindings
             .get_bindings(action)
@@ -934,7 +974,7 @@ impl PiApp {
                 if !output.is_empty() && !output.ends_with('\n') {
                     output.push('\n');
                 }
-                let _ = writeln!(output, "  {}", self.styles.accent_bold.render("What's New"));
+                let _ = writeln!(output, "  {}", self.styles.accent_bold.render("What's new"));
                 output.push('\n');
                 let markdown_width = self.term_width.saturating_sub(6).max(40);
                 let rendered = glamour::Renderer::new()
@@ -1379,19 +1419,26 @@ impl PiApp {
     pub(super) fn render_input(&self) -> String {
         let mut output = String::new();
 
-        let thinking_level = self
-            .session
-            .try_lock()
-            .ok()
-            .and_then(|guard| guard.header.thinking_level.clone())
-            .and_then(|level| level.parse::<ThinkingLevel>().ok())
-            .or_else(|| {
-                self.config
-                    .default_thinking_level
+        let thinking_level = match self.session.try_lock() {
+            Ok(guard) => {
+                let level = guard
+                    .header
+                    .thinking_level
                     .as_deref()
-                    .and_then(|level| level.parse::<ThinkingLevel>().ok())
-            })
-            .unwrap_or(ThinkingLevel::Off);
+                    .and_then(|level| level.parse::<ThinkingLevel>().ok());
+                self.last_known_thinking_level.set(level);
+                level
+            }
+            // contended means "busy", not "off"
+            Err(_) => self.last_known_thinking_level.get(),
+        }
+        .or_else(|| {
+            self.config
+                .default_thinking_level
+                .as_deref()
+                .and_then(|level| level.parse::<ThinkingLevel>().ok())
+        })
+        .unwrap_or(ThinkingLevel::Off);
 
         let input_text = self.input.value();
         let is_bash_mode = parse_bash_command(&input_text).is_some();
@@ -1537,11 +1584,25 @@ impl PiApp {
         }
 
         let Ok(session) = self.session.try_lock() else {
-            return 0;
+            // a stale count reads better than "no usage yet", which hides the
+            // whole context segment while a turn runs
+            return self
+                .context_tokens_cache
+                .get()
+                .map_or(0, |(_, tokens)| tokens);
         };
         let tokens = session.context_total_tokens();
         self.context_tokens_cache.set(Some((key, tokens)));
         tokens
+    }
+
+    #[cfg(test)]
+    pub(super) fn render_footer_into_for_test(
+        &self,
+        output: &mut String,
+        scroll_percent: Option<usize>,
+    ) {
+        self.render_footer_into(output, scroll_percent);
     }
 
     /// PERF-7: Render the footer directly into `output`, avoiding an
@@ -1556,15 +1617,19 @@ impl PiApp {
 
         let input = self.total_usage.input;
         let output_tokens = self.total_usage.output;
-        let persistence_str = self.session.try_lock().ok().map_or_else(
-            || Some("Persist: unavailable".to_string()),
-            |session| {
-                format_persistence_footer_segment(
+        let persistence_str = match self.session.try_lock() {
+            Ok(session) => {
+                let segment = format_persistence_footer_segment(
                     session.autosave_durability_mode(),
                     session.autosave_metrics(),
-                )
-            },
-        );
+                );
+                *self.last_known_persistence.borrow_mut() = Some(segment.clone());
+                segment
+            }
+            // never assert the session stopped persisting just because the
+            // lock was busy; show what was last true, or nothing
+            Err(_) => self.last_known_persistence.borrow().clone().flatten(),
+        };
         let branch_str = self.vcs_info.clone();
         let percent = self.context_left_percent();
 
@@ -1847,11 +1912,7 @@ impl PiApp {
     /// Render the current streaming response / thinking into `output`.
     /// Always renders fresh — never cached.
     fn append_streaming_tail(&self, output: &mut String) {
-        let _ = write!(
-            output,
-            "\n  {}\n",
-            self.styles.success_bold.render("Assistant:")
-        );
+        output.push('\n');
 
         // Show thinking if present
         if self.thinking_visible && !self.current_thinking.is_empty() {
@@ -1862,6 +1923,7 @@ impl PiApp {
         // format as they arrive instead of showing raw markers.
         if !self.current_response.is_empty() {
             let markdown_width = self.term_width.saturating_sub(6).max(40);
+            let mut block = String::new();
             if streaming_needs_markdown_renderer(&self.current_response) {
                 let rendered = render_streaming_markdown_with_glamour(
                     &self.current_response,
@@ -1869,15 +1931,21 @@ impl PiApp {
                     markdown_width,
                 );
                 for line in rendered.lines() {
-                    append_rendered_markdown_line(output, line, "  ", markdown_width);
+                    append_rendered_markdown_line(&mut block, line, "  ", markdown_width);
                 }
             } else {
                 append_streaming_plaintext_to_output(
-                    output,
+                    &mut block,
                     &self.current_response,
                     markdown_width,
                 );
             }
+            // the same gutter glyph the finished message gets, so the answer
+            // does not change its name the moment it stops streaming
+            output.push_str(&stamp_speaker(
+                &block,
+                &self.styles.accent_bold.render(ASSISTANT_GLYPH),
+            ));
         }
     }
 
@@ -2101,7 +2169,8 @@ impl PiApp {
             .and_then(|item| item.description.as_ref())
         {
             rows.push(self.styles.border.render(&"\u{2500}".repeat(inner)));
-            rows.push(desc_style.render(&fit_to_width(&desc.replace('\n', " "), inner)));
+            let flattened = desc.replace('\n', " ");
+            rows.push(desc_style.render(&fit_to_width(&ellipsize(&flattened, inner), inner)));
         }
 
         output.push('\n');
@@ -2247,7 +2316,7 @@ impl PiApp {
             let _ = writeln!(
                 output,
                 "  {}",
-                self.styles.muted.render("No settings available.")
+                self.styles.muted.render("No settings available")
             );
         } else {
             let offset = settings_ui.scroll_offset();
@@ -2344,7 +2413,7 @@ impl PiApp {
     pub(super) fn render_theme_picker(&self, picker: &ThemePickerOverlay) -> String {
         let mut output = String::new();
 
-        let _ = writeln!(output, "\n  {}\n", self.styles.title.render("Select Theme"));
+        let _ = writeln!(output, "\n  {}\n", self.styles.title.render("Select theme"));
 
         if picker.items.is_empty() {
             let (user_dir, project_dir) = self.resource_dirs("themes");
@@ -2479,11 +2548,15 @@ impl PiApp {
     }
 
     pub(super) fn render_tool_approval(&self, prompt: &ToolApprovalOverlay) -> String {
-        let title = format!("{} wants to run", self.styles.accent_bold.render("KESA"));
-        let summary = self.styles.warning_bold.render(&prompt.summary);
+        let title = "Run this?".to_string();
         let tool = self.styles.muted.render(&format!("{}:", prompt.tool_name));
 
-        let mut rows = vec![title, String::new(), tool, summary];
+        let mut rows = vec![title, String::new(), tool];
+        // one row per line: bordered_box draws one line per entry, and a
+        // multi-line bash command would otherwise break the box and the budget
+        for line in prompt.summary_lines() {
+            rows.push(self.styles.warning_bold.render(&line));
+        }
         if !prompt.detail.is_empty() {
             let detail: Vec<&str> = prompt.detail.iter().map(String::as_str).collect();
             let mut styled = String::new();
@@ -2504,7 +2577,13 @@ impl PiApp {
     /// Rows `render_tool_approval` writes: spacer, box, legend.
     pub(super) fn tool_approval_rows(&self) -> usize {
         self.tool_approval.as_ref().map_or(0, |prompt| {
-            1 + 2 + 4 + prompt.detail.len() + 1 + ApprovalAction::ALL.len() + 1
+            1 + 2
+                + 3
+                + prompt.summary_lines().len()
+                + prompt.detail.len()
+                + 1
+                + ApprovalAction::ALL.len()
+                + 1
         })
     }
 
@@ -2513,7 +2592,13 @@ impl PiApp {
         overlay: &ExtensionCustomOverlay,
     ) -> String {
         let mut output = String::new();
-        let title = overlay.title.as_deref().unwrap_or("Extension Overlay");
+        let title = overlay
+            .title
+            .as_deref()
+            // Title case to match the extension bridge, which supplies this
+            // same title for its own overlays and is a pinned vendored blob
+            // with a byte-exact integrity check.
+            .unwrap_or("Extension Overlay");
         let source = overlay.extension_id.as_deref().unwrap_or("extension");
 
         let _ = writeln!(output, "\n  {}", self.styles.title.render(title));
@@ -2574,7 +2659,7 @@ impl PiApp {
             let _ = writeln!(
                 output,
                 "  {}",
-                self.styles.muted_italic.render("No branches found.")
+                self.styles.muted_italic.render("No branches found")
             );
         } else {
             let offset = picker.scroll_offset();
@@ -2803,7 +2888,7 @@ impl PiApp {
                 if sum == breakdown.total {
                     "parts add up"
                 } else {
-                    "PARTS DO NOT ADD UP"
+                    "parts do not add up"
                 }
             ))
         );

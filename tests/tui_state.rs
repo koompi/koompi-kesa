@@ -19,7 +19,7 @@ use kesa::interactive::{ConversationMessage, MessageRole, PendingInput, PiApp, P
 use kesa::keybindings::KeyBindings;
 use kesa::model::{
     AssistantMessage, ContentBlock, Cost, ImageContent, StopReason, StreamEvent, TextContent,
-    Usage, UserContent,
+    ToolCall, Usage, UserContent,
 };
 use kesa::models::ModelEntry;
 use kesa::provider::{Context, InputType, Model, ModelCost, Provider, StreamOptions};
@@ -723,8 +723,8 @@ struct StepOutcome {
     delta: ViewDelta,
 }
 
-const SINGLE_LINE_HINT: &str = "Enter: send  Shift+Enter: newline  Alt+Enter: multi-line";
-const MULTI_LINE_HINT: &str = "Alt+Enter: send  Enter: newline  Esc: single-line";
+const SINGLE_LINE_HINT: &str = "Enter send";
+const MULTI_LINE_HINT: &str = "Enter send";
 
 #[allow(dead_code, clippy::needless_pass_by_value)]
 fn log_auth_test_event(test_name: &str, event: &str, data: serde_json::Value) {
@@ -794,7 +794,7 @@ fn log_initial_state(harness: &TestHarness, app: &PiApp) {
         "multi"
     } else if view.contains(SINGLE_LINE_HINT) {
         "single"
-    } else if view.contains("Processing...") {
+    } else if view.contains("Working") {
         "processing"
     } else {
         "unknown"
@@ -1219,7 +1219,7 @@ fn tui_state_enter_submits_in_single_line_mode() {
 
     type_text(&harness, &mut app, "hello world");
     let step = press_enter(&harness, &mut app);
-    assert_after_contains(&harness, &step, "Processing...");
+    assert_after_contains(&harness, &step, "Working");
 }
 
 #[test]
@@ -1232,7 +1232,7 @@ fn tui_state_shift_enter_inserts_newline_and_enters_multiline_mode() {
     type_text(&harness, &mut app, "line1");
     let step = press_shift_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, MULTI_LINE_HINT);
-    assert_after_not_contains(&harness, &step, "Processing...");
+    assert_after_not_contains(&harness, &step, "Working");
 }
 
 #[test]
@@ -1265,28 +1265,32 @@ fn tui_state_alt_enter_enables_multiline_mode() {
 }
 
 #[test]
-fn tui_state_alt_enter_submits_when_multiline_mode_and_non_empty() {
-    let harness = TestHarness::new("tui_state_alt_enter_submits_when_multiline_mode_and_non_empty");
+fn tui_state_alt_enter_never_submits_and_enter_always_does() {
+    // D51 made one rule for every mode: Enter sends, and a trailing backslash
+    // before Enter is what inserts a newline. Alt+Enter no longer submits.
+    let harness = TestHarness::new("tui_state_alt_enter_never_submits_and_enter_always_does");
     let mut app = build_app(&harness, Vec::new());
     log_initial_state(&harness, &app);
 
     press_alt_enter(&harness, &mut app);
     type_text(&harness, &mut app, "multi line submit");
     let step = press_alt_enter(&harness, &mut app);
-    assert_after_contains(&harness, &step, "Processing...");
+    assert_after_not_contains(&harness, &step, "Working");
+
+    let step = press_enter(&harness, &mut app);
+    assert_after_contains(&harness, &step, "Working");
 }
 
 #[test]
-fn tui_state_enter_in_multiline_mode_inserts_newline_not_submit() {
-    let harness = TestHarness::new("tui_state_enter_in_multiline_mode_inserts_newline_not_submit");
+fn tui_state_a_trailing_backslash_inserts_a_newline_instead_of_sending() {
+    let harness =
+        TestHarness::new("tui_state_a_trailing_backslash_inserts_a_newline_instead_of_sending");
     let mut app = build_app(&harness, Vec::new());
     log_initial_state(&harness, &app);
 
-    press_alt_enter(&harness, &mut app);
-    type_text(&harness, &mut app, "line1");
+    type_text(&harness, &mut app, "line1\\");
     let step = press_enter(&harness, &mut app);
-    assert_after_contains(&harness, &step, MULTI_LINE_HINT);
-    assert_after_not_contains(&harness, &step, "Processing...");
+    assert_after_not_contains(&harness, &step, "Working");
 }
 
 #[test]
@@ -1449,7 +1453,7 @@ fn tui_state_agent_start_enters_processing() {
     log_initial_state(&harness, &app);
 
     let step = apply_pi(&harness, &mut app, "PiMsg::AgentStart", PiMsg::AgentStart);
-    assert_after_contains(&harness, &step, "Processing...");
+    assert_after_contains(&harness, &step, "Working");
 }
 
 #[test]
@@ -1495,7 +1499,7 @@ fn tui_state_text_delta_renders_while_processing() {
         "PiMsg::TextDelta",
         PiMsg::TextDelta("hello".to_string()),
     );
-    assert_after_contains(&harness, &step, "Assistant:");
+    assert_after_contains(&harness, &step, "\u{25cf}");
     assert_after_contains(&harness, &step, "hello");
 }
 
@@ -1656,11 +1660,19 @@ fn tui_state_tool_update_does_not_emit_output_until_tool_end() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("file contents"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("file contents")),
+            ],
             details: None,
         },
     );
-    assert_after_not_contains(&harness, &step, "Tool read output:");
+    assert_after_not_contains(&harness, &step, "Read(");
 }
 
 #[test]
@@ -1685,7 +1697,15 @@ fn tui_state_tool_end_appends_tool_output_message() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("file contents"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("file contents")),
+            ],
             details: None,
         },
     );
@@ -1697,9 +1717,10 @@ fn tui_state_tool_end_appends_tool_output_message() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
-    assert_after_contains(&harness, &step, "Tool read output:");
+    assert_after_contains(&harness, &step, "Read(");
     assert_after_contains(&harness, &step, "file contents");
 }
 
@@ -1717,7 +1738,15 @@ fn tui_state_second_todo_write_replaces_the_first_block() {
             PiMsg::ToolUpdate {
                 name: "todo".to_string(),
                 tool_id: tool_id.to_string(),
-                content: vec![ContentBlock::Text(TextContent::new("ignored"))],
+                content: vec![
+                    ContentBlock::ToolCall(ToolCall {
+                        id: "tool-1".to_string(),
+                        name: "todo".to_string(),
+                        arguments: json!({"path": "f.txt"}),
+                        thought_signature: None,
+                    }),
+                    ContentBlock::Text(TextContent::new("ignored")),
+                ],
                 details: Some(serde_json::json!({
                     "schema": "kesa.todo.list.v1",
                     "todos": [
@@ -1738,6 +1767,7 @@ fn tui_state_second_todo_write_replaces_the_first_block() {
                 name: "todo".to_string(),
                 tool_id: tool_id.to_string(),
                 is_error: false,
+                failure_text: String::new(),
             },
         )
     };
@@ -1763,7 +1793,15 @@ fn tui_state_todo_panel_collapses_to_one_row_and_expands_on_f3() {
         PiMsg::ToolUpdate {
             name: "todo".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("ignored"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "todo".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("ignored")),
+            ],
             details: Some(serde_json::json!({
                 "schema": "kesa.todo.list.v1",
                 "todos": [
@@ -1810,9 +1848,15 @@ fn tui_state_tool_update_with_diff_details_appends_diff_block() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in foo.txt.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Successfully replaced text in foo.txt.")),
+            ],
             details: Some(json!({
                 "diff": "+1 added line\n-1 removed line\n 1 context",
             })),
@@ -1826,10 +1870,11 @@ fn tui_state_tool_update_with_diff_details_appends_diff_block() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool edit output:");
+    assert_after_contains(&harness, &step, "Edit(");
     assert_after_contains(&harness, &step, "Successfully replaced text in foo.txt.");
     assert_after_contains(&harness, &step, "@@ foo.txt @@");
     assert_after_contains(&harness, &step, "+1 added line");
@@ -1866,9 +1911,15 @@ fn tui_state_tool_update_with_large_diff_shows_truncation_indicator() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in foo.txt.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Successfully replaced text in foo.txt.")),
+            ],
             details: Some(json!({ "diff": diff })),
         },
     );
@@ -1880,12 +1931,12 @@ fn tui_state_tool_update_with_large_diff_shows_truncation_indicator() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
 
-    // The large diff auto-collapses; toggle global collapse twice to re-expand.
-    press_ctrlo(&harness, &mut app);
+    // The large diff auto-collapses; one ctrl+o expands every collapsed block.
     let mut step = press_ctrlo(&harness, &mut app);
 
     for _ in 0..5 {
@@ -1936,7 +1987,15 @@ fn tui_state_tool_update_with_diff_without_replace_message_uses_generic_header()
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("Edit completed."))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Edit completed.")),
+            ],
             details: Some(json!({
                 "diff": "- 1 old text\n+ 1 new text"
             })),
@@ -1950,10 +2009,11 @@ fn tui_state_tool_update_with_diff_without_replace_message_uses_generic_header()
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool edit output:");
+    assert_after_contains(&harness, &step, "Edit(");
     assert_after_contains(&harness, &step, "Diff:");
     assert_after_contains(&harness, &step, "+ 1 new text");
     assert_after_not_contains(&harness, &step, "@@");
@@ -1982,7 +2042,12 @@ fn tui_state_tool_update_with_details_and_no_content_renders_pretty_json() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: Vec::new(),
+            content: vec![ContentBlock::ToolCall(ToolCall {
+                id: "tool-1".to_string(),
+                name: "read".to_string(),
+                arguments: json!({"path": "src/main.rs"}),
+                thought_signature: None,
+            })],
             details: Some(json!({
                 "matches": 3,
                 "path": "src/main.rs"
@@ -1997,10 +2062,11 @@ fn tui_state_tool_update_with_details_and_no_content_renders_pretty_json() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool read output:");
+    assert_after_contains(&harness, &step, "Read(");
     assert_after_contains(&harness, &step, "\"matches\": 3");
     assert_after_contains(&harness, &step, "\"path\": \"src/main.rs\"");
 }
@@ -2028,7 +2094,15 @@ fn tui_state_tool_output_over_threshold_auto_collapses_with_preview() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(numbered_lines(30)))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(numbered_lines(30))),
+            ],
             details: None,
         },
     );
@@ -2040,11 +2114,12 @@ fn tui_state_tool_output_over_threshold_auto_collapses_with_preview() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool read output:");
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "Read(");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
     assert_after_contains(&harness, &step, "line 1");
     assert_after_contains(&harness, &step, "line 5");
     assert_after_not_contains(&harness, &step, "line 6");
@@ -2073,7 +2148,15 @@ fn tui_state_tool_output_at_threshold_stays_expanded() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(numbered_lines(19)))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(numbered_lines(19))),
+            ],
             details: None,
         },
     );
@@ -2085,10 +2168,11 @@ fn tui_state_tool_output_at_threshold_stays_expanded() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_not_contains(&harness, &step, "collapsed");
+    assert_after_not_contains(&harness, &step, "ctrl+o to expand");
     assert_after_contains(&harness, &step, "line 19");
 }
 
@@ -2114,7 +2198,15 @@ fn tui_state_expand_tools_reexpands_auto_collapsed_blocks() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(numbered_lines(30)))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(numbered_lines(30))),
+            ],
             details: None,
         },
     );
@@ -2126,17 +2218,14 @@ fn tui_state_expand_tools_reexpands_auto_collapsed_blocks() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
 
+    // ctrl+o expands everything, including blocks that auto-collapsed
     let step = press_ctrlo(&harness, &mut app);
-    assert_after_contains(&harness, &step, "Tool read output:");
-    assert_after_contains(&harness, &step, "collapsed");
-    assert_after_not_contains(&harness, &step, "line 1");
-
-    let step = press_ctrlo(&harness, &mut app);
-    assert_after_not_contains(&harness, &step, "collapsed");
+    assert_after_not_contains(&harness, &step, "ctrl+o to expand");
     assert_after_contains(&harness, &step, "line ");
     if !step.after.contains("line 30") {
         let mut current = step;
@@ -2153,6 +2242,10 @@ fn tui_state_expand_tools_reexpands_auto_collapsed_blocks() {
         }
         assert_after_contains(&harness, &current, "line 30");
     }
+
+    // and ctrl+o again puts them all back
+    let step = press_ctrlo(&harness, &mut app);
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
 }
 
 #[test]
@@ -2177,7 +2270,15 @@ fn tui_state_expand_tools_toggles_tool_output_visibility() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("file contents"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("file contents")),
+            ],
             details: None,
         },
     );
@@ -2189,21 +2290,22 @@ fn tui_state_expand_tools_toggles_tool_output_visibility() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
-    assert_after_contains(&harness, &step, "Tool read output:");
+    assert_after_contains(&harness, &step, "Read(");
     assert_after_contains(&harness, &step, "file contents");
-    assert_after_not_contains(&harness, &step, "collapsed");
+    assert_after_not_contains(&harness, &step, "ctrl+o to expand");
 
     let step = press_ctrlo(&harness, &mut app);
-    assert_after_contains(&harness, &step, "Tool read output:");
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "Read(");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
     assert_after_not_contains(&harness, &step, "file contents");
 
     let step = press_ctrlo(&harness, &mut app);
-    assert_after_contains(&harness, &step, "Tool read output:");
+    assert_after_contains(&harness, &step, "Read(");
     assert_after_contains(&harness, &step, "file contents");
-    assert_after_not_contains(&harness, &step, "collapsed");
+    assert_after_not_contains(&harness, &step, "ctrl+o to expand");
 }
 
 #[test]
@@ -2237,6 +2339,12 @@ fn tui_state_terminal_show_images_false_hides_images_in_tool_output() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
                 ContentBlock::Text(TextContent::new("file contents")),
                 ContentBlock::Image(ImageContent {
                     data: "aGVsbG8=".to_string(),
@@ -2254,10 +2362,11 @@ fn tui_state_terminal_show_images_false_hides_images_in_tool_output() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool read output:");
+    assert_after_contains(&harness, &step, "Read(");
     assert_after_contains(&harness, &step, "file contents");
     assert_after_contains(&harness, &step, "1 image(s) hidden");
     assert_after_not_contains(&harness, &step, "[image:");
@@ -2295,6 +2404,12 @@ fn tui_state_terminal_show_images_true_shows_image_placeholders_in_tool_output()
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
                 ContentBlock::Text(TextContent::new("file contents")),
                 ContentBlock::Image(ImageContent {
                     data: "aGVsbG8=".to_string(),
@@ -2312,10 +2427,11 @@ fn tui_state_terminal_show_images_true_shows_image_placeholders_in_tool_output()
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool read output:");
+    assert_after_contains(&harness, &step, "Read(");
     assert_after_contains(&harness, &step, "file contents");
     let has_placeholder = step.after.contains("[image: image/png]");
     let has_kitty = step.after.contains("\u{1b}_G");
@@ -2361,6 +2477,12 @@ fn tui_state_terminal_show_images_false_reports_multiple_hidden_images() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
                 ContentBlock::Text(TextContent::new("file contents")),
                 ContentBlock::Image(ImageContent {
                     data: "aGVsbG8=".to_string(),
@@ -2382,10 +2504,11 @@ fn tui_state_terminal_show_images_false_reports_multiple_hidden_images() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool read output:");
+    assert_after_contains(&harness, &step, "Read(");
     assert_after_contains(&harness, &step, "2 image(s) hidden");
     assert_after_not_contains(&harness, &step, "[image:");
 }
@@ -2421,10 +2544,18 @@ fn tui_state_terminal_show_images_false_still_renders_tool_output_when_only_imag
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Image(ImageContent {
-                data: "aGVsbG8=".to_string(),
-                mime_type: "image/png".to_string(),
-            })],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Image(ImageContent {
+                    data: "aGVsbG8=".to_string(),
+                    mime_type: "image/png".to_string(),
+                }),
+            ],
             details: None,
         },
     );
@@ -2436,10 +2567,11 @@ fn tui_state_terminal_show_images_false_still_renders_tool_output_when_only_imag
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool read output:");
+    assert_after_contains(&harness, &step, "Read(");
     assert_after_contains(&harness, &step, "1 image(s) hidden");
 }
 
@@ -2467,7 +2599,7 @@ fn tui_state_agent_done_appends_assistant_message_and_updates_usage() {
             error_message: None,
         },
     );
-    assert_after_contains(&harness, &step, "Assistant:");
+    assert_after_contains(&harness, &step, "\u{25cf}");
     assert_after_contains(&harness, &step, "final");
     assert_after_contains(&harness, &step, "Tokens: 5 in / 7 out");
 }
@@ -2501,7 +2633,7 @@ fn tui_state_agent_done_replaces_stream_buffer_without_duplicate_marker() {
         },
     );
 
-    assert_after_not_contains(&harness, &step, "Processing...");
+    assert_after_not_contains(&harness, &step, "Working");
     assert_after_contains(&harness, &step, SINGLE_LINE_HINT);
     let finalized_marker_count = app
         .conversation_messages_for_test()
@@ -2552,7 +2684,7 @@ fn tui_state_agent_done_error_without_response_adds_error_message() {
             error_message: Some("boom".to_string()),
         },
     );
-    assert_after_contains(&harness, &step, "Error: boom");
+    assert_after_contains(&harness, &step, "boom");
     assert_after_contains(&harness, &step, "boom");
 }
 
@@ -2582,7 +2714,13 @@ fn tui_state_agent_done_error_with_response_does_not_duplicate_error_system_mess
         },
     );
     assert_after_contains(&harness, &step, "partial");
-    assert_after_not_contains(&harness, &step, "Error: boom");
+    // the failure belongs in the status line, once, not as a second transcript row
+    assert_eq!(
+        step.after.matches("boom").count(),
+        1,
+        "the error must be said exactly once:\n{}",
+        step.after
+    );
 }
 
 #[test]
@@ -2599,7 +2737,7 @@ fn tui_state_agent_error_adds_system_error_message_and_returns_idle() {
         "PiMsg::AgentError",
         PiMsg::AgentError("boom".to_string()),
     );
-    assert_after_contains(&harness, &step, "Error: boom");
+    assert_after_contains(&harness, &step, "boom");
     assert_after_contains(&harness, &step, SINGLE_LINE_HINT);
 }
 
@@ -2638,8 +2776,8 @@ fn tui_state_conversation_reset_replaces_messages_sets_usage_and_status() {
     );
     assert_after_contains(&harness, &step, "reset ok");
     assert_after_contains(&harness, &step, "Tokens: 11 in / 22 out");
-    assert_after_contains(&harness, &step, "You: u1");
-    assert_after_contains(&harness, &step, "Assistant:");
+    assert_after_contains(&harness, &step, "u1");
+    assert_after_contains(&harness, &step, "\u{25cf}");
     assert_after_contains(&harness, &step, "a1");
 }
 
@@ -2670,8 +2808,8 @@ fn tui_state_run_pending_text_submits_next_input() {
     log_initial_state(&harness, &app);
 
     let step = apply_pi(&harness, &mut app, "PiMsg::RunPending", PiMsg::RunPending);
-    assert_after_contains(&harness, &step, "You: hello");
-    assert_after_contains(&harness, &step, "Processing...");
+    assert_after_contains(&harness, &step, "hello");
+    assert_after_contains(&harness, &step, "Working");
 }
 
 #[test]
@@ -2686,14 +2824,15 @@ fn tui_state_run_pending_content_submits_next_input() {
     log_initial_state(&harness, &app);
 
     let step = apply_pi(&harness, &mut app, "PiMsg::RunPending", PiMsg::RunPending);
-    assert_after_contains(&harness, &step, "You: hello");
-    assert_after_contains(&harness, &step, "Processing...");
+    assert_after_contains(&harness, &step, "hello");
+    assert_after_contains(&harness, &step, "Working");
 }
 
 #[test]
 fn tui_state_system_message_appends_without_processing() {
     let harness = TestHarness::new("tui_state_system_message_appends_without_processing");
-    let message = "OAuth token for anthropic has expired. Run /login anthropic to re-authenticate.";
+    // short enough that the transcript's own wrapping cannot split the assertion
+    let message = "OAuth token for anthropic has expired.";
     let mut app = build_app(&harness, Vec::new());
     log_initial_state(&harness, &app);
 
@@ -2704,7 +2843,7 @@ fn tui_state_system_message_appends_without_processing() {
         PiMsg::System(message.to_string()),
     );
     assert_after_contains(&harness, &step, message);
-    assert_after_not_contains(&harness, &step, "Processing...");
+    assert_after_not_contains(&harness, &step, "Working");
 }
 
 #[test]
@@ -2800,7 +2939,7 @@ fn tui_refresh_failure_shows_recovery_message() {
         PiMsg::System(recovery.to_string()),
     );
     assert_after_contains(&harness, &step, "/login anthropic");
-    assert_after_not_contains(&harness, &step, "Processing...");
+    assert_after_not_contains(&harness, &step, "Working");
 
     log_auth_test_event(
         test_name,
@@ -2961,7 +3100,7 @@ fn tui_state_slash_model_no_args_shows_configured_only_message_when_none_availab
     assert_after_contains(
         &harness,
         &step,
-        "Only showing models that are ready to use (see README for details)",
+        "Showing models with credentials configured",
     );
 }
 
@@ -2997,7 +3136,7 @@ fn tui_state_slash_model_no_args_opens_configured_only_selector() {
     assert_after_contains(
         &harness,
         &step,
-        "Only showing models that are ready to use (see README for details)",
+        "Showing models with credentials configured",
     );
     assert_after_contains(&harness, &step, "openai/gpt-a");
     assert_after_not_contains(&harness, &step, "  anthropic/claude-a");
@@ -3322,7 +3461,7 @@ fn tui_state_slash_history_shows_previous_inputs() {
 
     type_text(&harness, &mut app, "hello");
     let step = press_enter(&harness, &mut app);
-    assert_after_contains(&harness, &step, "You: hello");
+    assert_after_contains(&harness, &step, "hello");
 
     // Return to idle deterministically (we don't need real provider output for this test).
     apply_pi(
@@ -3365,7 +3504,7 @@ fn tui_state_slash_settings_opens_selector_and_restores_editor() {
     // Navigate to Theme and open the picker.
     press_down(&harness, &mut app);
     let step = press_enter(&harness, &mut app);
-    assert_after_contains(&harness, &step, "Select Theme");
+    assert_after_contains(&harness, &step, "Select theme");
     assert_after_contains(&harness, &step, "dark (built-in)");
     assert_after_contains(&harness, &step, "light (built-in)");
     assert_after_not_contains(&harness, &step, SINGLE_LINE_HINT);
@@ -3629,11 +3768,7 @@ fn tui_state_slash_share_creates_gist_and_reports_urls_and_cleans_temp_file() {
     let step = apply_pi(&harness, &mut app, "PiMsg share result", msg);
     assert_after_contains(&harness, &step, "Created private gist");
     assert_after_contains(&harness, &step, "Share URL:");
-    assert_after_contains(
-        &harness,
-        &step,
-        "https://buildwithpi.ai/session/#abcdef1234567890",
-    );
+    assert_after_contains(&harness, &step, "https://gist.github.com/abcdef1234567890");
     assert_after_contains(&harness, &step, "Gist:");
     assert_after_contains(
         &harness,
@@ -3826,7 +3961,7 @@ fn tui_state_slash_share_includes_gist_description() {
         "expected --desc flag in gh args, got: {recorded_args}"
     );
     assert!(
-        recorded_args.contains("Pi session: my-debug-session"),
+        recorded_args.contains("KESA session: my-debug-session"),
         "expected session name in gist description, got: {recorded_args}"
     );
 
@@ -4172,7 +4307,7 @@ fn tui_state_slash_clear_clears_conversation_and_sets_status() {
     type_text(&harness, &mut app, "/clear");
     let step = press_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, "Conversation cleared");
-    assert_after_contains(&harness, &step, "Welcome to KESA!");
+    assert_after_contains(&harness, &step, "Welcome to KESA");
     assert_after_contains(&harness, &step, "Ask for a change");
 }
 
@@ -4196,7 +4331,7 @@ fn tui_state_slash_new_resets_conversation_and_sets_status() {
     type_text(&harness, &mut app, "/new");
     let step = press_enter(&harness, &mut app);
     assert_after_contains(&harness, &step, "Started new session");
-    assert_after_not_contains(&harness, &step, "You: hello");
+    assert_after_not_contains(&harness, &step, "hello");
     assert_after_not_contains(&harness, &step, "world");
     assert_after_contains(&harness, &step, "Model set to dummy/dummy-model");
     assert_after_contains(&harness, &step, "Thinking level: off");
@@ -4244,7 +4379,7 @@ export default function init(pi) {
         .expect("expected System message after cancelled new");
     let step = apply_pi(&harness, &mut app, "PiMsg::System", system);
     assert_after_contains(&harness, &step, "Session switch cancelled by extension");
-    assert_after_contains(&harness, &step, "You: hello");
+    assert_after_contains(&harness, &step, "hello");
     assert_after_contains(&harness, &step, "world");
     assert_after_not_contains(&harness, &step, "Started new session");
 }
@@ -4292,7 +4427,7 @@ export default function init(pi) {
         .expect("expected ConversationReset after new session");
     let step = apply_pi(&harness, &mut app, "PiMsg::ConversationReset", reset);
     assert_after_contains(&harness, &step, "Started new session");
-    assert_after_not_contains(&harness, &step, "You: hello");
+    assert_after_not_contains(&harness, &step, "hello");
     assert_after_not_contains(&harness, &step, "world");
 }
 
@@ -4576,7 +4711,7 @@ fn tui_state_status_message_clears_on_any_keypress() {
 
     let step = type_text(&harness, &mut app, "x");
     assert_eq!(app.status_message(), None);
-    assert_after_contains(&harness, &step, "No matching models.");
+    assert_after_contains(&harness, &step, "No matching models");
 }
 
 #[test]
@@ -4604,7 +4739,15 @@ fn tui_state_tool_update_with_progress_shows_elapsed_and_lines() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("some output"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("some output")),
+            ],
             details: Some(json!({
                 "progress": {
                     "elapsedMs": 5000,
@@ -4645,7 +4788,15 @@ fn tui_state_tool_progress_hidden_under_one_second() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("quick"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("quick")),
+            ],
             details: Some(json!({
                 "progress": {
                     "elapsedMs": 500,
@@ -4686,7 +4837,15 @@ fn tui_state_tool_update_without_progress_keeps_spinner_without_metrics() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("still running"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("still running")),
+            ],
             details: Some(json!({
                 "note": "no progress payload here"
             })),
@@ -4721,7 +4880,15 @@ fn tui_state_tool_progress_reset_on_new_tool_start() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("out"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("out")),
+            ],
             details: Some(json!({
                 "progress": {
                     "elapsedMs": 10000,
@@ -4741,6 +4908,7 @@ fn tui_state_tool_progress_reset_on_new_tool_start() {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
     let step = apply_pi(
@@ -4783,7 +4951,15 @@ fn tui_state_tool_update_with_progress_shows_bytes_when_lines_missing() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("byte-only progress"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("byte-only progress")),
+            ],
             details: Some(json!({
                 "progress": {
                     "elapsedMs": 5000,
@@ -4822,7 +4998,15 @@ fn tui_state_tool_update_with_progress_shows_timeout_suffix() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("timeout progress"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("timeout progress")),
+            ],
             details: Some(json!({
                 "progress": {
                     "elapsedMs": 5000,
@@ -4867,11 +5051,11 @@ fn tui_state_capability_prompt_shows_overlay() {
     );
 
     // Modal should render with key elements.
-    assert_after_contains(&harness, &step, "Extension Permission Request");
+    assert_after_contains(&harness, &step, "requests");
     assert_after_contains(&harness, &step, "my-ext");
     assert_after_contains(&harness, &step, "exec");
-    assert_after_contains(&harness, &step, "Allow Once");
-    assert_after_contains(&harness, &step, "Deny");
+    assert_after_contains(&harness, &step, "allow it this once");
+    assert_after_contains(&harness, &step, "No, not this time");
 }
 
 #[test]
@@ -4903,7 +5087,7 @@ fn tui_state_capability_prompt_navigate_buttons() {
         "key:Right",
         KeyMsg::from_type(KeyType::Right),
     );
-    assert_after_contains(&harness, &step, "Allow Always");
+    assert_after_contains(&harness, &step, "allow it every time");
 
     // Press Right again to move to Deny.
     let step = apply_key(
@@ -4912,7 +5096,7 @@ fn tui_state_capability_prompt_navigate_buttons() {
         "key:Right",
         KeyMsg::from_type(KeyType::Right),
     );
-    assert_after_contains(&harness, &step, "Deny");
+    assert_after_contains(&harness, &step, "No, not this time");
 }
 
 #[test]
@@ -4945,8 +5129,8 @@ fn tui_state_capability_prompt_escape_denies() {
         KeyMsg::from_type(KeyType::Esc),
     );
 
-    // Overlay should be dismissed (no more "Extension Permission Request").
-    assert_after_not_contains(&harness, &step, "Extension Permission Request");
+    // Overlay should be dismissed (no more "requests").
+    assert_after_not_contains(&harness, &step, "requests");
 }
 
 #[test]
@@ -4980,7 +5164,7 @@ fn tui_state_capability_prompt_enter_confirms() {
     );
 
     // Overlay should be dismissed.
-    assert_after_not_contains(&harness, &step, "Extension Permission Request");
+    assert_after_not_contains(&harness, &step, "requests");
 }
 
 #[test]
@@ -5006,7 +5190,7 @@ fn tui_state_generic_confirm_not_intercepted_as_capability() {
     );
 
     // Should NOT show the capability overlay — should fall through to the text-based flow.
-    assert_after_not_contains(&harness, &step, "Extension Permission Request");
+    assert_after_not_contains(&harness, &step, "requests");
 }
 
 #[test]
@@ -5035,7 +5219,7 @@ fn tui_state_capability_prompt_blocks_regular_input() {
     // Try typing regular text — should NOT appear in input area because modal is active.
     let step = apply_key(&harness, &mut app, "key:a", KeyMsg::from_runes(vec!['a']));
     // The prompt should still be visible, and normal text input should not be processed.
-    assert_after_contains(&harness, &step, "Extension Permission Request");
+    assert_after_contains(&harness, &step, "requests");
     // Input area should NOT be shown while prompt is open.
     assert_after_not_contains(&harness, &step, "> ");
 }
@@ -5092,7 +5276,7 @@ fn tui_state_capability_prompt_tab_cycles_buttons() {
     );
 
     // Overlay should be dismissed.
-    assert_after_not_contains(&harness, &step, "Extension Permission Request");
+    assert_after_not_contains(&harness, &step, "requests");
 }
 
 #[test]
@@ -5191,7 +5375,7 @@ fn tui_grad_branch_picker_blocked_during_processing() {
 
     assert_eq!(
         app.status_message(),
-        Some("Cannot switch branches while processing")
+        Some("Cannot switch branches while KESA is working")
     );
     assert!(!app.has_branch_picker());
 }
@@ -5250,7 +5434,7 @@ fn tui_grad_cycle_sibling_blocked_during_processing() {
 
     assert_eq!(
         app.status_message(),
-        Some("Cannot switch branches while processing")
+        Some("Cannot switch branches while KESA is working")
     );
 }
 
@@ -5653,9 +5837,17 @@ fn tui_grad_diff_pure_addition_renders_only_plus_lines() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in new_feature.rs.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(
+                    "Successfully replaced text in new_feature.rs.",
+                )),
+            ],
             details: Some(json!({
                 "diff": "+use std::io;\n+use std::fs;\n+\n+fn new_feature() {\n+    println!(\"hello\");\n+}"
             })),
@@ -5669,6 +5861,7 @@ fn tui_grad_diff_pure_addition_renders_only_plus_lines() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -5699,9 +5892,15 @@ fn tui_grad_diff_pure_removal_renders_only_minus_lines() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in legacy.rs.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Successfully replaced text in legacy.rs.")),
+            ],
             details: Some(json!({
                 "diff": "-fn deprecated_fn() {\n-    // old code\n-    todo!()\n-}"
             })),
@@ -5715,6 +5914,7 @@ fn tui_grad_diff_pure_removal_renders_only_minus_lines() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -5745,9 +5945,15 @@ fn tui_grad_diff_multiline_replacement_preserves_context() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in config.rs.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Successfully replaced text in config.rs.")),
+            ],
             details: Some(json!({
                 "diff": " fn configure() {\n-    let old_val = 42;\n+    let new_val = 99;\n     ok()\n }"
             })),
@@ -5761,6 +5967,7 @@ fn tui_grad_diff_multiline_replacement_preserves_context() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -5792,9 +5999,15 @@ fn tui_grad_diff_tool_error_omits_diff() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Error: old_string not found in file.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Error: old_string not found in file.")),
+            ],
             details: None,
         },
     );
@@ -5806,10 +6019,11 @@ fn tui_grad_diff_tool_error_omits_diff() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: true,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool edit");
+    assert_after_contains(&harness, &step, "Edit(");
     assert_after_contains(&harness, &step, "old_string not found");
     assert_after_not_contains(&harness, &step, "@@");
     assert_after_not_contains(&harness, &step, "Diff:");
@@ -5837,9 +6051,17 @@ fn tui_grad_diff_no_diff_key_shows_plain_output() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "total 24\ndrwxr-xr-x 3 user user 4096 Jan 1 00:00 src",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(
+                    "total 24\ndrwxr-xr-x 3 user user 4096 Jan 1 00:00 src",
+                )),
+            ],
             details: None,
         },
     );
@@ -5851,10 +6073,11 @@ fn tui_grad_diff_no_diff_key_shows_plain_output() {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "Tool bash output:");
+    assert_after_contains(&harness, &step, "Bash(");
     assert_after_contains(&harness, &step, "total 24");
     assert_after_not_contains(&harness, &step, "@@");
     assert_after_not_contains(&harness, &step, "Diff:");
@@ -5884,7 +6107,15 @@ fn tui_grad_progress_shows_metrics_when_elapsed_over_one_second() {
         PiMsg::ToolUpdate {
             name: "grep".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("searching..."))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "grep".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("searching...")),
+            ],
             details: Some(json!({
                 "progress": {
                     "elapsedMs": 5000,
@@ -5922,7 +6153,15 @@ fn tui_grad_progress_shows_timeout_when_present() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("running long command"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("running long command")),
+            ],
             details: Some(json!({
                 "progress": {
                     "elapsedMs": 3000,
@@ -5964,7 +6203,15 @@ fn tui_grad_collapse_multiple_tools_mixed_sizes() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("short output"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("short output")),
+            ],
             details: None,
         },
     );
@@ -5976,6 +6223,7 @@ fn tui_grad_collapse_multiple_tools_mixed_sizes() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
     apply_pi(
@@ -6006,7 +6254,15 @@ fn tui_grad_collapse_multiple_tools_mixed_sizes() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-2".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(numbered_lines(30)))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(numbered_lines(30))),
+            ],
             details: None,
         },
     );
@@ -6018,12 +6274,13 @@ fn tui_grad_collapse_multiple_tools_mixed_sizes() {
             name: "bash".to_string(),
             tool_id: "tool-2".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
     // Small output should be visible, large output should be collapsed.
     assert_after_contains(&harness, &step, "short output");
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
 }
 
 #[test]
@@ -6050,9 +6307,15 @@ fn tui_grad_collapse_global_toggle_affects_all_tool_blocks() {
             PiMsg::ToolUpdate {
                 name: "read".to_string(),
                 tool_id: format!("tool-{i}"),
-                content: vec![ContentBlock::Text(TextContent::new(format!(
-                    "output from tool {i}"
-                )))],
+                content: vec![
+                    ContentBlock::ToolCall(ToolCall {
+                        id: "tool-1".to_string(),
+                        name: "read".to_string(),
+                        arguments: json!({"path": "f.txt"}),
+                        thought_signature: None,
+                    }),
+                    ContentBlock::Text(TextContent::new(format!("output from tool {i}"))),
+                ],
                 details: None,
             },
         );
@@ -6064,6 +6327,7 @@ fn tui_grad_collapse_global_toggle_affects_all_tool_blocks() {
                 name: "read".to_string(),
                 tool_id: format!("tool-{i}"),
                 is_error: false,
+                failure_text: String::new(),
             },
         );
     }
@@ -6081,7 +6345,7 @@ fn tui_grad_collapse_global_toggle_affects_all_tool_blocks() {
 
     // Toggle collapse (Ctrl+O).
     let step = press_ctrlo(&harness, &mut app);
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
     assert_after_not_contains(&harness, &step, "output from tool 1");
     assert_after_not_contains(&harness, &step, "output from tool 2");
 
@@ -6113,7 +6377,15 @@ fn tui_grad_collapse_auto_collapsed_shows_preview_line_count() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(numbered_lines(25)))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(numbered_lines(25))),
+            ],
             details: None,
         },
     );
@@ -6125,10 +6397,11 @@ fn tui_grad_collapse_auto_collapsed_shows_preview_line_count() {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
     assert_after_contains(&harness, &step, "line 1");
     assert_after_contains(&harness, &step, "line 5");
     assert_after_not_contains(&harness, &step, "line 6");
@@ -6160,6 +6433,12 @@ fn tui_grad_image_default_config_shows_images() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
                 ContentBlock::Text(TextContent::new("screenshot captured")),
                 ContentBlock::Image(ImageContent {
                     data: "aGVsbG8=".to_string(),
@@ -6177,6 +6456,7 @@ fn tui_grad_image_default_config_shows_images() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -6216,6 +6496,12 @@ fn tui_grad_image_mixed_content_with_show_images_false_preserves_text() {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
             content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
                 ContentBlock::Text(TextContent::new("command output line 1")),
                 ContentBlock::Image(ImageContent {
                     data: "aGVsbG8=".to_string(),
@@ -6238,6 +6524,7 @@ fn tui_grad_image_mixed_content_with_show_images_false_preserves_text() {
             name: "bash".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -6272,7 +6559,15 @@ fn tui_grad_integration_multiple_tools_in_sequence() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("fn main() {}"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("fn main() {}")),
+            ],
             details: None,
         },
     );
@@ -6284,6 +6579,7 @@ fn tui_grad_integration_multiple_tools_in_sequence() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -6304,9 +6600,15 @@ fn tui_grad_integration_multiple_tools_in_sequence() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-2".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in main.rs.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Successfully replaced text in main.rs.")),
+            ],
             details: Some(json!({
                 "diff": "-fn main() {}\n+fn main() {\n+    println!(\"hello\");\n+}"
             })),
@@ -6320,6 +6622,7 @@ fn tui_grad_integration_multiple_tools_in_sequence() {
             name: "edit".to_string(),
             tool_id: "tool-2".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -6340,7 +6643,15 @@ fn tui_grad_integration_multiple_tools_in_sequence() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-3".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(numbered_lines(30)))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(numbered_lines(30))),
+            ],
             details: None,
         },
     );
@@ -6352,12 +6663,13 @@ fn tui_grad_integration_multiple_tools_in_sequence() {
             name: "bash".to_string(),
             tool_id: "tool-3".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
     assert_after_contains(&harness, &step, "fn main() {}");
     assert_after_contains(&harness, &step, "@@ main.rs @@");
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
 }
 
 #[test]
@@ -6391,9 +6703,17 @@ fn tui_grad_integration_branching_with_tool_diffs() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in branch_a.rs.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(
+                    "Successfully replaced text in branch_a.rs.",
+                )),
+            ],
             details: Some(json!({
                 "diff": "-old_branch_a_code\n+new_branch_a_code"
             })),
@@ -6407,6 +6727,7 @@ fn tui_grad_integration_branching_with_tool_diffs() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -6437,9 +6758,15 @@ fn tui_grad_integration_tool_error_then_success_sequence() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Error: old_string not found in file.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Error: old_string not found in file.")),
+            ],
             details: None,
         },
     );
@@ -6451,6 +6778,7 @@ fn tui_grad_integration_tool_error_then_success_sequence() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: true,
+            failure_text: String::new(),
         },
     );
 
@@ -6471,9 +6799,15 @@ fn tui_grad_integration_tool_error_then_success_sequence() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-2".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in retry.rs.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("Successfully replaced text in retry.rs.")),
+            ],
             details: Some(json!({
                 "diff": "-old_value\n+new_value"
             })),
@@ -6487,6 +6821,7 @@ fn tui_grad_integration_tool_error_then_success_sequence() {
             name: "edit".to_string(),
             tool_id: "tool-2".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -6525,9 +6860,17 @@ fn tui_grad_integration_diff_with_collapse_toggle() {
         PiMsg::ToolUpdate {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "Successfully replaced text in large_file.rs.",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "edit".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(
+                    "Successfully replaced text in large_file.rs.",
+                )),
+            ],
             details: Some(json!({ "diff": diff })),
         },
     );
@@ -6539,16 +6882,16 @@ fn tui_grad_integration_diff_with_collapse_toggle() {
             name: "edit".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
 
     // Toggle expand (Ctrl+O twice: first collapse globally, second expand all).
-    press_ctrlo(&harness, &mut app);
     let step = press_ctrlo(&harness, &mut app);
 
-    assert_after_not_contains(&harness, &step, "collapsed");
+    assert_after_not_contains(&harness, &step, "ctrl+o to expand");
     assert_after_contains(&harness, &step, "+new line");
 }
 
@@ -6606,7 +6949,11 @@ fn tui_state_model_selector_opens_on_ctrll() {
 
     let step = press_ctrll(&harness, &mut app);
     assert_after_contains(&harness, &step, "Select a model");
-    assert_after_contains(&harness, &step, "Only showing models that are ready to use");
+    assert_after_contains(
+        &harness,
+        &step,
+        "Showing models with credentials configured",
+    );
     assert_after_contains(&harness, &step, "anthropic/claude-a");
     assert_after_contains(&harness, &step, "openai/gpt-a");
 }
@@ -6974,7 +7321,7 @@ fn tui_state_header_shows_pi_and_model_name() {
         "key:noop",
         KeyMsg::from_runes(vec![' ']),
     );
-    assert_after_contains(&harness, &step, "Pi");
+    assert_after_contains(&harness, &step, "KESA");
     assert_after_contains(&harness, &step, "dummy-model");
 }
 
@@ -7080,9 +7427,15 @@ fn tui_state_tool_error_output_collapse_toggle() {
         PiMsg::ToolUpdate {
             name: "bash".to_string(),
             tool_id: "tool-err-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "command not found: foobar",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "bash".to_string(),
+                    arguments: json!({"command": "ls -la"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("command not found: foobar")),
+            ],
             details: None,
         },
     );
@@ -7094,6 +7447,7 @@ fn tui_state_tool_error_output_collapse_toggle() {
             name: "bash".to_string(),
             tool_id: "tool-err-1".to_string(),
             is_error: true,
+            failure_text: String::new(),
         },
     );
     // Error tool output is shown.
@@ -7101,12 +7455,12 @@ fn tui_state_tool_error_output_collapse_toggle() {
 
     // Ctrl+O collapses.
     let step = press_ctrlo(&harness, &mut app);
-    assert_after_contains(&harness, &step, "collapsed");
+    assert_after_contains(&harness, &step, "ctrl+o to expand");
     assert_after_not_contains(&harness, &step, "command not found: foobar");
 
     // Ctrl+O re-expands.
     let step = press_ctrlo(&harness, &mut app);
-    assert_after_not_contains(&harness, &step, "collapsed");
+    assert_after_not_contains(&harness, &step, "ctrl+o to expand");
     assert_after_contains(&harness, &step, "command not found: foobar");
 }
 
@@ -7133,7 +7487,15 @@ fn tui_state_multiple_tool_blocks_collapse_together() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("contents of file A"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("contents of file A")),
+            ],
             details: None,
         },
     );
@@ -7145,6 +7507,7 @@ fn tui_state_multiple_tool_blocks_collapse_together() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -7165,9 +7528,15 @@ fn tui_state_multiple_tool_blocks_collapse_together() {
         PiMsg::ToolUpdate {
             name: "grep".to_string(),
             tool_id: "tool-2".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "match found at line 42",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "grep".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("match found at line 42")),
+            ],
             details: None,
         },
     );
@@ -7179,6 +7548,7 @@ fn tui_state_multiple_tool_blocks_collapse_together() {
             name: "grep".to_string(),
             tool_id: "tool-2".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -7229,7 +7599,15 @@ fn tui_state_thinking_and_tool_toggles_independent() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new("file data"))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new("file data")),
+            ],
             details: None,
         },
     );
@@ -7241,6 +7619,7 @@ fn tui_state_thinking_and_tool_toggles_independent() {
             name: "read".to_string(),
             tool_id: "tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -7340,7 +7719,11 @@ fn tui_state_model_selector_blocked_during_processing() {
 
     // Ctrl+L while processing should be blocked.
     let step = press_ctrll(&harness, &mut app);
-    assert_after_contains(&harness, &step, "Cannot switch models while processing");
+    assert_after_contains(
+        &harness,
+        &step,
+        "Cannot switch models while KESA is working",
+    );
     assert_after_not_contains(&harness, &step, "Select a model");
 }
 
@@ -7487,9 +7870,17 @@ fn tui_perf_memory_pressure_forces_degraded() {
         PiMsg::ToolUpdate {
             name: "read".to_string(),
             tool_id: "perf-tool-1".to_string(),
-            content: vec![ContentBlock::Text(TextContent::new(
-                "line-1: keep this deterministic\nline-2: will be collapsed under pressure",
-            ))],
+            content: vec![
+                ContentBlock::ToolCall(ToolCall {
+                    id: "tool-1".to_string(),
+                    name: "read".to_string(),
+                    arguments: json!({"path": "f.txt"}),
+                    thought_signature: None,
+                }),
+                ContentBlock::Text(TextContent::new(
+                    "line-1: keep this deterministic\nline-2: will be collapsed under pressure",
+                )),
+            ],
             details: None,
         },
     );
@@ -7501,6 +7892,7 @@ fn tui_perf_memory_pressure_forces_degraded() {
             name: "read".to_string(),
             tool_id: "perf-tool-1".to_string(),
             is_error: false,
+            failure_text: String::new(),
         },
     );
 
@@ -8035,12 +8427,12 @@ fn tui_agent_done_final_message_visible_after_finalization() {
 
     // The final response must be present in the finalized view.
     assert_after_contains(&harness, &step, unique_text);
-    // Must show "Assistant:" label.
-    assert_after_contains(&harness, &step, "Assistant:");
+    // Must show "\u{25cf}" label.
+    assert_after_contains(&harness, &step, "\u{25cf}");
     // Must show the input prompt (agent is idle).
     assert_after_contains(&harness, &step, SINGLE_LINE_HINT);
     // Must NOT show the processing spinner.
-    assert_after_not_contains(&harness, &step, "Processing...");
+    assert_after_not_contains(&harness, &step, "Working");
 }
 
 #[test]
@@ -9031,7 +9423,7 @@ fn tui_perf_large_session_frame_budget_surfaces_emit_evidence() {
         "large model selector should stay open"
     );
     assert!(
-        model_view.contains("No matching models."),
+        model_view.contains("No matching models"),
         "large model selector should render empty filtered state"
     );
 
@@ -9403,7 +9795,7 @@ fn tui_frame_budget_snapshot_covers_large_session_surfaces() {
     assert_view_fits("tool_preview", &tool_view, 40);
     let tool_view_normalized = normalize_view(&tool_view);
     assert!(
-        tool_view_normalized.contains("collapsed"),
+        tool_view_normalized.contains("ctrl+o to expand"),
         "large tool-output previews should render collapsed state"
     );
     let tool_snapshot = app.frame_budget_snapshot_for_test(
@@ -9679,6 +10071,7 @@ fn tui_perf_e2e_degradation_under_load() {
                 name: format!("read-{idx}"),
                 tool_id: format!("e2e-tool-{idx}"),
                 is_error: false,
+                failure_text: String::new(),
             },
         );
     }

@@ -19,8 +19,8 @@ expression: view
 
 
 
-  Assistant:
-  Streaming response...
+
+  ● Streaming response...
     Working (0s · esc to interrupt)
   ╭ default · think off · Enter send · \+Enter newline · @file context ──────╮
   │ > Type a message... (/help, /exit)                                       │

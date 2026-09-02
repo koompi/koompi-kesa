@@ -229,6 +229,19 @@ impl AutocompleteState {
         self.selected.and_then(|idx| self.items.get(idx))
     }
 
+    /// True when accepting the highlighted item would change nothing, because
+    /// the user already typed it in full. Row 0 is preselected so the popup can
+    /// show a description, which would otherwise make Enter a no-op that eats
+    /// the keystroke instead of submitting.
+    pub(super) fn selection_is_already_typed(&self, input: &str) -> bool {
+        let Some(item) = self.selected_item() else {
+            return false;
+        };
+        input
+            .get(self.replace_range.clone())
+            .is_some_and(|typed| typed.trim() == item.insert.trim())
+    }
+
     /// Returns the scroll offset for the dropdown view.
     pub(super) const fn scroll_offset(&self) -> usize {
         match self.selected {
@@ -622,11 +635,11 @@ impl CapabilityAction {
 pub(super) enum ApprovalAction {
     Once,
     Session,
-    Reject,
+    Deny,
 }
 
 impl ApprovalAction {
-    pub(super) const ALL: [Self; 3] = [Self::Once, Self::Session, Self::Reject];
+    pub(super) const ALL: [Self; 3] = [Self::Once, Self::Session, Self::Deny];
 }
 
 /// Modal overlay asking whether one tool call may run.
@@ -656,7 +669,7 @@ pub(super) struct ToolApprovalOverlay {
 impl ToolApprovalOverlay {
     pub(super) fn new(prompt: ToolApprovalPrompt, cwd: &Path) -> Self {
         let tool_name = prompt.request.tool_name.clone();
-        let mut overlay = Self {
+        let overlay = Self {
             summary: summarize_tool_arguments(&tool_name, &prompt.request.arguments),
             detail: approval_detail_rows(&tool_name, &prompt.request.arguments, cwd),
             session_rule: session_rule_for(&tool_name, &prompt.request.arguments),
@@ -665,10 +678,21 @@ impl ToolApprovalOverlay {
             reply: Some(prompt.reply),
             focused: 0,
         };
-        if let Some(warning) = overlay.sandbox_warning() {
-            overlay.summary = format!("{}   [{warning}]", overlay.summary);
-        }
         overlay
+    }
+
+    /// The summary the modal draws, one entry per rendered line, never empty.
+    /// The sandbox warning is its own line so a multi-line command does not
+    /// bury it at the end of its last row.
+    pub(super) fn summary_lines(&self) -> Vec<String> {
+        let mut lines: Vec<String> = self.summary.lines().map(str::to_string).collect();
+        if lines.is_empty() {
+            lines.push(String::new());
+        }
+        if let Some(warning) = self.sandbox_warning() {
+            lines.push(format!("[{warning}]"));
+        }
+        lines
     }
 
     /// Why this command will run unconfined. `None` when it will be confined,
@@ -719,7 +743,7 @@ impl ToolApprovalOverlay {
                     )
                 },
             ),
-            ApprovalAction::Reject => "No, and tell the agent what to do instead".to_string(),
+            ApprovalAction::Deny => "No, and tell the agent what to do instead".to_string(),
         }
     }
 }
@@ -1786,6 +1810,25 @@ mod tests {
         assert!(overlay.detail.is_empty(), "unchanged for every other tool");
     }
 
+    #[test]
+    fn a_multi_line_command_becomes_one_approval_row_per_line() {
+        let overlay = approval_overlay(
+            "bash",
+            serde_json::json!({"command": "set -e\ncargo build\ncargo test"}),
+        );
+        assert_eq!(
+            overlay.summary_lines()[..3],
+            ["set -e", "cargo build", "cargo test"],
+            "the box draws one line per row, so the summary must be split"
+        );
+    }
+
+    #[test]
+    fn an_empty_summary_still_takes_one_approval_row() {
+        let overlay = approval_overlay("read", serde_json::json!({"path": ""}));
+        assert_eq!(overlay.summary_lines().len(), 1);
+    }
+
     /// Approving a command is the one moment the sandbox's state changes an
     /// outcome, so the modal has to carry it rather than assume the statusline
     /// was read.
@@ -1796,16 +1839,20 @@ mod tests {
         println!("{}", overlay.summary);
         println!("{}", overlay.label(ApprovalAction::Once));
 
-        assert!(overlay.summary.starts_with("ls -la"));
+        assert_eq!(overlay.summary, "ls -la");
         let word = if status.is_enforcing() {
             assert_eq!(overlay.sandbox_warning(), None);
-            assert_eq!(overlay.summary, "ls -la");
+            assert_eq!(overlay.summary_lines(), ["ls -la"]);
             "sandboxed"
         } else {
             let warning = overlay.sandbox_warning().expect("degraded owes a reason");
             assert!(warning.contains(status.short_label()));
             assert!(warning.contains(&status.describe()));
-            assert!(overlay.summary.contains(&warning));
+            assert_eq!(
+                overlay.summary_lines().last().map(String::as_str),
+                Some(format!("[{warning}]").as_str()),
+                "the warning is its own row"
+            );
             "unconfined"
         };
         for action in [ApprovalAction::Once, ApprovalAction::Session] {

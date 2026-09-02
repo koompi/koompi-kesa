@@ -261,6 +261,35 @@ impl AgentRoster {
         (running, done, failed)
     }
 
+    /// A transcript block for the children that were still in flight when the
+    /// tool ended. Esc kills them without a final `pi.subagent.result.v1`, so
+    /// without this the record of what was running is lost with the roster.
+    pub fn cancellation_block(&self) -> Option<String> {
+        let running: Vec<&AgentRow> = self
+            .rows
+            .values()
+            .filter(|row| row.status.is_running())
+            .collect();
+        if running.is_empty() {
+            return None;
+        }
+        let glyph = AgentStatus::Cancelled.glyph();
+        let mut out = format!(
+            "Subagent cancelled ({} of {} still running)",
+            running.len(),
+            self.rows.len()
+        );
+        for row in running {
+            out.push_str(&format!(
+                "\n  {glyph} {} \u{b7} {} \u{b7} {}",
+                row.agent,
+                row.model_label(),
+                row.elapsed_label()
+            ));
+        }
+        Some(out)
+    }
+
     pub fn summary_line(&self) -> String {
         let (running, done, failed) = self.tally();
         let mut parts = Vec::new();
@@ -283,6 +312,32 @@ impl AgentRoster {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn cancelling_leaves_a_record_of_what_was_in_flight() {
+        let mut roster = AgentRoster::default();
+        roster.apply(progress_row(&progress("counter", "running")).expect("row"));
+        roster.apply(progress_row(&progress("greeter", "running")).expect("row"));
+        roster.apply(progress_row(&progress("namer", "completed")).expect("row"));
+
+        let block = roster
+            .cancellation_block()
+            .expect("two children were still running");
+        assert!(block.contains("2 of 3 still running"), "{block}");
+        assert!(block.contains("counter"), "{block}");
+        assert!(block.contains("greeter"), "{block}");
+        assert!(
+            !block.contains("namer"),
+            "a finished child was not cancelled: {block}"
+        );
+    }
+
+    #[test]
+    fn nothing_running_leaves_no_cancellation_block() {
+        let mut roster = AgentRoster::default();
+        roster.apply(progress_row(&progress("namer", "completed")).expect("row"));
+        assert!(roster.cancellation_block().is_none());
+    }
+
     use super::*;
     use serde_json::json;
 

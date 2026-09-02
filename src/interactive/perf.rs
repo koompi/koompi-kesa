@@ -577,7 +577,7 @@ impl PiApp {
     #[allow(clippy::too_many_lines)]
     pub(super) fn handle_slash_compact(&mut self, args: &str) -> Option<Cmd> {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot compact while processing".to_string());
+            self.status_message = Some("Cannot compact while KESA is working".to_string());
             return None;
         }
 

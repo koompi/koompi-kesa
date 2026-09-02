@@ -745,6 +745,121 @@ fn enter_accepts_highlighted_autocomplete_item() {
 }
 
 #[test]
+fn thinking_before_a_tool_call_stays_above_the_tool_row() {
+    // Gate clause 3: a finished turn must read the same live as it does on
+    // --continue, and the replay path attaches thinking to the assistant
+    // message that carried the tool call.
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+
+    app.current_thinking.push_str("I should read the file.");
+    app.handle_pi_message(PiMsg::ToolStart {
+        name: "read".to_string(),
+        tool_id: "t1".to_string(),
+    });
+
+    let thinking_row = app
+        .messages
+        .iter()
+        .position(|message| message.thinking.is_some())
+        .expect("the pre-tool thinking became its own row");
+    assert!(
+        app.current_thinking.is_empty(),
+        "the buffer must not also keep it"
+    );
+
+    app.handle_pi_message(PiMsg::ToolEnd {
+        name: "read".to_string(),
+        tool_id: "t1".to_string(),
+        is_error: false,
+        failure_text: String::new(),
+    });
+    let tool_row = app
+        .messages
+        .iter()
+        .position(|message| message.role == MessageRole::Tool);
+    if let Some(tool_row) = tool_row {
+        assert!(
+            thinking_row < tool_row,
+            "thinking must precede the tool it led to"
+        );
+    }
+}
+
+#[test]
+fn a_contended_session_lock_never_reports_thinking_off_or_a_stopped_persist() {
+    let dir = tempdir();
+    let app = build_test_app(dir.path().to_path_buf());
+
+    app.session.try_lock().expect("idle").header.thinking_level = Some("high".to_string());
+
+    let footer = |app: &PiApp| {
+        let mut out = String::new();
+        app.render_footer_into_for_test(&mut out, None);
+        strip_ansi(&out)
+    };
+    let idle_input = strip_ansi(&app.render_input());
+    let idle_footer = footer(&app);
+
+    let held = app.session.try_lock().expect("the session is idle here");
+    let busy_input = strip_ansi(&app.render_input());
+    let busy_footer = footer(&app);
+    drop(held);
+
+    assert!(
+        idle_input.contains("think high"),
+        "the idle input box reads the session header: {idle_input}"
+    );
+    assert_eq!(
+        idle_input, busy_input,
+        "a busy lock must not change what the input box claims"
+    );
+    assert!(
+        !busy_footer.contains("Persist: unavailable"),
+        "a busy lock must not assert the session stopped persisting: {busy_footer}"
+    );
+    assert_eq!(idle_footer, busy_footer);
+}
+
+#[test]
+fn a_fully_typed_command_submits_on_the_first_enter() {
+    // Row 0 is preselected so the popup can show a description. Without this,
+    // a fully typed `/exit` has Enter accept the identical highlighted entry,
+    // which changes nothing and swallows the keystroke.
+    use crate::autocomplete::{AutocompleteItem, AutocompleteItemKind};
+    use bubbletea::{KeyMsg, KeyType, Message};
+
+    let dir = tempdir();
+    let mut app = build_test_app(dir.path().to_path_buf());
+
+    app.input.set_value("/exit");
+    app.autocomplete.open = true;
+    app.autocomplete.items = vec![AutocompleteItem {
+        kind: AutocompleteItemKind::SlashCommand,
+        label: "/exit".to_string(),
+        insert: "/exit".to_string(),
+        description: Some("Exit KESA".to_string()),
+    }];
+    app.autocomplete.selected = Some(0);
+    app.autocomplete.replace_range = 0..5;
+
+    assert!(
+        app.autocomplete
+            .selection_is_already_typed(&app.input.value()),
+        "the highlighted entry is exactly what was typed"
+    );
+
+    let _ = app.update(Message::new(KeyMsg::from_type(KeyType::Enter)));
+
+    assert!(!app.autocomplete.open, "the popup closes");
+    assert!(
+        app.input.value().is_empty(),
+        "the first Enter must submit, not re-accept: {:?}",
+        app.input.value()
+    );
+}
+
+#[test]
 fn enter_submits_when_no_autocomplete_item_highlighted() {
     // The dual contract for issue #61: when the dropdown is open but the
     // user has not navigated to any item (selected.is_none()), Enter must
@@ -891,6 +1006,7 @@ fn drive_tool_pressure(app: &mut PiApp, trace: &mut TuiDegradationDrillTrace) {
         name: "bash".to_string(),
         tool_id: "tool-pressure".to_string(),
         is_error: false,
+        failure_text: String::new(),
     });
     trace.event();
 }
@@ -1164,7 +1280,15 @@ fn a_partial_answer_keeps_its_failure_in_the_status_line() {
         error_message: Some("stream ended early".to_string()),
     });
 
-    assert_eq!(app.status_message.as_deref(), Some("stream ended early"));
+    let status = app.status_message.as_deref().expect("a status line");
+    assert!(
+        status.starts_with("stream ended early"),
+        "the provider's own words must survive: {status}"
+    );
+    assert!(
+        status.contains("Next: "),
+        "and the line must end in something to do: {status}"
+    );
     assert!(
         !app.messages
             .iter()

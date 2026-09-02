@@ -308,16 +308,6 @@ impl PiConsole {
         }
     }
 
-    /// Render assistant message start.
-    pub fn render_assistant_start(&self) {
-        if self.is_tty {
-            self.print_markup("[bold]Assistant:[/] ");
-        } else {
-            print!("Assistant: ");
-        }
-        let _ = io::stdout().flush();
-    }
-
     /// Clear the current line (for progress updates).
     pub fn clear_line(&self) {
         if self.is_tty {

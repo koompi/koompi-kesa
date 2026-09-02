@@ -54,7 +54,7 @@ impl PiApp {
     /// Open the model selector overlay.
     pub fn open_model_selector(&mut self) {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot switch models while processing".to_string());
+            self.status_message = Some("Cannot switch models while KESA is working".to_string());
             return;
         }
 
@@ -74,7 +74,7 @@ impl PiApp {
 
     pub(super) fn open_model_selector_configured_only(&mut self) {
         if self.agent_state != AgentState::Idle {
-            self.status_message = Some("Cannot switch models while processing".to_string());
+            self.status_message = Some("Cannot switch models while KESA is working".to_string());
             return;
         }
 
@@ -86,7 +86,7 @@ impl PiApp {
         let filtered = self.available_models_with_credentials();
         if filtered.is_empty() {
             self.status_message = Some(
-                "No models are ready to use. Configure credentials with /login <provider>."
+                "No model has credentials configured. Run /login <provider> to add one."
                     .to_string(),
             );
             return;
@@ -194,11 +194,9 @@ impl PiApp {
 
         let mut rows = vec![self.styles.title.render("Select a model")];
         if selector.configured_only() {
-            rows.push(
-                self.styles
-                    .muted
-                    .render("Only showing models ready to use. Run /login <provider> to add more."),
-            );
+            rows.push(self.styles.muted.render(
+                "Showing models with credentials configured. Run /login <provider> to add more.",
+            ));
         }
         rows.push(String::new());
 
@@ -216,7 +214,7 @@ impl PiApp {
         rows.push(String::new());
 
         if selector.filtered_len() == 0 {
-            rows.push(self.styles.muted_italic.render("No matching models."));
+            rows.push(self.styles.muted_italic.render("No matching models"));
         } else {
             let offset = selector.scroll_offset();
             let visible_count = selector.max_visible().min(selector.filtered_len());
@@ -246,6 +244,9 @@ impl PiApp {
                 let is_current = full.eq_ignore_ascii_case(&current_full);
                 let marker = if is_current { " *" } else { "" };
                 let mut row = format!("{prefix} {full}{marker}");
+                if crate::models::provider_credentials_are_unchecked(&key.provider) {
+                    row.push_str(" (credentials not checked)");
+                }
                 if let Some(badge) = selector
                     .routing_evidence_for(key)
                     .and_then(crate::model_routing::ModelRoutingEvidence::row_badge)
@@ -274,7 +275,7 @@ impl PiApp {
             }
             if selector.configured_only() {
                 counter_parts.push(format!(
-                    "{} of {} ready",
+                    "{} of {} shown",
                     selector.filtered_len(),
                     selector.source_total()
                 ));
@@ -301,7 +302,7 @@ impl PiApp {
                 rows.push(
                     self.styles
                         .muted
-                        .render(&format!("Model Name: {}", entry.model.name)),
+                        .render(&format!("Model name: {}", entry.model.name)),
                 );
 
                 if let Some(evidence) = selector.routing_evidence_for(selected) {
@@ -628,7 +629,11 @@ mod tests {
         drop(agent_guard);
 
         let session_guard = app.session.try_lock().expect("session lock");
-        assert_eq!(session_guard.header.thinking_level.as_deref(), Some("off"));
+        assert_eq!(
+            session_guard.header.thinking_level.as_deref(),
+            Some("high"),
+            "only the runtime clamps; the header keeps the level to restore"
+        );
     }
 
     #[test]
