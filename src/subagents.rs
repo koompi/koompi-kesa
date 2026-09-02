@@ -157,27 +157,32 @@ impl Tool for SubagentTool {
     }
 
     fn description(&self) -> &'static str {
-        "Delegate an isolated task to a named KESA child agent. Supports one task, bounded parallel tasks, or a sequential chain whose tasks may reference {previous}. Agent definitions live in $KESA_CODING_AGENT_DIR/agents/*.md or .kesa/agents/*.md."
+        "Delegate an isolated task to a named KESA child agent. Pick exactly one workflow per call: `agent`+`task` for one delegation, `tasks` for bounded parallel delegations, or `chain` for a sequence whose tasks may reference {previous}. Leave the other workflow's fields out entirely; do not send empty strings or empty arrays as placeholders. Agent definitions live in $KESA_CODING_AGENT_DIR/agents/*.md or .kesa/agents/*.md."
     }
 
     fn parameters(&self) -> Value {
         json!({
             "type": "object",
             "properties": {
-                "agent": {"type": "string", "description": "Named agent for a single delegation."},
-                "task": {"type": "string", "description": "Task for a single delegation."},
-                "tasks": {"type": "array", "maxItems": MAX_PARALLEL_TASKS, "items": {"$ref": "#/definitions/task"}, "description": "Independent tasks to run in parallel."},
-                "chain": {"type": "array", "maxItems": MAX_PARALLEL_TASKS, "items": {"$ref": "#/definitions/task"}, "description": "Sequential tasks; {previous} is replaced with the prior child output."},
-                "concurrency": {"type": "integer", "minimum": 1, "maximum": MAX_PARALLEL_TASKS},
-                "scope": {"type": "string", "enum": ["both", "user", "project"], "default": "both"}
+                "agent": {"type": "string", "minLength": 1, "description": "Named agent for a single delegation. Send together with `task`, and only when `tasks` and `chain` are omitted."},
+                "task": {"type": "string", "minLength": 1, "description": "Task for a single delegation. Send together with `agent`, and only when `tasks` and `chain` are omitted."},
+                "tasks": {"type": "array", "minItems": 1, "maxItems": MAX_PARALLEL_TASKS, "items": {"$ref": "#/definitions/task"}, "description": "Independent tasks to run in parallel. Send instead of `agent`+`task` and `chain`; omit it (never an empty array) when not running in parallel."},
+                "chain": {"type": "array", "minItems": 1, "maxItems": MAX_PARALLEL_TASKS, "items": {"$ref": "#/definitions/task"}, "description": "Sequential tasks; {previous} is replaced with the prior child output. Send instead of `agent`+`task` and `tasks`; omit it (never an empty array) when not chaining."},
+                "concurrency": {"type": "integer", "minimum": 1, "maximum": MAX_PARALLEL_TASKS, "description": "Parallel limit for `tasks`."},
+                "scope": {"type": "string", "enum": ["both", "user", "project"], "default": "both", "description": "Which agent directories to search."}
             },
+            "oneOf": [
+                {"required": ["agent", "task"]},
+                {"required": ["tasks"]},
+                {"required": ["chain"]}
+            ],
             "definitions": {
                 "task": {
                     "type": "object",
                     "required": ["agent", "task"],
                     "properties": {
-                        "agent": {"type": "string"},
-                        "task": {"type": "string"},
+                        "agent": {"type": "string", "minLength": 1},
+                        "task": {"type": "string", "minLength": 1},
                         "cwd": {"type": "string"}
                     }
                 }
@@ -242,56 +247,72 @@ struct SubagentRequest {
 }
 
 impl SubagentRequest {
+    /// Resolve the workflow from the request without mutating it.
+    ///
+    /// Tool-call generators that ignore `oneOf` (codex/GPT-5.5) fill every
+    /// declared field with `""` or `[]`. Those placeholders are treated as
+    /// absent here so the request still converges on one workflow. Anything
+    /// half-filled is an error that names what arrived, so the model can fix
+    /// the specific field instead of re-reading the rule.
     fn mode(&self) -> Result<RequestMode> {
-        let single = self
-            .agent
-            .as_ref()
-            .zip(self.task.as_ref())
-            .map(|(agent, task)| SubagentTask {
-                agent: agent.clone(),
-                task: task.clone(),
+        let agent = self.agent.as_deref().filter(|value| is_present(value));
+        let task = self.task.as_deref().filter(|value| is_present(value));
+        let tasks = present_tasks("tasks", self.tasks.as_deref())?;
+        let chain = present_tasks("chain", self.chain.as_deref())?;
+
+        let mut received = Vec::new();
+        match (agent, task) {
+            (Some(_), Some(_)) => received.push("agent+task"),
+            (Some(_), None) => received.push("agent without task"),
+            (None, Some(_)) => received.push("task without agent"),
+            (None, None) => {}
+        }
+        if tasks.is_some() {
+            received.push("tasks");
+        }
+        if chain.is_some() {
+            received.push("chain");
+        }
+        if received.is_empty() {
+            return Err(Error::tool(
+                "subagent",
+                "received none of agent+task, tasks, chain (empty strings and empty arrays count as absent); send exactly one of them",
+            ));
+        }
+        if received.len() > 1 || agent.is_some() != task.is_some() {
+            return Err(Error::tool(
+                "subagent",
+                format!(
+                    "received {}; send exactly one of agent+task, tasks, or chain",
+                    received.join(" and ")
+                ),
+            ));
+        }
+
+        if let Some((agent, task)) = agent.zip(task) {
+            return Ok(RequestMode::Single(SubagentTask {
+                agent: agent.to_string(),
+                task: task.to_string(),
                 cwd: None,
-            });
-        let selected = usize::from(single.is_some())
-            + usize::from(self.tasks.is_some())
-            + usize::from(self.chain.is_some());
-        if selected.ne(&1) {
-            return Err(Error::tool(
-                "subagent",
-                "Provide exactly one of agent+task, tasks, or chain.",
-            ));
+            }));
         }
-        if self.agent.is_some() != self.task.is_some() {
-            return Err(Error::tool(
-                "subagent",
-                "Single delegation requires both agent and task.",
-            ));
+        if let Some(tasks) = tasks {
+            if tasks.len() > MAX_PARALLEL_TASKS {
+                return Err(Error::tool(
+                    "subagent",
+                    format!("tasks must contain 1-{MAX_PARALLEL_TASKS} entries."),
+                ));
+            }
+            return Ok(RequestMode::Parallel(tasks));
         }
-        if let Some(tasks) = &self.tasks
-            && (tasks.is_empty() || tasks.len() > MAX_PARALLEL_TASKS)
-        {
-            return Err(Error::tool(
-                "subagent",
-                format!("tasks must contain 1-{MAX_PARALLEL_TASKS} entries."),
-            ));
-        }
-        if let Some(chain) = &self.chain
-            && (chain.is_empty() || chain.len() > MAX_PARALLEL_TASKS)
-        {
+        let chain = chain.unwrap_or_default();
+        if chain.len() > MAX_PARALLEL_TASKS {
             return Err(Error::tool(
                 "subagent",
                 format!("chain must contain 1-{MAX_PARALLEL_TASKS} entries."),
             ));
         }
-        Ok(single.map_or_else(
-            || {
-                self.tasks.as_ref().map_or_else(
-                    || RequestMode::Chain(self.chain.clone().unwrap_or_default()),
-                    |tasks| RequestMode::Parallel(tasks.clone()),
-                )
-            },
-            RequestMode::Single,
-        ))
+        Ok(RequestMode::Chain(chain))
     }
 
     fn mode_name(&self) -> Result<&'static str> {
@@ -307,6 +328,53 @@ enum RequestMode {
     Single(SubagentTask),
     Parallel(Vec<SubagentTask>),
     Chain(Vec<SubagentTask>),
+}
+
+/// A string field counts as sent only when it has non-whitespace content.
+fn is_present(value: &str) -> bool {
+    !value.trim().is_empty()
+}
+
+/// Normalise a `tasks`/`chain` array: drop items whose `agent` and `task`
+/// are both blank (model placeholders), treat an all-placeholder or empty
+/// array as absent, and reject anything half-filled by index.
+fn present_tasks(field: &str, items: Option<&[SubagentTask]>) -> Result<Option<Vec<SubagentTask>>> {
+    let Some(items) = items else {
+        return Ok(None);
+    };
+    let mut real = Vec::with_capacity(items.len());
+    let mut first_placeholder = None;
+    for (index, item) in items.iter().enumerate() {
+        match (is_present(&item.agent), is_present(&item.task)) {
+            (true, true) => real.push(item.clone()),
+            (false, false) => {
+                first_placeholder.get_or_insert(index);
+            }
+            (true, false) => {
+                return Err(Error::tool(
+                    "subagent",
+                    format!("received {field}[{index}] with agent but an empty task"),
+                ));
+            }
+            (false, true) => {
+                return Err(Error::tool(
+                    "subagent",
+                    format!("received {field}[{index}] with task but an empty agent"),
+                ));
+            }
+        }
+    }
+    if let Some(index) = first_placeholder
+        && !real.is_empty()
+    {
+        return Err(Error::tool(
+            "subagent",
+            format!(
+                "received {field}[{index}] with empty agent and task next to filled entries; drop it"
+            ),
+        ));
+    }
+    Ok((!real.is_empty()).then_some(real))
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -1191,13 +1259,38 @@ mod tests {
         );
     }
 
+    fn request(value: Value) -> SubagentRequest {
+        serde_json::from_value(value).expect("parse request")
+    }
+
+    fn mode_error(value: Value) -> String {
+        request(value)
+            .mode()
+            .err()
+            .expect("request must be rejected")
+            .to_string()
+    }
+
     #[test]
     fn request_requires_exactly_one_mode_and_renders_chain_context() {
-        let invalid: SubagentRequest = serde_json::from_value(json!({
+        let error = mode_error(json!({
             "agent": "scout", "task": "x", "tasks": [{"agent": "review", "task": "y"}]
-        }))
-        .expect("parse");
-        assert!(invalid.mode().is_err());
+        }));
+        assert!(error.contains("received agent+task and tasks"), "{error}");
+        let error = mode_error(json!({"agent": "scout"}));
+        assert!(error.contains("received agent without task"), "{error}");
+        let error = mode_error(json!({"task": "x", "chain": [{"agent": "a", "task": "b"}]}));
+        assert!(
+            error.contains("received task without agent and chain"),
+            "{error}"
+        );
+        let error = mode_error(json!({"concurrency": 2}));
+        assert!(
+            error.contains(
+                "received none of agent+task, tasks, chain (empty strings and empty arrays count as absent)"
+            ),
+            "{error}"
+        );
         let task = SubagentTask {
             agent: "review".to_string(),
             task: "review {previous}".to_string(),
@@ -1251,6 +1344,68 @@ mod tests {
     }
 
     #[test]
+    fn request_treats_blank_strings_and_placeholder_items_as_absent() {
+        // A string is present iff it trims to non-empty.
+        let error = mode_error(json!({"agent": "  ", "task": "x"}));
+        assert!(error.contains("received task without agent"), "{error}");
+        // Every field filled with a placeholder: none received, not a mode clash.
+        let error = mode_error(json!({
+            "agent": "", "task": "", "tasks": [{"agent": "", "task": ""}], "chain": []
+        }));
+        assert!(
+            error.contains("received none of agent+task, tasks, chain"),
+            "{error}"
+        );
+        // Placeholders beside one real workflow converge on that workflow.
+        let padded = request(json!({
+            "agent": "scout", "task": "x", "tasks": [], "chain": [{"agent": " ", "task": ""}]
+        }));
+        assert_eq!(padded.mode_name().expect("single"), "single");
+        assert_eq!(
+            padded.agent.as_deref(),
+            Some("scout"),
+            "mode() must not mutate"
+        );
+        assert_eq!(
+            padded.chain.as_ref().map(Vec::len),
+            Some(1),
+            "mode() must not mutate"
+        );
+        let padded = request(json!({
+            "agent": "", "task": "", "tasks": [{"agent": "", "task": ""}, {"agent": "r", "task": "y"}]
+        }));
+        assert!(
+            padded.mode().is_err(),
+            "placeholder mixed with real items must not be dropped"
+        );
+        let padded = request(json!({
+            "agent": "", "task": "", "tasks": [{"agent": "r", "task": "y"}], "chain": []
+        }));
+        assert_eq!(padded.mode_name().expect("parallel"), "parallel");
+        let padded = request(json!({
+            "chain": [{"agent": "r", "task": "y"}, {"agent": "s", "task": "{previous}"}], "tasks": []
+        }));
+        assert_eq!(padded.mode_name().expect("chain"), "chain");
+        // Exactly one blank field in an item is an error naming the index.
+        let error = mode_error(json!({"tasks": [{"agent": "r", "task": ""}]}));
+        assert!(error.contains("tasks[0]"), "{error}");
+        let error = mode_error(
+            json!({"chain": [{"agent": "r", "task": "y"}, {"agent": " ", "task": "z"}]}),
+        );
+        assert!(error.contains("chain[1]"), "{error}");
+        // A placeholder mixed with real items is an error naming the index.
+        let error =
+            mode_error(json!({"tasks": [{"agent": "r", "task": "y"}, {"agent": "", "task": ""}]}));
+        assert!(error.contains("tasks[1]"), "{error}");
+        // An empty array is absent even when a real mode is also empty.
+        let error = mode_error(json!({"tasks": [], "chain": [{"agent": "", "task": ""}]}));
+        assert!(
+            error.contains("received none of agent+task, tasks, chain"),
+            "{error}"
+        );
+    }
+
+    #[test]
     fn tool_schema_advertises_all_three_workflows() {
         let tool =
             SubagentTool::with_paths(PathBuf::from("."), PathBuf::from("."), PathBuf::from("pi"));
@@ -1258,6 +1413,81 @@ mod tests {
         assert!(schema["properties"].get("agent").is_some());
         assert!(schema["properties"].get("tasks").is_some());
         assert!(schema["properties"].get("chain").is_some());
+        assert_eq!(schema["additionalProperties"], json!(false));
+        assert_eq!(
+            schema["oneOf"],
+            json!([
+                {"required": ["agent", "task"]},
+                {"required": ["tasks"]},
+                {"required": ["chain"]}
+            ])
+        );
+        assert_eq!(schema["properties"]["agent"]["minLength"], json!(1));
+        assert_eq!(schema["properties"]["task"]["minLength"], json!(1));
+        assert_eq!(schema["properties"]["tasks"]["minItems"], json!(1));
+        assert_eq!(schema["properties"]["chain"]["minItems"], json!(1));
+        // The exclusion rule survives gateways that strip `oneOf` only if it
+        // is spelled out in prose wherever the model reads.
+        for field in ["agent", "task", "tasks", "chain"] {
+            let description = schema["properties"][field]["description"]
+                .as_str()
+                .expect("description");
+            assert!(description.contains("omit"), "{field}: {description}");
+        }
+        assert!(tool.description().contains("exactly one workflow"));
+    }
+
+    /// The schema and `mode()` must agree on every canonical (placeholder-free)
+    /// request. If either side drifts, this test catches it before a model does.
+    #[test]
+    fn tool_schema_and_runtime_mode_agree_on_canonical_requests() {
+        let tool =
+            SubagentTool::with_paths(PathBuf::from("."), PathBuf::from("."), PathBuf::from("pi"));
+        let validator = jsonschema::draft202012::options()
+            .build(&tool.parameters())
+            .expect("subagent schema compiles");
+        let canonical: [(Value, bool); 10] = [
+            (json!({"agent": "scout", "task": "x"}), true),
+            (
+                json!({"tasks": [{"agent": "r", "task": "y"}], "concurrency": 2}),
+                true,
+            ),
+            (
+                json!({"chain": [{"agent": "r", "task": "y"}, {"agent": "s", "task": "{previous}"}], "scope": "user"}),
+                true,
+            ),
+            (json!({"agent": "scout"}), false),
+            (json!({"task": "x"}), false),
+            (json!({"agent": "", "task": ""}), false),
+            (
+                json!({"agent": "scout", "task": "x", "tasks": [{"agent": "r", "task": "y"}]}),
+                false,
+            ),
+            (json!({"tasks": [], "chain": []}), false),
+            (json!({"tasks": [{"agent": "r", "task": ""}]}), false),
+            (
+                json!({"chain": [{"agent": "r", "task": "y"}, {"agent": "", "task": ""}]}),
+                false,
+            ),
+        ];
+        for (fixture, accepted) in canonical {
+            assert_eq!(
+                validator.is_valid(&fixture),
+                accepted,
+                "schema on {fixture}"
+            );
+            assert_eq!(
+                request(fixture.clone()).mode().is_ok(),
+                accepted,
+                "runtime on {fixture}"
+            );
+        }
+        // Placeholder padding is the one deliberate gap: the schema rejects it
+        // (so a compliant model never sends it) while the runtime tolerates it
+        // (so a non-compliant one still converges).
+        let padded = json!({"agent": "scout", "task": "x", "tasks": [], "chain": []});
+        assert!(!validator.is_valid(&padded));
+        assert!(request(padded).mode().is_ok());
     }
 
     #[test]
