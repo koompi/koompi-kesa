@@ -44,10 +44,13 @@ Uninstall with:
 EOF
 }
 
+# shift 2 with no value exits 1 silently under set -e
+need_value() { [ $# -ge 2 ] && [ -n "${2:-}" ] || die "$1 needs a value (try --help)"; }
+
 while [ $# -gt 0 ]; do
   case "$1" in
-    --version) VERSION="${2:-}"; shift 2 ;;
-    --dest)    DEST="${2:-}"; shift 2 ;;
+    --version) need_value "$@"; VERSION="$2"; shift 2 ;;
+    --dest)    need_value "$@"; DEST="$2"; shift 2 ;;
     --no-verify) NO_VERIFY=1; shift ;;
     --help|-h) usage; exit 0 ;;
     *) die "unknown option: $1 (try --help)" ;;
@@ -55,8 +58,7 @@ while [ $# -gt 0 ]; do
 done
 
 need() { command -v "$1" >/dev/null 2>&1 || die "$1 is required but not installed"; }
-need tar
-need uname
+for tool in tar uname mktemp install awk sed; do need "$tool"; done
 if command -v curl >/dev/null 2>&1; then
   FETCH() { curl -fsSL --retry 3 "$1" -o "$2"; }
   FETCH_STDOUT() { curl -fsSL --retry 3 "$1"; }
@@ -67,8 +69,7 @@ else
   die "curl or wget is required"
 fi
 
-# Platform. The release publishes Linux builds only; everything else is told
-# how to build from source rather than handed a binary that will not run.
+# linux-only releases
 os="$(uname -s)"
 arch="$(uname -m)"
 case "$os" in
@@ -92,10 +93,19 @@ if [ -z "$VERSION" ]; then
   [ -n "$VERSION" ] || die "could not resolve the latest release of ${OWNER}/${REPO}"
 fi
 
+# tags carry a leading v; a bare version would name a nonexistent asset
+case "$VERSION" in
+  v*) ;;
+  [0-9]*) VERSION="v${VERSION}" ;;
+esac
+
 ASSET="${BIN}-${VERSION}-${PLATFORM}.tar.gz"
-# KESA_DOWNLOAD_BASE points the download at a mirror. Bandwidth to GitHub from
-# Cambodia is the reason this exists.
+# mirror; github bandwidth from cambodia
 BASE="${KESA_DOWNLOAD_BASE:-https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}}"
+
+mkdir -p "$DEST" 2>/dev/null \
+  || die "cannot create the install directory ${DEST}; pass --dest with somewhere writable"
+[ -w "$DEST" ] || die "${DEST} is not writable; pass --dest with somewhere writable"
 
 TMP="$(mktemp -d)"
 cleanup() { rm -rf "$TMP"; }
@@ -128,19 +138,17 @@ fi
 tar -xzf "${TMP}/${ASSET}" -C "$TMP"
 [ -f "${TMP}/${BIN}" ] || die "${ASSET} does not contain a ${BIN} binary"
 
-mkdir -p "$DEST"
-# Install through a temp name and rename, so a running kesa is not clobbered
-# mid-write and an interrupted install cannot leave a truncated binary.
+# temp name then rename: never clobber a running kesa, never leave a partial one
 install -m 0755 "${TMP}/${BIN}" "${DEST}/.${BIN}.new"
 mv -f "${DEST}/.${BIN}.new" "${DEST}/${BIN}"
 ok "Installed ${DEST}/${BIN}"
 
-# A v0.2.0 install left `kode` here. It keeps working, against ~/.kode, which
-# is how somebody ends up running two agents with two diverging configs.
+# adoption copy happens on first run, not here
 if [ -e "${DEST}/kode" ]; then
   say ""
-  say "${DEST}/kode is left over from the old name. Your settings and sessions"
-  say "have been copied to ~/.kesa; remove the old binary once this one looks right:"
+  say "${DEST}/kode is left over from the old name. The first run of kesa copies"
+  say "~/.kode to ~/.kesa, leaving the original untouched. Once this one looks"
+  say "right, remove the old binary:"
   say "  ${C_BOLD}rm ${DEST}/kode${C_OFF}"
 fi
 
