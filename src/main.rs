@@ -255,6 +255,33 @@ fn validate_fetch_models_is_standalone(
     }
 }
 
+/// Report that Ctrl+C will not be caught for the rest of the process.
+///
+/// The three modes that install a handler lose the same thing when it fails, so
+/// they say the same thing: the key stops interrupting, and the way out is the
+/// terminal's own kill.
+fn warn_ctrlc_handler_unavailable(mode: &str, err: &ctrlc::Error) {
+    eprintln!(
+        "Warning: no Ctrl+C handler could be installed for {mode}, so Ctrl+C will not \
+         interrupt a running turn: {err}\n\
+         Stop KESA from another terminal, or close this one, if it stops responding."
+    );
+}
+
+/// Report a `models.json` the registry could not use.
+///
+/// The registry still loads: the built-in catalog stands and the user's
+/// overrides are the only thing dropped. Say that, rather than printing a parse
+/// error with no consequence attached.
+fn warn_models_json_ignored(models_path: &Path, error: &str) {
+    eprintln!(
+        "Warning: {} could not be read, so its model overrides are not in effect \
+         and the built-in catalog is being used instead.\n{error}\n\
+         Fix the file, or move it aside to silence this.",
+        models_path.display()
+    );
+}
+
 fn reload_model_registry_with_extra_entries(
     auth: &AuthStorage,
     models_path: &Path,
@@ -262,7 +289,7 @@ fn reload_model_registry_with_extra_entries(
 ) -> ModelRegistry {
     let mut registry = ModelRegistry::load(auth, Some(models_path.to_path_buf()));
     if let Some(error) = registry.error() {
-        eprintln!("Warning: models.json error: {error}");
+        warn_models_json_ignored(models_path, error);
     }
     if !extra_entries.is_empty() {
         registry.merge_entries(extra_entries.to_vec());
@@ -572,7 +599,7 @@ fn main_impl() -> Result<()> {
             let models_path = default_models_path(&Config::global_dir());
             if let Some(payload) = load_list_models_cache(&models_path) {
                 if let Some(error) = &payload.error {
-                    eprintln!("Warning: models.json error: {error}");
+                    warn_models_json_ignored(&models_path, error);
                 }
                 list_models_from_cached_rows(&payload.rows, pattern.as_deref());
                 return Ok(());
@@ -582,7 +609,7 @@ fn main_impl() -> Result<()> {
             let registry = ModelRegistry::load_for_listing(&auth, Some(models_path.clone()));
             let error = registry.error().map(std::string::ToString::to_string);
             if let Some(error) = &error {
-                eprintln!("Warning: models.json error: {error}");
+                warn_models_json_ignored(&models_path, error);
             }
 
             let mut models = registry.available_models();
@@ -649,7 +676,7 @@ fn main_impl() -> Result<()> {
             .iter()
             .all(|message| message.trim().is_empty())
     {
-        bail!("No input provided. Use: pi -p \"your message\" or pipe input via stdin");
+        bail!("No input provided. Run `kesa -p \"your message\"`, or pipe text on stdin.");
     }
 
     // Initialize logging (skip for ultra-fast paths like --version)
@@ -682,13 +709,23 @@ fn main_impl() -> Result<()> {
 
 fn print_error_with_hints(err: &anyhow::Error) {
     for cause in err.chain() {
-        if let Some(pi_error) = cause.downcast_ref::<kesa::error::Error>() {
-            eprint!("{}", kesa::error_hints::format_error_with_hints(pi_error));
+        if let Some(typed) = cause.downcast_ref::<kesa::error::Error>() {
+            eprint!("{}", kesa::error_hints::format_error_with_hints(typed));
             return;
         }
     }
 
-    eprintln!("{err:?}");
+    // Nothing typed in the chain. Flatten it into one line and render it the
+    // same way, so this path still says `Error:` and still offers hints rather
+    // than dumping an anyhow Debug chain at the user.
+    let mut message = err.to_string();
+    for cause in err.chain().skip(1) {
+        let _ = write!(&mut message, ": {cause}");
+    }
+    eprint!(
+        "{}",
+        kesa::error_hints::format_error_text_with_hints(&message)
+    );
 }
 
 fn exit_code_for_error(err: &anyhow::Error) -> i32 {
@@ -930,10 +967,10 @@ fn extension_policy_migration_guardrails(
         "profile_source": resolved.profile_source,
         "permissive_by_default_reason": "Fresh installs favor extension compatibility and custom UI out of the box.",
         "override_cli": {
-            "safe_strict_mode": "pi --extension-policy safe <your command>",
-            "balanced_prompt_mode": "pi --extension-policy balanced <your command>",
-            "balanced_with_dangerous_caps": "KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
-            "explicit_permissive": "pi --extension-policy permissive <your command>",
+            "safe_strict_mode": "kesa --extension-policy safe <your command>",
+            "balanced_prompt_mode": "kesa --extension-policy balanced <your command>",
+            "balanced_with_dangerous_caps": "KESA_EXTENSION_ALLOW_DANGEROUS=1 kesa --extension-policy balanced <your command>",
+            "explicit_permissive": "kesa --extension-policy permissive <your command>",
         },
         "settings_examples": {
             "default_permissive": policy_default_toggle_example(true),
@@ -943,7 +980,7 @@ fn extension_policy_migration_guardrails(
             "balanced_with_dangerous_caps": policy_config_example("balanced", true),
             "explicit_permissive": policy_config_example("permissive", false),
         },
-        "revert_to_safe_cli": "pi --extension-policy safe <your command>",
+        "revert_to_safe_cli": "kesa --extension-policy safe <your command>",
     })
 }
 
@@ -972,8 +1009,8 @@ fn capability_remediation(capability: Capability, decision: PolicyDecision) -> s
     let (to_allow_cli, to_allow_config, recommendation) = match (is_dangerous, decision) {
         (true, PolicyDecision::Deny) => (
             vec![
-                "KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
-                "pi --extension-policy permissive <your command>",
+                "KESA_EXTENSION_ALLOW_DANGEROUS=1 kesa --extension-policy balanced <your command>",
+                "kesa --extension-policy permissive <your command>",
             ],
             vec![
                 policy_config_example("balanced", true),
@@ -984,7 +1021,7 @@ fn capability_remediation(capability: Capability, decision: PolicyDecision) -> s
         (true, PolicyDecision::Prompt) => (
             vec![
                 "Approve the runtime capability prompt (Allow once/always).",
-                "pi --extension-policy permissive <your command>",
+                "kesa --extension-policy permissive <your command>",
             ],
             vec![
                 policy_config_example("balanced", true),
@@ -999,8 +1036,8 @@ fn capability_remediation(capability: Capability, decision: PolicyDecision) -> s
         ),
         (false, PolicyDecision::Deny) => (
             vec![
-                "pi --extension-policy balanced <your command>",
-                "pi --extension-policy permissive <your command>",
+                "kesa --extension-policy balanced <your command>",
+                "kesa --extension-policy permissive <your command>",
             ],
             vec![
                 policy_config_example("balanced", false),
@@ -1011,7 +1048,7 @@ fn capability_remediation(capability: Capability, decision: PolicyDecision) -> s
         (false, PolicyDecision::Prompt) => (
             vec![
                 "Approve the runtime capability prompt (Allow once/always).",
-                "pi --extension-policy permissive <your command>",
+                "kesa --extension-policy permissive <your command>",
             ],
             vec![
                 policy_config_example("balanced", false),
@@ -1028,11 +1065,11 @@ fn capability_remediation(capability: Capability, decision: PolicyDecision) -> s
 
     let to_restrict_cli = if is_dangerous {
         vec![
-            "pi --extension-policy balanced <your command>",
-            "pi --extension-policy safe <your command>",
+            "kesa --extension-policy balanced <your command>",
+            "kesa --extension-policy safe <your command>",
         ]
     } else {
-        vec!["pi --extension-policy safe <your command>"]
+        vec!["kesa --extension-policy safe <your command>"]
     };
     let to_restrict_config = if is_dangerous {
         vec![
@@ -1086,19 +1123,19 @@ fn print_resolved_extension_policy(resolved: &kesa::config::ResolvedExtensionPol
         {
             "profile": "safe",
             "summary": "Strict deny-by-default profile.",
-            "cli": "pi --extension-policy safe <your command>",
+            "cli": "kesa --extension-policy safe <your command>",
             "config_example": policy_config_example("safe", false),
         },
         {
             "profile": "balanced",
             "summary": "Prompt-based profile (legacy alias: standard).",
-            "cli": "pi --extension-policy balanced <your command>",
+            "cli": "kesa --extension-policy balanced <your command>",
             "config_example": policy_config_example("balanced", false),
         },
         {
             "profile": "permissive",
             "summary": "Allow-most profile for compatibility-first workflows.",
-            "cli": "pi --extension-policy permissive <your command>",
+            "cli": "kesa --extension-policy permissive <your command>",
             "config_example": policy_config_example("permissive", false),
         },
     ]);
@@ -1113,7 +1150,7 @@ fn print_resolved_extension_policy(resolved: &kesa::config::ResolvedExtensionPol
         "allow_dangerous": resolved.allow_dangerous,
         "profile_presets": profile_presets,
         "dangerous_capability_opt_in": {
-            "cli": "KESA_EXTENSION_ALLOW_DANGEROUS=1 pi --extension-policy balanced <your command>",
+            "cli": "KESA_EXTENSION_ALLOW_DANGEROUS=1 kesa --extension-policy balanced <your command>",
             "env_var": "KESA_EXTENSION_ALLOW_DANGEROUS=1",
             "config_example": policy_config_example("balanced", true),
         },
@@ -1140,7 +1177,7 @@ fn print_resolved_repair_policy(resolved: &kesa::config::ResolvedRepairPolicy) -
             "auto-safe": "Automatically apply safe fixes (e.g., config updates).",
             "auto-strict": "Automatically apply all fixes including code changes.",
         },
-        "cli_override": "pi --repair-policy <mode> <your command>",
+        "cli_override": "kesa --repair-policy <mode> <your command>",
         "env_var": "KESA_REPAIR_POLICY=<mode>",
     });
 
@@ -1254,7 +1291,10 @@ async fn run(
             if resource_cli.has_explicit_paths() {
                 return Err(anyhow::Error::new(err));
             }
-            eprintln!("Warning: Failed to load skills/prompts/themes/extensions: {err}");
+            eprintln!(
+                "Warning: no skills, prompts, themes or extensions were loaded: {err}\n\
+                 The session continues without them; `kesa doctor` reports which source failed."
+            );
             ResourceLoader::empty(config.enable_skill_commands())
         }
     };
@@ -1404,7 +1444,17 @@ async fn run(
             pruned_providers = ?pruned,
             "Pruned stale credentials during startup"
         );
+        // deleting a stored credential is not something to do silently
+        let backup = auth.back_up().unwrap_or(None);
         auth.save()?;
+        eprintln!(
+            "Removed {} expired credential(s): {}. Run /login <provider> to sign in again.",
+            pruned.len(),
+            pruned.join(", ")
+        );
+        if let Some(backup) = backup {
+            eprintln!("The previous file is at {}.", backup.display());
+        }
     }
 
     let global_dir = Config::global_dir();
@@ -1412,7 +1462,7 @@ async fn run(
     let models_path = default_models_path(&global_dir);
     let mut model_registry = ModelRegistry::load(&auth, Some(models_path.clone()));
     if let Some(error) = model_registry.error() {
-        eprintln!("Warning: models.json error: {error}");
+        warn_models_json_ignored(&models_path, error);
     }
     if let Some(pattern) = &cli.list_models {
         list_models(&model_registry, pattern.as_deref());
@@ -1471,7 +1521,7 @@ async fn run(
         cli.no_session = true;
     }
     if mode.eq("text") && initial.is_none() && messages.is_empty() {
-        bail!("No input provided. Use: pi -p \"your message\" or pipe input via stdin");
+        bail!("No input provided. Run `kesa -p \"your message\"`, or pipe text on stdin.");
     }
 
     let scoped_patterns = if let Some(models_arg) = &cli.models {
@@ -1922,7 +1972,10 @@ async fn run(
         if let Ok(mut guard) = OwnedMutexGuard::lock(Arc::clone(&session_handle), &cx).await
             && let Err(e) = guard.flush_autosave_on_shutdown().await
         {
-            eprintln!("Warning: Failed to flush session autosave: {e}");
+            eprintln!(
+                "Warning: the session's final save did not complete: {e}\n\
+                 The last messages of this turn may be missing from `--continue`."
+            );
         }
     }
 
@@ -2002,7 +2055,10 @@ fn spawn_session_index_maintenance() {
         if index.should_reindex(MAX_INDEX_AGE)
             && let Err(err) = index.reindex_all()
         {
-            eprintln!("Warning: failed to reindex session index: {err}");
+            eprintln!(
+                "Warning: the session index could not be rebuilt: {err}\n\
+                 `--resume` may list stale sessions until a later run rebuilds it."
+            );
         }
     });
 }
@@ -2482,7 +2538,7 @@ fn print_search_results(
     } else {
         "extensions"
     };
-    println!("\n  {count} {noun} found. Install with: pi install <name>");
+    println!("\n  {count} {noun} found. Install with: kesa install <name>");
 }
 
 fn handle_info_blocking(name: &str) -> Result<()> {
@@ -2491,11 +2547,11 @@ fn handle_info_blocking(name: &str) -> Result<()> {
         ExtensionInfoLookup::Found(entry) => print_extension_info(entry, &index),
         ExtensionInfoLookup::Ambiguous => {
             println!("Extension query \"{name}\" is ambiguous.");
-            println!("Try: pi search {name}");
+            println!("Try: kesa search {name}");
         }
         ExtensionInfoLookup::NotFound => {
             println!("Extension \"{name}\" not found.");
-            println!("Try: pi search {name}");
+            println!("Try: kesa search {name}");
         }
     }
     Ok(())
@@ -2617,7 +2673,7 @@ fn print_extension_info(entry: &ExtensionIndexEntry, index: &ExtensionIndex) {
     // Install command
     println!("  ├{bar}┤");
     if let Some(install_source) = &entry.install_source {
-        let install_line = format!("Install: pi install {install_source}");
+        let install_line = format!("Install: kesa install {install_source}");
         for line in wrap_text(&install_line, width - 2) {
             let padding = width.saturating_sub(line.len() + 1);
             println!("  │ {line}{:padding$}│", "");
@@ -3200,7 +3256,10 @@ async fn collect_config_packages(manager: &PackageManager) -> Result<Vec<ConfigP
     let resolved_paths = match manager.resolve().await {
         Ok(paths) => Some(paths),
         Err(err) => {
-            eprintln!("Warning: failed to resolve package resources for config UI: {err}");
+            eprintln!(
+                "Warning: package resources could not be resolved: {err}\n\
+                 The settings UI lists only what is already installed locally."
+            );
             None
         }
     };
@@ -4586,7 +4645,7 @@ async fn run_first_time_setup(
         if let Some(provider) = provider_choice_from_token(&normalized) {
             break provider;
         }
-        console.render_warning("Unrecognized choice. Please try again.");
+        console.render_warning("Unrecognized choice. Enter a number from the list.");
     };
 
     let credential = match provider.kind {
@@ -5063,7 +5122,7 @@ async fn run_rpc_mode(
     if let Err(err) = ctrlc::set_handler(move || {
         abort_listener.abort();
     }) {
-        eprintln!("Warning: Failed to install Ctrl+C handler for RPC mode: {err}");
+        warn_ctrlc_handler_unavailable("RPC mode", &err);
     }
     let rpc_task = kesa::rpc::run_stdio(
         session,
@@ -5103,7 +5162,7 @@ async fn run_acp_mode(options: kesa::acp::AcpOptions) -> Result<()> {
     if let Err(err) = ctrlc::set_handler(move || {
         abort_listener.abort();
     }) {
-        eprintln!("Warning: Failed to install Ctrl+C handler for ACP mode: {err}");
+        warn_ctrlc_handler_unavailable("ACP mode", &err);
     }
     let acp_task = kesa::acp::run_stdio(options).fuse();
     let signal_task = abort_signal.wait().fuse();
@@ -5147,7 +5206,7 @@ async fn run_print_mode(
             io::stdout().flush()?;
             return Ok(());
         }
-        bail!("No input provided. Use: pi -p \"your message\" or pipe input via stdin");
+        bail!("No input provided. Run `kesa -p \"your message\"`, or pipe text on stdin.");
     }
 
     let text_stream_state = Arc::new(StdMutex::new(PrintTextStreamState::default()));
@@ -5189,7 +5248,7 @@ async fn run_print_mode(
     if let Err(err) = ctrlc::set_handler(move || {
         abort_listener.abort();
     }) {
-        eprintln!("Warning: Failed to install Ctrl+C handler: {err}");
+        warn_ctrlc_handler_unavailable("this session", &err);
     }
 
     let mut initial = initial;
@@ -5208,7 +5267,7 @@ async fn run_print_mode(
             io::stdout().flush()?;
             return Ok(());
         }
-        bail!("No input provided. Use: pi -p \"your message\" or pipe input via stdin");
+        bail!("No input provided. Run `kesa -p \"your message\"`, or pipe text on stdin.");
     }
 
     let retry_enabled = config.retry_enabled();
@@ -5810,7 +5869,7 @@ fn default_export_path(input: &Path) -> PathBuf {
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("session");
-    PathBuf::from(format!("pi-session-{basename}.html"))
+    PathBuf::from(format!("kesa-session-{basename}.html"))
 }
 
 #[cfg(test)]
@@ -7185,7 +7244,7 @@ mod tests {
 
         // The exact rustls close_notify string from the issue (prose fallback).
         let close_notify = build_error_turn(
-            "API error: SSE error: tls connection closed without \
+            "API error: Streaming response (SSE) error: tls connection closed without \
                  close_notify"
                 .to_string(),
         );

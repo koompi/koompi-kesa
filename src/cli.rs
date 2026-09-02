@@ -327,7 +327,11 @@ fn install_workspace_roots(cli: &Cli) -> Result<(), clap::Error> {
     if !matches!(cli.command, Some(Commands::SandboxExec { .. })) {
         let config = crate::config::Config::load().unwrap_or_default();
         for reason in roots.extend(&crate::config::configured_workspace_roots(&config)) {
-            eprintln!("Warning: ignoring configured additionalDirectories entry {reason}");
+            eprintln!(
+                "Warning: ignoring an `additional_directories` entry from settings {reason}\n\
+                 Tools will not reach that directory; pass it with --add-dir if it is meant to be \
+                 in the workspace."
+            );
         }
     }
 
@@ -419,7 +423,7 @@ pub struct Cli {
     /// first request can block while the model loads into memory. Raise this if
     /// a local model's cold start exceeds the default. Equivalent to the
     /// `KESA_HTTP_REQUEST_TIMEOUT_SECS` env var and the `requestTimeoutSecs`
-    /// setting. See pi_agent_rust#90.
+    /// setting.
     #[arg(long, value_name = "SECONDS", env = "KESA_HTTP_REQUEST_TIMEOUT_SECS")]
     pub request_timeout: Option<u64>,
 
@@ -480,12 +484,9 @@ pub struct Cli {
     /// turns the capture off so terminal-native copy/paste keeps working.
     /// In-app mouse wheel scrolling is sacrificed; users can still scroll
     /// with Page Up/Down or arrow keys.
-    ///
-    /// Note: the env-var path is intentionally read in `run_interactive`
-    /// (not via `#[arg(env = "...")]` here) so the truthiness semantics
-    /// stay "only `=1` is truthy", matching how `KESA_HARDWARE_CURSOR`
-    /// behaves and avoiding clap's bool-env ambiguity where `=0` /
-    /// `=false` may otherwise set the flag to true.
+    // Read in `run_interactive` rather than through `#[arg(env = ...)]` so only
+    // `=1` counts as true, matching `KESA_HARDWARE_CURSOR`. Clap's bool-env
+    // handling would also treat `=0` and `=false` as setting the flag.
     #[arg(long)]
     pub no_mouse_capture: bool,
 

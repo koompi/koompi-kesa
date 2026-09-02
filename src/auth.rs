@@ -1205,6 +1205,23 @@ impl AuthStorage {
         asupersync::runtime::spawn_blocking(move || Self::load(path)).await
     }
 
+    /// Where this storage writes, for a caller that needs to back it up first.
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    /// Copy the current file aside before an overwrite that drops entries.
+    /// Returns the backup path, or `None` when there was no file to copy.
+    pub fn back_up(&self) -> Result<Option<PathBuf>> {
+        if !self.path.exists() {
+            return Ok(None);
+        }
+        let backup = self.path.with_extension("json.bak");
+        std::fs::copy(&self.path, &backup)?;
+        Ok(Some(backup))
+    }
+
     /// Persist auth.json (atomic write + permissions).
     pub fn save(&self) -> Result<()> {
         let data = serde_json::to_string_pretty(&AuthFileRef {
@@ -5712,7 +5729,7 @@ pub async fn complete_copilot_browser_oauth(
 
     let Some(code) = code else {
         return Err(Error::auth(
-            "Missing authorization code. Paste the full callback URL or just the code parameter."
+            "Missing authorization code. Paste the full callback URL, or the code parameter on its own."
                 .to_string(),
         ));
     };
@@ -6032,7 +6049,7 @@ pub async fn complete_gitlab_oauth(
 
     let Some(code) = code else {
         return Err(Error::auth(
-            "Missing authorization code. Paste the full callback URL or just the code parameter."
+            "Missing authorization code. Paste the full callback URL, or the code parameter on its own."
                 .to_string(),
         ));
     };
@@ -12124,6 +12141,53 @@ sso_region = us-east-1
         assert!(auth.entries.contains_key("copilot"));
         assert!(auth.entries.contains_key("recent-ext"));
         assert!(auth.entries.contains_key("anthropic"));
+    }
+
+    #[test]
+    fn pruning_leaves_the_previous_auth_file_recoverable() {
+        let dir = tempfile::tempdir().expect("tmpdir");
+        let auth_path = dir.path().join("auth.json");
+
+        let now = chrono::Utc::now().timestamp_millis();
+        let mut auth = AuthStorage {
+            path: auth_path.clone(),
+            entries: HashMap::new(),
+        };
+        auth.entries.insert(
+            "stale-ext".to_string(),
+            AuthCredential::OAuth {
+                extra: HashMap::new(),
+                // ubs:ignore test fixture credential, not live secret.
+                access_token: "dead".to_string(),
+                // ubs:ignore test fixture credential, not live secret.
+                refresh_token: "dead-ref".to_string(),
+                expires: now - 30 * 24 * 60 * 60 * 1000,
+                token_url: None,
+                client_id: None,
+            },
+        );
+        auth.save().expect("write the original file");
+
+        let pruned = auth.prune_stale_credentials(7 * 24 * 60 * 60 * 1000);
+        assert_eq!(pruned, ["stale-ext"]);
+        let backup = auth
+            .back_up()
+            .expect("back up before overwriting")
+            .expect("a file existed to copy");
+        auth.save().expect("write the pruned file");
+
+        assert!(
+            !std::fs::read_to_string(&auth_path)
+                .expect("read pruned")
+                .contains("stale-ext"),
+            "the pruned file must not keep the entry"
+        );
+        assert!(
+            std::fs::read_to_string(&backup)
+                .expect("read backup")
+                .contains("stale-ext"),
+            "the deleted credential must survive somewhere"
+        );
     }
 
     #[test]

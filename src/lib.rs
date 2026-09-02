@@ -53,9 +53,9 @@
 extern crate self as kesa;
 
 /// Serialize unit tests that temporarily change the process-wide current
-/// directory. Rust's test runner executes modules concurrently, so separate
-/// per-module locks do not prevent one module from observing another module's
-/// temporary directory.
+/// directory against tests that resolve paths through it. Rust's test runner
+/// executes modules concurrently, so separate per-module locks do not prevent
+/// one module from observing another module's temporary directory.
 #[cfg(test)]
 pub(crate) fn test_current_dir_lock() -> std::sync::MutexGuard<'static, ()> {
     static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();

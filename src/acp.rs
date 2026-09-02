@@ -206,7 +206,7 @@ pub struct AcpOptions {
     pub runtime_handle: RuntimeHandle,
     /// When set (from the `--session-dir` CLI flag), ACP sessions persist to
     /// this directory and autosave is enabled, so they can be resumed later via
-    /// `pi --session`/`--resume` (#102). When `None`, ACP keeps its in-memory,
+    /// `kesa --session`/`--resume` (#102). When `None`, ACP keeps its in-memory,
     /// non-persisted behavior.
     pub session_dir: Option<PathBuf>,
 }
@@ -1299,7 +1299,7 @@ fn build_acp_system_prompt(cwd: &std::path::Path, enabled_tools: &[&str]) -> Str
 ///
 /// When `--session-dir` is configured, the session persists to that directory
 /// using the configured store kind, and autosave is enabled (`save_enabled =
-/// true`) so the ACP session can be resumed later via `pi --session`/`--resume`
+/// true`) so the ACP session can be resumed later via `kesa --session`/`--resume`
 /// (#102). Without it, ACP keeps its existing in-memory, non-persisted behavior.
 /// Takes the two inputs it needs (rather than the whole `AcpOptions`) so it can
 /// be unit-tested without constructing auth/runtime handles.

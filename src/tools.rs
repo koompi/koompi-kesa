@@ -1696,8 +1696,16 @@ fn attach_text_artifact_from_path_if_needed_with_root(
     }
 }
 
+#[cfg(not(test))]
 const TOOL_OUTPUT_CACHE_MAX_ENTRIES: usize = 128;
+#[cfg(not(test))]
 const TOOL_OUTPUT_CACHE_MAX_BYTES: usize = 8 * 1024 * 1024;
+// The cache is process-wide, so under a parallel test run another test's inserts
+// can evict the entry a cache-hit assertion is about. Nothing tests eviction.
+#[cfg(test)]
+const TOOL_OUTPUT_CACHE_MAX_ENTRIES: usize = 1 << 20;
+#[cfg(test)]
+const TOOL_OUTPUT_CACHE_MAX_BYTES: usize = usize::MAX;
 const TOOL_OUTPUT_CACHE_MAX_ENTRY_BYTES: usize = DEFAULT_MAX_BYTES + 64 * 1024;
 const TOOL_OUTPUT_CACHE_MAX_FINGERPRINT_FILES: usize = 2048;
 const TOOL_OUTPUT_CACHE_MAX_FINGERPRINT_BYTES: u64 = 8 * 1024 * 1024;
@@ -1996,7 +2004,7 @@ fn read_file_capped_sync(path: &Path, max_bytes: u64) -> std::io::Result<Vec<u8>
     Ok(contents)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct ToolCacheDependency {
     path: PathBuf,
     fingerprint: [u8; 32],
@@ -2251,6 +2259,13 @@ fn cache_dependencies_for_scoped_scan(
                 control.path = cwd_root.logical_path().join(relative);
             }
         }
+        // The controls were ordered under the two `/proc/self/fd` roots they
+        // were collected from, whose numbers differ on every call. Re-order by
+        // the logical paths they were just rewritten to: a dependency list that
+        // permutes between two identical scans reads as a changed dependency,
+        // and the cached entry is thrown away instead of hit.
+        controls.sort();
+        controls.dedup();
         dependencies.extend(controls);
     }
     Some(dependencies)
@@ -2956,6 +2971,76 @@ fn normalize_scanner_relative_path(path: &Path) -> std::io::Result<PathBuf> {
         }
     }
     Ok(normalized)
+}
+
+/// Rewrite gitignore patterns written relative to `from` so they mean the same
+/// thing when the scanner runs from `from.join(rel)`.
+///
+/// The scanners run from the pinned scan root, but `--ignore-file` patterns are
+/// read relative to the child's cwd. Without this, a workspace control naming
+/// `subdir/secret.txt` silently matches nothing once the search is scoped to
+/// `subdir`. Patterns anchored elsewhere are dropped; unanchored ones (no `/`,
+/// which git matches at any depth) are kept as they are.
+fn rebase_ignore_patterns(contents: &str, rel: &Path) -> String {
+    let prefix = rel.to_string_lossy().replace('\\', "/");
+    let prefix = prefix.trim_matches('/');
+    let mut out = String::new();
+    for line in contents.lines() {
+        let trimmed = line.trim_end();
+        if trimmed.trim().is_empty() || trimmed.trim_start().starts_with('#') {
+            out.push_str(trimmed);
+            out.push('\n');
+            continue;
+        }
+        let (negation, body) = trimmed
+            .strip_prefix('!')
+            .map_or(("", trimmed), |rest| ("!", rest));
+        // no separator: git applies it at any depth, so it already applies here
+        let interior = body.strip_suffix('/').unwrap_or(body);
+        if !interior.contains('/') {
+            out.push_str(trimmed);
+            out.push('\n');
+            continue;
+        }
+        let anchored = body.trim_start_matches('/');
+        let Some(rest) = anchored
+            .strip_prefix(prefix)
+            .and_then(|rest| rest.strip_prefix('/'))
+        else {
+            continue;
+        };
+        if rest.is_empty() {
+            continue;
+        }
+        out.push_str(negation);
+        out.push('/');
+        out.push_str(rest);
+        out.push('\n');
+    }
+    out
+}
+
+/// The ignore file to hand a scanner rooted at `scan_root`, given the workspace
+/// control at `workspace_gitignore`. Returns a temp file when the patterns had
+/// to be rebased; the caller must keep it alive until the child exits.
+fn rebased_workspace_ignore(
+    workspace_gitignore: &Path,
+    workspace_root: &Path,
+    scan_root: &Path,
+) -> Option<tempfile::NamedTempFile> {
+    let rel = scan_root.strip_prefix(workspace_root).ok()?;
+    if rel.as_os_str().is_empty() {
+        return None;
+    }
+    let contents = std::fs::read_to_string(workspace_gitignore).ok()?;
+    let rebased = rebase_ignore_patterns(&contents, rel);
+    let mut file = tempfile::Builder::new()
+        .prefix("kesa-ignore-")
+        .tempfile()
+        .ok()?;
+    std::io::Write::write_all(&mut file, rebased.as_bytes()).ok()?;
+    std::io::Write::flush(&mut file).ok()?;
+    Some(file)
 }
 
 async fn open_scoped_scan_root(
@@ -5302,19 +5387,28 @@ fn run_formatter(command: &str, cwd: &Path, input: &[u8]) -> std::result::Result
     // cannot deadlock the wait below.
     let mut stdin = child.stdin.take();
     let payload = input.to_vec();
+    let (stdin_tx, stdin_rx) = mpsc::channel();
     thread::spawn(move || {
-        if let Some(mut stdin) = stdin.take() {
-            let _ = stdin.write_all(&payload);
-        }
+        let result = match stdin.take() {
+            // dropped at the end of this arm, so the child sees EOF
+            Some(mut stdin) => stdin.write_all(&payload).and_then(|()| stdin.flush()),
+            None => Ok(()),
+        };
+        let _ = stdin_tx.send(result.err().map(|err| err.to_string()));
     });
+    // a formatter that streams without end must not be able to fill memory
+    let stdout_cap = (input.len().saturating_mul(4)).max(1 << 20) as u64;
     let mut stdout = child.stdout.take();
     let (stdout_tx, stdout_rx) = mpsc::channel();
     thread::spawn(move || {
         let mut buffer = Vec::new();
+        let mut overflowed = false;
         if let Some(stdout) = stdout.as_mut() {
-            let _ = stdout.read_to_end(&mut buffer);
+            let _ = stdout.take(stdout_cap + 1).read_to_end(&mut buffer);
+            overflowed = buffer.len() as u64 > stdout_cap;
+            let _ = std::io::copy(stdout, &mut std::io::sink());
         }
-        let _ = stdout_tx.send(buffer);
+        let _ = stdout_tx.send((buffer, overflowed));
     });
     let mut stderr = child.stderr.take();
     let (stderr_tx, stderr_rx) = mpsc::channel();
@@ -5355,9 +5449,23 @@ fn run_formatter(command: &str, cwd: &Path, input: &[u8]) -> std::result::Result
         Some(code) => return Err(failure(&format!("exit {code}"), &stderr)),
         None => return Err(failure("killed by a signal", &stderr)),
     }
-    let stdout = stdout_rx
+    // A formatter that exits 0 without consuming the whole file would otherwise
+    // have its partial output persisted over the user's edit.
+    if let Some(err) = stdin_rx.recv_timeout(FORMATTER_PIPE_GRACE).unwrap_or(None) {
+        return Err(failure(
+            &format!("did not read the whole file ({err})"),
+            &stderr,
+        ));
+    }
+    let (stdout, overflowed) = stdout_rx
         .recv_timeout(FORMATTER_PIPE_GRACE)
         .map_err(|_| failure("stdout never closed", &stderr))?;
+    if overflowed {
+        return Err(failure(
+            &format!("wrote more than {stdout_cap} bytes"),
+            &stderr,
+        ));
+    }
     if stdout.is_empty() {
         return Err(failure("empty stdout", &stderr));
     }
@@ -8419,7 +8527,7 @@ impl Tool for EditTool {
             return Err(Error::tool(
                 "edit",
                 format!(
-                    "Found {occurrences} occurrences of the text in {}. The text must be unique. Please provide more context to make it unique.",
+                    "Found {occurrences} matches for the text in {}. Add surrounding lines to oldText so it matches exactly one place.",
                     input.path
                 ),
             ));
@@ -9292,6 +9400,9 @@ impl Tool for GrepTool {
         let glob_override =
             build_grep_glob_override(cwd_scope.logical_path(), input.glob.as_deref())?;
 
+        // held only so the temp file outlives the scanner child
+        let mut _rebased_ignore = None;
+
         // Mirror find-tool behavior: explicitly pass root/nested .gitignore files
         // so ignore rules apply consistently even outside a git worktree.
         if is_directory {
@@ -9303,13 +9414,26 @@ impl Tool for GrepTool {
             // filtering, so do not load unrelated directory controls for that case.
             let workspace_gitignore = operation_cwd.join(".gitignore");
             if workspace_gitignore.exists() {
-                args.push(OsString::from("--ignore-file"));
-                args.push(
-                    cwd_scope
-                        .inherited_child_operand()
-                        .join(".gitignore")
-                        .into_os_string(),
-                );
+                match rebased_workspace_ignore(
+                    &workspace_gitignore,
+                    cwd_scope.logical_path(),
+                    scoped_root.logical_path(),
+                ) {
+                    Some(rebased) => {
+                        args.push(OsString::from("--ignore-file"));
+                        args.push(rebased.path().as_os_str().to_owned());
+                        _rebased_ignore = Some(rebased);
+                    }
+                    None => {
+                        args.push(OsString::from("--ignore-file"));
+                        args.push(
+                            cwd_scope
+                                .inherited_child_operand()
+                                .join(".gitignore")
+                                .into_os_string(),
+                        );
+                    }
+                }
             }
             let root_gitignore = scoped_root.child_operand().join(".gitignore");
             if scoped_root.logical_path() != cwd_scope.logical_path()
@@ -9327,7 +9451,7 @@ impl Tool for GrepTool {
         let rg_cmd = find_rg_binary().ok_or_else(|| {
             Error::tool(
                 "grep",
-                "rg is not available (please install ripgrep or rg)".to_string(),
+                "ripgrep (rg) is not installed. Install it, then retry.".to_string(),
             )
         })?;
 
@@ -9786,6 +9910,23 @@ impl FindTool {
     }
 }
 
+/// fd matches a glob against the file name unless `--full-path` is given, and
+/// under `--full-path` the candidate it tests is prefixed with `./` because the
+/// search operand is `.`. So a pattern with a separator has to be anchored with
+/// `**/` or it can never match. Returns the pattern to send and whether to ask
+/// for full-path matching.
+fn fd_pattern_for(pattern: &str) -> (String, bool) {
+    if !pattern.contains('/') {
+        return (pattern.to_string(), false);
+    }
+    let anchored = if pattern.starts_with("**/") {
+        pattern.to_string()
+    } else {
+        format!("**/{}", pattern.trim_start_matches("./"))
+    };
+    (anchored, true)
+}
+
 #[async_trait]
 #[allow(clippy::unnecessary_literal_bound)]
 impl Tool for FindTool {
@@ -9973,7 +10114,7 @@ impl Tool for FindTool {
         let fd_cmd = find_fd_binary().ok_or_else(|| {
             Error::tool(
                 "find",
-                "fd is not available (please install fd-find or fd)".to_string(),
+                "fd is not installed. Install it (Debian and Ubuntu package it as fd-find), then retry.".to_string(),
             )
         })?;
 
@@ -9997,15 +10138,30 @@ impl Tool for FindTool {
         // the root .gitignore if it exists, to ensure it's respected even if the
         // search path logic might otherwise miss it.
         // We do NOT perform a blocking `glob("**/.gitignore")` here.
+        // held only so the temp file outlives the scanner child
+        let mut _rebased_ignore = None;
         let workspace_gitignore = operation_cwd.join(".gitignore");
         if workspace_gitignore.exists() {
-            args.push(OsString::from("--ignore-file"));
-            args.push(
-                cwd_scope
-                    .inherited_child_operand()
-                    .join(".gitignore")
-                    .into_os_string(),
-            );
+            match rebased_workspace_ignore(
+                &workspace_gitignore,
+                cwd_scope.logical_path(),
+                scoped_root.logical_path(),
+            ) {
+                Some(rebased) => {
+                    args.push(OsString::from("--ignore-file"));
+                    args.push(rebased.path().as_os_str().to_owned());
+                    _rebased_ignore = Some(rebased);
+                }
+                None => {
+                    args.push(OsString::from("--ignore-file"));
+                    args.push(
+                        cwd_scope
+                            .inherited_child_operand()
+                            .join(".gitignore")
+                            .into_os_string(),
+                    );
+                }
+            }
         }
         let root_gitignore = scoped_root.child_operand().join(".gitignore");
         if scoped_root.logical_path() != cwd_scope.logical_path()
@@ -10015,8 +10171,12 @@ impl Tool for FindTool {
             args.push(root_gitignore.as_os_str().to_owned());
         }
 
+        let (pattern, match_full_path) = fd_pattern_for(&input.pattern);
+        if match_full_path {
+            args.push(OsString::from("--full-path"));
+        }
         args.push(OsString::from("--"));
-        args.push(OsString::from(&input.pattern));
+        args.push(OsString::from(pattern));
         args.push(scoped_root.child_operand().into_os_string());
 
         let mut child = command_with_default_sigpipe_in_dir(fd_cmd, &scan_io_path)
@@ -13997,6 +14157,113 @@ mod tests {
         assert!(tool_output_cache_stats_for_tests().invalidations > invalidations_before);
     }
 
+    #[test]
+    fn a_glob_with_a_separator_is_anchored_so_fd_can_match_it() {
+        // fd matches the file name unless --full-path, and under --full-path the
+        // candidate carries the `./` from the `.` operand.
+        assert_eq!(
+            super::fd_pattern_for("src/**/*.rs"),
+            ("**/src/**/*.rs".to_string(), true)
+        );
+        assert_eq!(
+            super::fd_pattern_for("./src/*.rs"),
+            ("**/src/*.rs".to_string(), true)
+        );
+        assert_eq!(
+            super::fd_pattern_for("**/*.json"),
+            ("**/*.json".to_string(), true)
+        );
+        assert_eq!(
+            super::fd_pattern_for("*.ts"),
+            ("*.ts".to_string(), false),
+            "a bare name still matches by file name"
+        );
+    }
+
+    #[test]
+    fn workspace_ignore_patterns_are_rebased_onto_the_scan_root() {
+        let rebased = super::rebase_ignore_patterns(
+            "# comment\n\nsub/secret.txt\n/sub/anchored.log\n!sub/keep.txt\nother/thing.txt\n*.tmp\nbuild/\n",
+            Path::new("sub"),
+        );
+        let lines: Vec<&str> = rebased.lines().filter(|l| !l.trim().is_empty()).collect();
+        assert!(lines.contains(&"/secret.txt"), "{lines:?}");
+        assert!(lines.contains(&"/anchored.log"), "{lines:?}");
+        assert!(lines.contains(&"!/keep.txt"), "{lines:?}");
+        assert!(
+            !lines.iter().any(|l| l.contains("thing.txt")),
+            "a control anchored to a sibling does not apply here: {lines:?}"
+        );
+        assert!(
+            lines.contains(&"*.tmp"),
+            "an unanchored pattern applies at any depth: {lines:?}"
+        );
+        assert!(
+            lines.contains(&"build/"),
+            "an unanchored directory pattern is kept: {lines:?}"
+        );
+        assert!(lines.contains(&"# comment"), "{lines:?}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn scoped_scan_dependencies_do_not_depend_on_which_root_got_the_lower_fd() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let workspace = tmp.path();
+        std::fs::write(workspace.join(".gitignore"), "workspace-secret.txt\n").expect("write");
+        let scan_root = workspace.join("scan-root");
+        std::fs::create_dir(&scan_root).expect("create scan root");
+        std::fs::write(scan_root.join(".gitignore"), "root-secret.txt\n").expect("write");
+
+        let dependencies_for = |cwd_first: bool| {
+            let (cwd_root, path_root) = if cwd_first {
+                let cwd_root =
+                    super::open_scoped_scan_root_sync(workspace, workspace, false, || {})
+                        .expect("open workspace root");
+                let path_root =
+                    super::open_scoped_scan_root_sync(&scan_root, workspace, false, || {})
+                        .expect("open scan root");
+                (cwd_root, path_root)
+            } else {
+                let path_root =
+                    super::open_scoped_scan_root_sync(&scan_root, workspace, false, || {})
+                        .expect("open scan root");
+                let cwd_root =
+                    super::open_scoped_scan_root_sync(workspace, workspace, false, || {})
+                        .expect("open workspace root");
+                (cwd_root, path_root)
+            };
+            super::cache_dependencies_for_scoped_scan(
+                &path_root,
+                &cwd_root,
+                super::ToolCacheFingerprintMode::DirectoryRecursive,
+                Some(super::RecursiveScanAccess::ReadableFiles),
+            )
+            .expect("scoped scan dependencies")
+        };
+
+        // The two roots are pinned as open descriptors, so opening them in the
+        // other order gives them the other pair of fd numbers. The dependency
+        // list a cache hit is compared against must not notice.
+        let cwd_first = dependencies_for(true);
+        let path_first = dependencies_for(false);
+        assert_eq!(
+            cwd_first, path_first,
+            "the same scan produced a permuted dependency list"
+        );
+    }
+
+    #[test]
+    fn a_scan_rooted_at_the_workspace_needs_no_rebase() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let ignore = tmp.path().join(".gitignore");
+        std::fs::write(&ignore, "secret.txt\n").expect("write");
+        assert!(
+            super::rebased_workspace_ignore(&ignore, tmp.path(), tmp.path()).is_none(),
+            "the patterns already mean what they say"
+        );
+    }
+
     async fn assert_scan_caches_track_parent_ignore_control(tmp: &Path) {
         let have_rg = find_rg_binary().is_some();
         let have_fd = find_fd_binary().is_some();
@@ -14271,6 +14538,9 @@ mod tests {
 
     #[test]
     fn tool_output_cache_reuses_and_invalidates_read_only_tool_outputs() {
+        // the scanners resolve through the process working directory, which a
+        // chdir-ing test elsewhere can move out from under a cache-hit assertion
+        let _cwd = crate::test_current_dir_lock();
         asupersync::test_utils::run_test(|| async {
             reset_tool_output_cache_for_tests();
 
@@ -15820,6 +16090,35 @@ mod tests {
                 text.contains("formatter `true` failed (empty stdout)"),
                 "{text}"
             );
+        });
+    }
+
+    #[test]
+    fn a_formatter_that_stops_reading_early_never_persists_its_partial_output() {
+        asupersync::test_utils::run_test(|| async {
+            let tmp = tempfile::tempdir().unwrap();
+            let path = tmp.path().join("note.txt");
+            // exits 0 with non-empty stdout after reading only the first line
+            let registry = formatting_registry(tmp.path(), &[("*.txt", "head -n 1")]);
+            let path_str = path.to_string_lossy().into_owned();
+            let content = "keep\n".repeat(20_000);
+
+            let output = run_tool(
+                &registry,
+                "write",
+                serde_json::json!({ "path": path_str, "content": content.clone() }),
+            )
+            .await
+            .unwrap();
+
+            assert!(!output.is_error);
+            assert_eq!(
+                std::fs::read_to_string(&path).unwrap(),
+                content,
+                "the model's own bytes must survive a formatter that truncated them"
+            );
+            let text = output_text(&output);
+            assert!(text.contains("did not read the whole file"), "{text}");
         });
     }
 

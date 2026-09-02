@@ -219,9 +219,9 @@ impl Error {
     /// consults. For a transient connection drop (reset/abort/EOF/broken
     /// pipe/timeout) a canonical `transient connection drop` marker is appended
     /// so the drop is re-driven regardless of the dependency's (rustls/hyper)
-    /// prose, which changes phrasing between versions (pi_agent_rust#118).
+    /// prose, which changes phrasing between versions.
     pub fn sse(err: &std::io::Error) -> Self {
-        let base = format!("SSE error: {err}");
+        let base = format!("Streaming response (SSE) error: {err}");
         if io_kind_is_transient(err.kind()) {
             Self::Api(format!("{base} (transient connection drop)"))
         } else {
@@ -322,7 +322,7 @@ impl Error {
             Self::SessionNotFound { path } => build_hints(
                 "Session file not found.",
                 vec![
-                    "Use `pi --continue` to open the most recent session.".to_string(),
+                    "Use `kesa --continue` to open the most recent session.".to_string(),
                     "Verify the path or move the session back into the sessions directory."
                         .to_string(),
                 ],
@@ -573,7 +573,7 @@ fn config_hints(message: &str) -> ErrorHints {
             "Configuration file is not valid JSON.",
             vec![
                 "Fix JSON formatting in the active settings file.".to_string(),
-                "Run `pi config` to see which settings file is in use.".to_string(),
+                "Run `kesa config` to see which settings file is in use.".to_string(),
             ],
             vec![("details", message.to_string())],
         );
@@ -583,7 +583,7 @@ fn config_hints(message: &str) -> ErrorHints {
             "Configuration file is missing.",
             vec![
                 "Create `~/.kesa/agent/settings.json` or set `KESA_CONFIG_PATH`.".to_string(),
-                "Run `pi config` to confirm the resolved path.".to_string(),
+                "Run `kesa config` to confirm the resolved path.".to_string(),
             ],
             vec![("details", message.to_string())],
         );
@@ -592,7 +592,7 @@ fn config_hints(message: &str) -> ErrorHints {
         "Configuration error.",
         vec![
             "Review your settings file for incorrect values.".to_string(),
-            "Run `pi config` to verify settings precedence.".to_string(),
+            "Run `kesa config` to verify settings precedence.".to_string(),
         ],
         vec![("details", message.to_string())],
     )
@@ -604,7 +604,7 @@ fn session_hints(message: &str) -> ErrorHints {
         return build_hints(
             "Session file is empty or corrupted.",
             vec![
-                "Start a new session with `pi --no-session`.".to_string(),
+                "Start a new session with `kesa --no-session`.".to_string(),
                 "Inspect the session file for truncation.".to_string(),
             ],
             vec![("details", message.to_string())],
@@ -623,7 +623,7 @@ fn session_hints(message: &str) -> ErrorHints {
     build_hints(
         "Session error.",
         vec![
-            "Try `pi --continue` or specify `--session <path>`.".to_string(),
+            "Try `kesa --continue` or specify `--session <path>`.".to_string(),
             "Check session file integrity in the sessions directory.".to_string(),
         ],
         vec![("details", message.to_string())],
@@ -1626,7 +1626,7 @@ mod tests {
     fn native_provider_missing_key_anthropic() {
         let err = Error::provider(
             "anthropic",
-            "Missing API key for Anthropic. Set ANTHROPIC_API_KEY or use `pi auth`.",
+            "Missing API key for Anthropic. Set ANTHROPIC_API_KEY, or run `/login anthropic` inside kesa.",
         );
         let d = err.auth_diagnostic().expect("diagnostic");
         assert_eq!(d.code, AuthDiagnosticCode::MissingApiKey);
@@ -1853,7 +1853,7 @@ mod tests {
         let cases: &[(&str, &str)] = &[
             (
                 "anthropic",
-                "Missing API key for Anthropic. Set ANTHROPIC_API_KEY or use `pi auth`.",
+                "Missing API key for Anthropic. Set ANTHROPIC_API_KEY, or run `/login anthropic` inside kesa.",
             ),
             (
                 "openai",
@@ -2675,7 +2675,7 @@ mod tests {
             None,
         ));
         assert!(is_retryable_error(
-            "API error: SSE error: tls connection closed without close_notify \
+            "API error: Streaming response (SSE) error: tls connection closed without close_notify \
              (transient connection drop)",
             None,
             None,

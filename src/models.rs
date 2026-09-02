@@ -1174,14 +1174,21 @@ pub(crate) fn normalize_api_key_opt(api_key: Option<String>) -> Option<String> {
     })
 }
 
+/// Providers whose credentials are resolved by their own SDK chain at request
+/// time, so nothing here can tell in advance whether they will work. Their
+/// models are shown, but never described as ready.
+pub(crate) fn provider_credentials_are_unchecked(provider: &str) -> bool {
+    let canonical = canonical_provider_id(provider).unwrap_or(provider);
+    matches!(canonical, "amazon-bedrock" | "sap-ai-core")
+}
+
 pub(crate) fn model_requires_configured_credential(entry: &ModelEntry) -> bool {
     let provider = entry.model.provider.as_str();
-    let canonical_provider = canonical_provider_id(provider).unwrap_or(provider);
 
-    // These native adapters resolve structured credentials at request time. Requiring a generic
-    // `api_key` here would either reject valid AWS/SAP credential chains before the provider can
-    // consume them or tempt callers to flatten one component into a bogus bearer token.
-    if matches!(canonical_provider, "amazon-bedrock" | "sap-ai-core") {
+    // Requiring a generic `api_key` here would either reject valid AWS/SAP
+    // credential chains before the provider can consume them, or tempt callers
+    // to flatten one component into a bogus bearer token.
+    if provider_credentials_are_unchecked(provider) {
         return false;
     }
 
@@ -4109,6 +4116,21 @@ pub(crate) fn ad_hoc_model_entry(provider: &str, model_id: &str) -> Option<Model
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_provider_kesa_cannot_check_is_never_called_ready_without_saying_so() {
+        assert!(
+            crate::models::provider_credentials_are_unchecked("amazon-bedrock"),
+            "bedrock resolves its chain at request time"
+        );
+        assert!(crate::models::provider_credentials_are_unchecked(
+            "sap-ai-core"
+        ));
+        assert!(
+            !crate::models::provider_credentials_are_unchecked("anthropic"),
+            "a provider with an api key is checkable"
+        );
+    }
+
     use super::*;
     use crate::auth::{AuthCredential, AuthStorage};
     use tempfile::tempdir;

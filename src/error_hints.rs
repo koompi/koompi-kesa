@@ -68,7 +68,7 @@ fn presentation(message: &str, hint: &ErrorHint) -> ErrorPresentation {
     let body = body
         .split("\nSuggestions:")
         .next()
-        .unwrap_or(body)
+        .unwrap_or_default()
         .trim_end();
     let body = body.strip_suffix(hint.summary).map_or(body, str::trim_end);
     let detail = if body == hint.summary { "" } else { body };
@@ -118,7 +118,7 @@ pub fn hints_for_error(error: &Error) -> ErrorHint {
 fn config_hints(msg: &str) -> ErrorHint {
     if msg.contains("cassette") {
         return ErrorHint {
-            summary: "VCR cassette missing or invalid",
+            summary: "Recorded HTTP cassette (VCR) missing or invalid",
             action: "Re-record the cassette, or unset the VCR env var and retry",
             hints: &[
                 "If running tests, set VCR_MODE=record to create cassettes",
@@ -133,7 +133,7 @@ fn config_hints(msg: &str) -> ErrorHint {
             action: "Fix or remove the settings file, then restart kesa",
             hints: &[
                 "Check that ~/.kesa/agent/settings.json exists and is valid JSON",
-                "Run 'pi config' to see configuration paths and precedence",
+                "Run 'kesa config' to see configuration paths and precedence",
             ],
             context_fields: &["file_path"],
         };
@@ -164,7 +164,7 @@ fn session_hints(error: &Error) -> ErrorHint {
             action: "Run kesa without --session, or /resume to pick a session",
             hints: &[
                 "Use 'kesa' without --session to start a new session",
-                "Use 'pi --resume' to pick from existing sessions",
+                "Use 'kesa --resume' to pick from existing sessions",
             ],
             context_fields: &["path"],
         },
@@ -231,7 +231,7 @@ fn auth_hints(msg: &str) -> ErrorHint {
             summary: "OAuth token expired or invalid",
             action: "/login <provider> to sign in again",
             hints: &[
-                "Run 'pi login <provider>' to re-authenticate",
+                "Run '/login <provider>' inside kesa to sign in again",
                 "Or set API key directly via environment variable",
             ],
             context_fields: &["provider"],
@@ -333,7 +333,7 @@ fn provider_hints(message: &str) -> ErrorHint {
         };
     }
     ErrorHint {
-        summary: "Provider API error",
+        summary: "The provider returned an error",
         action: "Up then Enter to retry",
         hints: &["Check provider documentation for this error"],
         context_fields: &["provider", "status_code"],
@@ -465,7 +465,7 @@ fn extension_hints(msg: &str) -> ErrorHint {
             action: "Fix the extension path in settings, then /reload",
             hints: &[
                 "Check extension name is correct",
-                "Use 'pi list' to see installed extensions",
+                "Run 'kesa list' to see installed packages",
             ],
             context_fields: &["extension_name"],
         };
@@ -505,13 +505,13 @@ fn extension_hints(msg: &str) -> ErrorHint {
 ///
 /// Layered Winsock providers (VPN clients, antivirus, firewall LSPs) can
 /// report an outbound connect as complete while the base provider socket has
-/// not finished connecting, so the first send fails with 10057. Pi retries the
+/// not finished connecting, so the first send fails with 10057. KESA retries the
 /// connect automatically; if the error still surfaces the interference is
 /// persistent and needs OS-level remediation.
 const fn winsock_not_connected_hints() -> ErrorHint {
     ErrorHint {
-        summary: "Socket not connected (Windows WSAENOTCONN 10057) - often VPN, antivirus, or Winsock LSP interference",
-        action: "Disable the VPN or LSP, then Up then Enter to retry",
+        summary: "Socket not connected (Windows WSAENOTCONN 10057) - often VPN, antivirus, or a Winsock layered service provider",
+        action: "Disable the VPN or the layered service provider, then Up then Enter to retry",
         hints: &[
             "Retry the request; if it persists, temporarily disable VPN/antivirus/firewall software to identify the interfering layer",
             "Inspect layered providers with 'netsh winsock show catalog'; as a last resort run 'netsh winsock reset' from an elevated prompt and reboot",
@@ -617,7 +617,7 @@ fn json_hints(err: &serde_json::Error) -> ErrorHint {
             action: "Fix the JSON, then retry",
             hints: &[
                 "Check for missing commas, brackets, or quotes",
-                "Validate JSON at jsonlint.com or similar",
+                "Check the file with a local JSON parser, such as `jq . <file>`",
             ],
             context_fields: &["line", "column"],
         };
@@ -788,9 +788,9 @@ mod tests {
         assert_eq!(shown.detail, "HTTP 429 Too Many Requests");
         assert!(!shown.detail.contains("Suggestions"));
         let bare = present_error_text("Request failed");
-        assert_eq!(bare.summary, "Provider API error");
+        assert_eq!(bare.summary, "The provider returned an error");
         assert_eq!(bare.detail, "Request failed");
-        let same = present_error_text("Provider API error");
+        let same = present_error_text("The provider returned an error");
         assert_eq!(
             same.detail, "",
             "a detail that repeats the summary is dropped"
@@ -922,7 +922,10 @@ mod tests {
         let error = Error::Json(Box::new(json_err));
         let formatted = format_error_with_hints(&error);
         assert!(formatted.contains("Invalid JSON syntax"));
-        assert!(formatted.contains("Validate JSON"));
+        assert!(
+            formatted.contains("jq . <file>"),
+            "the hint must not send a config that may hold API keys to a web service: {formatted}"
+        );
     }
 
     #[test]
@@ -945,7 +948,7 @@ mod tests {
     fn test_format_error_with_hints_includes_vcr_cassette_hint() {
         let error = Error::config("Failed to read cassette /tmp/cassette.json: missing file");
         let formatted = format_error_with_hints(&error);
-        assert!(formatted.contains("VCR cassette"));
+        assert!(formatted.contains("cassette (VCR)"));
         assert!(formatted.contains("VCR_MODE=record"));
         assert!(formatted.contains("VCR_CASSETTE_DIR"));
     }
@@ -1050,7 +1053,7 @@ mod tests {
         let error = Error::auth("OAuth token expired for provider X");
         let hint = hints_for_error(&error);
         assert!(hint.summary.contains("OAuth"));
-        assert!(hint.hints.iter().any(|h| h.contains("pi login")));
+        assert!(hint.hints.iter().any(|h| h.contains("/login <provider>")));
     }
 
     #[test]
@@ -1105,7 +1108,7 @@ mod tests {
     fn test_provider_generic_fallback() {
         let error = Error::provider("unknown", "something broke");
         let hint = hints_for_error(&error);
-        assert_eq!(hint.summary, "Provider API error");
+        assert_eq!(hint.summary, "The provider returned an error");
     }
 
     // -----------------------------------------------------------------------
@@ -1195,7 +1198,7 @@ mod tests {
         let error = Error::extension("extension my-ext not found");
         let hint = hints_for_error(&error);
         assert!(hint.summary.contains("not found"));
-        assert!(hint.hints.iter().any(|h| h.contains("pi list")));
+        assert!(hint.hints.iter().any(|h| h.contains("kesa list")));
     }
 
     #[test]
@@ -1482,7 +1485,7 @@ mod tests {
                 let msg = format!("{prefix} cassette missing");
                 let error = Error::config(msg);
                 let hint = hints_for_error(&error);
-                assert_eq!(hint.summary, "VCR cassette missing or invalid");
+                assert_eq!(hint.summary, "Recorded HTTP cassette (VCR) missing or invalid");
             }
 
             /// Config error with "settings.json" always maps to settings hint.

@@ -643,7 +643,9 @@ impl Provider for AnthropicProvider {
         if anthropic_bearer_token {
             beta_flags.push(anthropic_oauth_beta_flags());
         }
-        if options.cache_retention != CacheRetention::None {
+        // Same gate as the body-side cache_control: a gateway that never sees
+        // the field must not be handed the beta header for it either.
+        if self.provider == "anthropic" && options.cache_retention != CacheRetention::None {
             beta_flags.push(anthropic_cache_beta_flag());
         }
         if !beta_flags.is_empty() {
@@ -2436,6 +2438,21 @@ mod tests {
         assert!(captured.headers.contains_key("x-msh-device-model"));
         assert!(captured.headers.contains_key("x-msh-os-version"));
         assert!(captured.headers.contains_key("x-msh-device-id"));
+    }
+
+    #[test]
+    fn a_gateway_never_gets_the_cache_beta_header_even_with_caching_on() {
+        let captured = run_stream_and_capture_headers_for_provider_with_api_key(
+            CacheRetention::Short,
+            "kimi-for-coding",
+            "sk-kimi-api-key",
+        )
+        .expect("captured request for kimi with short cache retention");
+        assert!(
+            !captured.headers.contains_key("anthropic-beta"),
+            "a gateway that never sees cache_control must not see its beta flag either: {:?}",
+            captured.headers.get("anthropic-beta")
+        );
     }
 
     #[test]

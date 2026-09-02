@@ -533,7 +533,7 @@ fn openai_invalid_utf8_in_sse_is_reported() {
         let err = stream.next().await.expect("expected one item").unwrap_err();
         let message = err.to_string();
         assert!(
-            message.contains("SSE error"),
+            message.contains("Streaming response (SSE) error"),
             "unexpected stream error: {message}"
         );
     });

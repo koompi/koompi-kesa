@@ -74,7 +74,7 @@ impl CheckCategory {
             Self::Config => "Configuration",
             Self::Dirs => "Directories",
             Self::Auth => "Authentication",
-            Self::Shell => "Shell & Tools",
+            Self::Shell => "Shell and tools",
             Self::Sandbox => "Sandbox",
             Self::Sessions => "Sessions",
             Self::Extensions => "Extensions",
@@ -242,7 +242,7 @@ impl DoctorReport {
     /// Render human-friendly text output.
     pub fn render_text(&self) -> String {
         let mut out = String::with_capacity(2048);
-        out.push_str("KESA Doctor\n==================\n");
+        out.push_str("KESA doctor\n===========\n");
 
         // Group findings by category, preserving insertion order
         let mut seen_categories: Vec<CheckCategory> = Vec::new();
@@ -298,7 +298,7 @@ impl DoctorReport {
     /// Render as markdown.
     pub fn render_markdown(&self) -> String {
         let mut out = String::with_capacity(2048);
-        out.push_str("# KESA Doctor Report\n\n");
+        out.push_str("# KESA doctor report\n\n");
 
         let mut seen_categories: Vec<CheckCategory> = Vec::new();
         for f in &self.findings {
@@ -439,13 +439,13 @@ fn check_config(cwd: &Path, findings: &mut Vec<Finding>) {
         );
         check_settings_file(cat, &project_path, &label, findings);
     } else {
-        findings.push(Finding::pass(cat, "No project settings (OK)"));
+        findings.push(Finding::pass(cat, "No project settings"));
     }
 }
 
 fn check_settings_file(cat: CheckCategory, path: &Path, label: &str, findings: &mut Vec<Finding>) {
     if !path.exists() {
-        findings.push(Finding::pass(cat, format!("{label}: not present (OK)")));
+        findings.push(Finding::pass(cat, format!("{label}: not present")));
         return;
     }
     match std::fs::read_to_string(path) {
@@ -743,7 +743,7 @@ fn check_auth(fix: bool, findings: &mut Vec<Finding>) {
                         findings.push(
                             Finding::warn(cat, format!("{provider}: OAuth token expired"))
                                 .with_remediation(format!(
-                                    "Run `kesa /login {provider}` to refresh"
+                                    "Start `kesa`, then run `/login {provider}` to refresh"
                                 )),
                         );
                     }
@@ -795,8 +795,9 @@ fn check_auth_env_vars(cat: CheckCategory, findings: &mut Vec<Finding>) {
             ));
         } else {
             findings.push(
-                Finding::info(cat, format!("{provider}: no env var"))
-                    .with_detail(format!("Set {env_key} or run `kesa /login {provider}`")),
+                Finding::info(cat, format!("{provider}: no env var")).with_detail(format!(
+                    "Set {env_key}, or start `kesa` and run `/login {provider}`"
+                )),
             );
         }
     }
@@ -834,11 +835,12 @@ fn check_shell(findings: &mut Vec<Finding>) {
         ToolCheckMode::PresenceOnly,
         findings,
     );
+    // grep and find are core tools and are unusable without these two
     check_tool(
         cat,
         "rg",
         &["--version"],
-        Severity::Warn,
+        Severity::Fail,
         ToolCheckMode::PresenceOnly,
         findings,
     );
@@ -852,7 +854,7 @@ fn check_shell(findings: &mut Vec<Finding>) {
         cat,
         fd_bin,
         &["--version"],
-        Severity::Warn,
+        Severity::Fail,
         ToolCheckMode::PresenceOnly,
         findings,
     );
@@ -996,8 +998,22 @@ fn report_missing_tool(
         data: None,
         fixability: Fixability::NotFixable,
     };
-    if tool.eq("gh") {
-        f.remediation = Some("Install: https://cli.github.com/".to_string());
+    match tool {
+        "gh" => f.remediation = Some("Install: https://cli.github.com/".to_string()),
+        "rg" => {
+            f.detail =
+                Some("The grep tool shells out to ripgrep and fails without it.".to_string());
+            f.remediation =
+                Some("Install ripgrep: https://github.com/BurntSushi/ripgrep".to_string());
+        }
+        "fd" | "fdfind" => {
+            f.detail = Some("The find tool shells out to fd and fails without it.".to_string());
+            f.remediation = Some(
+                "Install fd (Debian and Ubuntu package it as fd-find): https://github.com/sharkdp/fd"
+                    .to_string(),
+            );
+        }
+        _ => {}
     }
     findings.push(f);
 }
@@ -1409,7 +1425,7 @@ mod tests {
         let report =
             DoctorReport::from_findings(vec![Finding::pass(CheckCategory::Config, "all good")]);
         let text = report.render_text();
-        assert!(text.contains("KESA Doctor"));
+        assert!(text.contains("KESA doctor"));
         assert!(text.contains("[PASS] Configuration"));
         assert!(text.contains("[PASS] all good"));
     }
@@ -1429,7 +1445,7 @@ mod tests {
         let report =
             DoctorReport::from_findings(vec![Finding::warn(CheckCategory::Auth, "expired")]);
         let md = report.render_markdown();
-        assert!(md.contains("# KESA Doctor Report"));
+        assert!(md.contains("# KESA doctor report"));
         assert!(md.contains("## Authentication"));
     }
 

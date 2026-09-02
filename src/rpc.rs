@@ -2182,7 +2182,7 @@ pub async fn run(
     // stdin has closed. Drain any in-flight work (streaming turn, extension
     // command, auto-compaction, background bash) before tearing down so a
     // client that pipes a single command and closes stdin
-    // (`printf '{"type":"prompt",...}' | pi --mode rpc`) still receives the
+    // (`printf '{"type":"prompt",...}' | kesa --mode rpc`) still receives the
     // full event stream through `agent_end` (gh #137). Without this the
     // process shuts down while the spawned task is still starting or
     // streaming, and the work is silently dropped. The Ctrl+C abort path in
@@ -4523,14 +4523,14 @@ async fn export_html_snapshot(
             snapshot.path.as_ref().map_or_else(
                 || {
                     let ts = chrono::Utc::now().format("%Y-%m-%dT%H-%M-%S%.3fZ");
-                    PathBuf::from(format!("pi-session-{ts}.html"))
+                    PathBuf::from(format!("kesa-session-{ts}.html"))
                 },
                 |session_path| {
                     let basename = session_path
                         .file_stem()
                         .and_then(|s| s.to_str())
                         .unwrap_or("session");
-                    PathBuf::from(format!("pi-session-{basename}.html"))
+                    PathBuf::from(format!("kesa-session-{basename}.html"))
                 },
             )
         },
@@ -6624,7 +6624,7 @@ export default function init(pi) {
             let ui_event = recv_ui_request(&out_rx, "wait-confirm-report ui before eof").await;
             assert_eq!(ui_event["method"], "confirm");
 
-            // Simulate `printf ... | pi --mode rpc`: stdin closes immediately.
+            // Simulate `printf ... | kesa --mode rpc`: stdin closes immediately.
             drop(in_tx);
 
             // The server must drain the in-flight command (cancelling the

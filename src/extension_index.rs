@@ -88,7 +88,7 @@ impl ExtensionIndex {
 
     /// Resolve a unique `installSource` for an id/name, if present.
     ///
-    /// This is used to support ergonomic forms like `pi install checkpoint-pi` without requiring
+    /// This is used to support ergonomic forms like `kesa install checkpoint-pi` without requiring
     /// users to spell out `npm:` / `git:` prefixes. If resolution is ambiguous, returns `None`.
     #[must_use]
     pub fn resolve_install_source(&self, query: &str) -> Option<String> {

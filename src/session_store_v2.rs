@@ -762,12 +762,28 @@ fn open_private_directory(path: &Path, create: bool) -> Result<File> {
     Ok(directory)
 }
 
+/// Reject a link, a special file, or a world-readable directory, reading only
+/// the entry's own metadata. Opening it would demand listing access to a tree a
+/// healthy resume never reads, which is why a mode-0 `tmp/` used to make a
+/// perfectly good session unopenable.
 fn validate_private_directory_entry(path: &Path) -> Result<()> {
-    let directory = open_directory_nofollow(path, false)?;
+    let metadata = fs::symlink_metadata(path)?;
+    let file_type = metadata.file_type();
+    if file_type.is_symlink() {
+        return Err(Error::session(format!(
+            "session-store directory is a symlink: {}",
+            path.display()
+        )));
+    }
+    if !file_type.is_dir() {
+        return Err(Error::session(format!(
+            "session-store path is not a directory: {}",
+            path.display()
+        )));
+    }
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt as _;
-        let metadata = directory.metadata()?;
         if metadata.permissions().mode() & 0o077 != 0 {
             return Err(Error::session(format!(
                 "session-store directory has non-private permissions: {}",
@@ -775,8 +791,6 @@ fn validate_private_directory_entry(path: &Path) -> Result<()> {
             )));
         }
     }
-    #[cfg(not(unix))]
-    drop(directory);
     Ok(())
 }
 

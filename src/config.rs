@@ -1240,7 +1240,9 @@ static WORKSPACE_ROOTS: std::sync::RwLock<Option<WorkspaceRoots>> = std::sync::R
 /// Install the process-wide roots. Called from CLI parsing, which is the one
 /// point both the agent process and the sandbox trampoline pass through.
 pub fn configure_workspace_roots(roots: WorkspaceRoots) {
-    *WORKSPACE_ROOTS.write().expect("workspace roots lock") = Some(roots);
+    *WORKSPACE_ROOTS
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(roots);
 }
 
 /// Unconfigured means the working directory and nothing else, so a library
@@ -1250,7 +1252,7 @@ pub fn configure_workspace_roots(roots: WorkspaceRoots) {
 pub fn workspace_roots() -> WorkspaceRoots {
     WORKSPACE_ROOTS
         .read()
-        .expect("workspace roots lock")
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
         .clone()
         .unwrap_or_else(|| default_workspace_roots().clone())
 }

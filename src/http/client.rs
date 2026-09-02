@@ -57,7 +57,7 @@ const DEFAULT_REMOTE_REQUEST_TIMEOUT_SECS: u64 = 60;
 /// Local inference servers frequently incur a large first-request latency: the
 /// model has to be loaded from disk into RAM/VRAM, which for a multi-GB model
 /// on a cold cache can take well over a minute (sometimes several). The cloud
-/// 60s default was too short for this and caused `pi --provider ollama ...` to
+/// 60s default was too short for this and caused `kesa --provider ollama ...` to
 /// fail with "Request timed out" while Ollama was still loading the model
 /// (pi_agent_rust#90).
 ///

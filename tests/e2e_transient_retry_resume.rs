@@ -164,7 +164,7 @@ impl Provider for StepThenTransientProvider {
         // Tool result present: fail once transiently to simulate a mid-turn drop
         // that happens AFTER the tool already executed.
         if !self.failed_once.swap(true, Ordering::SeqCst) {
-            let transient = "SSE error: connection reset by peer (transient connection drop)";
+            let transient = "Streaming response (SSE) error: connection reset by peer (transient connection drop)";
             return match self.mode {
                 FailMode::BeforeResponse => Err(Error::api(transient)),
                 FailMode::MidStream => {

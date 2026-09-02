@@ -654,7 +654,7 @@ impl Default for RpcTransportOptions {
     }
 }
 
-/// Subprocess-backed SDK transport for `pi --mode rpc`.
+/// Subprocess-backed SDK transport for `kesa --mode rpc`.
 pub struct RpcTransportClient {
     child: Child,
     stdin: BufWriter<ChildStdin>,
@@ -1885,19 +1885,20 @@ mod tests {
         runtime.block_on(future)
     }
 
-    fn current_dir_lock() -> std::sync::MutexGuard<'static, ()> {
-        crate::test_current_dir_lock()
-    }
-
     struct CurrentDirGuard {
         previous: PathBuf,
+        _lock: std::sync::MutexGuard<'static, ()>,
     }
 
     impl CurrentDirGuard {
         fn new(path: &Path) -> Self {
+            let lock = crate::test_current_dir_lock();
             let previous = env::current_dir().expect("current dir");
             env::set_current_dir(path).expect("set current dir");
-            Self { previous }
+            Self {
+                previous,
+                _lock: lock,
+            }
         }
     }
 
@@ -1977,7 +1978,6 @@ mod tests {
 
     #[test]
     fn create_agent_session_uses_working_directory_for_new_session_header_and_path() {
-        let _lock = current_dir_lock();
         let process_cwd = tempdir().expect("process cwd");
         let sdk_cwd = tempdir().expect("sdk cwd");
         let session_root = tempdir().expect("session root");
@@ -2023,7 +2023,6 @@ mod tests {
 
     #[test]
     fn create_agent_session_resolves_relative_session_dir_against_working_directory() {
-        let _lock = current_dir_lock();
         let process_cwd = tempdir().expect("process cwd");
         let sdk_cwd = tempdir().expect("sdk cwd");
         let _guard = CurrentDirGuard::new(process_cwd.path());
@@ -2066,7 +2065,6 @@ mod tests {
 
     #[test]
     fn create_agent_session_resolves_relative_session_path_against_working_directory() {
-        let _lock = current_dir_lock();
         let process_cwd = tempdir().expect("process cwd");
         let sdk_cwd = tempdir().expect("sdk cwd");
         let _guard = CurrentDirGuard::new(process_cwd.path());

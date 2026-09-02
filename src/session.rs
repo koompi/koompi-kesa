@@ -8486,19 +8486,20 @@ mod tests {
             .expect("create tempdir under TMPDIR")
     }
 
-    fn current_dir_lock() -> std::sync::MutexGuard<'static, ()> {
-        crate::test_current_dir_lock()
-    }
-
     struct CurrentDirGuard {
         previous: PathBuf,
+        _lock: std::sync::MutexGuard<'static, ()>,
     }
 
     impl CurrentDirGuard {
         fn new(path: &Path) -> Self {
+            let lock = crate::test_current_dir_lock();
             let previous = env::current_dir().expect("current dir");
             env::set_current_dir(path).expect("set current dir");
-            Self { previous }
+            Self {
+                previous,
+                _lock: lock,
+            }
         }
     }
 
@@ -12562,7 +12563,6 @@ mod tests {
 
     #[test]
     fn test_save_uses_session_header_cwd_for_project_session_dir() {
-        let _lock = current_dir_lock();
         let process_cwd = tempfile::tempdir().unwrap();
         let _guard = CurrentDirGuard::new(process_cwd.path());
 
@@ -12824,7 +12824,6 @@ mod tests {
 
     #[test]
     fn test_continue_recent_in_dir_prunes_corrupt_stale_index_entry() {
-        let _lock = current_dir_lock();
         let process_cwd = tempfile::tempdir().unwrap();
         let _guard = CurrentDirGuard::new(process_cwd.path());
 
@@ -12873,7 +12872,6 @@ mod tests {
 
     #[test]
     fn test_continue_recent_in_dir_prunes_missing_stale_index_entry() {
-        let _lock = current_dir_lock();
         let process_cwd = tempfile::tempdir().unwrap();
         let _guard = CurrentDirGuard::new(process_cwd.path());
 
@@ -12922,7 +12920,6 @@ mod tests {
 
     #[test]
     fn test_continue_recent_in_dir_prunes_index_when_project_dir_is_missing() {
-        let _lock = current_dir_lock();
         let process_cwd = tempfile::tempdir().unwrap();
         let _guard = CurrentDirGuard::new(process_cwd.path());
 
@@ -13251,7 +13248,6 @@ mod tests {
 
     #[test]
     fn test_continue_recent_in_dir_refreshes_index_after_changed_disk_session() {
-        let _lock = current_dir_lock();
         let process_cwd = tempfile::tempdir().unwrap();
         let _guard = CurrentDirGuard::new(process_cwd.path());
 
@@ -13293,7 +13289,6 @@ mod tests {
 
     #[test]
     fn test_resume_with_picker_refreshes_index_after_changed_disk_session() {
-        let _lock = current_dir_lock();
         let process_cwd = tempfile::tempdir().unwrap();
         let _guard = CurrentDirGuard::new(process_cwd.path());
 

@@ -1088,7 +1088,10 @@ fn format_error_model_not_found_hints() {
 #[test]
 fn hints_config_cassette() {
     let hint = hints_for_error(&Error::config("cassette file missing"));
-    assert_eq!(hint.summary, "VCR cassette missing or invalid");
+    assert_eq!(
+        hint.summary,
+        "Recorded HTTP cassette (VCR) missing or invalid"
+    );
     assert!(hint.context_fields.contains(&"file_path"));
 }
 
@@ -1247,7 +1250,7 @@ fn hints_provider_model_not_found() {
 #[test]
 fn hints_provider_generic() {
     let hint = hints_for_error(&Error::provider("x", "unknown provider issue"));
-    assert_eq!(hint.summary, "Provider API error");
+    assert_eq!(hint.summary, "The provider returned an error");
 }
 
 #[test]

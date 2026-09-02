@@ -1232,7 +1232,7 @@ mod backpressure_tests {
                 },
                 ProviderPressureChunk::MalformedChunk {
                     class: "malformed_chunk",
-                    message: "SSE error: JSON parse error: expected value at line 1 column 1",
+                    message: "Streaming response (SSE) error: JSON parse error: expected value at line 1 column 1",
                 },
             ],
         }

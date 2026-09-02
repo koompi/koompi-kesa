@@ -771,21 +771,29 @@ fn event_coalescer_characterization_batch_drain_resolves_every_payload_in_order(
         );
     }
 
-    assert_eq!(
-        coalescer
+    // The buffer's depth is not observable from here: the drain task can run
+    // between the dispatch and this line. What must hold is that the three
+    // events share one drain and come back whole and in order, which the
+    // settle-then-compare below asserts.
+    {
+        let buffered = coalescer
             .batch_buffer
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .len(),
-        3,
-        "all non-coalescable events must share the scheduled batch"
-    );
-    assert!(
-        coalescer
+            .len();
+        let draining = coalescer
             .batch_drain_scheduled
-            .load(std::sync::atomic::Ordering::Acquire),
-        "exactly one drain task should be scheduled for the buffered batch"
-    );
+            .load(std::sync::atomic::Ordering::Acquire);
+        assert!(
+            buffered > 0
+                || draining
+                || !resolved
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .is_empty(),
+            "the batch was neither buffered, draining, nor resolved"
+        );
+    }
 
     runtime.block_on(await_settled("batch drain", || {
         let buffer_empty = coalescer

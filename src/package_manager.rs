@@ -1186,7 +1186,7 @@ impl PackageManager {
                             "Missing package.json version for installed npm package at {}",
                             installed_path.display()
                         ),
-                        "Reinstall the package (`pi remove <source>` then `pi install <source>`) and retry.",
+                        "Reinstall the package (`kesa remove <source>` then `kesa install <source>`) and retry.",
                     )
                 })?;
 
@@ -3841,7 +3841,7 @@ fn npm_exact_version(value: &str) -> Option<semver::Version> {
 /// Whether an npm spec's version fragment pins the source.
 ///
 /// Mirrors upstream pi's `isExactNpmVersion`: only exact versions pin, so
-/// `pi update` refreshes ranges and dist-tags while leaving pins alone.
+/// `kesa update` refreshes ranges and dist-tags while leaving pins alone.
 /// Local file/link/workspace references are additionally treated as pinned
 /// so update keeps leaving them untouched (unchanged behavior).
 fn npm_version_pins_source(version: &str) -> bool {
@@ -4024,7 +4024,7 @@ pub fn evaluate_lock_transition(
                 candidate.source_kind
             ),
             remediation: format!(
-                "Review the source change, then run `pi remove {}` and `pi install {}` to re-establish trust.",
+                "Review the source change, then run `kesa remove {}` and `kesa install {}` to re-establish trust.",
                 candidate.source, candidate.source
             ),
         });
@@ -4041,7 +4041,7 @@ pub fn evaluate_lock_transition(
                 candidate.identity
             ),
             remediation: format!(
-                "Use `pi update {}` for unpinned sources, or reinstall after intentional provenance changes.",
+                "Use `kesa update {}` for unpinned sources, or reinstall after intentional provenance changes.",
                 candidate.source
             ),
         });
@@ -4055,7 +4055,7 @@ pub fn evaluate_lock_transition(
                 candidate.identity, existing.digest_sha256, candidate.digest_sha256
             ),
             remediation: format!(
-                "Inspect upstream changes. If expected, run `pi remove {}` then `pi install {}` to trust the new digest.",
+                "Inspect upstream changes. If expected, run `kesa remove {}` then `kesa install {}` to trust the new digest.",
                 candidate.source, candidate.source
             ),
         });
@@ -6343,7 +6343,7 @@ mod tests {
             ("npm:pkg@1.2.3", true),
             ("npm:pkg@v1.2.3", true),
             ("npm:@scope/pkg@2.0.0-beta.1", true),
-            // Local references stay pinned so `pi update` leaves them alone.
+            // Local references stay pinned so `kesa update` leaves them alone.
             ("npm:pkg@file:../pkg", true),
             ("npm:pkg@link:../pkg", true),
             // Ranges, partial versions, and dist-tags float.

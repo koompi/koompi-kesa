@@ -1734,16 +1734,20 @@ impl Agent {
         self.begin_session().await;
         let result = self.run_loop_inner(prompts, on_event, abort).await;
         match &result {
-            // The user is at the keyboard and just hit Esc: `Stop` and the
-            // turn-end notification are wrong, `Interrupt` is the event.
+            // An aborted turn is `Interrupt`, not `Stop` — except in a child,
+            // whose parent is still owed the `SubagentStop` it waits on.
             Ok(message) if message.stop_reason == StopReason::Aborted => {
-                let session_id = self
-                    .config
-                    .stream_options
-                    .session_id
-                    .clone()
-                    .unwrap_or_default();
-                self.shell_hooks().interrupt(&session_id).await;
+                if is_subagent() {
+                    self.shell_hooks().subagent_stop(false).await;
+                } else {
+                    let session_id = self
+                        .config
+                        .stream_options
+                        .session_id
+                        .clone()
+                        .unwrap_or_default();
+                    self.shell_hooks().interrupt(&session_id).await;
+                }
             }
             Ok(_) => self.end_turn().await,
             Err(_) => {}

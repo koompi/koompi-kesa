@@ -670,7 +670,10 @@ impl ChildRunner {
             return result;
         }
         let stdout = child.take_stdout().expect("stdout checked above");
-        let stderr = child.take_stderr().expect("stderr is piped");
+        let Some(stderr) = child.take_stderr() else {
+            result.fail("Child stderr was not piped.".to_string());
+            return result;
+        };
         let (tx, rx) = mpsc::sync_channel(256);
         let stdout_thread = spawn_pipe_reader(stdout, PipeKind::Stdout, tx.clone());
         let stderr_thread = spawn_pipe_reader(stderr, PipeKind::Stderr, tx);

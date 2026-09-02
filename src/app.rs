@@ -103,10 +103,10 @@ pub fn normalize_cli(cli: &mut cli::Cli) {
 pub fn validate_rpc_args(cli: &cli::Cli) -> Result<()> {
     let rpc_mode = cli.rpc || cli.mode.as_deref() == Some("rpc");
     if cli.rpc && cli.print {
-        bail!("Error: RPC mode cannot be combined with --print");
+        bail!("RPC mode (the headless JSON-RPC protocol) cannot be combined with --print");
     }
     if rpc_mode && !cli.file_args().is_empty() {
-        bail!("Error: @file arguments are not supported in RPC mode");
+        bail!("@file arguments are not supported in RPC mode");
     }
     Ok(())
 }
@@ -297,7 +297,7 @@ fn default_system_prompt(enabled_tools: &[&str], package_dir: &Path) -> String {
     let examples_path = package_dir.join("examples").display().to_string();
 
     format!(
-        "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n{tools_list}\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n{guidelines}\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: {readme_path}\n- Additional docs: {docs_path}\n- Examples: {examples_path} (extensions, custom tools, SDK)\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)"
+        "You are an expert coding assistant operating inside KESA, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n{tools_list}\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n{guidelines}\n\nKESA documentation (read only when the user asks about KESA itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: {readme_path}\n- Additional docs: {docs_path}\n- Examples: {examples_path} (extensions, custom tools, SDK)\n- When asked about: extensions (docs/extension-architecture.md, docs/extension-troubleshooting.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), providers (docs/providers.md), adding models (docs/models.md), KESA packages (docs/packages.md)\n- When working on KESA topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read KESA .md files completely and follow links to related docs (e.g., tui.md for TUI API details)"
     )
 }
 
@@ -343,7 +343,10 @@ fn load_context_file_from_dir(dir: &Path) -> Option<ContextFile> {
                     });
                 }
                 Err(err) => {
-                    eprintln!("Warning: Could not read {}: {err}", path.display());
+                    eprintln!(
+                        "Warning: {} was left out of the prompt because it could not be read: {err}",
+                        path.display()
+                    );
                 }
             }
         }
@@ -978,7 +981,10 @@ pub fn resolve_model_scope(
             let glob = match Pattern::new(&glob_pattern.to_lowercase()) {
                 Ok(glob) => glob,
                 Err(err) => {
-                    eprintln!("Warning: Invalid model pattern \"{pattern}\": {err}");
+                    eprintln!(
+                        "Warning: ignoring the model pattern \"{pattern}\", which is not a valid \
+                         glob: {err}"
+                    );
                     continue;
                 }
             };
@@ -1003,7 +1009,7 @@ pub fn resolve_model_scope(
             }
 
             if !matched_any {
-                eprintln!("Warning: No models match pattern \"{pattern}\"");
+                warn_no_models_match(pattern);
             }
             continue;
         }
@@ -1024,11 +1030,23 @@ pub fn resolve_model_scope(
                 });
             }
         } else {
-            eprintln!("Warning: No models match pattern \"{pattern}\"");
+            warn_no_models_match(pattern);
         }
     }
 
     scoped_models
+}
+
+/// Report a `--models` pattern that selected nothing.
+///
+/// Both the glob branch and the exact-name branch drop the pattern silently
+/// otherwise, and from the outside the two are the same event: Ctrl+P will not
+/// cycle to anything the user was expecting.
+fn warn_no_models_match(pattern: &str) {
+    eprintln!(
+        "Warning: no model matches \"{pattern}\", so Ctrl+P will not cycle to one.\n\
+         Run `kesa --list-models` for the ids this build can see."
+    );
 }
 
 fn parse_model_pattern(pattern: &str, available_models: &[ModelEntry]) -> ParsedModelResult {
@@ -1203,7 +1221,10 @@ impl Drop for RewindGuard {
         if let Some(mut store) = crate::rewind::uninstall()
             && let Err(err) = store.close()
         {
-            eprintln!("Warning: rewind store cleanup failed: {err}");
+            eprintln!(
+                "Warning: the undo history for this session was not tidied up on exit: {err}\n\
+                 It costs disk until a later session cleans it; nothing in this session is lost."
+            );
         }
     }
 }
