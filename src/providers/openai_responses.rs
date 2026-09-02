@@ -7,7 +7,7 @@ use crate::error::{Error, Result};
 use crate::http::client::Client;
 use crate::model::{
     AssistantMessage, ContentBlock, Message, StopReason, StreamEvent, TextContent, ThinkingContent,
-    ToolCall, Usage, UserContent,
+    ThinkingLevel, ToolCall, Usage, UserContent,
 };
 use crate::models::CompatConfig;
 use crate::provider::{Context, Provider, StreamOptions, ToolDef};
@@ -133,21 +133,30 @@ impl OpenAIResponsesProvider {
         // Codex mode requires additional fields per the TS reference implementation.
         // tool_choice and parallel_tool_calls are always sent (not conditional on tools).
         let (tool_choice, parallel_tool_calls, text, include, reasoning) = if self.codex_mode {
-            let effort = options
-                .thinking_level
-                .as_ref()
-                .map_or_else(|| "high".to_string(), ToString::to_string);
+            let effort = options.thinking_level.map_or_else(
+                || Some("high".to_string()),
+                |level| responses_effort_for_level(level, self.compat.as_ref()),
+            );
+            // `off` omits `reasoning` altogether; the encrypted-content include
+            // only makes sense when reasoning is requested.
+            let (include, reasoning) = match effort {
+                Some(effort) => (
+                    Some(vec!["reasoning.encrypted_content"]),
+                    Some(OpenAIResponsesReasoning {
+                        effort,
+                        summary: Some("auto"),
+                    }),
+                ),
+                None => (None, None),
+            };
             (
                 Some("auto"),
                 Some(true),
                 Some(OpenAIResponsesTextConfig {
                     verbosity: "medium",
                 }),
-                Some(vec!["reasoning.encrypted_content"]),
-                Some(OpenAIResponsesReasoning {
-                    effort,
-                    summary: Some("auto"),
-                }),
+                include,
+                reasoning,
             )
         } else {
             (None, None, None, None, None)
@@ -172,6 +181,32 @@ impl OpenAIResponsesProvider {
             include,
             reasoning,
         }
+    }
+}
+
+/// Map the thinking level onto the Responses API `reasoning.effort` value
+/// for codex mode. A per-model `thinkingLevelMap` from the catalog overrides
+/// the default, keyed by the lowercase `ThinkingLevel` name.
+///
+/// `off` yields `None` so the request omits `reasoning` entirely, which is
+/// what Codex CLI sends for non-reasoning models. The API rejects `"off"`,
+/// and `"none"` is only accepted from gpt-5.1 on, so neither is a safe wire
+/// value. Every other level passes through as its own word; the API lists
+/// `max` among its supported values.
+///
+/// Kept separate from `anthropic_effort_for_level`: the vocabularies differ.
+fn responses_effort_for_level(
+    level: ThinkingLevel,
+    compat: Option<&CompatConfig>,
+) -> Option<String> {
+    if let Some(map) = compat.and_then(|c| c.thinking_level_map.as_ref())
+        && let Some(mapped) = map.get(level.to_string().as_str())
+    {
+        return Some(mapped.clone());
+    }
+    match level {
+        ThinkingLevel::Off => None,
+        level => Some(level.to_string()),
     }
 }
 
@@ -1692,6 +1727,65 @@ mod tests {
         let provider = OpenAIResponsesProvider::new("gpt-4o");
         assert_eq!(provider.name(), "openai");
         assert_eq!(provider.api(), "openai-responses");
+    }
+
+    fn codex_request(provider: &OpenAIResponsesProvider, level: Option<ThinkingLevel>) -> Value {
+        let options = StreamOptions {
+            thinking_level: level,
+            ..Default::default()
+        };
+        serde_json::to_value(provider.build_request(&Context::default(), &options))
+            .expect("serialize request")
+    }
+
+    /// One `/thinking off` used to wedge every later codex request: `"off"`
+    /// went straight into `reasoning.effort` and the API 400s on it.
+    #[test]
+    fn test_codex_build_request_omits_reasoning_for_thinking_off() {
+        let provider = OpenAIResponsesProvider::new("gpt-5.5").with_codex_mode(true);
+
+        let off = codex_request(&provider, Some(ThinkingLevel::Off));
+        assert!(off.get("reasoning").is_none(), "{off}");
+        assert!(off.get("include").is_none(), "{off}");
+        assert_eq!(off["tool_choice"], "auto", "codex fields stay: {off}");
+
+        for (level, word) in [
+            (ThinkingLevel::High, "high"),
+            (ThinkingLevel::XHigh, "xhigh"),
+            (ThinkingLevel::Max, "max"),
+        ] {
+            let value = codex_request(&provider, Some(level));
+            assert_eq!(value["reasoning"]["effort"], word, "{value}");
+            assert_eq!(
+                value["include"],
+                json!(["reasoning.encrypted_content"]),
+                "{value}"
+            );
+        }
+
+        let default = codex_request(&provider, None);
+        assert_eq!(default["reasoning"]["effort"], "high", "{default}");
+        assert_eq!(
+            default["include"],
+            json!(["reasoning.encrypted_content"]),
+            "{default}"
+        );
+
+        let mut map = HashMap::new();
+        map.insert("off".to_string(), "none".to_string());
+        let mapped = OpenAIResponsesProvider::new("gpt-5.5")
+            .with_codex_mode(true)
+            .with_compat(Some(CompatConfig {
+                thinking_level_map: Some(map),
+                ..CompatConfig::default()
+            }));
+        let value = codex_request(&mapped, Some(ThinkingLevel::Off));
+        assert_eq!(value["reasoning"]["effort"], "none", "{value}");
+        assert_eq!(
+            value["include"],
+            json!(["reasoning.encrypted_content"]),
+            "{value}"
+        );
     }
 
     #[test]
