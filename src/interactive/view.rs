@@ -2393,99 +2393,97 @@ impl PiApp {
         output
     }
 
+    /// The capability prompt and the tool-approval modal are the same
+    /// question asked of the same user, so they share one box: a bordered
+    /// frame, numbered options with a focus marker, and one legend line.
+    fn render_choice_box(&self, rows: Vec<String>, legend: &str) -> String {
+        let width = box_width(self.term_width);
+        let mut output = String::from("\n");
+        for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
+            let _ = writeln!(output, "  {line}");
+        }
+        let _ = writeln!(output, "  {}", self.styles.muted_italic.render(legend));
+        output
+    }
+
+    fn choice_row(&self, index: usize, label: &str, focused: bool) -> String {
+        let label = format!("{}. {label}", index + 1);
+        if focused {
+            self.styles.selection.render(&format!("\u{276f} {label}"))
+        } else {
+            self.styles.muted.render(&format!("  {label}"))
+        }
+    }
+
     pub(super) fn render_capability_prompt(&self, prompt: &CapabilityPromptOverlay) -> String {
-        let mut output = String::new();
-
-        // Title line.
-        let _ = writeln!(
-            output,
-            "\n  {}",
-            self.styles.title.render("Extension Permission Request")
-        );
-
-        // Extension and capability info.
-        let _ = writeln!(
-            output,
-            "  {} requests {}",
+        let title = format!(
+            "{} requests {}",
             self.styles.accent_bold.render(&prompt.extension_id),
             self.styles.warning_bold.render(&prompt.capability),
         );
-
-        // Description.
+        let mut rows = vec![title, String::new()];
         if !prompt.description.is_empty() {
-            let _ = writeln!(
-                output,
-                "\n  {}",
-                self.styles.muted.render(&prompt.description),
-            );
+            rows.push(self.styles.muted.render(&prompt.description));
+            rows.push(String::new());
         }
-
-        // Button row.
-        output.push('\n');
-        output.push_str("  ");
         for (idx, action) in CapabilityAction::ALL.iter().enumerate() {
-            let label = action.label();
-            let rendered = if idx == prompt.focused {
-                self.styles.selection.render(&format!("[{label}]"))
-            } else {
-                self.styles.muted.render(&format!(" {label} "))
-            };
-            output.push_str(&rendered);
-            output.push_str("  ");
+            rows.push(self.choice_row(idx, action.label(), idx == prompt.focused));
         }
-        output.push('\n');
-
-        // Auto-deny timer.
         if let Some(secs) = prompt.auto_deny_secs {
-            let _ = writeln!(
-                output,
-                "  {}",
+            rows.push(String::new());
+            rows.push(
                 self.styles
                     .muted_italic
                     .render(&format!("Auto-deny in {secs}s")),
             );
         }
+        self.render_choice_box(
+            rows,
+            "1-4 choose  \u{2191}/\u{2193} navigate  Enter confirm  Esc deny once",
+        )
+    }
 
-        // Help text.
-        let _ = writeln!(
-            output,
-            "  {}",
-            self.styles
-                .muted_italic
-                .render("←/→/Tab: navigate  Enter: confirm  Esc: deny")
-        );
-
-        output
+    /// Rows `render_capability_prompt` writes: spacer, box, legend.
+    pub(super) fn capability_prompt_rows(&self) -> usize {
+        self.capability_prompt.as_ref().map_or(0, |prompt| {
+            let description = if prompt.description.is_empty() { 0 } else { 2 };
+            let timer = if prompt.auto_deny_secs.is_some() {
+                2
+            } else {
+                0
+            };
+            1 + 2 + 2 + description + CapabilityAction::ALL.len() + timer + 1
+        })
     }
 
     pub(super) fn render_tool_approval(&self, prompt: &ToolApprovalOverlay) -> String {
-        let width = box_width(self.term_width);
         let title = format!("{} wants to run", self.styles.accent_bold.render("KESA"));
         let summary = self.styles.warning_bold.render(&prompt.summary);
         let tool = self.styles.muted.render(&format!("{}:", prompt.tool_name));
 
-        let mut rows = vec![title, String::new(), tool, summary, String::new()];
+        let mut rows = vec![title, String::new(), tool, summary];
+        if !prompt.detail.is_empty() {
+            let detail: Vec<&str> = prompt.detail.iter().map(String::as_str).collect();
+            let mut styled = String::new();
+            super::tool_render::render_diff_lines(&detail, false, &self.styles, &mut styled);
+            // render_diff_lines starts every row with a newline
+            rows.extend(styled.split('\n').skip(1).map(str::to_string));
+        }
+        rows.push(String::new());
         for (idx, action) in ApprovalAction::ALL.iter().enumerate() {
-            let label = format!("{}. {}", idx + 1, prompt.label(*action));
-            rows.push(if idx == prompt.focused {
-                self.styles.selection.render(&format!("\u{276f} {label}"))
-            } else {
-                self.styles.muted.render(&format!("  {label}"))
-            });
+            rows.push(self.choice_row(idx, &prompt.label(*action), idx == prompt.focused));
         }
+        self.render_choice_box(
+            rows,
+            "1-3 choose  \u{2191}/\u{2193} navigate  Enter confirm  Esc reject",
+        )
+    }
 
-        let mut output = String::from("\n");
-        for line in bordered_box(rows.iter().map(String::as_str), width, &self.styles.border) {
-            let _ = writeln!(output, "  {line}");
-        }
-        let _ = writeln!(
-            output,
-            "  {}",
-            self.styles
-                .muted_italic
-                .render("1-3 choose  \u{2191}/\u{2193} navigate  Enter confirm  Esc reject")
-        );
-        output
+    /// Rows `render_tool_approval` writes: spacer, box, legend.
+    pub(super) fn tool_approval_rows(&self) -> usize {
+        self.tool_approval.as_ref().map_or(0, |prompt| {
+            1 + 2 + 4 + prompt.detail.len() + 1 + ApprovalAction::ALL.len() + 1
+        })
     }
 
     pub(super) fn render_extension_custom_overlay(

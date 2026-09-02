@@ -588,12 +588,15 @@ impl CapabilityAction {
         Self::DenyAlways,
     ];
 
+    /// The words on the buttons, in the same register as the tool-approval
+    /// modal. The two "always" answers are written to disk and survive
+    /// restarts, and the label says so.
     pub(super) const fn label(self) -> &'static str {
         match self {
-            Self::AllowOnce => "Allow Once",
-            Self::AllowAlways => "Allow Always",
-            Self::Deny => "Deny",
-            Self::DenyAlways => "Deny Always",
+            Self::AllowOnce => "Yes, allow it this once",
+            Self::AllowAlways => "Yes, and save that: allow it every time",
+            Self::Deny => "No, not this time",
+            Self::DenyAlways => "No, and save that: deny it every time",
         }
     }
 
@@ -628,6 +631,11 @@ pub(super) struct ToolApprovalOverlay {
     /// One-line rendering of the arguments, e.g. the command for `bash`,
     /// carrying [`Self::sandbox_warning`] when there is one to carry.
     pub(super) summary: String,
+    /// What the call will do, under the summary: `-`/`+` rows for a file
+    /// tool, the working directory for a shell, one row per task for a
+    /// delegation. Unstyled; the view colours them, because the styles live
+    /// on the app. Built once here so repaint does no work.
+    pub(super) detail: Vec<String>,
     /// Rule installed when the user picks [`ApprovalAction::Session`].
     pub(super) session_rule: String,
     /// Sandbox state at the moment the modal opened, for a tool that spawns a
@@ -638,10 +646,11 @@ pub(super) struct ToolApprovalOverlay {
 }
 
 impl ToolApprovalOverlay {
-    pub(super) fn new(prompt: ToolApprovalPrompt) -> Self {
+    pub(super) fn new(prompt: ToolApprovalPrompt, cwd: &Path) -> Self {
         let tool_name = prompt.request.tool_name.clone();
         let mut overlay = Self {
             summary: summarize_tool_arguments(&tool_name, &prompt.request.arguments),
+            detail: approval_detail_rows(&tool_name, &prompt.request.arguments, cwd),
             session_rule: session_rule_for(&tool_name, &prompt.request.arguments),
             sandbox: spawns_a_process(&tool_name).then(crate::sandbox::status),
             tool_name,
@@ -713,9 +722,28 @@ fn spawns_a_process(tool_name: &str) -> bool {
     matches!(tool_name.to_ascii_lowercase().as_str(), "bash" | "shell")
 }
 
+/// Rows of detail the approval modal shows before truncating.
+pub(super) const APPROVAL_DETAIL_MAX_ROWS: usize = 10;
+
 /// The argument worth showing: the command for a shell, the path for a file
-/// tool, and the whole object only when neither is present.
+/// tool, what a write will do to which file, who a delegation runs, and the
+/// whole object only when none of those is present.
 fn summarize_tool_arguments(tool_name: &str, arguments: &Value) -> String {
+    let name = tool_name.to_ascii_lowercase();
+    if name == "write"
+        && let Some(path) = argument_str(arguments, "path")
+    {
+        let lines = argument_str(arguments, "content").map_or(0, |content| content.lines().count());
+        let noun = if lines == 1 { "line" } else { "lines" };
+        return format!("write {lines} {noun} to {path}");
+    }
+    if name == "subagent" {
+        let agents = delegated_agents(arguments);
+        if !agents.is_empty() {
+            let noun = if agents.len() == 1 { "agent" } else { "agents" };
+            return format!("{} {noun}: {}", agents.len(), agents.join(", "));
+        }
+    }
     let field = if spawns_a_process(tool_name) {
         "command"
     } else {
@@ -726,6 +754,133 @@ fn summarize_tool_arguments(tool_name: &str, arguments: &Value) -> String {
         .or_else(|| arguments.get("file_path"))
         .and_then(Value::as_str)
         .map_or_else(|| arguments.to_string(), ToString::to_string)
+}
+
+fn argument_str<'a>(arguments: &'a Value, field: &str) -> Option<&'a str> {
+    arguments.get(field).and_then(Value::as_str)
+}
+
+/// Every agent a `subagent` call names, in call order, each once.
+fn delegated_agents(arguments: &Value) -> Vec<String> {
+    let mut agents: Vec<String> = Vec::new();
+    let mut push = |agent: Option<&str>| {
+        if let Some(agent) = agent.map(str::trim).filter(|agent| !agent.is_empty())
+            && !agents.iter().any(|seen| seen == agent)
+        {
+            agents.push(agent.to_string());
+        }
+    };
+    push(argument_str(arguments, "agent"));
+    for field in ["tasks", "chain"] {
+        for task in arguments
+            .get(field)
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            push(argument_str(task, "agent"));
+        }
+    }
+    agents
+}
+
+/// What the modal shows under the summary, built from the model's arguments
+/// alone: nothing here reads the file. For `edit` both texts are in the
+/// call, so the rows are the real replacement. For `write` and
+/// `hashline_edit` the old text exists only on disk, so the rows are the
+/// incoming lines; the true diff is the one the tool result renders after
+/// the fact.
+fn approval_detail_rows(tool_name: &str, arguments: &Value, cwd: &Path) -> Vec<String> {
+    let name = tool_name.to_ascii_lowercase();
+    let rows = match name.as_str() {
+        "edit" => {
+            let old = argument_str(arguments, "oldText").unwrap_or_default();
+            let new = argument_str(arguments, "newText").unwrap_or_default();
+            old.lines()
+                .map(|line| format!("-{line}"))
+                .chain(new.lines().map(|line| format!("+{line}")))
+                .collect()
+        }
+        "write" => argument_str(arguments, "content")
+            .unwrap_or_default()
+            .lines()
+            .map(|line| format!("+{line}"))
+            .collect(),
+        "hashline_edit" => hashline_rows(arguments),
+        "subagent" => delegated_tasks(arguments),
+        _ if spawns_a_process(tool_name) => vec![format!("in {}", cwd.display())],
+        _ => Vec::new(),
+    };
+    truncate_detail_rows(rows)
+}
+
+/// One row per hashline op, then its incoming lines as `+` rows.
+fn hashline_rows(arguments: &Value) -> Vec<String> {
+    let mut rows = Vec::new();
+    for edit in arguments
+        .get("edits")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let op = argument_str(edit, "op").unwrap_or("edit");
+        rows.push(
+            match (argument_str(edit, "pos"), argument_str(edit, "end")) {
+                (Some(pos), Some(end)) => format!("{op} {pos}..{end}"),
+                (Some(pos), None) => format!("{op} {pos}"),
+                _ => op.to_string(),
+            },
+        );
+        match edit.get("lines") {
+            Some(Value::Array(lines)) => {
+                for line in lines {
+                    let text = line
+                        .as_str()
+                        .map_or_else(|| line.to_string(), str::to_string);
+                    rows.push(format!("+{text}"));
+                }
+            }
+            Some(Value::String(text)) => rows.extend(text.lines().map(|line| format!("+{line}"))),
+            _ => {}
+        }
+    }
+    rows
+}
+
+/// `agent: task` for each delegated task, first line of the task only.
+fn delegated_tasks(arguments: &Value) -> Vec<String> {
+    let row = |task: &Value| -> Option<String> {
+        let agent = argument_str(task, "agent")?.trim();
+        let text = argument_str(task, "task")?
+            .lines()
+            .next()
+            .unwrap_or_default()
+            .trim();
+        (!agent.is_empty()).then(|| format!("{agent}: {text}"))
+    };
+    let mut rows = Vec::new();
+    rows.extend(row(arguments));
+    for field in ["tasks", "chain"] {
+        rows.extend(
+            arguments
+                .get(field)
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(row),
+        );
+    }
+    rows
+}
+
+/// Cap the detail at [`APPROVAL_DETAIL_MAX_ROWS`] and say how much is hidden.
+fn truncate_detail_rows(mut rows: Vec<String>) -> Vec<String> {
+    if rows.len() > APPROVAL_DETAIL_MAX_ROWS {
+        let hidden = rows.len() - APPROVAL_DETAIL_MAX_ROWS;
+        rows.truncate(APPROVAL_DETAIL_MAX_ROWS);
+        rows.push(format!("... {hidden} more lines"));
+    }
+    rows
 }
 
 /// The rule "don't ask again" installs.
@@ -1510,14 +1665,117 @@ mod tests {
 
     fn approval_overlay(tool_name: &str, arguments: Value) -> ToolApprovalOverlay {
         let (reply, _answer) = oneshot::channel();
-        ToolApprovalOverlay::new(ToolApprovalPrompt {
-            request: crate::agent::ToolApprovalRequest {
-                tool_call_id: "call-1".to_string(),
-                tool_name: tool_name.to_string(),
-                arguments,
+        ToolApprovalOverlay::new(
+            ToolApprovalPrompt {
+                request: crate::agent::ToolApprovalRequest {
+                    tool_call_id: "call-1".to_string(),
+                    tool_name: tool_name.to_string(),
+                    arguments,
+                },
+                reply,
             },
-            reply,
-        })
+            Path::new("/work"),
+        )
+    }
+
+    /// The user is approving a replacement, so the modal shows the
+    /// replacement: the rows come from `oldText`/`newText`, not from JSON.
+    #[test]
+    fn an_edit_approval_shows_minus_and_plus_rows_from_its_arguments() {
+        let overlay = approval_overlay(
+            "edit",
+            serde_json::json!({
+                "path": "src/main.rs",
+                "oldText": "let x = 1;\nlet y = 2;",
+                "newText": "let x = 10;"
+            }),
+        );
+        assert_eq!(overlay.summary, "src/main.rs");
+        assert_eq!(
+            overlay.detail,
+            ["-let x = 1;", "-let y = 2;", "+let x = 10;"]
+        );
+        assert!(!overlay.detail.iter().any(|row| row.contains("oldText")));
+    }
+
+    /// A write has no old text in the call, so the modal says how much lands
+    /// where and shows the incoming lines.
+    #[test]
+    fn a_write_approval_counts_its_lines_and_shows_them_as_additions() {
+        let overlay = approval_overlay(
+            "write",
+            serde_json::json!({"path": "notes.md", "content": "one\ntwo\nthree"}),
+        );
+        assert_eq!(overlay.summary, "write 3 lines to notes.md");
+        assert_eq!(overlay.detail, ["+one", "+two", "+three"]);
+    }
+
+    #[test]
+    fn approval_detail_truncates_at_the_stated_row_count() {
+        let content = (1..=30)
+            .map(|n| format!("line {n}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let overlay = approval_overlay(
+            "write",
+            serde_json::json!({"path": "big.txt", "content": content}),
+        );
+        assert_eq!(overlay.summary, "write 30 lines to big.txt");
+        assert_eq!(overlay.detail.len(), APPROVAL_DETAIL_MAX_ROWS + 1);
+        assert_eq!(overlay.detail[APPROVAL_DETAIL_MAX_ROWS - 1], "+line 10");
+        assert_eq!(
+            overlay.detail[APPROVAL_DETAIL_MAX_ROWS],
+            "... 20 more lines"
+        );
+    }
+
+    #[test]
+    fn a_hashline_approval_shows_one_row_per_op_with_its_lines() {
+        let overlay = approval_overlay(
+            "hashline_edit",
+            serde_json::json!({
+                "path": "src/lib.rs",
+                "edits": [
+                    {"op": "replace", "pos": "12#ab", "end": "14#cd", "lines": ["fn a() {}", "fn b() {}"]},
+                    {"op": "append", "lines": "tail"}
+                ]
+            }),
+        );
+        assert_eq!(overlay.summary, "src/lib.rs");
+        assert_eq!(
+            overlay.detail,
+            [
+                "replace 12#ab..14#cd",
+                "+fn a() {}",
+                "+fn b() {}",
+                "append",
+                "+tail"
+            ]
+        );
+    }
+
+    #[test]
+    fn a_subagent_approval_names_its_agents_and_a_shell_names_its_cwd() {
+        let overlay = approval_overlay(
+            "subagent",
+            serde_json::json!({"tasks": [
+                {"agent": "counter", "task": "count\nmore"},
+                {"agent": "greeter", "task": "greet"},
+                {"agent": "namer", "task": "name"}
+            ]}),
+        );
+        assert_eq!(overlay.summary, "3 agents: counter, greeter, namer");
+        assert_eq!(
+            overlay.detail,
+            ["counter: count", "greeter: greet", "namer: name"]
+        );
+
+        let overlay = approval_overlay("bash", serde_json::json!({"command": "ls -la"}));
+        assert_eq!(overlay.detail, ["in /work"]);
+
+        let overlay = approval_overlay("read", serde_json::json!({"path": "src/main.rs"}));
+        assert_eq!(overlay.summary, "src/main.rs");
+        assert!(overlay.detail.is_empty(), "unchanged for every other tool");
     }
 
     /// Approving a command is the one moment the sandbox's state changes an
@@ -1571,7 +1829,7 @@ mod tests {
         let overlay = approval_overlay("write", serde_json::json!({"path": "src/main.rs"}));
         assert!(overlay.sandbox.is_none());
         assert_eq!(overlay.sandbox_warning(), None);
-        assert_eq!(overlay.summary, "src/main.rs");
+        assert_eq!(overlay.summary, "write 0 lines to src/main.rs");
         assert_eq!(overlay.label(ApprovalAction::Once), "Yes");
     }
 

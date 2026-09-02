@@ -97,32 +97,26 @@ impl PiApp {
     pub(super) fn handle_capability_prompt_key(&mut self, key: &KeyMsg) -> Option<Cmd> {
         let prompt = self.capability_prompt.as_mut()?;
 
+        // The options stack vertically like the tool-approval modal, so the
+        // same keys drive both; the older horizontal keys still work.
         match key.key_type {
-            // Navigate between buttons.
-            KeyType::Right | KeyType::Tab => prompt.focus_next(),
-            KeyType::Left => prompt.focus_prev(),
-            KeyType::Runes if key.runes == ['l'] => prompt.focus_next(),
-            KeyType::Runes if key.runes == ['h'] => prompt.focus_prev(),
-
-            // Confirm selection.
+            KeyType::Down | KeyType::Right | KeyType::Tab => prompt.focus_next(),
+            KeyType::Up | KeyType::Left => prompt.focus_prev(),
+            KeyType::Runes if key.runes == ['j'] || key.runes == ['l'] => prompt.focus_next(),
+            KeyType::Runes if key.runes == ['k'] || key.runes == ['h'] => prompt.focus_prev(),
+            KeyType::Runes
+                if key.runes.len() == 1
+                    && let Some(index) = key.runes[0]
+                        .to_digit(10)
+                        .map(|digit| digit as usize)
+                        .filter(|digit| (1..=CapabilityAction::ALL.len()).contains(digit)) =>
+            {
+                self.answer_capability_prompt(CapabilityAction::ALL[index - 1]);
+            }
             KeyType::Enter => {
                 let action = prompt.selected_action();
-                let response = ExtensionUiResponse {
-                    id: prompt.request.id.clone(),
-                    value: Some(Value::Bool(action.is_allow())),
-                    cancelled: false,
-                };
-                // Record persistent decisions for "Always" choices.
-                if action.is_persistent()
-                    && let Ok(mut store) = crate::permissions::PermissionStore::open_default()
-                {
-                    let _ =
-                        store.record(&prompt.extension_id, &prompt.capability, action.is_allow());
-                }
-                self.capability_prompt = None;
-                self.send_extension_ui_response(response);
+                self.answer_capability_prompt(action);
             }
-
             // Escape = deny once.
             KeyType::Esc => {
                 let response = ExtensionUiResponse {
@@ -133,11 +127,30 @@ impl PiApp {
                 self.capability_prompt = None;
                 self.send_extension_ui_response(response);
             }
-
             _ => {}
         }
 
         None
+    }
+
+    /// Answer the open capability prompt. The two "always" answers are
+    /// recorded on disk and survive restarts, unlike a tool approval's
+    /// session rule.
+    fn answer_capability_prompt(&mut self, action: CapabilityAction) {
+        let Some(prompt) = self.capability_prompt.take() else {
+            return;
+        };
+        let response = ExtensionUiResponse {
+            id: prompt.request.id.clone(),
+            value: Some(Value::Bool(action.is_allow())),
+            cancelled: false,
+        };
+        if action.is_persistent()
+            && let Ok(mut store) = crate::permissions::PermissionStore::open_default()
+        {
+            let _ = store.record(&prompt.extension_id, &prompt.capability, action.is_allow());
+        }
+        self.send_extension_ui_response(response);
     }
 
     pub(super) fn handle_tool_approval_key(&mut self, key: &KeyMsg) -> Option<Cmd> {
@@ -220,7 +233,7 @@ impl PiApp {
             .lock()
             .ok()
             .and_then(|mut queue| queue.pop_front());
-        self.tool_approval = next.map(ToolApprovalOverlay::new);
+        self.tool_approval = next.map(|prompt| ToolApprovalOverlay::new(prompt, &self.cwd));
     }
 
     pub(super) fn handle_rewind_overlay_key(&mut self, key: &KeyMsg) -> Option<Cmd> {
@@ -1890,6 +1903,134 @@ mod tests {
         );
         assert!(SlashCommand::parse("/resources").is_some());
         assert!(SlashCommand::help_text().contains("/resources"));
+    }
+
+    fn open_capability_prompt(app: &mut PiApp) {
+        let request = ExtensionUiRequest::new(
+            "req-cap",
+            "confirm",
+            serde_json::json!({
+                "extension_id": "snake",
+                "capability": "exec",
+                "message": "Needs shell access",
+            }),
+        )
+        .with_extension_id(Some("snake".to_string()));
+        app.capability_prompt = Some(CapabilityPromptOverlay::from_request(request));
+    }
+
+    fn open_tool_approval(app: &mut PiApp, tool_name: &str, arguments: Value) {
+        let (reply, _answer) = oneshot::channel();
+        let prompt = ToolApprovalPrompt {
+            request: crate::agent::ToolApprovalRequest {
+                tool_call_id: "call-1".to_string(),
+                tool_name: tool_name.to_string(),
+                arguments,
+            },
+            reply,
+        };
+        app.tool_approval = Some(ToolApprovalOverlay::new(prompt, &app.cwd));
+    }
+
+    fn box_lines(view: &str) -> Vec<String> {
+        let plain = strip_ansi(view);
+        let start = plain.rfind('\u{256d}').expect("box opens");
+        let mut lines = Vec::new();
+        for line in plain[start..].lines() {
+            lines.push(line.trim_end().to_string());
+            if line.trim_start().starts_with('\u{2570}') {
+                return lines;
+            }
+        }
+        panic!("box never closes: {plain}")
+    }
+
+    /// The most-repeated interaction in the product: approving an edit must
+    /// show the edit, and the two approval boxes must look and answer alike.
+    #[test]
+    fn approval_boxes_share_a_border_number_keys_and_esc() {
+        let current = model_entry("openai", "gpt-5.2", Some("key"), HashMap::new());
+        let mut app = build_test_app(current.clone(), vec![current]);
+        app.set_terminal_size(100, 40);
+
+        open_tool_approval(
+            &mut app,
+            "edit",
+            serde_json::json!({
+                "path": "src/main.rs",
+                "oldText": "let x = 1;",
+                "newText": "let x = 10;"
+            }),
+        );
+        let view = app.view();
+        let lines = box_lines(&view);
+        println!("{}", lines.join("\n"));
+        assert!(
+            lines.iter().any(|line| line.contains("│ -let x = 1;")),
+            "{lines:?}"
+        );
+        assert!(
+            lines.iter().any(|line| line.contains("│ +let x = 10;")),
+            "{lines:?}"
+        );
+        assert!(!view.contains("oldText"), "raw JSON leaked into the modal");
+        assert!(
+            lines.iter().any(|line| line.contains("1. Yes")),
+            "{lines:?}"
+        );
+        assert!(
+            lines.iter().any(|line| line.contains("3. No,")),
+            "{lines:?}"
+        );
+        assert!(strip_ansi(&view).contains("1-3 choose"), "{view}");
+        assert_eq!(app.tool_approval_rows(), 1 + 2 + 4 + 2 + 1 + 3 + 1);
+
+        app.update(Message::new(KeyMsg::from_runes(vec!['1'])));
+        assert!(app.tool_approval.is_none(), "1 answers the approval");
+        open_tool_approval(&mut app, "read", serde_json::json!({"path": "a"}));
+        app.update(Message::new(KeyMsg::from_type(KeyType::Esc)));
+        assert!(app.tool_approval.is_none(), "Esc answers the approval");
+
+        open_capability_prompt(&mut app);
+        let view = app.view();
+        let lines = box_lines(&view);
+        println!("{}", lines.join("\n"));
+        assert!(
+            lines[0].starts_with('\u{256d}'),
+            "same bordered box: {lines:?}"
+        );
+        assert!(
+            lines
+                .iter()
+                .any(|line| line.contains("snake requests exec")),
+            "{lines:?}"
+        );
+        for (idx, action) in CapabilityAction::ALL.iter().enumerate() {
+            let expected = format!("{}. {}", idx + 1, action.label());
+            assert!(
+                lines.iter().any(|line| line.contains(&expected)),
+                "choice {expected} missing: {lines:?}"
+            );
+        }
+        assert!(
+            lines
+                .iter()
+                .any(|line| line.contains("\u{276f} 1. Yes, allow it this once")),
+            "{lines:?}"
+        );
+        assert!(strip_ansi(&view).contains("1-4 choose"), "{view}");
+        assert!(strip_ansi(&view).contains("Esc deny once"), "{view}");
+        assert_eq!(app.capability_prompt_rows(), 1 + 2 + 2 + 2 + 4 + 2 + 1);
+
+        app.update(Message::new(KeyMsg::from_type(KeyType::Down)));
+        assert_eq!(app.capability_prompt.as_ref().map(|p| p.focused), Some(1));
+        app.update(Message::new(KeyMsg::from_runes(vec!['3'])));
+        assert!(app.capability_prompt.is_none(), "3 answers the prompt");
+        open_capability_prompt(&mut app);
+        app.update(Message::new(KeyMsg::from_runes(vec!['9'])));
+        assert!(app.capability_prompt.is_some(), "9 is not a choice");
+        app.update(Message::new(KeyMsg::from_type(KeyType::Esc)));
+        assert!(app.capability_prompt.is_none(), "Esc answers the prompt");
     }
 
     #[test]

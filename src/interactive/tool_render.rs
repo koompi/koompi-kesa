@@ -304,7 +304,15 @@ pub(super) fn render_tool_message(text: &str, styles: &TuiStyles) -> String {
 }
 
 /// Render diff lines with word-level highlighting for paired -/+ lines.
-fn render_diff_lines(lines: &[&str], truncated: bool, styles: &TuiStyles, out: &mut String) {
+///
+/// Also feeds the approval modal, which builds its `-`/`+` rows from the
+/// tool's arguments before anything has run.
+pub(super) fn render_diff_lines(
+    lines: &[&str],
+    truncated: bool,
+    styles: &TuiStyles,
+    out: &mut String,
+) {
     let mut i = 0;
     let mut rendered_separator = false;
     while i < lines.len() {

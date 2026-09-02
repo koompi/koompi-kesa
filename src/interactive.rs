@@ -1222,10 +1222,10 @@ impl PiApp {
             chrome += view::wrapped_rows(status, self.term_width.saturating_sub(2));
         }
 
-        // Capability prompt overlay: ~8 lines (title, ext name, desc, blank, buttons, timer, help, blank).
-        if self.capability_prompt.is_some() {
-            chrome += 8;
-        }
+        // The two approval boxes: spacer + bordered rows + legend, counted
+        // by the view that draws them so the viewport cannot drift.
+        chrome += self.capability_prompt_rows();
+        chrome += self.tool_approval_rows();
 
         // Custom extension overlay: spacer + title + source + content/help.
         chrome += self.extension_custom_overlay_rows();
