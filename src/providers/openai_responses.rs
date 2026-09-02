@@ -43,6 +43,10 @@ pub struct OpenAIResponsesProvider {
     codex_mode: bool,
     compat: Option<CompatConfig>,
     auth_header: bool,
+    /// Whether the model accepts `reasoning.effort`. The registry sets it from
+    /// `ModelEntry::model.reasoning`; a non-reasoning model (gpt-4.1 and
+    /// friends) 400s on the field, so it defaults to `false`.
+    reasoning: bool,
 }
 
 impl OpenAIResponsesProvider {
@@ -57,7 +61,17 @@ impl OpenAIResponsesProvider {
             codex_mode: false,
             compat: None,
             auth_header: true,
+            reasoning: false,
         }
+    }
+
+    /// Whether the model takes a `reasoning` block outside codex mode. The
+    /// user's thinking level is forwarded only when this is set; nothing else
+    /// tells this provider whether the model can accept it.
+    #[must_use]
+    pub const fn with_reasoning(mut self, reasoning: bool) -> Self {
+        self.reasoning = reasoning;
+        self
     }
 
     /// Override the provider name reported in streamed events.
@@ -159,7 +173,24 @@ impl OpenAIResponsesProvider {
                 reasoning,
             )
         } else {
-            (None, None, None, None, None)
+            // A reasoning model reached by plain API key honours the user's
+            // level. The gate is the model flag, not the level: a non-reasoning
+            // model 400s on any `reasoning.effort`, and compaction sends
+            // `High` unconditionally. `None` omits the block (no codex-style
+            // default), `Off` omits it because the API rejects `"off"`.
+            // `summary` and the encrypted-content include are codex-only.
+            let reasoning = if self.reasoning {
+                options
+                    .thinking_level
+                    .and_then(|level| responses_effort_for_level(level, self.compat.as_ref()))
+                    .map(|effort| OpenAIResponsesReasoning {
+                        effort,
+                        summary: None,
+                    })
+            } else {
+                None
+            };
+            (None, None, None, None, reasoning)
         };
 
         OpenAIResponsesRequest {
@@ -1786,6 +1817,57 @@ mod tests {
             json!(["reasoning.encrypted_content"]),
             "{value}"
         );
+    }
+
+    /// A gpt-5 reached by plain API key used to ignore the thinking level
+    /// entirely: only the codex arm built `reasoning`.
+    #[test]
+    fn test_build_request_forwards_reasoning_effort_for_reasoning_models() {
+        let provider = OpenAIResponsesProvider::new("gpt-5").with_reasoning(true);
+
+        for (level, word) in [
+            (ThinkingLevel::Minimal, "minimal"),
+            (ThinkingLevel::Low, "low"),
+            (ThinkingLevel::Medium, "medium"),
+            (ThinkingLevel::High, "high"),
+            (ThinkingLevel::XHigh, "xhigh"),
+            (ThinkingLevel::Max, "max"),
+        ] {
+            let value = codex_request(&provider, Some(level));
+            assert_eq!(value["reasoning"]["effort"], word, "{value}");
+            assert!(
+                value["reasoning"].get("summary").is_none(),
+                "summary is codex-only: {value}"
+            );
+            assert!(
+                value.get("include").is_none(),
+                "encrypted-content include is codex-only: {value}"
+            );
+            assert!(value.get("tool_choice").is_none(), "{value}");
+        }
+
+        let off = codex_request(&provider, Some(ThinkingLevel::Off));
+        assert!(off.get("reasoning").is_none(), "off omits the block: {off}");
+
+        let unset = codex_request(&provider, None);
+        assert!(
+            unset.get("reasoning").is_none(),
+            "no level means no block, not a default: {unset}"
+        );
+    }
+
+    /// The Responses API 400s with `Unsupported parameter: 'reasoning.effort'`
+    /// on gpt-4.1 and the other non-reasoning catalog entries, so the model
+    /// flag, not the level, gates the block.
+    #[test]
+    fn test_build_request_omits_reasoning_for_non_reasoning_models() {
+        let provider = OpenAIResponsesProvider::new("gpt-4.1");
+        let value = codex_request(&provider, Some(ThinkingLevel::High));
+        assert!(value.get("reasoning").is_none(), "{value}");
+
+        let explicit = OpenAIResponsesProvider::new("gpt-4.1").with_reasoning(false);
+        let value = codex_request(&explicit, Some(ThinkingLevel::High));
+        assert!(value.get("reasoning").is_none(), "{value}");
     }
 
     #[test]
