@@ -1221,6 +1221,10 @@ struct RecentToolCall {
     call: u64,
     result: u64,
     is_error: bool,
+    /// True when the call never ran because approval was denied. Denials are
+    /// skipped when scanning, so the guard keeps seeing the failures under
+    /// them instead of resuming the loop every third call.
+    denied: bool,
 }
 
 /// Recursively sorts object keys. `serde_json` keeps insertion order here, so
@@ -3311,6 +3315,10 @@ impl Agent {
             },
         });
 
+        let denied = output.details.as_ref().is_some_and(|details| {
+            details.get("schema").and_then(Value::as_str) == Some(TOOL_APPROVAL_DENIED_SCHEMA_V1)
+        });
+
         let tool_result =
             self.budgeted_tool_result(tool_call, output.content, output.details, is_error);
 
@@ -3321,6 +3329,7 @@ impl Agent {
             call: tool_call_fingerprint(tool_call),
             result: tool_result_fingerprint(&tool_result),
             is_error,
+            denied,
         });
 
         on_event(AgentEvent::ToolExecutionEnd {
@@ -3540,7 +3549,8 @@ impl Agent {
     /// Denies a call whose last `DOOM_LOOP_N - 1` runs this turn all failed
     /// with the same result. A successful result never counts, so polling and
     /// re-reading are exempt; what is caught is a deterministic failure
-    /// retried verbatim. The reason is written for the model, because the
+    /// retried verbatim. Denied entries are skipped, so once the loop is shut
+    /// it stays shut rather than reopening on the call after each denial. The reason is written for the model, because the
     /// reason is what breaks the loop; asking the user again is the failure
     /// mode being fixed.
     fn doom_loop_denial(&self, tool_call: &ToolCall) -> Option<String> {
@@ -3549,7 +3559,7 @@ impl Agent {
             .recent_tool_calls
             .iter()
             .rev()
-            .filter(|entry| entry.call == call)
+            .filter(|entry| entry.call == call && !entry.denied)
             .take(DOOM_LOOP_N - 1);
         let last = recent.next()?;
         let before = recent.next()?;
@@ -8033,6 +8043,28 @@ mod doom_loop_tests {
         assert_eq!(results[0], "file not found");
         assert_eq!(results[1], "file not found");
         assert_eq!(results[2], DENIAL);
+    }
+
+    #[test]
+    fn the_loop_stays_denied_and_does_not_resume_every_third_call() {
+        let runtime = RuntimeBuilder::current_thread()
+            .build()
+            .expect("runtime build");
+        let (mut agent, reached) = agent_with(Verdict::SameError, 5);
+
+        run_turn(&runtime, &mut agent);
+
+        // A denial is itself a recorded result. If the ring did not skip
+        // denials, its fingerprint would break the run of matching failures
+        // and calls 4 and 5 would reach the tool again.
+        assert_eq!(
+            reached.load(Ordering::SeqCst),
+            2,
+            "only calls 1 and 2 may reach the tool"
+        );
+        let results = tool_result_texts(&agent);
+        assert_eq!(results.len(), 5, "got {results:?}");
+        assert_eq!(&results[2..], &[DENIAL, DENIAL, DENIAL], "got {results:?}");
     }
 
     #[test]
