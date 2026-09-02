@@ -138,9 +138,10 @@ impl SlashCommand {
             "Compact older context with optional instructions",
         ),
         ("/reload", "Reload skills/prompts from disk"),
-        // `/resources` is deliberately absent until it is also in
-        // `builtin_slash_commands` (src/autocomplete.rs): a test there
-        // requires every /help row to autocomplete.
+        (
+            "/resources",
+            "List the skills, templates, themes and extensions that loaded",
+        ),
         (
             "/template <name> [args]",
             "Expand a prompt template by name",
@@ -3034,11 +3035,11 @@ result in account suspension/ban. Prefer using an Anthropic API key (ANTHROPIC_A
         }
 
         content.push_str(
-            "\nNote: KESA only loads MCP servers that an installed extension registers via\n\
-             registerMcpServer. It does not read standalone MCP config files\n\
-             (.agents/mcp.json, .kesa/mcp.json, ~/.kesa/agent/mcp.json) — those are used by\n\
-             other agents, not KESA. To expose an MCP server to KESA, install an extension\n\
-             that registers it.",
+            "\nNote: KESA has no MCP client. An extension can register a server with\n\
+             registerMcpServer and it is listed here, but nothing dials it and no MCP\n\
+             tools are exposed to the model. Standalone MCP config files\n\
+             (.agents/mcp.json, .kesa/mcp.json, ~/.kesa/agent/mcp.json) are not read\n\
+             either — those are used by other agents, not KESA.",
         );
 
         self.messages.push(ConversationMessage {

@@ -799,6 +799,10 @@ const fn builtin_slash_commands() -> &'static [BuiltinSlashCommand] {
             description: "Reload resources from disk",
         },
         BuiltinSlashCommand {
+            name: "resources",
+            description: "List the skills, templates, themes and extensions that loaded",
+        },
+        BuiltinSlashCommand {
             name: "template",
             description: "Expand a prompt template by name",
         },
