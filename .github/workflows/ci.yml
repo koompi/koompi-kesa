@@ -41,23 +41,16 @@ jobs:
       # fd-find installs as fdfind, which find_fd_binary already accepts.
       - name: Install ripgrep and fd
         run: sudo apt-get update && sudo apt-get install -y ripgrep fd-find
-      # Two library tests fail on kernels without the filesystem access these
-      # fixtures assume. Inherited from upstream, red before the fork existed.
-      # The gate is on a third name appearing, not on green.
-      - name: cargo test --lib, gated on the known failures
+      - run: cargo test --lib
+      # The four suites that gate what the user sees. The other 288 integration
+      # targets are compiled by `check --all-targets` but not run here.
+      - name: the user-facing suites, which must be green
         run: |
           set -euo pipefail
-          cargo test --lib 2>&1 | tee /tmp/lib.log || true
-          failed=$(sed -n '/^failures:$/,/^test result:/p' /tmp/lib.log \
-            | grep -E '^    [a-z_]+::' | sed 's/^ *//' | sort -u || true)
-          expected=$(printf '%s\n' \
-            'session::tests::v2_healthy_open_accepts_read_only_owner_class_without_mutation' \
-            'tools::tests::tool_output_cache_reuses_and_invalidates_read_only_tool_outputs' \
-            | sort -u)
-          unexpected=$(comm -23 <(printf '%s\n' "$failed") <(printf '%s\n' "$expected"))
-          if [ -n "$unexpected" ]; then
-            echo "::error::new test failures:"; printf '%s\n' "$unexpected"; exit 1
-          fi
+          cargo test --test tui_snapshot
+          cargo test --test tui_state
+          cargo test --test theme_contrast
+          cargo test --test sdk_unit
 
   # A sandbox is only verified by watching it refuse something, and nothing in
   # this repository can watch seatbelt refuse anything except a Mac.

@@ -1,10 +1,7 @@
-# Pinned to a specific nightly so builds and lint results are reproducible.
-# The locked dependency graph requires Rust 1.95 or newer; the repository's
-# validated release toolchain is nightly-2026-07-05. An unpinned `nightly`
-# channel let clippy drift across toolchains: newer nightlies strengthen the
-# pedantic/nursery lint groups and can expose new warnings without a source
-# change. CI runs `cargo clippy --all-targets -- -D warnings`, so bump this pin
-# deliberately and re-run the complete release gates rather than floating.
+# Pinned to a specific nightly so builds are reproducible. The locked dependency
+# graph requires Rust 1.95 or newer; the repository's validated release
+# toolchain is nightly-2026-07-05. Bump this pin deliberately and re-run the
+# release gates rather than floating on `nightly`.
 #
 # Deliberate bump 2026-07-09: nightly-2026-02-19 -> nightly-2026-07-05.
 # asupersync requires `sysinfo = "0.39"`; the locked sysinfo 0.39.6 declares
@@ -15,7 +12,10 @@
 # repository's locked asupersync/sysinfo graph.)
 #
 # clippy is not published for this nightly, so it is not requested here: rustup
-# fails the whole toolchain install on a component it cannot download.
+# fails the whole toolchain install on a component it cannot download. There is
+# therefore no clippy gate in CI, and the crate-level lint configuration in
+# src/lib.rs is not enforced anywhere. Restoring it needs a nightly that ships
+# the component.
 [toolchain]
 channel = "nightly-2026-07-05"
 components = ["rustfmt"]

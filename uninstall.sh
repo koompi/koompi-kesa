@@ -37,16 +37,28 @@ EOF
   esac
 done
 
-# `kode` is the pre-rename binary; leaving it behind leaves a working agent on
-# PATH after the user asked for none. Only the one this installer put in $DEST -
-# a `kode` from anywhere else on PATH is not ours to delete.
+# kode is the pre-rename binary; leaving it behind leaves a working agent on PATH
 removed=0
-for candidate in "${DEST}/${BIN}" "$(command -v "$BIN" 2>/dev/null || true)" "${DEST}/kode"; do
-  if [ -n "$candidate" ] && [ -f "$candidate" ]; then
-    rm -f "$candidate" && ok "Removed ${candidate}" && removed=1
+for candidate in "${DEST}/${BIN}" "${DEST}/kode"; do
+  [ -f "$candidate" ] || continue
+  if rm -f "$candidate"; then
+    ok "Removed ${candidate}"
+    removed=1
+  else
+    say "Could not remove ${candidate}. Remove it by hand, or re-run with a writable --dest." >&2
+    exit 1
   fi
 done
-[ "$removed" = 1 ] || say "No ${BIN} binary found."
+[ "$removed" = 1 ] || say "No ${BIN} binary found in ${DEST}."
+
+# anything this installer did not place is the user's or a package manager's
+elsewhere="$(command -v "$BIN" 2>/dev/null || true)"
+if [ -n "$elsewhere" ] && [ "$elsewhere" != "${DEST}/${BIN}" ]; then
+  say ""
+  say "Another ${BIN} is still on your PATH at ${elsewhere}."
+  say "This uninstaller only removes what it installed. Remove that one with:"
+  say "  rm ${elsewhere}"
+fi
 
 for dir in "$HOME/.kesa" "$HOME/.kode"; do
   [ -d "$dir" ] || continue

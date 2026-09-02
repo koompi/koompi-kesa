@@ -7,7 +7,8 @@
 # Downloads the release binary for this machine, checks it against the
 # release's SHA256SUMS, and drops `kesa` in ~/.local/bin.
 #
-# Environment overrides: OWNER, REPO, VERSION, DEST, KESA_NO_VERIFY.
+# Environment overrides: OWNER, REPO, VERSION, DEST, KESA_NO_VERIFY,
+# KESA_DOWNLOAD_BASE (mirror to download the release asset from).
 
 set -euo pipefail
 
@@ -33,7 +34,7 @@ usage() {
   cat <<EOF
 KOOMPI KESA installer
 
-  --version <tag>   Install a specific release, e.g. v0.2.0 (default: latest)
+  --version <tag>   Install a specific release, e.g. v0.4.0 (default: latest)
   --dest <dir>      Install directory (default: \$HOME/.local/bin)
   --no-verify       Skip the SHA256SUMS check
   --help            Show this message
@@ -153,7 +154,9 @@ case ":${PATH}:" in
 esac
 
 say ""
-"${DEST}/${BIN}" --version || true
+if ! "${DEST}/${BIN}" --version; then
+  die "${DEST}/${BIN} was installed but does not run on this machine"
+fi
 say ""
 say "Get started:  ${C_BOLD}kesa${C_OFF}"
 say "Uninstall:    ${C_DIM}curl -fsSL https://raw.githubusercontent.com/${OWNER}/${REPO}/main/uninstall.sh | bash${C_OFF}"

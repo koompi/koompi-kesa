@@ -275,7 +275,6 @@ storage.sqlite3-wal.corrupt-*
 /ubs.txt
 /ubs_findings.jsonl
 /ubs_findings.txt
-graphify-out/
 
 # lead/worker scratch, not repo content
 .work/

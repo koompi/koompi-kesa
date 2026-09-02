@@ -40,8 +40,10 @@ jobs:
         with:
           toolchain: nightly-2026-07-05
       - uses: Swatinem/rust-cache@v2
+      # clipboard is off by default so the library builds without X11; the
+      # published binary needs it or ctrl+V and /copy degrade silently
       - name: Build
-        run: cargo build --release --bin kesa
+        run: cargo build --release --bin kesa --features clipboard
       - name: Package
         id: package
         env:
