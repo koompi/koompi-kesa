@@ -62,6 +62,7 @@ use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::fmt;
 use std::fmt::Write as _;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::sync::OnceLock;
@@ -1200,6 +1201,65 @@ pub struct Agent {
     /// Active model's context window, the source the per-result byte budget is
     /// derived from. Same value the footer and compaction resolve.
     context_window_tokens: u32,
+
+    /// Fingerprints of the last few tool calls this turn, oldest first, so a
+    /// deterministic failure retried verbatim is denied instead of re-run.
+    /// Read under `&self` while a batch runs, written under `&mut self` once
+    /// it has joined; the borrow checker keeps those apart without a lock.
+    recent_tool_calls: VecDeque<RecentToolCall>,
+}
+
+/// How many tool results the doom-loop ring remembers within one turn.
+const DOOM_LOOP_RING: usize = 32;
+
+/// The Nth identical call after N-1 identical failures is denied.
+const DOOM_LOOP_N: usize = 3;
+
+/// One entry of the doom-loop ring: a call fingerprint and what came back.
+#[derive(Debug, Clone, Copy)]
+struct RecentToolCall {
+    call: u64,
+    result: u64,
+    is_error: bool,
+}
+
+/// Recursively sorts object keys. `serde_json` keeps insertion order here, so
+/// `{"a":1,"b":2}` and `{"b":2,"a":1}` would otherwise serialise differently.
+fn canonical_json(value: &Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let mut entries: Vec<(&String, &Value)> = map.iter().collect();
+            entries.sort_by(|a, b| a.0.cmp(b.0));
+            let mut sorted = serde_json::Map::new();
+            for (key, value) in entries {
+                sorted.insert(key.clone(), canonical_json(value));
+            }
+            Value::Object(sorted)
+        }
+        Value::Array(items) => Value::Array(items.iter().map(canonical_json).collect()),
+        other => other.clone(),
+    }
+}
+
+fn tool_call_fingerprint(tool_call: &ToolCall) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    tool_call.name.hash(&mut hasher);
+    serde_json::to_string(&canonical_json(&tool_call.arguments))
+        .unwrap_or_default()
+        .hash(&mut hasher);
+    hasher.finish()
+}
+
+/// Hashes what the model sees: the error flag and the post-budget text.
+fn tool_result_fingerprint(result: &ToolResultMessage) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    result.is_error.hash(&mut hasher);
+    for block in &result.content {
+        if let ContentBlock::Text(text) = block {
+            text.text.hash(&mut hasher);
+        }
+    }
+    hasher.finish()
 }
 
 /// Share of the context window one tool result may occupy.
@@ -1323,6 +1383,7 @@ impl Agent {
             input_source: InputSource::Interactive,
             lifecycle: OnceLock::new(),
             context_window_tokens: ResolvedCompactionSettings::default().context_window_tokens,
+            recent_tool_calls: VecDeque::with_capacity(DOOM_LOOP_RING),
         }
     }
 
@@ -1664,6 +1725,8 @@ impl Agent {
         on_event: AgentEventHandler,
         abort: Option<AbortSignal>,
     ) -> Result<AssistantMessage> {
+        // A doom loop lives inside one turn; a fresh prompt starts clean.
+        self.recent_tool_calls.clear();
         self.begin_session().await;
         let result = self.run_loop_inner(prompts, on_event, abort).await;
         match &result {
@@ -3251,6 +3314,15 @@ impl Agent {
         let tool_result =
             self.budgeted_tool_result(tool_call, output.content, output.details, is_error);
 
+        if self.recent_tool_calls.len() >= DOOM_LOOP_RING {
+            self.recent_tool_calls.pop_front();
+        }
+        self.recent_tool_calls.push_back(RecentToolCall {
+            call: tool_call_fingerprint(tool_call),
+            result: tool_result_fingerprint(&tool_result),
+            is_error,
+        });
+
         on_event(AgentEvent::ToolExecutionEnd {
             tool_call_id: tool_result.tool_call_id.clone(),
             tool_name: tool_result.tool_name.clone(),
@@ -3412,6 +3484,10 @@ impl Agent {
         tool_call: &ToolCall,
         on_event: AgentEventHandler,
     ) -> Option<ToolOutput> {
+        if let Some(reason) = self.doom_loop_denial(tool_call) {
+            return Some(Self::tool_approval_denied_output(&reason));
+        }
+
         if let Some(policy) = &self.config.tool_policy {
             let effects = self.policy_effects(&tool_call.name);
             let decision = policy
@@ -3459,6 +3535,32 @@ impl Agent {
                 Some(Self::tool_approval_denied_output(&reason))
             }
         }
+    }
+
+    /// Denies a call whose last `DOOM_LOOP_N - 1` runs this turn all failed
+    /// with the same result. A successful result never counts, so polling and
+    /// re-reading are exempt; what is caught is a deterministic failure
+    /// retried verbatim. The reason is written for the model, because the
+    /// reason is what breaks the loop; asking the user again is the failure
+    /// mode being fixed.
+    fn doom_loop_denial(&self, tool_call: &ToolCall) -> Option<String> {
+        let call = tool_call_fingerprint(tool_call);
+        let mut recent = self
+            .recent_tool_calls
+            .iter()
+            .rev()
+            .filter(|entry| entry.call == call)
+            .take(DOOM_LOOP_N - 1);
+        let last = recent.next()?;
+        let before = recent.next()?;
+        if !(last.is_error && before.is_error && last.result == before.result) {
+            return None;
+        }
+        Some(format!(
+            "the same `{}` call with identical arguments has failed {} times in a row with the same result; do not repeat it — change the arguments or the approach, or ask the user",
+            tool_call.name,
+            DOOM_LOOP_N - 1
+        ))
     }
 
     fn emit_tool_approved(on_event: &AgentEventHandler, tool_call: &ToolCall) {
@@ -7740,6 +7842,280 @@ mod abort_tests {
             assert_eq!(details["toolName"], "hanging_tool");
             assert_eq!(details["cleanup"], "tool_result_recorded_no_success");
         });
+    }
+}
+
+#[cfg(test)]
+mod doom_loop_tests {
+    use super::*;
+    use crate::tools::{Tool, ToolOutput, ToolRegistry, ToolUpdate};
+    use asupersync::runtime::RuntimeBuilder;
+    use async_trait::async_trait;
+    use futures::Stream;
+    use serde_json::json;
+    use std::pin::Pin;
+    use std::sync::atomic::AtomicUsize;
+
+    /// Emits `per_turn` identical `flaky_tool` calls, one per model turn,
+    /// then a final text message; repeats that shape for every prompt.
+    #[derive(Debug)]
+    struct RepeatingProvider {
+        per_turn: usize,
+        calls: AtomicUsize,
+    }
+
+    #[async_trait]
+    #[allow(clippy::unnecessary_literal_bound)]
+    impl Provider for RepeatingProvider {
+        fn name(&self) -> &str {
+            "test-provider"
+        }
+
+        fn api(&self) -> &str {
+            "test-api"
+        }
+
+        fn model_id(&self) -> &str {
+            "test-model"
+        }
+
+        async fn stream(
+            &self,
+            _context: &Context<'_>,
+            _options: &StreamOptions,
+        ) -> crate::error::Result<
+            Pin<Box<dyn Stream<Item = crate::error::Result<StreamEvent>> + Send>>,
+        > {
+            let call = self.calls.fetch_add(1, Ordering::SeqCst);
+            let (stop_reason, content) = if call % (self.per_turn + 1) < self.per_turn {
+                (
+                    StopReason::ToolUse,
+                    vec![ContentBlock::ToolCall(ToolCall {
+                        id: format!("call-{call}"),
+                        name: "flaky_tool".to_string(),
+                        arguments: json!({"path": "/missing", "n": 1}),
+                        thought_signature: None,
+                    })],
+                )
+            } else {
+                (
+                    StopReason::Stop,
+                    vec![ContentBlock::Text(TextContent::new("done"))],
+                )
+            };
+            let message = AssistantMessage {
+                content,
+                api: "test-api".to_string(),
+                provider: "test-provider".to_string(),
+                model: "test-model".to_string(),
+                usage: Usage::default(),
+                stop_reason,
+                stop_details: None,
+                error_message: None,
+                timestamp: 0,
+            };
+            Ok(Box::pin(futures::stream::iter(vec![Ok(
+                StreamEvent::Done {
+                    reason: stop_reason,
+                    message,
+                },
+            )])))
+        }
+    }
+
+    #[derive(Debug, Clone, Copy)]
+    enum Verdict {
+        SameError,
+        DifferentError,
+        Success,
+    }
+
+    #[derive(Debug)]
+    struct FlakyTool {
+        verdict: Verdict,
+        reached: Arc<AtomicUsize>,
+    }
+
+    #[async_trait]
+    #[allow(clippy::unnecessary_literal_bound)]
+    impl Tool for FlakyTool {
+        fn name(&self) -> &str {
+            "flaky_tool"
+        }
+
+        fn label(&self) -> &str {
+            "flaky_tool"
+        }
+
+        fn description(&self) -> &str {
+            "fails on demand"
+        }
+
+        fn parameters(&self) -> serde_json::Value {
+            json!({ "type": "object" })
+        }
+
+        async fn execute(
+            &self,
+            _tool_call_id: &str,
+            _input: serde_json::Value,
+            _on_update: Option<Box<dyn Fn(ToolUpdate) + Send + Sync>>,
+        ) -> Result<ToolOutput> {
+            let n = self.reached.fetch_add(1, Ordering::SeqCst);
+            let (text, is_error) = match self.verdict {
+                Verdict::SameError => ("file not found".to_string(), true),
+                Verdict::DifferentError => (format!("attempt {n} failed"), true),
+                Verdict::Success => ("ok".to_string(), false),
+            };
+            Ok(ToolOutput {
+                content: vec![ContentBlock::Text(TextContent::new(text))],
+                details: None,
+                is_error,
+            })
+        }
+    }
+
+    fn agent_with(verdict: Verdict, per_turn: usize) -> (Agent, Arc<AtomicUsize>) {
+        let reached = Arc::new(AtomicUsize::new(0));
+        let provider = Arc::new(RepeatingProvider {
+            per_turn,
+            calls: AtomicUsize::new(0),
+        });
+        let tools = ToolRegistry::from_tools(vec![Box::new(FlakyTool {
+            verdict,
+            reached: Arc::clone(&reached),
+        })]);
+        let agent = Agent::new(provider, tools, AgentConfig::default());
+        (agent, reached)
+    }
+
+    fn tool_result_texts(agent: &Agent) -> Vec<String> {
+        agent
+            .messages()
+            .iter()
+            .filter_map(|message| match message {
+                Message::ToolResult(result) => Some(
+                    result
+                        .content
+                        .iter()
+                        .filter_map(|block| match block {
+                            ContentBlock::Text(text) => Some(text.text.as_str()),
+                            _ => None,
+                        })
+                        .collect::<String>(),
+                ),
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn run_turn(runtime: &Runtime, agent: &mut Agent) {
+        runtime.block_on(async {
+            let message = agent.run("go", |_| {}).await.expect("run");
+            assert_eq!(message.stop_reason, StopReason::Stop);
+        });
+    }
+
+    const DENIAL: &str = "Tool execution denied: the same `flaky_tool` call with identical arguments has failed 2 times in a row with the same result; do not repeat it — change the arguments or the approach, or ask the user";
+
+    #[test]
+    fn third_identical_call_after_two_identical_failures_is_denied() {
+        let runtime = RuntimeBuilder::current_thread()
+            .build()
+            .expect("runtime build");
+        let (mut agent, reached) = agent_with(Verdict::SameError, 3);
+
+        run_turn(&runtime, &mut agent);
+
+        assert_eq!(reached.load(Ordering::SeqCst), 2, "call 3 reached the tool");
+        let results = tool_result_texts(&agent);
+        assert_eq!(results.len(), 3, "got {results:?}");
+        assert_eq!(results[0], "file not found");
+        assert_eq!(results[1], "file not found");
+        assert_eq!(results[2], DENIAL);
+    }
+
+    #[test]
+    fn identical_calls_with_different_errors_all_run() {
+        let runtime = RuntimeBuilder::current_thread()
+            .build()
+            .expect("runtime build");
+        let (mut agent, reached) = agent_with(Verdict::DifferentError, 3);
+
+        run_turn(&runtime, &mut agent);
+
+        assert_eq!(reached.load(Ordering::SeqCst), 3);
+        assert!(
+            tool_result_texts(&agent)
+                .iter()
+                .all(|text| !text.contains("Tool execution denied")),
+            "{:?}",
+            tool_result_texts(&agent)
+        );
+    }
+
+    #[test]
+    fn identical_successful_calls_all_run() {
+        let runtime = RuntimeBuilder::current_thread()
+            .build()
+            .expect("runtime build");
+        let (mut agent, reached) = agent_with(Verdict::Success, 3);
+
+        run_turn(&runtime, &mut agent);
+
+        assert_eq!(reached.load(Ordering::SeqCst), 3);
+        assert_eq!(tool_result_texts(&agent), vec!["ok", "ok", "ok"]);
+    }
+
+    #[test]
+    fn ring_is_cleared_between_turns() {
+        let runtime = RuntimeBuilder::current_thread()
+            .build()
+            .expect("runtime build");
+        let (mut agent, reached) = agent_with(Verdict::SameError, 2);
+
+        run_turn(&runtime, &mut agent);
+        assert_eq!(reached.load(Ordering::SeqCst), 2);
+
+        // Turn 2 repeats the same call twice; both reach the tool because the
+        // two failures from turn 1 no longer count.
+        run_turn(&runtime, &mut agent);
+        assert_eq!(reached.load(Ordering::SeqCst), 4);
+        assert!(
+            tool_result_texts(&agent)
+                .iter()
+                .all(|text| !text.contains("Tool execution denied")),
+            "{:?}",
+            tool_result_texts(&agent)
+        );
+    }
+
+    #[test]
+    fn fingerprint_ignores_key_order_but_not_value_type() {
+        let call = |arguments: Value| ToolCall {
+            id: "x".to_string(),
+            name: "t".to_string(),
+            arguments,
+            thought_signature: None,
+        };
+        assert_eq!(
+            tool_call_fingerprint(&call(json!({"a": 1, "b": 2}))),
+            tool_call_fingerprint(&call(json!({"b": 2, "a": 1}))),
+        );
+        assert_eq!(
+            tool_call_fingerprint(&call(json!({"o": {"y": [1, {"q": 1, "p": 2}], "x": 0}}))),
+            tool_call_fingerprint(&call(json!({"o": {"x": 0, "y": [1, {"p": 2, "q": 1}]}}))),
+        );
+        assert_ne!(
+            tool_call_fingerprint(&call(json!({"a": 1}))),
+            tool_call_fingerprint(&call(json!({"a": "1"}))),
+        );
+        let mut other = call(json!({"a": 1}));
+        other.name = "u".to_string();
+        assert_ne!(
+            tool_call_fingerprint(&call(json!({"a": 1}))),
+            tool_call_fingerprint(&other),
+        );
     }
 }
 
