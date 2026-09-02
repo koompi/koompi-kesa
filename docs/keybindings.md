@@ -1,6 +1,6 @@
 # Keybindings
 
-Pi supports configurable keybindings in interactive mode.
+KESA supports configurable keybindings in interactive mode.
 
 ## Configuration
 

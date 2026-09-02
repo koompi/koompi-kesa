@@ -1,7 +1,7 @@
 # SDK Cookbook and Migration Guide
 
-This guide is for teams embedding Pi as a Rust library. The Rust SDK provides
-idiomatic Rust APIs for Pi's core embedding workflows, using Rust-native
+This guide is for teams embedding KESA as a Rust library. The Rust SDK provides
+idiomatic Rust APIs for KESA's core embedding workflows, using Rust-native
 patterns such as `Result` types and structured concurrency.
 
 **Note**: This SDK is an idiomatic Rust companion to the pi-mono TypeScript
@@ -10,19 +10,21 @@ certification contract and its provenance-matched verdict.
 
 ## Install
 
+The published crate is `koompi-kesa`; the library it builds is named `kesa`.
+
 ```toml
 [dependencies]
-pi = { package = "koompi_code_cli", version = "0.2.0" }
+koompi-kesa = "0.4.0"
 futures = "0.3"
 ```
 
-When developing against a local checkout, replace `version = "0.2.0"` with
-`path = "/path/to/koompi_code_cli"` while retaining `package = "koompi_code_cli"`.
+When developing against a local checkout, replace the version with
+`path = "/path/to/koompi-kesa"`.
 
 ## SemVer Surface
 
-The supported library surface is the crate root aliases `pi::Error`,
-`pi::PiResult`, and the `pi::sdk` module. Other root modules are implementation
+The supported library surface is the crate root aliases `kesa::Error`,
+`kesa::PiResult`, and the `kesa::sdk` module. Other root modules are implementation
 details for the CLI, examples, and in-repository tests; they are hidden from the
 published API documentation and may change without SemVer guarantees.
 
@@ -38,31 +40,31 @@ be breaking for Rust consumers.
 
 | Item | Stability | Notes |
 | --- | --- | --- |
-| `pi::Error` | Stable | Crate-root error type alias target. |
-| `pi::PiResult` | Stable | Crate-root result alias for `pi::Error`. |
-| `pi::sdk::{Error, Result}` | Stable | SDK error/result exports. |
-| `pi::sdk::{AbortHandle, AbortSignal}` | Stable | Prompt cancellation handles. |
-| `pi::sdk::{Agent, AgentConfig, AgentEvent, AgentSession, QueueMode}` | Stable | In-process agent/session integration exports. |
-| `pi::sdk::{AssistantMessage, ContentBlock, Cost, CustomMessage, ImageContent, Message, StopDetails, StopReason, StreamEvent, TextContent, ThinkingContent, ToolCall, ToolResultMessage, Usage, UserContent, UserMessage}` | Stable | Message, content, streaming, and accounting model types. |
-| `pi::sdk::{Config, ExtensionManager, ExtensionPolicy, ExtensionRegion, Session, ThinkingLevel}` | Stable | Configuration, extension, session, and thinking-control exports. |
-| `pi::sdk::{InputType, Model, ModelCost, Provider, ProviderContext, ProviderThinkingBudgets, StreamOptions, ToolDef}` | Stable | Provider integration exports. |
-| `pi::sdk::{ModelEntry, ModelRegistry}` | Stable | Model registry exports. |
-| `pi::sdk::{Tool, ToolDefinition, ToolOutput, ToolRegistry, ToolUpdate}` | Stable | Tool integration exports. |
-| `pi::sdk::BUILTIN_TOOL_NAMES` | Stable | Canonical default non-delegating tool-name inventory; opt-in `subagent` is separate. |
-| `pi::sdk::{create_read_tool, create_bash_tool, create_edit_tool, create_write_tool, create_grep_tool, create_find_tool, create_ls_tool, create_hashline_edit_tool, create_all_tools}` | Stable | Default non-delegating tool constructors. |
-| `pi::sdk::{tool_to_definition, all_tool_definitions}` | Stable | Default non-delegating tool schema helpers. |
-| `pi::sdk::{SubscriptionId, EventListeners, EventSubscriber, OnStreamEvent, OnToolEnd, OnToolStart}` | Stable | Event subscription and hook types. |
-| `pi::sdk::{SessionOptions, ToolFactory, default_tool_registry}` | Stable | In-process session construction and custom tool registry extension points. |
-| `pi::sdk::{AgentSessionHandle, AgentSessionState, create_agent_session}` | Stable | Primary in-process SDK entry point and state handle. |
-| `pi::sdk::{SessionPromptResult, SessionTransport, SessionTransportEvent, SessionTransportState}` | Stable | Unified in-process/RPC transport adapter. |
-| `pi::sdk::{RpcTransportClient, RpcTransportOptions}` | Stable | Subprocess RPC transport client. |
-| `pi::sdk::{RpcBashResult, RpcCancelledResult, RpcCommandInfo, RpcCompactionResult, RpcCycleModelResult, RpcExportHtmlResult, RpcExtensionUiResponse, RpcForkMessage, RpcForkResult, RpcLastAssistantText, RpcModelInfo, RpcSessionState, RpcSessionStats, RpcThinkingLevelResult, RpcTokenStats}` | Stable | RPC request/response payloads. |
+| `kesa::Error` | Stable | Crate-root error type alias target. |
+| `kesa::PiResult` | Stable | Crate-root result alias for `kesa::Error`. |
+| `kesa::sdk::{Error, Result}` | Stable | SDK error/result exports. |
+| `kesa::sdk::{AbortHandle, AbortSignal}` | Stable | Prompt cancellation handles. |
+| `kesa::sdk::{Agent, AgentConfig, AgentEvent, AgentSession, QueueMode}` | Stable | In-process agent/session integration exports. |
+| `kesa::sdk::{AssistantMessage, ContentBlock, Cost, CustomMessage, ImageContent, Message, StopDetails, StopReason, StreamEvent, TextContent, ThinkingContent, ToolCall, ToolResultMessage, Usage, UserContent, UserMessage}` | Stable | Message, content, streaming, and accounting model types. |
+| `kesa::sdk::{Config, ExtensionManager, ExtensionPolicy, ExtensionRegion, Session, ThinkingLevel}` | Stable | Configuration, extension, session, and thinking-control exports. |
+| `kesa::sdk::{InputType, Model, ModelCost, Provider, ProviderContext, ProviderThinkingBudgets, StreamOptions, ToolDef}` | Stable | Provider integration exports. |
+| `kesa::sdk::{ModelEntry, ModelRegistry}` | Stable | Model registry exports. |
+| `kesa::sdk::{Tool, ToolDefinition, ToolOutput, ToolRegistry, ToolUpdate}` | Stable | Tool integration exports. |
+| `kesa::sdk::BUILTIN_TOOL_NAMES` | Stable | Canonical default non-delegating tool-name inventory; opt-in `subagent` is separate. |
+| `kesa::sdk::{create_read_tool, create_bash_tool, create_edit_tool, create_write_tool, create_grep_tool, create_find_tool, create_ls_tool, create_hashline_edit_tool, create_all_tools}` | Stable | Default non-delegating tool constructors. |
+| `kesa::sdk::{tool_to_definition, all_tool_definitions}` | Stable | Default non-delegating tool schema helpers. |
+| `kesa::sdk::{SubscriptionId, EventListeners, EventSubscriber, OnStreamEvent, OnToolEnd, OnToolStart}` | Stable | Event subscription and hook types. |
+| `kesa::sdk::{SessionOptions, ToolFactory, default_tool_registry}` | Stable | In-process session construction and custom tool registry extension points. |
+| `kesa::sdk::{AgentSessionHandle, AgentSessionState, create_agent_session}` | Stable | Primary in-process SDK entry point and state handle. |
+| `kesa::sdk::{SessionPromptResult, SessionTransport, SessionTransportEvent, SessionTransportState}` | Stable | Unified in-process/RPC transport adapter. |
+| `kesa::sdk::{RpcTransportClient, RpcTransportOptions}` | Stable | Subprocess RPC transport client. |
+| `kesa::sdk::{RpcBashResult, RpcCancelledResult, RpcCommandInfo, RpcCompactionResult, RpcCycleModelResult, RpcExportHtmlResult, RpcExtensionUiResponse, RpcForkMessage, RpcForkResult, RpcLastAssistantText, RpcModelInfo, RpcSessionState, RpcSessionStats, RpcThinkingLevelResult, RpcTokenStats}` | Stable | RPC request/response payloads. |
 
 ## Migration Map (TypeScript -> Rust)
 
 | TypeScript surface | Rust SDK surface |
 | --- | --- |
-| `createAgentSession(options)` | `pi::sdk::create_agent_session(SessionOptions)` |
+| `createAgentSession(options)` | `kesa::sdk::create_agent_session(SessionOptions)` |
 | `session.prompt(text, onEvent)` | `AgentSessionHandle::prompt(text, on_event)` |
 | `session.subscribe(listener)` | `AgentSessionHandle::subscribe(listener)` |
 | `unsubscribe()` | `AgentSessionHandle::unsubscribe(subscription_id)` |
@@ -77,9 +79,9 @@ be breaking for Rust consumers.
 
 ```rust
 use futures::executor::block_on;
-use pi::sdk::{AgentEvent, SessionOptions, create_agent_session};
+use kesa::sdk::{AgentEvent, SessionOptions, create_agent_session};
 
-fn main() -> pi::sdk::Result<()> {
+fn main() -> kesa::sdk::Result<()> {
     let mut session = block_on(create_agent_session(SessionOptions {
         provider: Some("openai".to_string()),
         model: Some("gpt-4o".to_string()),
@@ -101,10 +103,10 @@ fn main() -> pi::sdk::Result<()> {
 
 ```rust
 use futures::executor::block_on;
-use pi::sdk::{SessionOptions, create_agent_session};
+use kesa::sdk::{SessionOptions, create_agent_session};
 use std::sync::Arc;
 
-fn main() -> pi::sdk::Result<()> {
+fn main() -> kesa::sdk::Result<()> {
     let options = SessionOptions {
         on_tool_start: Some(Arc::new(|tool, args| eprintln!("tool start: {tool} {args}"))),
         on_tool_end: Some(Arc::new(|tool, output, is_error| {
@@ -127,9 +129,9 @@ fn main() -> pi::sdk::Result<()> {
 
 ```rust
 use futures::executor::block_on;
-use pi::sdk::{AgentSessionHandle, SessionOptions, create_agent_session};
+use kesa::sdk::{AgentSessionHandle, SessionOptions, create_agent_session};
 
-fn main() -> pi::sdk::Result<()> {
+fn main() -> kesa::sdk::Result<()> {
     let mut session = block_on(create_agent_session(SessionOptions::default()))?;
 
     let (abort_handle, abort_signal) = AgentSessionHandle::new_abort_handle();
@@ -144,9 +146,9 @@ fn main() -> pi::sdk::Result<()> {
 
 ```rust
 use futures::executor::block_on;
-use pi::sdk::{SessionOptions, ThinkingLevel, create_agent_session};
+use kesa::sdk::{SessionOptions, ThinkingLevel, create_agent_session};
 
-fn main() -> pi::sdk::Result<()> {
+fn main() -> kesa::sdk::Result<()> {
     let mut session = block_on(create_agent_session(SessionOptions::default()))?;
     block_on(session.set_model("openai", "gpt-4o"))?;
     block_on(session.set_thinking_level(ThinkingLevel::Low))?;
@@ -161,10 +163,10 @@ fn main() -> pi::sdk::Result<()> {
 
 ```rust
 use futures::executor::block_on;
-use pi::sdk::{SessionOptions, create_agent_session};
+use kesa::sdk::{SessionOptions, create_agent_session};
 use std::path::PathBuf;
 
-fn main() -> pi::sdk::Result<()> {
+fn main() -> kesa::sdk::Result<()> {
     let session = block_on(create_agent_session(SessionOptions {
         extension_paths: vec![PathBuf::from("extensions/my_extension.js")],
         extension_policy: Some("safe".to_string()),
@@ -183,9 +185,9 @@ fn main() -> pi::sdk::Result<()> {
 
 ```rust
 use futures::executor::block_on;
-use pi::sdk::{RpcTransportClient, RpcTransportOptions};
+use kesa::sdk::{RpcTransportClient, RpcTransportOptions};
 
-fn main() -> pi::sdk::Result<()> {
+fn main() -> kesa::sdk::Result<()> {
     let mut rpc = RpcTransportClient::connect(RpcTransportOptions::default())?;
 
     let state = block_on(rpc.get_state())?;
@@ -203,9 +205,9 @@ fn main() -> pi::sdk::Result<()> {
 
 ```rust
 use futures::executor::block_on;
-use pi::sdk::{SessionOptions, SessionTransport};
+use kesa::sdk::{SessionOptions, SessionTransport};
 
-fn main() -> pi::sdk::Result<()> {
+fn main() -> kesa::sdk::Result<()> {
     let mut transport = block_on(SessionTransport::in_process(SessionOptions::default()))?;
 
     let _result = block_on(transport.prompt("Status?", |_event| {}))?;

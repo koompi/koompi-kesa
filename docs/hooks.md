@@ -25,12 +25,13 @@ The default timeout is 60 seconds, or 5 seconds for `SessionStart` and `SessionE
 | `PreToolUse` | After the permission decision, before the tool spawns. Blocking stops the call. | `tool_name`, `tool_input` |
 | `PostToolUse` | After the tool produced its result. Blocking appends feedback; it cannot undo the call. | `tool_name`, `tool_input`, `tool_response` |
 | `UserPromptSubmit` | The user submitted a prompt. Blocking rejects it. | `prompt` |
-| `Stop` | The agent finished a turn. Blocking asks for another. | `stop_hook_active` |
+| `Stop` | The agent finished a turn on its own. Does not fire on an aborted turn. Blocking asks for another. | `stop_hook_active` |
 | `SessionStart` | The first turn of a session, before it reads input. | `session_id`, `source` (`startup` or `resume`) |
 | `SessionEnd` | The session is over. See below. | `session_id`, `reason` (`exit`, `interrupt` or `panic`) |
 | `PreCompact` | Before compaction discards anything. | `trigger` (`auto` or `manual`), `custom_instructions` |
 | `SubagentStop` | A subagent finished a turn, in the subagent's own process. | `stop_hook_active` |
 | `Notification` | KESA has something to tell you, including turn end. | `message` |
+| `Interrupt` | The user aborted a turn. Nothing is left to block, so the decision is ignored. | `session_id` |
 
 `matcher` filters on the tool name and only `PreToolUse` and `PostToolUse` carry one, so leave it off or set `*` for the rest.
 

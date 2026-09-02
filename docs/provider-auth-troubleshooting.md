@@ -1,4 +1,4 @@
-# Provider Auth Troubleshooting Matrix (bd-3uqg.11.12.2)
+# Provider auth troubleshooting matrix
 
 Auth failure modes and exact remediation paths for each gap and longtail
 provider, linked to test evidence and the error hint system in `src/error.rs`.
@@ -24,11 +24,11 @@ Reconciled against the live registry and auth runtime: 2026-08-06
 
 ## Provider name crosswalk (canonical ID / alias / env-key / endpoint)
 
-This crosswalk maps every user-visible provider name (including upstream aliases from opencode and models.dev) to the Pi canonical ID, accepted aliases, auth env vars, and default endpoint. Use this when a user reports "missing provider" or confusion about which name to use.
+This crosswalk maps every user-visible provider name (including upstream aliases from opencode and models.dev) to the KESA canonical ID, accepted aliases, auth env vars, and default endpoint. Use this when a user reports "missing provider" or confusion about which name to use.
 
 **Total**: 94 registered canonical provider IDs and 51 aliases. Registration
 coverage is not a claim that every ID has an executable native route; use
-`pi --list-providers` and the implementation-mode evidence for runtime status.
+`kesa --list-providers` and the implementation-mode evidence for runtime status.
 
 ### Native providers (dedicated adapter)
 
@@ -158,7 +158,7 @@ active.
 
 ### Alias resolution summary
 
-If a user types any of these aliases (left), Pi resolves to the canonical ID (right):
+If a user types any of these aliases (left), KESA resolves to the canonical ID (right):
 
 | User input | Resolves to |
 |------------|------------|
@@ -390,7 +390,7 @@ The `AuthDiagnosticCode` enum (`src/error.rs:67-81`) provides stable machine cod
 | Rate limit | 429 | `{"type":"error","error":{"type":"rate_limit_error","message":"..."}}` | — | `verify_anthropic_error_rate_limit_429.json` |
 | Bad request | 400 | `{"type":"error","error":{"type":"invalid_request_error","message":"..."}}` | — | `verify_anthropic_error_bad_request_400.json` |
 
-**User-facing message**: `"Missing API key for Anthropic. Set ANTHROPIC_API_KEY or use 'pi auth'."`
+**User-facing message**: ``"Missing API key for Anthropic. Set ANTHROPIC_API_KEY, or run `/login anthropic` inside kesa."``
 **Source**: `src/providers/anthropic.rs:158-167`
 
 ### OpenAI
@@ -549,7 +549,7 @@ The auth system (`src/auth.rs`) resolves credentials in this order:
    `provider_auth_env_keys()`, in their documented order
 4. **Stored API key** — an `ApiKey` entry in `~/.kesa/agent/auth.json`
 5. **External coding-CLI credential** — supported credentials auto-detected
-   from another local coding CLI, only when using Pi's global auth storage
+   from another local coding CLI, only when using KESA's global auth storage
 
 Canonical IDs and aliases share credential lookup at each applicable tier; alias
 resolution is not a separate, lower-priority credential source. If all five auth

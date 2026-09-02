@@ -1,12 +1,12 @@
 # RPC Protocol
 
-Pi supports a headless RPC mode for integration with IDEs and other tools.
+KESA supports a headless RPC mode for integration with IDEs and other tools.
 
 ## Usage
 
-Start Pi in RPC mode:
+Start KESA in RPC mode:
 ```bash
-pi --mode rpc
+kesa --mode rpc
 ```
 
 Communication is via **JSON Lines** over stdin/stdout. Each line must be a valid JSON object.

@@ -1,4 +1,4 @@
-# Provider Selection and Migration Guide (bd-3uqg.11.12.3)
+# Provider selection and migration guide
 
 How to choose among providers and migrate configurations safely.
 
@@ -55,22 +55,22 @@ between them requires only changing the env var and provider flag:
 # From Groq to Cerebras
 # Before:
 export GROQ_API_KEY="gsk_..."
-pi --provider groq --model llama-3.3-70b-versatile
+kesa --provider groq --model llama-3.3-70b-versatile
 
 # After:
 export CEREBRAS_API_KEY="csk-..."
-pi --provider cerebras --model llama-3.3-70b
+kesa --provider cerebras --model llama-3.3-70b
 ```
 
 ```bash
 # From direct provider to OpenRouter
 # Before:
 export GROQ_API_KEY="gsk_..."
-pi --provider groq --model llama-3.3-70b-versatile
+kesa --provider groq --model llama-3.3-70b-versatile
 
 # After:
 export OPENROUTER_API_KEY="sk-or-v1-..."
-pi --provider openrouter --model meta-llama/llama-3.3-70b-instruct
+kesa --provider openrouter --model meta-llama/llama-3.3-70b-instruct
 # Note: OpenRouter uses org/model format for model IDs
 ```
 
@@ -78,11 +78,11 @@ pi --provider openrouter --model meta-llama/llama-3.3-70b-instruct
 # Between Kimi regional endpoints
 # Before (global):
 export MOONSHOT_API_KEY="sk-global-key"
-pi --provider moonshotai --model kimi-k2.5
+kesa --provider moonshotai --model kimi-k2.5
 
 # After (China):
 export MOONSHOT_API_KEY="sk-china-key"  # Different key!
-pi --provider moonshotai-cn --model kimi-k2.5
+kesa --provider moonshotai-cn --model kimi-k2.5
 # WARNING: Keys are NOT interchangeable between .ai and .cn endpoints
 ```
 
@@ -136,7 +136,7 @@ Before switching providers, verify:
 - SSE comment frames (`: OPENROUTER PROCESSING`) must be ignored
 
 **Migrating TO Kimi (moonshotai)**:
-- Three Pi entries: `moonshotai` (global), `moonshotai-cn` (China), `kimi-for-coding` (Anthropic API)
+- Three KESA entries: `moonshotai` (global), `moonshotai-cn` (China), `kimi-for-coding` (Anthropic API)
 - Keys are NOT interchangeable between `.ai` and `.cn` endpoints
 - `kimi-for-coding` uses `anthropic-messages` API, not `openai-completions`
 - Temperature must be 0-1 (not 0-2)

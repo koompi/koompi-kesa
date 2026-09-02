@@ -1,6 +1,6 @@
 # Terminal Setup
 
-Pi works in any modern terminal, but some features (like image display) and key combos require
+KESA works in any modern terminal, but some features (like image display) and key combos require
 terminal-specific support or configuration.
 
 ## Recommended Terminals
@@ -73,8 +73,8 @@ If you want the hardware cursor visible, set `KESA_HARDWARE_CURSOR=1` before run
 
 ## Image Support
 
-Pi detects terminal capabilities to display images inline (currently Kitty-compatible terminals such
-as Kitty, WezTerm, and Ghostty, plus iTerm2). For unsupported terminals, Pi falls back to a stable
+KESA detects terminal capabilities to display images inline (currently Kitty-compatible terminals such
+as Kitty, WezTerm, and Ghostty, plus iTerm2). For unsupported terminals, KESA falls back to a stable
 placeholder such as `[image: image/png, 1024x768]`.
 
 To block images entirely, set:
@@ -97,13 +97,13 @@ You can also hide image blocks in terminal output:
 }
 ```
 
-`terminal.show_images` controls whether Pi includes image blocks in terminal tool output (defaults to `true`).
+`terminal.show_images` controls whether KESA includes image blocks in terminal tool output (defaults to `true`).
 
 `terminal.clear_on_shrink` (defaults to `false`) purges scrollback when the terminal height shrinks, which helps avoid stale rows reappearing after a resize.
 
 ## Keybindings
 
-Some terminals intercept key combinations needed by Pi (e.g., `Ctrl+Arrow`, `Shift+Enter`).
+Some terminals intercept key combinations needed by KESA (e.g., `Ctrl+Arrow`, `Shift+Enter`).
 
 - **Windows Terminal**: Use `Ctrl+Enter` for newlines if `Shift+Enter` isn’t available.
 - **VS Code Terminal**: Some shortcuts may be captured by VS Code. Check your

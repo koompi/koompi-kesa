@@ -1,6 +1,6 @@
 # Session Tree Navigation
 
-Pi sessions are **trees**, not flat message lists. Every entry has an `id` and optional `parentId`, and the session tracks a current **leaf** pointer (your current position in the tree).
+KESA sessions are **trees**, not flat message lists. Every entry has an `id` and optional `parentId`, and the session tracks a current **leaf** pointer (your current position in the tree).
 
 Use `/tree` to navigate the session tree and switch the leaf.
 
@@ -28,7 +28,7 @@ The tree UI shows a depth-first list with indentation, and marks the current lea
 
 ### Selection behavior
 
-Pi has two distinct selection modes depending on what you select:
+KESA has two distinct selection modes depending on what you select:
 
 1) **User message (or custom message)**
    - Leaf is set to the **parent** of the selected node (or `null` if the selected node is the root).
@@ -40,7 +40,7 @@ Pi has two distinct selection modes depending on what you select:
 
 ## Branch summarization
 
-When switching branches, Pi may offer to summarize the branch you’re leaving. The prompt offers:
+When switching branches, KESA may offer to summarize the branch you’re leaving. The prompt offers:
 
 1) **No summary**
 2) **Summarize**

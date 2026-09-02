@@ -1,10 +1,10 @@
 # Windows Notes
 
-Pi runs natively on Windows, but there are some platform-specific differences to be aware of.
+KESA runs natively on Windows, but there are some platform-specific differences to be aware of.
 
 ## Shell Requirements (bash tool)
 
-Pi’s `bash` tool (and `!command` shortcuts) require a **POSIX shell**. On Windows, install
+KESA’s `bash` tool (and `!command` shortcuts) require a **POSIX shell**. On Windows, install
 one of:
 
 1. Git Bash (recommended): `C:\Program Files\Git\bin\bash.exe`
@@ -27,19 +27,19 @@ You can also set a custom shell in settings:
 
 ## Clipboard
 
-Pi attempts to use the system clipboard for `/copy` and image pasting.
+KESA attempts to use the system clipboard for `/copy` and image pasting.
 
 - Ensure you are running in a terminal that supports clipboard access if using remote sessions (e.g. via SSH).
-- If clipboard operations fail, Pi will typically fall back to printing the content or ignoring the paste.
+- If clipboard operations fail, KESA will typically fall back to printing the content or ignoring the paste.
 
 ## Paths
 
-- Pi supports both forward slashes `/` and backslashes `\` in paths.
+- KESA supports both forward slashes `/` and backslashes `\` in paths.
 - When configuring paths in JSON (e.g. `settings.json`), remember to escape backslashes: `C:\Users\Name\.pi`.
 - Use forward slashes in `settings.json` for cross-platform compatibility if possible (`C:/Users/Name/.pi`).
 
 ## Shell Commands
 
-- In `bash` tools and `!command` shortcuts, Pi tries to use `sh` (Git Bash or similar) if available.
+- In `bash` tools and `!command` shortcuts, KESA tries to use `sh` (Git Bash or similar) if available.
 - If configuring `shell_path`, point it to your preferred shell executable (e.g., `bash.exe`, `powershell.exe`, `pwsh.exe`).
 - Secret resolution in `models.json` uses `cmd /C` to execute `!commands`.

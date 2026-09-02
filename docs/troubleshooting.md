@@ -29,7 +29,7 @@ client secret as an API token.
 
 **401/403:** Key missing or invalid. Confirm correct provider and key.
 
-**429:** Rate limit. Pi will retry if `retry.enabled` is true in settings.
+**429:** Rate limit. KESA will retry if `retry.enabled` is true in settings.
 
 **5xx/network:** Temporary provider outage or flaky network. Retry or switch models.
 
@@ -38,9 +38,9 @@ client secret as an API token.
 {
   "retry": {
     "enabled": true,
-    "maxRetries": 3,
-    "baseDelayMs": 1000,
-    "maxDelayMs": 30000
+    "max_retries": 3,
+    "base_delay_ms": 2000,
+    "max_delay_ms": 60000
   }
 }
 ```
@@ -63,12 +63,9 @@ Common fixes:
 **Symptom:** extensions or skills not found.
 
 **Fixes:**
-- Check package sources via `pi list`.
+- Check package sources via `kesa list`.
 - Confirm settings in `~/.kesa/agent/settings.json` or `.kesa/settings.json`.
-- Re-run `pi update` after adding a source.
-
-Extension discovery is tracked under **bd-1e0** (install + resolution). If an
-extension fails to load, expect diagnostics to improve as that bead lands.
+- Re-run `kesa update` after adding a source.
 
 ## Sessions (persistence + recovery)
 
@@ -85,8 +82,6 @@ Overrides:
 - Run with `--no-session` to bypass persistence.
 - Move the offending `.jsonl` file out of the sessions dir.
 
-Interactive UX parity for `/resume`, `/tree`, `/fork` is tracked by **bd-14cc**.
-
 ## Keybindings & hotkeys
 
 Keybindings are loaded from:
@@ -98,8 +93,6 @@ If shortcuts don’t work as expected:
 - Delete/rename the file to fall back to defaults.
 - Confirm your terminal isn’t intercepting the keys.
 
-Full keybinding parity (including `/hotkeys`) is tracked by **bd-3ip**.
-
 ## Terminal quirks
 
 Some terminals reserve key combos (especially on Windows):
@@ -107,8 +100,6 @@ Some terminals reserve key combos (especially on Windows):
 - Paste events can differ between terminals.
 
 If a shortcut doesn’t trigger, try a different terminal or remap the key.
-Interactive editor parity (autocomplete/bang/paste) is tracked by **bd-1iwi**.
-
 ## Missing system dependencies
 
 The `find` tool requires `fd`:

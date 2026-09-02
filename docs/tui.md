@@ -1,6 +1,6 @@
 # Interactive Interface (TUI)
 
-Pi's interactive mode provides a full-screen terminal UI for chatting, streaming
+KESA's interactive mode provides a full-screen terminal UI for chatting, streaming
 responses, and managing sessions.
 
 ## Layout
@@ -62,45 +62,48 @@ from `~/.kesa/agent/keybindings.json`).
 
 Type a slash command into the editor (prefix with `/`) and press Enter.
 
-`/help` is the authoritative, in-app list. This section documents the current
-command surface implemented in `src/interactive.rs`.
+`/help` is the authoritative, in-app list. The table below is the same set, from
+`SLASH_COMMANDS` in `src/interactive/commands.rs`.
 
 | Command | Description |
 |---------|-------------|
-| `/help` (`/h`, `/?`) | Show help text and shortcut tips. |
-| `/login [provider]` | Login/setup credentials (OAuth for built-ins; API key prompts for supported providers). Run without args to see status table. |
-| `/logout [provider]` | Remove stored OAuth credentials. |
-| `/clear` (`/cls`) | Clear conversation view/history. |
-| `/model [id|provider/id]` (`/m`) | Show or change the current model. |
-| `/thinking [level]` (`/think`, `/t`) | Set thinking level (`off|minimal|low|medium|high|xhigh|max`). |
-| `/scoped-models [patterns\|clear]` (`/scoped`) | Show or set model patterns used for Ctrl+P cycling. |
-| `/history` (`/hist`) | Show input history. |
-| `/export [path]` | Export conversation to HTML. |
-| `/session` (`/info`) | Show session info (path, tokens, cost). |
-| `/settings` | Open settings selector UI. |
-| `/theme [name]` | List or switch themes (see `docs/themes.md`). |
+| `/help` (`/h`, `/?`) | Show this help message. |
+| `/login [provider]` | Sign in to a provider; without one, show the status table. |
+| `/logout [provider]` | Remove stored credentials. |
+| `/clear` (`/cls`) | Clear the conversation history. |
+| `/model [id\|provider/id]` (`/m`) | Open the model selector, or switch directly. |
+| `/thinking [level]` (`/think`, `/t`) | Set the thinking level (off/minimal/low/medium/high/xhigh/max). |
+| `/scoped-models [patterns\|clear]` (`/scoped`) | Show or set the models Ctrl+P cycles through. |
+| `/history` (`/hist`) | Show the input history. |
+| `/export [path]` | Export the session to an HTML file on this machine. |
+| `/session` (`/info`) | Show the session path, token use and cost. |
+| `/settings` | Open the settings selector. |
+| `/theme [name]` | List or switch themes. |
 | `/resume` (`/r`) | Pick and resume a previous session. |
 | `/new` | Start a new session. |
-| `/copy` (`/cp`) | Copy last assistant message to clipboard. |
-| `/name <name>` | Set session display name. |
-| `/hotkeys` (`/keys`, `/keybindings`) | Show keyboard shortcuts. |
-| `/changelog` | Show changelog entries. |
-| `/tree` | Show session branch tree summary. |
-| `/fork [id\|index]` | Fork from a user message (default: last on current path). |
-| `/compact [notes]` | Compact older context with optional instructions. |
-| `/reload` | Reload skills/prompts from disk. |
+| `/copy` (`/cp`) | Copy the last model message to the clipboard. |
+| `/name <name>` | Set the session display name. |
+| `/hotkeys` (`/keys`, `/keybindings`) | Show the keyboard shortcuts. |
+| `/changelog` | Show the changelog entries. |
+| `/tree` | Show the session branch tree. |
+| `/fork [id\|index]` | Branch from an earlier message of yours (default: the last one). |
+| `/rewind` (`/undo`) | Undo a turn's file edits, its transcript, or both (also Esc Esc). |
+| `/context` (`/ctx`) | Break the context window down by what is filling it. |
+| `/compact [notes]` | Compact older context, with optional instructions. |
+| `/reload` | Reload skills, prompts, themes and extensions from disk. |
+| `/resources` | List the skills, templates, themes and extensions that loaded. |
 | `/template <name> [args]` | Expand a prompt template by name. |
-| `/share` | Upload session HTML to a secret GitHub gist and show URL. |
-| `/exit` (`/quit`, `/q`) | Exit Pi. |
+| `/share` | Upload the session to a secret GitHub gist and show the URL. |
+| `/mcp` | List the MCP servers extensions registered (KESA does not connect to them). |
+| `/exit` (`/quit`, `/q`) | Exit KESA. |
 
 ### Model selection
 - Use `/model` to switch models (by `provider/id` or fuzzy match).
-- Some builds also define shortcuts like `Ctrl+L` (model selector) and `Ctrl+P`
-  (cycle models). If a shortcut appears in `/hotkeys` but does nothing, it
-  hasn’t been wired in that build yet.
+- `Ctrl+L` opens the model selector. `Ctrl+P` cycles forward through the models
+  `/scoped-models` selects, `Ctrl+Shift+P` backward.
 
 ### Session Picker (`/resume`)
-Browse and resume previous sessions without restarting Pi.
+Browse and resume previous sessions without restarting KESA.
 - `Enter`: Select session
 - `Ctrl+D`: Delete session (with confirmation)
 
@@ -115,7 +118,7 @@ Change configuration on the fly (Thinking levels, themes, message delivery mode)
 
 ## Message Queue
 
-When Pi is busy generating a response or running tools, you can still type.
+When KESA is busy generating a response or running tools, you can still type.
 
 - **Queue Steering (`Enter`)**: Sends your message as a steering interrupt after
   the current step completes.

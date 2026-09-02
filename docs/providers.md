@@ -1,6 +1,6 @@
 # Providers
 
-This document is the canonical in-repo provider baseline for `koompi_code_cli`.
+This document is the canonical in-repo provider baseline for KESA.
 It summarizes provider IDs, aliases, API families, auth behavior, and current implementation mode.
 
 Snapshot basis:
@@ -12,7 +12,7 @@ Snapshot basis:
 - Original snapshot timestamp: 2026-02-10
 - Last source cross-check: 2026-08-03
 
-Provider-count rule: Pi has 11 native provider implementation modules. Those modules are `anthropic`, `openai`, `openai_responses`, `gemini`, `cohere`, `azure`, `bedrock`, `vertex`, `copilot`, `gitlab`, and `cursor`. User-visible canonical IDs, aliases, OpenAI-compatible presets, VCR coverage families, and extension-provided providers are separate counts. The factory module `mod.rs` and shared live-catalog helper `model_fetch.rs` are support modules, not provider implementations, and are excluded.
+Provider-count rule: KESA has 11 native provider implementation modules. Those modules are `anthropic`, `openai`, `openai_responses`, `gemini`, `cohere`, `azure`, `bedrock`, `vertex`, `copilot`, `gitlab`, and `cursor`. User-visible canonical IDs, aliases, OpenAI-compatible presets, VCR coverage families, and extension-provided providers are separate counts. The factory module `mod.rs` and shared live-catalog helper `model_fetch.rs` are support modules, not provider implementations, and are excluded.
 
 This rule is guarded by `tests/traceability_staleness.rs::native_provider_module_inventory_matches_provider_docs`, which compares this list against the live `src/providers/*.rs` inventory.
 
@@ -42,7 +42,7 @@ Extension-provided providers route through the extension provider bridge in `src
 | `alias-only` | Provider ID is a documented synonym of a canonical ID; no distinct runtime implementation. |
 | `missing` | Provider ID is recognized in enums/auth mappings but has no usable runtime dispatch path yet. |
 
-### Machine-Readable Classification (`bd-3uqg.1.4`)
+### Machine-readable classification
 
 Historical planning artifact: `docs/provider-implementation-modes.json`
 
@@ -60,7 +60,7 @@ vocabulary was:
 
 Historical snapshot coverage (`docs/provider-implementation-modes.json`):
 - 93 upstream union IDs classified (no gaps)
-- 6 supplemental Pi alias IDs classified
+- 6 supplemental KESA alias IDs classified
 - 99 total entries with explicit profile, rationale, and runtime status
 - 20 high-risk providers carry explicit prerequisite beads + required diagnostic artifacts
 
@@ -74,7 +74,7 @@ Historical snapshot coverage (`docs/provider-implementation-modes.json`):
 - Live provider integration lane: [`tests/e2e_live.rs`](../tests/e2e_live.rs)
 - Discrepancy-ledger freshness gate: `python3 scripts/check_provider_discrepancy_ledger.py --compact`
 
-## Wave A Parity Verification (`bd-3uqg.4.4`)
+## Wave A parity verification
 
 Unit + request-shape verification for all currently tracked Wave A OpenAI-compatible preset IDs:
 `groq`, `deepinfra`, `cerebras`, `openrouter`, `mistral`, `moonshotai`, `dashscope`, `deepseek`,
@@ -108,7 +108,7 @@ Migration mapping decisions:
 - Route and auth behavior are parity-locked between `fireworks` and `fireworks-ai`.
 - No compatibility shim layer is introduced; canonical configs should use `fireworks` going forward.
 
-## Wave B1 Onboarding Verification (`bd-3uqg.5.2`)
+## Wave B1 onboarding verification
 
 Batch B1 provider IDs integrated and lock-tested:
 `alibaba-cn`, `kimi-for-coding`, `minimax`, `minimax-cn`, `minimax-coding-plan`, `minimax-cn-coding-plan`.
@@ -144,7 +144,7 @@ Canonical mapping decisions:
 - `minimax-cn`, `minimax-coding-plan`, and `minimax-cn-coding-plan` inherit representative smoke coverage via
   shared family behavior plus explicit route/auth lock tests.
 
-## Wave B2 Onboarding Verification (`bd-3uqg.5.1`)
+## Wave B2 onboarding verification
 
 Batch B2 provider IDs integrated and lock-tested:
 `modelscope`, `moonshotai-cn`, `nebius`, `ovhcloud`, `scaleway`.
@@ -178,7 +178,7 @@ Canonical mapping decisions:
 - `moonshotai-cn` is a distinct canonical regional ID and does not alias to `moonshotai`.
 - `moonshotai` and `moonshotai-cn` intentionally share `MOONSHOT_API_KEY` while retaining distinct base URLs.
 
-## Wave B3 Onboarding Verification (`bd-3uqg.5.3`)
+## Wave B3 onboarding verification
 
 Batch B3 provider IDs integrated and lock-tested:
 `siliconflow`, `siliconflow-cn`, `upstage`, `venice`, `zai`, `zai-coding-plan`, `zhipuai`, `zhipuai-coding-plan`.
@@ -227,7 +227,7 @@ Canonical mapping decisions:
 - `zai` and `zai-coding-plan` are distinct canonical IDs that intentionally share `ZHIPU_API_KEY` while retaining distinct base URLs.
 - `zhipuai` and `zhipuai-coding-plan` are distinct canonical IDs that intentionally share `ZHIPU_API_KEY` while retaining distinct base URLs.
 
-## Wave C Staging Snapshot (`bd-3uqg.6`)
+## Wave C staging snapshot
 
 Source of truth for provisional Wave C defaults:
 - `https://models.dev/api.json` (queried on 2026-02-12)
@@ -249,13 +249,13 @@ Wave C execution status:
 
 | Provider ID | API family target | Default base URL | Auth env | Current tracking status |
 |-------------|-------------------|------------------|----------|-------------------------|
-| `baseten` | `openai-completions` | `https://inference.baseten.co/v1` | `BASETEN_API_KEY` | Wave C preset candidate (`bd-3uqg.6.1`) |
-| `llama` | `openai-completions` | `https://api.llama.com/compat/v1/` | `LLAMA_API_KEY` | Wave C preset candidate (`bd-3uqg.6.2`) |
-| `lmstudio` | `openai-completions` | `http://127.0.0.1:1234/v1` | `LMSTUDIO_API_KEY` | Wave C preset candidate (`bd-3uqg.6.2`) |
-| `ollama-cloud` | `openai-completions` | `https://ollama.com/v1` | `OLLAMA_API_KEY` | Wave C preset candidate (`bd-3uqg.6.2`) |
-| `opencode` | `openai-completions` | `https://opencode.ai/zen/v1` | `OPENCODE_API_KEY` | Special routing pending (`bd-3uqg.3.9`, `bd-3uqg.6.3`) |
-| `vercel` | gateway-wrapper (`@ai-sdk/gateway`) | no static API URL in `models.dev` | `AI_GATEWAY_API_KEY` | Classification/routing pending (`bd-3uqg.3.9`, `bd-3uqg.6.1`) |
-| `zenmux` | `anthropic-messages` target (gateway) | `https://zenmux.ai/api/anthropic/v1` | `ZENMUX_API_KEY` | Special routing pending (`bd-3uqg.3.9`, `bd-3uqg.6.3`) |
+| `baseten` | `openai-completions` | `https://inference.baseten.co/v1` | `BASETEN_API_KEY` | Wave C preset candidate |
+| `llama` | `openai-completions` | `https://api.llama.com/compat/v1/` | `LLAMA_API_KEY` | Wave C preset candidate |
+| `lmstudio` | `openai-completions` | `http://127.0.0.1:1234/v1` | `LMSTUDIO_API_KEY` | Wave C preset candidate |
+| `ollama-cloud` | `openai-completions` | `https://ollama.com/v1` | `OLLAMA_API_KEY` | Wave C preset candidate |
+| `opencode` | `openai-completions` | `https://opencode.ai/zen/v1` | `OPENCODE_API_KEY` | Special routing pending |
+| `vercel` | gateway-wrapper (`@ai-sdk/gateway`) | no static API URL in `models.dev` | `AI_GATEWAY_API_KEY` | Classification/routing pending |
+| `zenmux` | `anthropic-messages` target (gateway) | `https://zenmux.ai/api/anthropic/v1` | `ZENMUX_API_KEY` | Special routing pending |
 
 ## Canonical Provider Matrix (Current Baseline + Evidence Links)
 
@@ -268,26 +268,26 @@ Wave C execution status:
 | `google-gemini-cli` | `gemini-cli` | text + image + reasoning | `google-gemini-cli` | Project-scoped Code Assist endpoint | Google OAuth via `/login google-gemini-cli` plus project ID | `native-adapter-required` | Dispatchable through the Gemini CLI path | [gemini](../src/providers/gemini.rs), [models](../src/models.rs), [metadata](../tests/provider_metadata_comprehensive.rs) |
 | `google-antigravity` | `antigravity` | text + image + reasoning | `google-gemini-cli` | Project-scoped Antigravity endpoint | Google OAuth via `/login google-antigravity` plus project ID | `native-adapter-required` | Dispatchable through the Gemini CLI path with Antigravity routing | [gemini](../src/providers/gemini.rs), [models](../src/models.rs), [metadata](../tests/provider_metadata_comprehensive.rs) |
 | `google-vertex` | `vertexai` | text + image + reasoning + tool-calls | `google-vertex` | `https://{region}-aiplatform.googleapis.com/v1/projects/{project}/locations/{region}/publishers/{publisher}/models/{model}` | `Authorization: Bearer` (`GOOGLE_CLOUD_API_KEY`, alt `VERTEX_API_KEY`) | `native-implemented` | Implemented and dispatchable; supports Google (Gemini) and Anthropic publishers | [unit](../src/providers/vertex.rs), [factory](../src/providers/mod.rs), [metadata](../tests/provider_metadata_comprehensive.rs) |
-| `cohere` | - | text + tool-calls | `cohere-chat` | `https://api.cohere.com/v2` (normalized to `/chat`) | `Authorization: Bearer` (`COHERE_API_KEY`) | `native-implemented` | Implemented and dispatchable | [unit](../tests/provider_streaming/cohere.rs), [contract](../tests/provider_backward_lock.rs), [cassette](../tests/fixtures/vcr/verify_cohere_simple_text.json), e2e expansion tracked in `bd-3uqg.8.4` |
+| `cohere` | - | text + tool-calls | `cohere-chat` | `https://api.cohere.com/v2` (normalized to `/chat`) | `Authorization: Bearer` (`COHERE_API_KEY`) | `native-implemented` | Implemented and dispatchable | [unit](../tests/provider_streaming/cohere.rs), [contract](../tests/provider_backward_lock.rs), [cassette](../tests/fixtures/vcr/verify_cohere_simple_text.json), individual e2e cassette pending |
 | `azure-openai` | `azure`, `azure_openai`, `azure-cognitive-services`, `azure-openai-responses` | text + tool-calls | Azure chat/completions path | `https://{resource}.openai.azure.com/openai/deployments/{deployment}/chat/completions?api-version={version}` or `https://{resource}.cognitiveservices.azure.com/openai/deployments/{deployment}/chat/completions?api-version={version}` | `api-key` header (`AZURE_OPENAI_API_KEY`) | `native-implemented` | Dispatchable through provider factory with deterministic resource/deployment/api-version resolution from env + model/base_url | [unit](../tests/provider_streaming/azure.rs), [contract](../tests/provider_backward_lock.rs), [e2e](../tests/e2e_live.rs), [cassette](../tests/fixtures/vcr/azure_simple_text.json) |
-| `groq` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.groq.com/openai/v1` | `Authorization: Bearer` (`GROQ_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
-| `deepinfra` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.deepinfra.com/v1/openai` | `Authorization: Bearer` (`DEEPINFRA_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
-| `cerebras` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.cerebras.ai/v1` | `Authorization: Bearer` (`CEREBRAS_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
+| `groq` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.groq.com/openai/v1` | `Authorization: Bearer` (`GROQ_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), individual e2e cassette pending |
+| `deepinfra` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.deepinfra.com/v1/openai` | `Authorization: Bearer` (`DEEPINFRA_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), individual e2e cassette pending |
+| `cerebras` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.cerebras.ai/v1` | `Authorization: Bearer` (`CEREBRAS_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), individual e2e cassette pending |
 | `openrouter` | `open-router` | text (+ OAI-compatible tools) | `openai-completions` | `https://openrouter.ai/api/v1` | `Authorization: Bearer` (`OPENROUTER_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback; model/provider aliases normalize to canonical IDs | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [contract](../tests/provider_native_contract.rs), [e2e](../tests/e2e_cross_provider_parity.rs), [scenario-e2e](../tests/e2e_provider_scenarios.rs) |
-| `mistral` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.mistral.ai/v1` | `Authorization: Bearer` (`MISTRAL_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
-| `moonshotai` | `moonshot`, `kimi` | text (+ OAI-compatible tools) | `openai-completions` | `https://api.moonshot.ai/v1` | `Authorization: Bearer` (`MOONSHOT_API_KEY`, fallback `KIMI_API_KEY`) | `oai-compatible-preset` (`moonshot`,`kimi` are `alias-only`) | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [alias-roundtrip](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
+| `mistral` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.mistral.ai/v1` | `Authorization: Bearer` (`MISTRAL_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), individual e2e cassette pending |
+| `moonshotai` | `moonshot`, `kimi` | text (+ OAI-compatible tools) | `openai-completions` | `https://api.moonshot.ai/v1` | `Authorization: Bearer` (`MOONSHOT_API_KEY`, fallback `KIMI_API_KEY`) | `oai-compatible-preset` (`moonshot`,`kimi` are `alias-only`) | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [alias-roundtrip](../tests/provider_factory.rs), individual e2e cassette pending |
 | `moonshotai-cn` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.moonshot.cn/v1` | `Authorization: Bearer` (`MOONSHOT_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [native-verify harness](../tests/provider_native_verify.rs), [cassette](../tests/fixtures/vcr/verify_moonshotai-cn_simple_text.json) |
 | `kimi-for-coding` | - | text + image (Anthropic-compatible) | `anthropic-messages` | `https://api.kimi.com/coding/v1/messages` | `x-api-key` for `sk-*` direct keys; `Authorization: Bearer` plus Kimi device headers for `/login` and external Kimi tokens (`KIMI_API_KEY` is the direct-env source) | `oai-compatible-preset` (preset fallback) | Dispatchable through Anthropic API fallback route | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [bearer/direct-key unit tests](../src/providers/anthropic.rs), [native-verify harness](../tests/provider_native_verify.rs), [cassette](../tests/fixtures/vcr/verify_kimi-for-coding_simple_text.json) |
-| `dashscope` | `alibaba`, `qwen` | text (+ OAI-compatible tools) | `openai-completions` | `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` | `Authorization: Bearer` (`DASHSCOPE_API_KEY`, fallback `QWEN_API_KEY`) | `oai-compatible-preset` (`alibaba`,`qwen` are `alias-only`) | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
+| `alibaba` | `dashscope`, `qwen` | text (+ OAI-compatible tools) | `openai-completions` | `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` | `Authorization: Bearer` (`DASHSCOPE_API_KEY`, fallback `QWEN_API_KEY`) | `oai-compatible-preset` (`dashscope`,`qwen` are `alias-only`) | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), individual e2e cassette pending |
 | `alibaba-cn` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `Authorization: Bearer` (`DASHSCOPE_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [native-verify harness](../tests/provider_native_verify.rs), [cassette](../tests/fixtures/vcr/verify_alibaba-cn_simple_text.json) |
 | `modelscope` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api-inference.modelscope.cn/v1` | `Authorization: Bearer` (`MODELSCOPE_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [native-verify harness](../tests/provider_native_verify.rs), [cassette](../tests/fixtures/vcr/verify_modelscope_simple_text.json) |
 | `nebius` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.tokenfactory.nebius.com/v1` | `Authorization: Bearer` (`NEBIUS_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [native-verify harness](../tests/provider_native_verify.rs), [cassette](../tests/fixtures/vcr/verify_nebius_simple_text.json) |
 | `ovhcloud` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://oai.endpoints.kepler.ai.cloud.ovh.net/v1` | `Authorization: Bearer` (`OVHCLOUD_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [native-verify harness](../tests/provider_native_verify.rs), [cassette](../tests/fixtures/vcr/verify_ovhcloud_simple_text.json) |
 | `scaleway` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.scaleway.ai/v1` | `Authorization: Bearer` (`SCALEWAY_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [native-verify harness](../tests/provider_native_verify.rs), [cassette](../tests/fixtures/vcr/verify_scaleway_simple_text.json) |
 | `deepseek` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.deepseek.com` | `Authorization: Bearer` (`DEEPSEEK_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [e2e](../tests/e2e_cross_provider_parity.rs) |
-| `fireworks` | `fireworks-ai` | text (+ OAI-compatible tools) | `openai-completions` | `https://api.fireworks.ai/inference/v1` | `Authorization: Bearer` (`FIREWORKS_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
-| `togetherai` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.together.xyz/v1` | `Authorization: Bearer` (`TOGETHER_API_KEY`, alt `TOGETHER_AI_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
-| `perplexity` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.perplexity.ai` | `Authorization: Bearer` (`PERPLEXITY_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), e2e expansion tracked in `bd-3uqg.8.4` |
+| `fireworks` | `fireworks-ai` | text (+ OAI-compatible tools) | `openai-completions` | `https://api.fireworks.ai/inference/v1` | `Authorization: Bearer` (`FIREWORKS_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), individual e2e cassette pending |
+| `togetherai` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.together.xyz/v1` | `Authorization: Bearer` (`TOGETHER_API_KEY`, alt `TOGETHER_AI_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), individual e2e cassette pending |
+| `perplexity` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.perplexity.ai` | `Authorization: Bearer` (`PERPLEXITY_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), individual e2e cassette pending |
 | `xai` | - | text (+ OAI-compatible tools) | `openai-completions` | `https://api.x.ai/v1` | `Authorization: Bearer` (`XAI_API_KEY`) | `oai-compatible-preset` | Dispatchable through OpenAI-compatible fallback | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [e2e](../tests/e2e_cross_provider_parity.rs) |
 | `minimax` | - | text (Anthropic-compatible) | `anthropic-messages` | `https://api.minimax.io/anthropic/v1/messages` | `x-api-key` (`MINIMAX_API_KEY`) | `oai-compatible-preset` (preset fallback) | Dispatchable through Anthropic API fallback route | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), [native-verify harness](../tests/provider_native_verify.rs), [cassette](../tests/fixtures/vcr/verify_minimax_simple_text.json) |
 | `minimax-cn` | - | text (Anthropic-compatible) | `anthropic-messages` | `https://api.minimaxi.com/anthropic/v1/messages` | `x-api-key` (`MINIMAX_CN_API_KEY`) | `oai-compatible-preset` (preset fallback) | Dispatchable through Anthropic API fallback route | [metadata](../tests/provider_metadata_comprehensive.rs), [factory](../tests/provider_factory.rs), family representative smoke via [`verify_minimax_simple_text.json`](../tests/fixtures/vcr/verify_minimax_simple_text.json) |
@@ -327,7 +327,7 @@ At the time of that report, all native and preset providers had at least metadat
 | Native adapter required | 4 | 4/4 (100%) | 4-6 scenario VCR suites |
 | Wave B1-B3 preset | 19 | 19/19 (100%) | 3-scenario VCR suites |
 | Wave C special routing | 3 | 3/3 (100%) | 3-scenario VCR suites |
-| Batch A1-A4 preset | 34 | 0/34 (0%) | Metadata + factory verified; individual VCR fixtures pending (`bd-3uqg.8.4`) |
+| Batch A1-A4 preset | 34 | 0/34 (0%) | Metadata + factory verified; individual VCR fixtures pending |
 | Local/self-hosted preset | 4 | 0/4 (0%) | Metadata + factory verified; VCR pending |
 | Cloudflare gateway | 2 | 0/2 (0%) | Metadata + factory verified; VCR pending |
 
@@ -353,7 +353,7 @@ Historical snapshot coverage (85 canonical IDs registered in `PROVIDER_METADATA`
 - Alias coverage: `moonshot`/`kimi` -> `moonshotai`, `alibaba`/`qwen` -> `dashscope`, `fireworks-ai` -> `fireworks`, `gemini` -> `google`, `bedrock` -> `amazon-bedrock`, `copilot` -> `github-copilot`, `azure`/`azure_openai`/`azure-cognitive-services`/`azure-openai-responses` -> `azure-openai`, `vertexai` -> `google-vertex`, `sap` -> `sap-ai-core`, `gitlab-duo` -> `gitlab`, `vercel-ai-gateway` -> `vercel`.
 
 Remaining gaps:
-- Batch A1-A4 providers need individual VCR fixture expansion (tracked in `bd-3uqg.8.4`).
+- Batch A1-A4 providers still need individual VCR fixtures.
 - `v0` (Vercel) deferred: no API endpoint published in models.dev.
 
 ## Deferred Providers and Rationale
@@ -362,17 +362,17 @@ The following providers are recognized in upstream catalogs but explicitly defer
 
 | Provider ID | Classification | Deferral Reason | User Impact (Current) | Graduation Condition | Tracking (Owner) |
 |-------------|---------------|-----------------|-----------------------|----------------------|------------------|
-| `v0` | deferred-watchlist | No API endpoint published in `models.dev`; Vercel's `@ai-sdk/gateway` does not expose a static base URL suitable for preset routing. | Users cannot target `v0` directly from Pi provider config; nearest fallback is `vercel` gateway preset where applicable. | Vercel publishes a stable REST API endpoint with documented auth flow. | `bd-3uqg.11.10.8` (`CopperCreek`) |
-| `google-vertex-anthropic` | native-new-high-risk | Hybrid Vertex + Anthropic publisher surface requires dedicated protocol/auth path distinct from the Google-publisher Vertex adapter. | Anthropic-on-Vertex publisher semantics are not first-class; users should use current `google-vertex` (Google publisher) or direct `anthropic` instead. | Anthropic publisher endpoint is validated with streaming + tool-call parity against the existing `google-vertex` Google publisher path. | `bd-3uqg.11.10.9` (`CopperCreek`) |
-| `azure-cognitive-services` | native-new-high-risk | Distinct Cognitive Services path requires separate auth/routing semantics beyond current `azure-openai` handling. Already reachable through the `azure-openai` alias family for shared deployments. | Users requiring Cognitive-Services-specific routing guarantees may encounter alias-only behavior; recommended path is canonical `azure-openai` config. | Confirmed need for separate routing path vs. alias sufficiency; if alias-only, close as won't-fix. | `bd-3uqg.11.10.10` (`CopperCreek`) |
-| `local` | native-new-high-risk | Generic local runtime mode requires explicit process/model lifecycle integration (start, health-check, shutdown). | No first-class local process lifecycle provider is available; users should use tested local-compatible presets (`lmstudio`) where possible. | Local provider lifecycle adapter is implemented with process management tests. | `bd-3uqg.11.10.11` (`CopperCreek`) |
-| `ollama` | native-new-high-risk | Local OSS provider requires dedicated process/orchestration adapter and lifecycle tests distinct from `ollama-cloud`. | Local Ollama daemon is not managed as a native provider path in this wave; users can use `ollama-cloud` where cloud semantics are acceptable. | Ollama process lifecycle adapter is implemented; distinct from cloud variant. | `bd-3uqg.11.10.11` (`CopperCreek`) |
+| `v0` | deferred-watchlist | No API endpoint published in `models.dev`; Vercel's `@ai-sdk/gateway` does not expose a static base URL suitable for preset routing. | Users cannot target `v0` directly from KESA provider config; nearest fallback is `vercel` gateway preset where applicable. | Vercel publishes a stable REST API endpoint with documented auth flow. |
+| `google-vertex-anthropic` | native-new-high-risk | Hybrid Vertex + Anthropic publisher surface requires dedicated protocol/auth path distinct from the Google-publisher Vertex adapter. | Anthropic-on-Vertex publisher semantics are not first-class; users should use current `google-vertex` (Google publisher) or direct `anthropic` instead. | Anthropic publisher endpoint is validated with streaming + tool-call parity against the existing `google-vertex` Google publisher path. |
+| `azure-cognitive-services` | native-new-high-risk | Distinct Cognitive Services path requires separate auth/routing semantics beyond current `azure-openai` handling. Already reachable through the `azure-openai` alias family for shared deployments. | Users requiring Cognitive-Services-specific routing guarantees may encounter alias-only behavior; recommended path is canonical `azure-openai` config. | Confirmed need for separate routing path vs. alias sufficiency; if alias-only, close as won't-fix. |
+| `local` | native-new-high-risk | Generic local runtime mode requires explicit process/model lifecycle integration (start, health-check, shutdown). | No first-class local process lifecycle provider is available; users should use tested local-compatible presets (`lmstudio`) where possible. | Local provider lifecycle adapter is implemented with process management tests. |
+| `ollama` | native-new-high-risk | Local OSS provider requires dedicated process/orchestration adapter and lifecycle tests distinct from `ollama-cloud`. | Local Ollama daemon is not managed as a native provider path in this wave; users can use `ollama-cloud` where cloud semantics are acceptable. | Ollama process lifecycle adapter is implemented; distinct from cloud variant. |
 
 ### Batch A1-A4 VCR Gap
 
 33 providers are fully metadata-registered and factory-verified but lack individual VCR fixtures: `302ai`, `abacus`, `aihubmix`, `bailing`, `berget`, `chutes`, `cortecs`, `fastrouter`, `firmware`, `friendli`, `helicone`, `huggingface`, `iflowcn`, `inception`, `inference`, `io-net`, `jiekou`, `lucidquery`, `moark`, `morph`, `nano-gpt`, `nova`, `novita-ai`, `nvidia`, `poe`, `privatemode-ai`, `requesty`, `submodel`, `synthetic`, `vivgrid`, `vultr`, `wandb`, `xiaomi`.
 
-These providers are dispatchable through the OpenAI-compatible fallback and pass metadata + factory tests. Individual VCR fixture expansion is tracked in `bd-3uqg.8.4`.
+These providers are dispatchable through the OpenAI-compatible fallback and pass metadata + factory tests. Individual VCR fixtures are still outstanding.
 
 `github-models` is intentionally absent from the active provider registry:
 GitHub retired the GitHub Models service on 2026-07-30. This does not affect the
@@ -511,9 +511,9 @@ Both configs produce identical runtime behavior. The alias form continues to wor
 **CLI migration** (equivalent commands):
 ```bash
 # Alias (still supported)
-pi --provider gemini --model gemini-2.5-flash -p "Hello"
+kesa --provider gemini --model gemini-2.5-flash -p "Hello"
 # Canonical (recommended)
-pi --provider google --model gemini-2.5-flash -p "Hello"
+kesa --provider google --model gemini-2.5-flash -p "Hello"
 ```
 
 ### Common Pitfalls
@@ -551,7 +551,7 @@ Auth diagnostics and redaction contract:
 - Key tests: `e2e_all_diagnostic_codes_have_redact_secrets_policy`, `e2e_hints_enrichment_completeness`, `e2e_alias_env_key_consistency` in [`src/error.rs`](../src/error.rs), plus `test_resolve_api_key_*` precedence cases in [`src/auth.rs`](../src/auth.rs).
 
 Choose provider/model via:
-- CLI flags: `pi --provider openai --model gpt-4o "Hello"`
+- CLI flags: `kesa --provider openai --model gpt-4o "Hello"`
 - Env vars: `KESA_PROVIDER`, `KESA_MODEL`
 - Settings: `default_provider`, `default_model` in `~/.kesa/agent/settings.json`
 

@@ -1,6 +1,6 @@
 # Android (Termux) Notes
 
-Pi can run on Android via [Termux](https://termux.dev/), but some features are limited by the
+KESA can run on Android via [Termux](https://termux.dev/), but some features are limited by the
 mobile environment.
 
 ## Prerequisites
@@ -13,7 +13,7 @@ mobile environment.
    pkg install termux-api git
    ```
 
-Pi detects `termux-clipboard-get` and `termux-clipboard-set` when standard clipboard access fails.
+KESA detects `termux-clipboard-get` and `termux-clipboard-set` when standard clipboard access fails.
 
 > Note: official source builds use the exact nightly pinned in
 > `rust-toolchain.toml`. If Termux cannot install that toolchain easily, build

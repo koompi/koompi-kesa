@@ -85,7 +85,8 @@ unavailable and the same refusal applies.
 curl -fsSL https://raw.githubusercontent.com/koompi/koompi-kesa/main/install.sh | bash
 
 # A specific version, or a different directory
-curl -fsSL .../install.sh | bash -s -- --version v0.2.0 --dest /usr/local/bin
+curl -fsSL https://raw.githubusercontent.com/koompi/koompi-kesa/main/install.sh \
+  | bash -s -- --version v0.4.0 --dest /usr/local/bin
 ```
 
 The installer checks the download against the release's `SHA256SUMS` before
@@ -126,13 +127,19 @@ Tools: `read`, `write`, `edit`, `hashline_edit`, `bash`, `grep`, `find`, `ls`,
 
 ## Configure
 
-Settings live in `~/.kesa/settings.json`, and a project can override them from
-`.kesa/settings.json`. Project settings merge over global ones rather than
-replacing them.
+Settings live in `~/.kesa/agent/settings.json`, and a project can override them
+from `.kesa/settings.json` in the repository. Project settings merge over global
+ones rather than replacing them.
 
-Skills, prompts, themes and extensions load from `~/.kesa/` and from `.kesa/`
-in the project. `kesa config` opens the settings UI, `kesa doctor` reports on
-the environment, and `kesa list` shows what is installed.
+Skills, prompts, themes and extensions load from `~/.kesa/agent/` and from
+`.kesa/` in the project. `kesa config` opens the settings UI, `kesa doctor`
+reports on the environment, and `kesa list` shows what is installed.
+
+## Documentation
+
+[docs/README.md](docs/README.md) is the index. The ones most people want are
+[settings](docs/settings.md), [tui](docs/tui.md), [providers](docs/providers.md)
+and [troubleshooting](docs/troubleshooting.md).
 
 ## Building
 
@@ -141,11 +148,6 @@ cargo check --all-targets
 cargo test --lib
 cargo build --release --bin kesa
 ```
-
-Two library tests fail on this fork and are inherited from upstream, not
-regressions: `session::tests::v2_healthy_open_accepts_read_only_owner_class_without_mutation`
-and `tools::tests::tool_output_cache_reuses_and_invalidates_read_only_tool_outputs`.
-CI gates on a third name appearing, not on green.
 
 `unsafe_code` is forbidden crate-wide. Anything needing privileged setup goes
 through a re-exec rather than a relaxed lint.

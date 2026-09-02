@@ -51,10 +51,10 @@ dangerous ones) or `Permissive` (allows everything with audit logging).
 **Diagnosis**:
 ```bash
 # Check effective policy
-pi info <extension-id>
+kesa info <extension-id>
 
 # Or inspect the resolved config
-pi config show | grep -A 20 extensions.policy
+kesa config show | grep -A 20 extensions.policy
 ```
 
 ### Symptom: "Allow Always" not persisting

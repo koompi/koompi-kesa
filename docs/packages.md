@@ -1,10 +1,10 @@
 # Package Management
 
-Pi supports installing packages that provide extensions, skills, prompt templates, and themes.
+KESA supports installing packages that provide extensions, skills, prompt templates, and themes.
 
 ## Sources
 
-Pi supports three types of package sources:
+KESA supports three types of package sources:
 
 1. **npm**: `npm:package-name` or `npm:@org/package` (optionally `@version`)
 2. **git**: `git:host/owner/repo` or just `https://github.com/owner/repo` (optionally `@ref`)
@@ -16,13 +16,13 @@ Pi supports three types of package sources:
 
 Install a package globally (user scope):
 ```bash
-pi install npm:pi-skills
-pi install git:github.com/someuser/my-tools
+kesa install npm:pi-skills
+kesa install git:github.com/someuser/my-tools
 ```
 
 Install locally for the current project:
 ```bash
-pi install --local npm:@org/project-utils
+kesa install --local npm:@org/project-utils
 ```
 
 This adds the package to your `settings.json` (global or project) and installs it.
@@ -31,16 +31,16 @@ This adds the package to your `settings.json` (global or project) and installs i
 
 Remove a package:
 ```bash
-pi remove npm:pi-skills
-pi remove --local npm:@org/project-utils
+kesa remove npm:pi-skills
+kesa remove --local npm:@org/project-utils
 ```
 
 ### Update
 
 Update all packages (or a specific one):
 ```bash
-pi update
-pi update npm:pi-skills
+kesa update
+kesa update npm:pi-skills
 ```
 
 Packages with pinned versions (e.g. `npm:pkg@1.2.3` or `git:repo@v1`) are skipped unless the command arguments explicitly change the version.
@@ -49,12 +49,12 @@ Packages with pinned versions (e.g. `npm:pkg@1.2.3` or `git:repo@v1`) are skippe
 
 List installed packages:
 ```bash
-pi list
+kesa list
 ```
 
 ## Resource Discovery
 
-When a package is installed, Pi looks for resources in the following locations within the package root:
+When a package is installed, KESA looks for resources in the following locations within the package root:
 
 1. **Manifest**: If `package.json` has a `pi` section, it uses the paths defined there.
    ```json
@@ -66,7 +66,7 @@ When a package is installed, Pi looks for resources in the following locations w
    }
    ```
 
-2. **Conventions**: If no manifest entry exists, Pi looks for standard directories:
+2. **Conventions**: If no manifest entry exists, KESA looks for standard directories:
    - `extensions/` (or `index.ts`/`index.js` for single-file extensions)
    - `skills/`
    - `prompts/`
@@ -77,9 +77,9 @@ When a package is installed, Pi looks for resources in the following locations w
 For extension package roots, resolution is intentionally deterministic:
 
 - If `package.json` includes `pi.extensions`, only those listed entries are considered.
-- If the `pi.extensions` key is present as an empty array (`[]`), Pi loads **no** extensions from that package.
-- If `pi.extensions` entries are present but none resolve to existing files, Pi loads **no** extensions from that package.
-- In both cases above, Pi does **not** implicitly fall back to `index.ts`, `index.js`, or directory-level extension loading.
+- If the `pi.extensions` key is present as an empty array (`[]`), KESA loads **no** extensions from that package.
+- If `pi.extensions` entries are present but none resolve to existing files, KESA loads **no** extensions from that package.
+- In both cases above, KESA does **not** implicitly fall back to `index.ts`, `index.js`, or directory-level extension loading.
 - Conventional fallback (`extensions/`, `index.ts`, `index.js`) applies only when the `pi.extensions` key is absent.
 
 ## Configuration
@@ -129,7 +129,7 @@ Example:
 
 ## Deterministic Lockfile and Provenance Verification
 
-Pi writes a deterministic package lockfile after successful install/update verification:
+KESA writes a deterministic package lockfile after successful install/update verification:
 
 - Project scope: `.kesa/packages.lock.json`
 - User scope: `~/.kesa/agent/packages.lock.json`
@@ -150,11 +150,11 @@ By default, install/update is fail-closed when trusted provenance or digest does
 - pinned git installs must match pinned ref/commit resolution
 - trusted digest/provenance mismatches block install/update
 
-For unpinned `pi update`, provenance/digest rotation is allowed and re-recorded as a trusted update.
+For unpinned `kesa update`, provenance/digest rotation is allowed and re-recorded as a trusted update.
 
 ### Trust Transition Audit Artifact
 
-Pi appends trust-state transitions as JSONL audit events:
+KESA appends trust-state transitions as JSONL audit events:
 
 - Project scope: `.kesa/package-trust-audit.jsonl`
 - User scope: `~/.kesa/agent/package-trust-audit.jsonl`

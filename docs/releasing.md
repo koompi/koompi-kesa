@@ -1,4 +1,4 @@
-# Releasing koompi_code_cli
+# Releasing KESA
 
 This repo ships:
 - A crates.io package: `koompi_code_cli` (Cargo `[package].name`)
@@ -114,7 +114,7 @@ Goal: keep packaging and invocation ergonomics compatible enough for frictionles
 ### Executable compatibility path
 - Canonical command is `pi`.
 - If TypeScript `pi` already exists, installer supports in-place migration and preserves old command as `legacy-pi`.
-- If migration is declined (`--keep-existing-pi`), Rust Pi installs as `pi-rust` so both CLIs remain callable.
+- If migration is declined (`--keep-existing-pi`), Rust KESA installs as `pi-rust` so both CLIs remain callable.
 - Pinned rollout is supported by `install.sh --version vX.Y.Z`.
 
 ### Representative validation matrix
@@ -122,10 +122,10 @@ Run this matrix before declaring distribution parity complete for a release cand
 
 1. Fresh Linux/macOS install (no prior `pi`):
    - `curl .../install.sh | bash`
-   - `command -v pi && pi --version && pi --help >/dev/null`
+   - `command -v kesa && kesa --version && kesa --help >/dev/null`
 2. Migration host with existing TypeScript `pi`:
    - `install.sh --adopt` (or interactive adopt path)
-   - `pi --version` returns Rust build
+   - `kesa --version` returns Rust build
    - `legacy-pi --version` still resolves to preserved TypeScript CLI
 3. Keep-existing path:
    - `install.sh --keep-existing-pi`
@@ -134,7 +134,7 @@ Run this matrix before declaring distribution parity complete for a release cand
    - `install.sh --version vX.Y.Z`
    - binary checksum validation passes against release `SHA256SUMS`
 
-## Perf-vs-size artifact policy (bd-3ar8v.5.5)
+## Perf-vs-size artifact policy
 
 Release operations must keep benchmark evidence and shipping artifacts distinct.
 
@@ -151,7 +151,7 @@ Policy constraints:
 3. Any release note claiming performance gains should include correlation-linked evidence references from benchmark artifact bundles.
 4. If profile labels/provenance are missing or contradictory, treat the performance claim as invalid until regenerated.
 
-## Swarm-scale claim readiness report (bd-2zcs5.27)
+## Swarm-scale claim readiness report
 
 Before using swarm-scale, drop-in, extension, full-suite, or performance evidence in release-facing copy, generate the read-only readiness report:
 
@@ -1395,7 +1395,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
        --run-id "$DSR_BUILD_RUN_ID" \
        --state-dir "$PRESERVED_DSR_STATE_DIR" \
        --output-dir "$RAW_RELEASE_DIR" -- \
-       build pi --version 0.2.0 \
+       build kesa --version 0.2.0 \
        --targets linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64 \
        --only-native --jobs 1 > "$build_receipt"
    )
@@ -2873,7 +2873,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
 
    test "$actual_sha" = "$expected_sha"
    case "$version_output" in
-     "pi $expected_version ("*) ;;
+     "kesa $expected_version ("*) ;;
      *) printf 'unexpected version output: %s\n' "$version_output" >&2; exit 5 ;;
    esac
    receipt_label="$label"
@@ -2953,10 +2953,10 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
    $ActualSha = (Get-FileHash -LiteralPath $Binary -Algorithm SHA256).Hash.ToLowerInvariant()
    if ($ActualSha -ne '{expected_sha}') {{ throw 'Windows smoke digest mismatch' }}
    $VersionOutput = ((& $Binary --version 2>&1) -join "`n").Trim()
-   if ($LASTEXITCODE -ne 0) {{ throw 'pi --version failed' }}
-   if (-not $VersionOutput.StartsWith('pi {version} (')) {{ throw "unexpected version: $VersionOutput" }}
+   if ($LASTEXITCODE -ne 0) {{ throw 'kesa --version failed' }}
+   if (-not $VersionOutput.StartsWith('kesa {version} (')) {{ throw "unexpected version: $VersionOutput" }}
    & $Binary --help *> $null
-   if ($LASTEXITCODE -ne 0) {{ throw 'pi --help failed' }}
+   if ($LASTEXITCODE -ne 0) {{ throw 'kesa --help failed' }}
    Write-Output 'status=success'
    Write-Output 'label=windows-amd64'
    Write-Output "os=$([System.Runtime.InteropServices.RuntimeInformation]::OSDescription)"
@@ -3866,7 +3866,7 @@ d040d967dbf63644a29d72068aa6ac35e5ff74a7e168cb5eda08a46ff828f32b
       ' "$raw_manifest")"
       test "$installed_sha" = "$linux_release_sha"
       installed_version="$("$PIAR_INSTALL_BIN" --version)"
-      case "$installed_version" in "pi $RELEASE_VERSION ("*) ;; *) exit 1 ;; esac
+      case "$installed_version" in "kesa $RELEASE_VERSION ("*) ;; *) exit 1 ;; esac
       printf 'post_public_installer_status=success\nsha256=%s\nversion=%s\n' \
         "$installed_sha" "$installed_version"
     ) >> "$installer_receipt"
@@ -3935,4 +3935,4 @@ For branches opened before this gate was introduced:
 - GitHub Release exists and includes expected artifacts for each platform.
 - `SHA256SUMS` matches downloaded artifacts.
 - Crates.io publish succeeded (if configured) and the version matches the tag.
-- Smoke test install paths (download binary + run `pi --version`).
+- Smoke test install paths (download binary + run `kesa --version`).

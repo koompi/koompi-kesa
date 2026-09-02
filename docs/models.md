@@ -1,6 +1,6 @@
 # Models Configuration
 
-Pi loads available models from a built-in registry and an optional user-defined `models.json`.
+KESA loads available models from a built-in registry and an optional user-defined `models.json`.
 
 ## Location
 
@@ -15,9 +15,9 @@ fingerprint excludes credential values, URL query values, and header values, so 
 cannot serve as an offline credential verifier. It binds recognized credential-query
 ordered name/presence shape (including exact query-name casing) and
 case-insensitive header name/presence shape. A non-empty query/header value
-outside a recognized credential channel may select a tenant or deployment; Pi
+outside a recognized credential channel may select a tenant or deployment; KESA
 therefore refuses persistence for that route and ignores legacy generated membership
-under such a current route. Pi ignores mismatched generated rows and asks you to
+under such a current route. KESA ignores mismatched generated rows and asks you to
 refresh them. Because the fingerprint deliberately excludes credential values,
 switching accounts without changing the endpoint/transport shape does not
 invalidate saved membership automatically; rerun
@@ -186,8 +186,8 @@ out-of-the-box without a `models.json` entry:
 
 ```bash
 # Defaults: llama-server -> http://127.0.0.1:8080/v1, mistral.rs -> http://127.0.0.1:1234/v1
-pi --provider llamacpp  --model ggml-org/gemma-4-E4B-it-GGUF -p "hi"
-pi --provider mistralrs --model default -p "hi"
+kesa --provider llamacpp  --model ggml-org/gemma-4-E4B-it-GGUF -p "hi"
+kesa --provider mistralrs --model default -p "hi"
 ```
 
 Provider aliases are accepted: `llama.cpp` / `llama-cpp` / `llama-server` ->
@@ -209,7 +209,7 @@ needed):
 
 ## User Model Override (extending the bundled snapshot)
 
-Pi ships with a snapshot of every provider's discovery endpoint at
+KESA ships with a snapshot of every provider's discovery endpoint at
 `docs/provider-upstream-model-ids-snapshot.json`. The snapshot is regenerated
 ahead of releases, but a new model from a provider (e.g. Anthropic shipping a
 new Opus version) is invisible to `/model` until the next release.
@@ -226,7 +226,7 @@ snapshot at runtime. The file uses the same shape as the bundled snapshot:
 
 `<config_dir>` is whatever `dirs::config_dir()` reports — `~/.config` on Linux,
 `~/Library/Application Support` on macOS, `%APPDATA%` on Windows. Set
-`KESA_MODELS_OVERRIDE=/path/to/file.json` in the environment to point pi at a
+`KESA_MODELS_OVERRIDE=/path/to/file.json` in the environment to point KESA at a
 file outside the standard config directory.
 
 Behavior:
@@ -238,13 +238,13 @@ Behavior:
   not in pi's binary, so model entries you add stay across releases until the
   bundled snapshot catches up — then they dedupe automatically.
 - **Fail-safe.** A missing or malformed override file logs a debug/warning
-  line and is treated as empty so a typo never breaks pi startup.
+  line and is treated as empty so a typo never breaks startup.
 - **Provider IDs must match canonical names.** Use `anthropic`, `openai`,
   `openrouter`, etc. (the keys you see in
   `docs/provider-upstream-model-ids-snapshot.json`).
 
 The override only affects the `/model` autocomplete catalog. To actually call
 a model that pi does not yet have a built-in route for, also configure the
-provider in `models.json` (sections above) — pi already routes any
+provider in `models.json` (sections above) — KESA already routes any
 `anthropic/<id>` value through the Anthropic API regardless of whether the ID
 is in the snapshot.

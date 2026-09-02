@@ -108,7 +108,7 @@ The prompt presents a small, fixed set of decisions:
 1. **Allow Once**
    - Applies only to this single hostcall (one `call_id`).
 2. **Allow For Session**
-   - Applies to the current Pi session only (cleared when session ends).
+   - Applies to the current KESA session only (cleared when session ends).
 3. **Allow Always**
    - Persisted decision (see Persistence Model).
 4. **Deny**
@@ -298,7 +298,7 @@ Server replies with standard response envelope (`docs/rpc.md`):
 
 ### Timeout Behavior
 
-- If no decision is received within `timeoutMs` (default 30s), Pi MUST:
+- If no decision is received within `timeoutMs` (default 30s), KESA MUST:
   - deny all pending `callIds`,
   - emit `policy.decision` logs with `decision="deny_timeout"`.
 

@@ -40,7 +40,7 @@ If `name` is omitted, the parent directory name is used.
 
 ### Auto-Discovery
 
-By default, Pi includes all enabled skills in the system prompt. The model can decide to "activate" a skill by reading its definition file using the `read` tool.
+By default, KESA includes all enabled skills in the system prompt. The model can decide to "activate" a skill by reading its definition file using the `read` tool.
 
 ### Explicit Invocation
 

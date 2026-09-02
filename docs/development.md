@@ -2,9 +2,9 @@
 
 ## Building
 
-Pi release builds use the exact `nightly-2026-07-05` toolchain pinned in
+KESA release builds use the exact `nightly-2026-07-05` toolchain pinned in
 `rust-toolchain.toml`. The locked dependency graph requires Rust 1.95 or newer;
-use the repository pin so compiler and Clippy results remain reproducible.
+use the repository pin so compiler results remain reproducible.
 
 ```bash
 # Build dev binary
@@ -106,7 +106,7 @@ fix.
 
 ### Conformance Tests
 
-Conformance tests validate that Pi behaves identically to the legacy TypeScript implementation for tools, extensions, and core logic. Tests are organized in tiers:
+Conformance tests validate that KESA behaves identically to the legacy TypeScript implementation for tools, extensions, and core logic. Tests are organized in tiers:
 
 #### Quick: Policy + Tool Conformance (no external deps)
 
@@ -225,14 +225,20 @@ Before submitting a PR, ensure all gates pass:
 
 ```bash
 # Format check
-cargo fmt --check
+cargo fmt --all -- --check
 
-# Lint check (deny warnings)
-rch exec -- cargo clippy --all-targets -- -D warnings
+# Everything compiles, including tests and examples
+cargo check --all-targets
 
 # Tests
-rch exec -- cargo test --all-targets
+cargo test --lib
+cargo test --test tui_snapshot --test tui_state --test theme_contrast --test sdk_unit
 ```
+
+Clippy is not part of the gate. The pinned nightly in `rust-toolchain.toml`
+does not publish the component, so `cargo clippy` cannot run on this repository
+at all, and the crate-level lint configuration in `src/lib.rs` is unenforced.
+The clippy invocations further up this page are for a toolchain that has it.
 
 ## Project Structure
 

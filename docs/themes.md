@@ -1,8 +1,6 @@
 # Themes
 
-Pi’s interactive TUI supports **JSON theme files** plus a few built-in themes.
-
-If something described here doesn’t match what you see, check `src/theme.rs` and the theme workstream (`bd-22p`) — the theme UX is still evolving.
+The interactive TUI reads **JSON theme files** and ships three built-in themes.
 
 ## Built-in themes
 
@@ -12,12 +10,12 @@ If something described here doesn’t match what you see, check `src/theme.rs` a
 
 ## Theme discovery (custom themes)
 
-Pi discovers custom themes by scanning these directories for `*.json` files:
+KESA discovers custom themes by scanning these directories for `*.json` files:
 
 - Global: `~/.kesa/agent/themes/`
 - Project: `<cwd>/.kesa/themes/`
 
-Discovery is by file extension only; Pi loads each JSON file and uses the `name` field inside it.
+Discovery is by file extension only; each JSON file is loaded and the `name` field inside it is used.
 
 ## Selecting a theme
 
@@ -27,6 +25,17 @@ Discovery is by file extension only; Pi loads each JSON file and uses the `name`
 - ` /theme <name> `: switch themes
 
 Note: `/settings` includes a Theme entry that opens the picker. `/theme` remains available for quick switching, and editing `settings.json` works as well.
+
+### Command line
+
+```bash
+kesa --theme solarized              # built-in name, discovered name, or a path
+kesa --theme ./my-theme.json
+kesa --theme-path ~/themes          # add a file or directory to discovery
+kesa --no-themes                    # skip discovery, built-ins only
+```
+
+`--theme-path` may be repeated.
 
 ### Settings file
 
@@ -43,7 +52,7 @@ Example:
 }
 ```
 
-If a configured theme can’t be loaded, Pi falls back to `dark` and logs a warning.
+If a configured theme can’t be loaded, KESA falls back to `dark` and logs a warning.
 
 ## Theme file format (JSON)
 
@@ -87,8 +96,11 @@ Minimal example:
 - `syntax.*`: colors used for code/markup rendering
 - `ui.*`: frame/selection/cursor colors
 
-## Current gaps vs legacy pi-mono
+## What is not supported
 
-Legacy pi-mono supports additional theme discovery mechanisms (packages, `themes[]` settings paths, CLI `--theme`, hot reload, many more tokens). The Rust port is intentionally smaller right now.
+Themes are read once at startup. Editing a theme file while a session runs has
+no effect until the next launch; `/theme` re-selects among the themes that were
+discovered at startup.
 
-Track progress in `bd-22p`.
+The token set is the one listed above. A theme file may carry extra keys, and
+they are ignored rather than rejected.
