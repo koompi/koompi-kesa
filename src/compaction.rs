@@ -12,7 +12,7 @@ use crate::model::{
     AssistantMessage, ContentBlock, Message, StopReason, TextContent, ThinkingLevel, ToolCall,
     Usage, UserContent, UserMessage,
 };
-use crate::provider::{Context, Provider, StreamOptions};
+use crate::provider::{CacheRetention, Context, Provider, StreamOptions};
 use crate::session::{SessionEntry, SessionMessage, session_message_to_model};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -1321,6 +1321,11 @@ async fn complete_simple(
         api_key: Some(api_key.to_string()),
         max_tokens: Some(max_tokens),
         thinking_level: Some(ThinkingLevel::High),
+        // No cache breakpoint: the only part of this request that repeats is
+        // the short summarisation system prompt, far under the minimum
+        // cacheable prefix, and the user block is unique on every call. A
+        // breakpoint here is a cache write that is never read back.
+        cache_retention: CacheRetention::None,
         ..Default::default()
     };
 
@@ -2375,8 +2380,97 @@ pub mod semantic_marker_scan_quality {
 mod tests {
     use super::semantic_marker_scan_quality as marker_scan;
     use super::*;
-    use crate::model::{AssistantMessage, ContentBlock, TextContent, Usage};
+    use crate::model::{AssistantMessage, ContentBlock, StreamEvent, TextContent, Usage};
     use serde_json::json;
+
+    /// Records the `StreamOptions` it is handed and answers with one `Done`.
+    #[derive(Debug)]
+    struct CapturingProvider {
+        seen: std::sync::Mutex<Option<StreamOptions>>,
+    }
+
+    #[async_trait::async_trait]
+    #[allow(clippy::unnecessary_literal_bound)]
+    impl Provider for CapturingProvider {
+        fn name(&self) -> &str {
+            "capturing"
+        }
+
+        fn api(&self) -> &str {
+            "test-api"
+        }
+
+        fn model_id(&self) -> &str {
+            "test-model"
+        }
+
+        async fn stream(
+            &self,
+            _context: &Context<'_>,
+            options: &StreamOptions,
+        ) -> Result<std::pin::Pin<Box<dyn futures::Stream<Item = Result<StreamEvent>> + Send>>>
+        {
+            *self
+                .seen
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(options.clone());
+            let message = AssistantMessage {
+                content: vec![ContentBlock::Text(TextContent::new("summary"))],
+                api: "test-api".to_string(),
+                provider: "capturing".to_string(),
+                model: "test-model".to_string(),
+                usage: Usage::default(),
+                stop_reason: StopReason::Stop,
+                stop_details: None,
+                error_message: None,
+                timestamp: 0,
+            };
+            Ok(Box::pin(futures::stream::iter(vec![Ok(
+                StreamEvent::Done {
+                    reason: StopReason::Stop,
+                    message,
+                },
+            )])))
+        }
+    }
+
+    /// The default `StreamOptions` caches; a summarisation request must opt
+    /// out explicitly, so a later default flip cannot re-enable it here.
+    #[test]
+    fn summarisation_requests_never_ask_for_a_cache_breakpoint() {
+        asupersync::test_utils::run_test(|| async {
+            let provider = Arc::new(CapturingProvider {
+                seen: std::sync::Mutex::new(None),
+            });
+            let as_provider: Arc<dyn Provider> = provider.clone();
+
+            let message = complete_simple(
+                as_provider,
+                "system",
+                "prompt".to_string(),
+                "key",
+                1024,
+                0.5,
+            )
+            .await
+            .expect("complete_simple");
+
+            assert_eq!(message.stop_reason, StopReason::Stop);
+            let seen = provider
+                .seen
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clone()
+                .expect("provider was called");
+            assert_eq!(seen.cache_retention, CacheRetention::None);
+            assert_eq!(seen.thinking_level, Some(ThinkingLevel::High));
+            assert_ne!(
+                StreamOptions::default().cache_retention,
+                CacheRetention::None,
+                "the default caches, which is why the opt-out above is explicit"
+            );
+        });
+    }
 
     fn make_user_text(text: &str) -> SessionMessage {
         SessionMessage::User {
