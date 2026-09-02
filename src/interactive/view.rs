@@ -1186,13 +1186,19 @@ impl PiApp {
 
         // Progress rows sit above the editor, which stays live through a turn.
         if self.agent_state != AgentState::Idle {
-            if self.show_processing_status_spinner() {
-                // Show spinner while waiting on provider/tool activity, before
-                // we have visible streaming deltas.
+            if self.progress_row_visible() {
+                // The clock and the interrupt hint stay for the whole turn.
+                // The glyph only spins until the first streamed token; after
+                // that the streaming text is the progress indicator.
+                let glyph = if self.show_processing_status_spinner() {
+                    self.spinner.view()
+                } else {
+                    " ".to_string()
+                };
                 let _ = writeln!(
                     output,
                     "  {} {} {}",
-                    self.spinner.view(),
+                    glyph,
                     self.styles.accent.render("Working"),
                     self.styles.muted.render(&self.render_progress_suffix()),
                 );

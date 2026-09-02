@@ -2069,6 +2069,53 @@ mod tests {
         );
     }
 
+    /// The clock and "esc to interrupt" used to vanish with the first token,
+    /// exactly when a turn got long enough to want them.
+    #[test]
+    fn the_progress_row_keeps_its_clock_after_the_first_token() {
+        let current = model_entry("openai", "gpt-5.2", Some("key"), HashMap::new());
+        let mut app = build_test_app(current.clone(), vec![current]);
+        app.set_terminal_size(100, 40);
+        app.agent_state = AgentState::Processing;
+        app.busy_since = Some(std::time::Instant::now() - std::time::Duration::from_secs(12));
+
+        let waiting_height = app.view_effective_conversation_height();
+        assert!(
+            app.show_processing_status_spinner(),
+            "glyph spins before any token"
+        );
+
+        app.current_response.push_str("first token");
+        assert!(app.progress_row_visible(), "the row stays");
+        assert!(!app.show_processing_status_spinner(), "the glyph stops");
+        assert!(
+            app.spinner_visible(),
+            "ticks keep flowing so the clock advances"
+        );
+        assert_eq!(
+            app.view_effective_conversation_height(),
+            waiting_height,
+            "the viewport budget must count the row it still draws"
+        );
+
+        let view = strip_ansi(&app.view());
+        let row = view
+            .lines()
+            .find(|line| line.contains("Working"))
+            .expect("progress row after the first token");
+        assert!(row.contains("12s"), "{row}");
+        assert!(row.contains("esc to interrupt"), "{row}");
+        let frames: Vec<char> =
+            "\u{280b}\u{2819}\u{2839}\u{2838}\u{283c}\u{2834}\u{2826}\u{2827}\u{2807}\u{280f}"
+                .chars()
+                .collect();
+        assert!(
+            !row.chars().any(|ch| frames.contains(&ch)),
+            "spinner glyph must be absent once tokens stream: {row}"
+        );
+        assert!(row.trim_start().starts_with("Working"), "{row}");
+    }
+
     #[test]
     fn double_escape_action_none_does_not_arm_or_trigger() {
         let current = model_entry("openai", "gpt-5.2", Some("old-key"), HashMap::new());

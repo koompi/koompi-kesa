@@ -1117,13 +1117,23 @@ impl PiApp {
         self.view_effective_conversation_height()
     }
 
-    /// Return whether the generic "Processing..." spinner row should be shown.
+    /// Whether the progress row (elapsed clock, token count, interrupt hint)
+    /// is on screen: the agent is busy and no tool row is standing in for it.
     ///
-    /// Once provider text/thinking deltas are streaming, that output already
-    /// acts as progress feedback; suppressing the extra animated status row
-    /// reduces redraw churn and visible flicker.
-    const fn show_processing_status_spinner(&self) -> bool {
-        if matches!(self.agent_state, AgentState::Idle) || self.current_tool.is_some() {
+    /// The row outlives the first streamed token. A turn that has started
+    /// streaming is exactly the turn long enough to want a clock and a way
+    /// out. Three sites read this and must agree: the view that draws the
+    /// row, the viewport budget that counts it, and the tick gate that keeps
+    /// the clock advancing between tokens.
+    pub(super) const fn progress_row_visible(&self) -> bool {
+        !matches!(self.agent_state, AgentState::Idle) && self.current_tool.is_none()
+    }
+
+    /// Whether the progress row carries the animated glyph. Once provider
+    /// text or thinking is streaming, that output is its own progress
+    /// indicator, so the glyph stops while the rest of the row stays.
+    pub(super) const fn show_processing_status_spinner(&self) -> bool {
+        if !self.progress_row_visible() {
             return false;
         }
 
@@ -1132,15 +1142,14 @@ impl PiApp {
         !has_visible_stream_progress
     }
 
-    /// Return whether any spinner row is currently visible in `view()`.
-    ///
-    /// The spinner is rendered either for tool execution progress, or for the
-    /// generic processing state before visible stream output appears.
+    /// Return whether a row driven by spinner ticks is visible in `view()`:
+    /// the tool row, or the progress row. The progress row needs the ticks
+    /// even without its glyph, or its clock only moves when a token lands.
     const fn spinner_visible(&self) -> bool {
         if matches!(self.agent_state, AgentState::Idle) {
             return false;
         }
-        self.current_tool.is_some() || self.show_processing_status_spinner()
+        self.current_tool.is_some() || self.progress_row_visible()
     }
 
     /// Return whether the normal editor input area should be visible.
@@ -1289,10 +1298,10 @@ impl PiApp {
             chrome += 2;
         }
 
-        // Input area and processing spinner can be on screen together: the
+        // Input area and progress row can be on screen together: the
         // editor stays live while the agent works.
-        if self.show_processing_status_spinner() {
-            // Processing spinner: "  spinner Working ..." = 1 row.
+        if self.progress_row_visible() {
+            // Progress row: "  spinner Working ..." = 1 row.
             chrome += 1;
         }
 

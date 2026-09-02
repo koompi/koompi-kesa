@@ -1,5 +1,6 @@
 ---
 source: tests/tui_snapshot.rs
+assertion_line: 233
 expression: view
 ---
   KESA (dummy/dummy-model)  <cwd>
@@ -18,10 +19,10 @@ expression: view
 
 
 
-
   Assistant:
   Thinking: Considering options...
   Partial answer.
+    Working (0s · esc to interrupt)
   ╭ default · think off · Enter send · \+Enter newline · @file context ──────╮
   │ > Type a message... (/help, /exit)                                       │
   ╰──────────────────────────────────────────────────────────────────────────╯
